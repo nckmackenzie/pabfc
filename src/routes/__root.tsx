@@ -36,7 +36,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "Sacco Management",
+				title: "Prime Age Beauty & Fitness Center",
 			},
 		],
 		links: [
