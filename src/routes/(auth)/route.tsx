@@ -16,7 +16,7 @@ function RouteComponent() {
 					{/* Logo */}
 					<div className="flex items-center gap-3 mb-12">
 						<img
-							src="/logo_48_dark1.png"
+							src="/logo_48_dark.png"
 							alt="Prime Age Beauty & Fitness Center"
 							className="w-12 h-12"
 						/>
