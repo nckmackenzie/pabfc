@@ -1,18 +1,9 @@
+import type { users } from "@/drizzle/schema";
 import type { FileRoutesByTo } from "@/routeTree.gen";
-
-export type UserType = "superadmin" | "admin" | "user" | "member";
 
 export type ColorVariant = "success" | "warning" | "error" | "info";
 
-export interface User {
-	id: string;
-	name: string;
-	image: string | null;
-	contact: string | null;
-	userType: UserType;
-	username: string;
-	active: boolean;
-}
+export type User = typeof users.$inferSelect;
 
 export interface UserPermissions {
 	userId: string;
