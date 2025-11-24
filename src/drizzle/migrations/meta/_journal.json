@@ -15,6 +15,13 @@
       "when": 1763984677015,
       "tag": "0001_wild_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763984960874,
+      "tag": "0002_blushing_rictor",
+      "breakpoints": true
     }
   ]
 }

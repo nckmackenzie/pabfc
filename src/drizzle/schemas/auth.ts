@@ -27,7 +27,7 @@ export const users = pgTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 		twoFactorEnabled: boolean("two_factor_enabled").default(false),
-		role: text("role").default("user").notNull(),
+		role: userTypeEnum("role").default("staff").notNull(),
 		banned: boolean("banned").default(false),
 		banReason: text("ban_reason"),
 		banExpires: timestamp("ban_expires"),

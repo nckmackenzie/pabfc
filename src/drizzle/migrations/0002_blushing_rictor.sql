@@ -1,0 +1,2 @@
+ALTER TABLE "users" ALTER COLUMN "role" SET DEFAULT 'staff'::"public"."user_type";--> statement-breakpoint
+ALTER TABLE "users" ALTER COLUMN "role" SET DATA TYPE "public"."user_type" USING "role"::"public"."user_type";
