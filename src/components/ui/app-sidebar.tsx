@@ -5,10 +5,9 @@ import {
 	CalendarIcon,
 	ChartPieIcon,
 	ChatMessageIcon,
-	PackageIcon,
 	PaymentCardIcon,
 	PercentBadgeIcon,
-	PersonBadgeIcon,
+	Users2Icon,
 	UsersIcon,
 } from "@/components/ui/icons";
 
@@ -41,7 +40,7 @@ const menuItems = [
 	{
 		title: "Member Management",
 		url: "/app/members",
-		icon: PersonBadgeIcon,
+		icon: Users2Icon,
 	},
 	{
 		title: "Plans & Packages",
