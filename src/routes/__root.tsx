@@ -7,6 +7,9 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "react-hot-toast";
+import { ErrorComponent } from "@/components/ui/error-component";
+import { NotFoundComponent } from "@/components/ui/not-found";
+import { Spinner } from "@/components/ui/spinner";
 import { authQueries } from "@/lib/session/queries";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -62,6 +65,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
+	errorComponent: ({ error }) => <ErrorComponent message={error.message} />,
+	pendingComponent: () => (
+		<div className="flex items-center justify-center min-h-screen">
+			<div className="flex flex-col items-center gap-4">
+				<Spinner className="size-12 text-primary" />
+				<p className="text-muted-foreground text-sm">Loading, please wait...</p>
+			</div>
+		</div>
+	),
+	notFoundComponent: () => <NotFoundComponent />,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
