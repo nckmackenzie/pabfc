@@ -1,5 +1,4 @@
 import { zxcvbn, zxcvbnOptions } from "@zxcvbn-ts/core";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
 import {
 	type ChangeEvent,
 	type ComponentProps,
@@ -11,6 +10,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import { EyeIcon, EyeOffIcon } from "@/components/ui/icons";
 import type { Input } from "@/components/ui/input";
 import {
 	InputGroup,

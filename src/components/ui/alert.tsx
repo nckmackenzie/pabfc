@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
+import { XIcon } from "./icons";
 
 const alertVariants = cva(
 	"flex items-stretch w-full gap-2 group-[.toaster]:w-(--width)",
@@ -237,7 +237,7 @@ function Alert({
 					className={cn("group shrink-0 size-4 cursor-pointer")}
 					type="button"
 				>
-					<X className="opacity-60 group-hover:opacity-100 size-4" />
+					<XIcon className="opacity-60 group-hover:opacity-100 size-4" />
 				</button>
 			)}
 		</div>
