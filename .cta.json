@@ -1,0 +1,28 @@
+{
+  "initialized": true,
+  "mode": "file-router",
+  "projectName": "sacco-with-start",
+  "typescript": true,
+  "tailwind": true,
+  "git": true,
+  "addOnOptions": {
+    "drizzle": {
+      "database": "postgresql"
+    }
+  },
+  "packageManager": "pnpm",
+  "version": 1,
+  "framework": "react-cra",
+  "chosenAddOns": [
+    "compiler",
+    "drizzle",
+    "form",
+    "shadcn",
+    "t3env",
+    "table",
+    "start",
+    "tanstack-query",
+    "biome",
+    "nitro"
+  ]
+}
