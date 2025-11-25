@@ -40,11 +40,10 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 							/>
 						));
 					},
-					onSuccess: () => {
+					onSuccess: async () => {
 						const target = sanitizeRedirect(redirectTo ?? previousLocation);
 						form.reset();
 						navigate({ to: target, replace: true });
-						// navigate({ to: "/app/dashboard", replace: true });
 					},
 				},
 			);
