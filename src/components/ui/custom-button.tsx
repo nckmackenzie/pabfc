@@ -47,7 +47,7 @@ export function ViewDetailsAction({ text }: { text?: string }) {
 	return (
 		<>
 			<FileSpreadsheetIcon className="size-4! text-muted-foreground" />
-			<span className="text-xs">{text || "Details"}</span>
+			<span className="text-xs -ml-1">{text || "Details"}</span>
 		</>
 	);
 }
@@ -63,9 +63,9 @@ export function AutomateAction({ text }: { text: string }) {
 
 export function DeleteAction() {
 	return (
-		<>
+		<div className="flex items-center gap-1 ml-1">
 			<TrashIcon className="size-4! text-destructive" />
 			<span className="text-destructive text-xs">Delete</span>
-		</>
+		</div>
 	);
 }
