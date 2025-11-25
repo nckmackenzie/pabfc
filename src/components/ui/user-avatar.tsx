@@ -14,9 +14,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-	ArrowClockWiseIcon,
 	BellIcon,
-	ClipboardClockIcon,
 	CogIcon,
 	LogOutIcon,
 	UsersIcon,
@@ -75,16 +73,10 @@ export function UserAvatar() {
 						Notifications
 					</DropdownMenuItem>
 					{session?.user.role === "admin" && (
-						<>
-							<DropdownMenuItem>
-								<CogIcon />
-								Settings
-							</DropdownMenuItem>
-							<DropdownMenuItem className="cursor-pointer">
-								<ClipboardClockIcon />
-								Activty Logs
-							</DropdownMenuItem>
-						</>
+						<DropdownMenuItem>
+							<CogIcon />
+							Settings
+						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
