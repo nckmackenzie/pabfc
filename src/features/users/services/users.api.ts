@@ -22,7 +22,11 @@ import {
 	userRoles,
 	users,
 } from "@/drizzle/schema";
-import { type UserSchema, userSchema } from "@/features/users/services/schema";
+import {
+	resetPasswordFormSchema,
+	type UserSchema,
+	userSchema,
+} from "@/features/users/services/schema";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
@@ -215,6 +219,36 @@ export const deleteUser = createServerFn()
 			await tx.delete(sessions).where(eq(sessions.userId, userId));
 			await tx.delete(users).where(eq(users.id, userId));
 		});
+	});
+
+export const resetPassword = createServerFn()
+	.middleware([adminMiddleware])
+	.inputValidator(resetPasswordFormSchema)
+	.handler(async ({ data }) => {
+		const { userId, resetMethod, password } = data;
+
+		const user = await getUserWithRole({ data: { userId } });
+		if (!user) {
+			throw new NotFoundError("User");
+		}
+
+		let newPassword: string;
+		if (resetMethod === "automatic") {
+			newPassword = generateTemporaryPassword();
+		} else {
+			newPassword = password as string;
+		}
+
+		const hashedPassword = await hashPassword(newPassword);
+
+		await db
+			.update(accounts)
+			.set({ password: hashedPassword })
+			.where(
+				and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")),
+			);
+
+		return newPassword;
 	});
 
 export type UserWithLoginAttempts = Awaited<

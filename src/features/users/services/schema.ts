@@ -21,4 +21,25 @@ export const userSchema = z
 		}
 	});
 
+export const resetPasswordFormSchema = z
+	.object({
+		userId: z.string().min(1, { error: "User is required" }),
+		resetMethod: z.enum(["automatic", "manual"], {
+			error: "Reset method is required",
+		}),
+		password: z.string().nullish(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.resetMethod === "manual") {
+			if (!data.password || data.password.length < 8) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Password must be at least 8 characters long",
+					path: ["password"],
+				});
+			}
+		}
+	});
+
 export type UserSchema = z.infer<typeof userSchema>;
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>;
