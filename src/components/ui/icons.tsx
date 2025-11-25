@@ -598,6 +598,32 @@ export function ClipboardDocumentIcon({
 	);
 }
 
+export function ConstructionIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			{...props}
+		>
+			<rect x="2" y="6" width="20" height="8" rx="1" />
+			<path d="M17 14v7" />
+			<path d="M7 14v7" />
+			<path d="M17 3v3" />
+			<path d="M7 3v3" />
+			<path d="M10 14 2.3 6.3" />
+			<path d="m14 6 7.7 7.7" />
+			<path d="m8 6 8 8" />
+		</svg>
+	);
+}
+
 export function DollarSignIcon({ ...props }: React.ComponentProps<"svg">) {
 	return (
 		<svg
@@ -729,6 +755,27 @@ export function GaugeIcon({ ...props }: React.ComponentProps<"svg">) {
 				fill-rule="evenodd"
 				d="M0 10a8 8 0 1 1 15.547 2.661c-.442 1.253-1.845 1.602-2.932 1.25C11.309 13.488 9.475 13 8 13c-1.474 0-3.31.488-4.615.911-1.087.352-2.49.003-2.932-1.25A8 8 0 0 1 0 10m8-7a7 7 0 0 0-6.603 9.329c.203.575.923.876 1.68.63C4.397 12.533 6.358 12 8 12s3.604.532 4.923.96c.757.245 1.477-.056 1.68-.631A7 7 0 0 0 8 3"
 			/>
+		</svg>
+	);
+}
+
+export function HammerIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			{...props}
+		>
+			<path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9" />
+			<path d="m18 15 4-4" />
+			<path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5" />
 		</svg>
 	);
 }
@@ -1015,6 +1062,25 @@ export function ResetIcon({ ...props }: React.ComponentProps<"svg">) {
 				strokeLinecap="round"
 				strokeLinejoin="round"
 				d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+			/>
+		</svg>
+	);
+}
+
+export function RocketIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			strokeWidth={1.5}
+			stroke="currentColor"
+			{...props}
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"
 			/>
 		</svg>
 	);
