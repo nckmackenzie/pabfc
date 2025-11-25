@@ -101,7 +101,7 @@ export function UsersTable() {
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuItem asChild>
-							<Link to="/app/users/$userId/edit" params={{ userId: id }}>
+							<Link to="/app/users/$userId/reset" params={{ userId: id }}>
 								<ResetIcon className="size-4! text-muted-foreground" />
 								<span className="text-xs -ml-1">Reset Password</span>
 							</Link>
