@@ -41,5 +41,13 @@ export const resetPasswordFormSchema = z
 		}
 	});
 
+export const roleFormSchema = z.object({
+	name: requiredStringSchemaEntry("Role is required"),
+	description: z.string().nullish(),
+	permissions: z.array(z.string()),
+});
+
+export type RoleFormValues = z.infer<typeof roleFormSchema>;
+
 export type UserSchema = z.infer<typeof userSchema>;
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>;
