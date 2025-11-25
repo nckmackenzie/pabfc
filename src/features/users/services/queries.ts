@@ -11,6 +11,7 @@ export const usersQueries = {
 			queryKey: [...usersQueries.all, "list", { filters }] as const,
 			queryFn: () => getUsers({ data: { q: filters.q } }),
 			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
 		}),
 	detail: (userId: string) =>
 		queryOptions({
