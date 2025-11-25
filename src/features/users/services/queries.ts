@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
 import { getActiveRoles } from "@/features/users/services/roles.api";
 import { getUsers, getUserWithRole } from "@/features/users/services/users.api";
@@ -10,6 +10,7 @@ export const usersQueries = {
 		queryOptions({
 			queryKey: [...usersQueries.all, "list", { filters }] as const,
 			queryFn: () => getUsers({ data: { q: filters.q } }),
+			placeholderData: keepPreviousData,
 		}),
 	detail: (userId: string) =>
 		queryOptions({
