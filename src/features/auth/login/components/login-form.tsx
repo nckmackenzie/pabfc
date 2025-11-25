@@ -18,6 +18,7 @@ const defaultValues = {
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 	const previousLocation = usePreviousLocation();
 	const navigate = useNavigate({ from: "/sign-in" });
+
 	const form = useAppForm({
 		defaultValues,
 		validators: {
