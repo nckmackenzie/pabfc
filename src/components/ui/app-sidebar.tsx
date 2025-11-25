@@ -94,9 +94,7 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{menuItems.map((item) => {
-								const recreatedPathName = `${pathname.split("/app")[1]}`;
-								// const isActive = recreatedPathName === item.url;
-								const isActive = item.url.includes(recreatedPathName);
+								const isActive = pathname.startsWith(item.url);
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton
