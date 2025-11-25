@@ -30,3 +30,16 @@ export function EditPageWrapper(
 		</Wrapper>
 	);
 }
+
+export function PageWrapperWithBackLink(
+	props: EditPageWrapperProps & Required<PropsWithChildren>,
+) {
+	return (
+		<div className="space-y-8">
+			<BackLink size="sm" variant="outline" href="/app/users">
+				Back to Users
+			</BackLink>
+			<Wrapper size={props.wrapperSize}>{props.children}</Wrapper>
+		</div>
+	);
+}
