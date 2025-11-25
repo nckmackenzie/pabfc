@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BackLink } from "@/components/ui/links";
+import { PageWrapperWithBackLink } from "@/components/ui/edit-page-wrapper";
 import { FormLoader } from "@/components/ui/loaders";
-import { Wrapper } from "@/components/ui/wrapper";
 import { UserForm } from "@/features/users/components/user-form";
 import { rolesQueries } from "@/features/users/services/queries";
 
@@ -22,13 +21,12 @@ export const Route = createFileRoute("/app/users/new")({
 function RouteComponent() {
 	const { roles } = Route.useLoaderData();
 	return (
-		<div className="space-y-8">
-			<BackLink size="sm" variant="outline" href="/app/users">
-				Back to Users
-			</BackLink>
-			<Wrapper size="sm">
-				<UserForm roles={roles} />
-			</Wrapper>
-		</div>
+		<PageWrapperWithBackLink
+			wrapperSize="sm"
+			backPath="/app/users"
+			buttonText="Back to Users"
+		>
+			<UserForm roles={roles} />
+		</PageWrapperWithBackLink>
 	);
 }
