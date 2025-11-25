@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Route } from "@/types/index.types";
 import type { buttonVariants } from "./button";
 import { BackLink } from "./links";
+import { Wrapper } from "./wrapper";
 
 type EditPageWrapperProps = {
 	backPath: Route;
@@ -11,17 +12,21 @@ type EditPageWrapperProps = {
 	className?: string;
 	variant?: VariantProps<typeof buttonVariants>["variant"];
 	size?: VariantProps<typeof buttonVariants>["size"];
+	wrapperSize?: VariantProps<typeof Wrapper>["size"];
 };
 
 export function EditPageWrapper(
 	props: EditPageWrapperProps & Required<PropsWithChildren>,
 ) {
 	return (
-		<div className={cn("space-y-6", props.className)}>
+		<Wrapper
+			size={props.wrapperSize}
+			className={cn("space-y-6", props.className)}
+		>
 			<BackLink size={props.size} variant={props.variant} href={props.backPath}>
 				{props.buttonText || "Bak to List"}
 			</BackLink>
 			{props.children}
-		</div>
+		</Wrapper>
 	);
 }
