@@ -544,9 +544,9 @@ export function ClipboardClockIcon({ ...props }: React.ComponentProps<"svg">) {
 			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
 			{...props}
 		>
 			<path d="M16 14v2.2l1.6 1" />
@@ -607,9 +607,9 @@ export function ConstructionIcon({ ...props }: React.ComponentProps<"svg">) {
 			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
 			{...props}
 		>
 			<rect x="2" y="6" width="20" height="8" rx="1" />
@@ -768,9 +768,9 @@ export function HammerIcon({ ...props }: React.ComponentProps<"svg">) {
 			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
 			{...props}
 		>
 			<path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9" />
