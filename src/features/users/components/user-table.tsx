@@ -80,7 +80,9 @@ export function UsersTable() {
 					original: { lastSignedInAt },
 				},
 			}) =>
-				!lastSignedInAt ? null : (
+				!lastSignedInAt ? (
+					<Badge variant="outline">Never</Badge>
+				) : (
 					<Badge variant="secondary">
 						{formatDistanceToNow(new Date(lastSignedInAt), { addSuffix: true })}
 					</Badge>
