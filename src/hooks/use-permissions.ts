@@ -25,26 +25,26 @@ export function usePermissions() {
 	}, [userPermissions]);
 
 	const hasPermission = (permission: Permission): boolean => {
-		if (session?.user.userType === "admin") return true;
+		if (session?.user.role === "admin") return true;
 		return permissions.includes(permission);
 	};
 
 	const hasAnyPermission = (permissionList: Array<Permission>): boolean => {
-		if (session?.user.userType === "admin") return true;
+		if (session?.user.role === "admin") return true;
 		return permissionList.some((permission) =>
 			permissions.includes(permission),
 		);
 	};
 
 	const hasAllPermissions = (permissionList: Array<Permission>): boolean => {
-		if (session?.user.userType === "admin") return true;
+		if (session?.user.role === "admin") return true;
 		return permissionList.every((permission) =>
 			permissions.includes(permission),
 		);
 	};
 
 	const hasRole = (roleName: string): boolean => {
-		if (session?.user.userType === "admin") return true;
+		if (session?.user.role === "admin") return true;
 		return roles.includes(roleName);
 	};
 
