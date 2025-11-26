@@ -7,6 +7,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { Wip } from "@/components/ui/wip";
 
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/app")({
 		}
 	},
 	component: RouteComponent,
+	notFoundComponent: () => <Wip />,
 });
 
 function RouteComponent() {
