@@ -30,6 +30,7 @@ import {
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
+import { logActivity } from "@/services/activity-logger";
 
 export function generateTemporaryPassword(): string {
 	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -113,43 +114,58 @@ export const getUsers = createServerFn()
 export const createUser = createServerFn({ method: "POST" })
 	.middleware([adminMiddleware])
 	.inputValidator(userSchema)
-	.handler(async ({ data }) => {
-		if (await getUserByContact({ data: { contact: data.contact } })) {
-			throw new ConflictError("Contact");
-		}
-
-		const userId = await db.transaction(async (tx) => {
-			const [{ id }] = await tx
-				.insert(users)
-				.values({
-					name: data.name.toLowerCase(),
-					username: data.contact,
-					contact: data.contact,
-					role: data.role,
-					active: true,
-				})
-				.returning({ id: users.id });
-
-			const temporaryPassword = generateTemporaryPassword();
-			await tx.insert(accounts).values({
-				id: nanoid(),
-				accountId: id,
-				providerId: "credential",
-				userId: id,
-				password: await hashPassword(temporaryPassword),
-			});
-
-			if (data.role !== "admin" && data.roleIds?.length) {
-				await tx
-					.insert(userRoles)
-					.values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { id: loggedUserId },
+			},
+		}) => {
+			if (await getUserByContact({ data: { contact: data.contact } })) {
+				throw new ConflictError("Contact");
 			}
 
-			return id;
-		});
+			const userId = await db.transaction(async (tx) => {
+				const [{ id }] = await tx
+					.insert(users)
+					.values({
+						name: data.name.toLowerCase(),
+						username: data.contact,
+						contact: data.contact,
+						role: data.role,
+						active: true,
+					})
+					.returning({ id: users.id });
 
-		return userId;
-	});
+				const temporaryPassword = generateTemporaryPassword();
+				await tx.insert(accounts).values({
+					id: nanoid(),
+					accountId: id,
+					providerId: "credential",
+					userId: id,
+					password: await hashPassword(temporaryPassword),
+				});
+
+				if (data.role !== "admin" && data.roleIds?.length) {
+					await tx
+						.insert(userRoles)
+						.values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
+				}
+
+				await logActivity({
+					data: {
+						userId: loggedUserId,
+						action: "create user",
+						description: `Created new user ${data.name}`,
+					},
+				});
+
+				return id;
+			});
+
+			return userId;
+		},
+	);
 
 export const getUserWithRole = createServerFn()
 	.middleware([authMiddleware])
@@ -177,49 +193,80 @@ export const getUserWithRole = createServerFn()
 export const updateUser = createServerFn({ method: "POST" })
 	.middleware([adminMiddleware])
 	.inputValidator((values: { userId: string; data: UserSchema }) => values)
-	.handler(async ({ data: { userId, data } }) => {
-		if (await getUserByContact({ data: { contact: data.contact, userId } })) {
-			throw new ConflictError("Contact");
-		}
-
-		await db.transaction(async (tx) => {
-			await tx
-				.update(users)
-				.set({
-					name: data.name.toLowerCase(),
-					username: data.contact,
-					contact: data.contact,
-					role: data.role,
-					active: data.active,
-				})
-				.where(eq(users.id, userId));
-
-			await tx.delete(userRoles).where(eq(userRoles.userId, userId));
-
-			if (data.role !== "admin" && data.roleIds?.length) {
-				await tx
-					.insert(userRoles)
-					.values(data.roleIds.map((roleId) => ({ userId, roleId })));
+	.handler(
+		async ({
+			data: { userId, data },
+			context: {
+				user: { id },
+			},
+		}) => {
+			if (await getUserByContact({ data: { contact: data.contact, userId } })) {
+				throw new ConflictError("Contact");
 			}
-		});
 
-		return userId;
-	});
+			await db.transaction(async (tx) => {
+				await tx
+					.update(users)
+					.set({
+						name: data.name.toLowerCase(),
+						username: data.contact,
+						contact: data.contact,
+						role: data.role,
+						active: data.active,
+					})
+					.where(eq(users.id, userId));
+
+				await tx.delete(userRoles).where(eq(userRoles.userId, userId));
+
+				if (data.role !== "admin" && data.roleIds?.length) {
+					await tx
+						.insert(userRoles)
+						.values(data.roleIds.map((roleId) => ({ userId, roleId })));
+				}
+			});
+
+			await logActivity({
+				data: {
+					userId: id,
+					action: "update user",
+					description: `Updated user ${data.name} details`,
+				},
+			});
+
+			return userId;
+		},
+	);
 
 export const deleteUser = createServerFn()
+	.middleware([adminMiddleware])
 	.inputValidator((userId: string) => userId)
-	.handler(async ({ data: userId }) => {
-		if (!(await getUserWithRole({ data: { userId } }))) {
-			throw new NotFoundError("User");
-		}
+	.handler(
+		async ({
+			data: userId,
+			context: {
+				user: { id },
+			},
+		}) => {
+			if (!(await getUserWithRole({ data: { userId } }))) {
+				throw new NotFoundError("User");
+			}
 
-		await db.transaction(async (tx) => {
-			await tx.delete(userRoles).where(eq(userRoles.userId, userId));
-			await tx.delete(accounts).where(eq(accounts.userId, userId));
-			await tx.delete(sessions).where(eq(sessions.userId, userId));
-			await tx.delete(users).where(eq(users.id, userId));
-		});
-	});
+			await db.transaction(async (tx) => {
+				await tx.delete(userRoles).where(eq(userRoles.userId, userId));
+				await tx.delete(accounts).where(eq(accounts.userId, userId));
+				await tx.delete(sessions).where(eq(sessions.userId, userId));
+				await tx.delete(users).where(eq(users.id, userId));
+			});
+
+			await logActivity({
+				data: {
+					userId: id,
+					action: "delete user",
+					description: `Deleted user ${userId}`,
+				},
+			});
+		},
+	);
 
 export const resetPassword = createServerFn()
 	.middleware([adminMiddleware])

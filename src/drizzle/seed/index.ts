@@ -1,3 +1,4 @@
+import { seedMemberData } from "@/drizzle/seed/members";
 import { seedUsers } from "@/drizzle/seed/users";
 
 async function main() {
@@ -7,7 +8,7 @@ async function main() {
 	try {
 		await Promise.all([
 			seedUsers(),
-			//   seedSuppliers(),
+			seedMemberData(),
 			//   seedCategories(),
 			//   seedProducts(),
 			//   seedCustomer(),

@@ -12,7 +12,9 @@ import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
 
 const PermissionMatrix = lazy(() =>
-	import("./permission-matrix").then((m) => ({ default: m.PermissionMatrix })),
+	import("./permission-matrix-hieracical").then((m) => ({
+		default: m.PermissionMatrix,
+	})),
 );
 
 type Props = {

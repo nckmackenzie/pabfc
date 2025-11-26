@@ -1,0 +1,1 @@
+ALTER TABLE "activity_logs" ADD COLUMN "description" varchar NOT NULL;
