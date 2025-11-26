@@ -43,6 +43,13 @@
       "when": 1764143173196,
       "tag": "0005_moaning_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1764148762382,
+      "tag": "0006_numerous_vindicator",
+      "breakpoints": true
     }
   ]
 }
