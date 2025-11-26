@@ -69,6 +69,7 @@ export const members = pgTable(
 		}),
 		deviceId: varchar("device_id", { length: 255 }),
 		notes: text("notes"),
+		image: varchar("image", { length: 255 }),
 		createdAt,
 		updatedAt,
 	},

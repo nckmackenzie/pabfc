@@ -64,6 +64,13 @@
       "when": 1764153980789,
       "tag": "0008_wandering_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1764175605357,
+      "tag": "0009_stale_anita_blake",
+      "breakpoints": true
     }
   ]
 }
