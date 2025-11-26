@@ -1,4 +1,3 @@
-import { CheckIcon, ChevronUpDownIcon } from "@/components/ui/icons";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +8,7 @@ import {
 	CommandItem,
 	CommandList,
 } from "@/components/ui/command";
+import { CheckIcon, ChevronUpDownIcon } from "@/components/ui/icons";
 import {
 	Popover,
 	PopoverContent,
@@ -20,10 +20,18 @@ import type { Option } from "@/types/index.types";
 interface ComboBoxProps {
 	items: Array<Option>;
 	value: string;
-	setValue: (value: string) => void;
+	onChange: (value: string) => void;
+	placeholder: string;
+	commandPlaceholder?: string;
 }
 
-export function ComboBox({ value, setValue, items }: ComboBoxProps) {
+export function ComboBox({
+	value,
+	onChange,
+	items,
+	placeholder,
+	commandPlaceholder,
+}: ComboBoxProps) {
 	const [open, setOpen] = React.useState(false);
 
 	return (
@@ -37,22 +45,25 @@ export function ComboBox({ value, setValue, items }: ComboBoxProps) {
 				>
 					{value
 						? items.find((item) => item.value === value)?.label
-						: "Select framework..."}
+						: placeholder}
 					<ChevronUpDownIcon className="opacity-50" />
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent className="max-w-md p-0">
 				<Command>
-					<CommandInput placeholder="Search framework..." className="h-10" />
+					<CommandInput
+						placeholder={commandPlaceholder ?? placeholder}
+						className="h-10 "
+					/>
 					<CommandList>
-						<CommandEmpty>No framework found.</CommandEmpty>
+						<CommandEmpty>No options found.</CommandEmpty>
 						<CommandGroup>
 							{items.map((item) => (
 								<CommandItem
 									key={item.value}
 									value={item.value}
 									onSelect={(currentValue) => {
-										setValue(currentValue === value ? "" : currentValue);
+										onChange(currentValue === value ? "" : currentValue);
 										setOpen(false);
 									}}
 								>

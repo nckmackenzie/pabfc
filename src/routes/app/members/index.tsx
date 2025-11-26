@@ -1,13 +1,17 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import { BasePageComponent } from "@/components/ui/base-page";
-import { Wip } from "@/components/ui/wip";
+import {
+	BasePageComponent,
+	BasePageLoadingSkeleton,
+} from "@/components/ui/base-page";
 import { MemberFilters } from "@/features/members/components/filters";
+import { MemberTable } from "@/features/members/components/member-table";
 import { memberValidateSearch } from "@/features/members/services/schemas";
+import { planQueries } from "@/features/plans/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 
 const defaultValues = {
 	q: "",
-	status: "all",
+	status: "all" as const,
 	plan: "all",
 };
 
@@ -23,6 +27,15 @@ export const Route = createFileRoute("/app/members/")({
 		meta: [{ title: "Members / Prime Age Beauty & Fitness Center" }],
 	}),
 	component: RouteComponent,
+	pendingComponent: () => <BasePageLoadingSkeleton />,
+	loader: async ({ context }) => {
+		const [activePlans] = await Promise.all([
+			context.queryClient.ensureQueryData(planQueries.active()),
+		]);
+		return {
+			plans: activePlans,
+		};
+	},
 });
 
 function RouteComponent() {
@@ -36,8 +49,7 @@ function RouteComponent() {
 			filterClassName="md:justify-end"
 			customFilters={<MemberFilters />}
 		>
-			{/* TODO: HANDLE EMPTY DATA */}
-			<Wip displayBackButton={false} transparent />
+			<MemberTable />
 		</BasePageComponent>
 	);
 }

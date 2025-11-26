@@ -5,10 +5,13 @@ import {
 	index,
 	integer,
 	pgEnum,
+	pgMaterializedView,
 	pgTable,
 	text,
+	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
+import { attendanceLogs } from "@/drizzle/schema";
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 
 export const gender = ["male", "female", "unspecified", "other"] as const;
@@ -69,6 +72,8 @@ export const members = pgTable(
 		}),
 		deviceId: varchar("device_id", { length: 255 }),
 		notes: text("notes"),
+		image: varchar("image", { length: 255 }),
+		deletedAt: timestamp("deleted_at"),
 		createdAt,
 		updatedAt,
 	},
@@ -78,6 +83,11 @@ export const members = pgTable(
 		index("idx_member_status").on(table.memberStatus),
 	],
 );
+
+export const memberRelations = relations(members, ({ many }) => ({
+	memberships: many(memberMemberships),
+	attendances: many(attendanceLogs),
+}));
 
 export const membershipPlans = pgTable(
 	"membership_plans",
@@ -148,3 +158,18 @@ export const memberMembershipsRelations = relations(
 		}),
 	}),
 );
+
+export const membersOverview = pgMaterializedView("vw_member_overview", {
+	id: varchar("id").notNull(),
+	memberNo: integer("member_no").notNull(),
+	firstName: varchar("first_name").notNull(),
+	lastName: varchar("last_name").notNull(),
+	fullName: varchar("full_name").notNull(),
+	contact: varchar("contact", { length: 15 }).unique(),
+	gender: genderEnum("gender").notNull(),
+	memberStatus: memberStatusEnum("member_status").notNull(),
+	image: varchar("image"),
+	activePlanName: varchar("active_plan_name"),
+	nextRenewalDate: date("next_renewal_date"),
+	lastVisit: timestamp("last_visit"),
+}).existing();

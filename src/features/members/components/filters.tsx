@@ -1,14 +1,12 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { ComboBox } from "@/components/ui/custom-select";
-import { Label } from "@/components/ui/label";
 import { Search } from "@/components/ui/search";
-import { SearchSelect } from "@/components/ui/search-select";
 import { useFilters } from "@/hooks/use-filters";
 
 const statusOptions = [
 	{
 		value: "all",
-		label: "All",
+		label: "All Status",
 	},
 	{
 		value: "active",
@@ -29,27 +27,29 @@ const statusOptions = [
 ];
 
 export function MemberFilters() {
-	const { filters, setFilters } = useFilters(getRouteApi("/app/members/").id);
+	const route = getRouteApi("/app/members/");
+	const { plans } = route.useLoaderData();
+	const { filters, setFilters } = useFilters(route.id);
+
 	return (
 		<div className="grid md:grid-cols-3 gap-3">
-			<div className="flex flex-col gap-2">
-				<Label>Search</Label>
-				<Search
-					placeholder="Search members..."
-					onHandleSearch={(value) => setFilters({ q: value })}
-					defaultValue={filters.q}
-				/>
-			</div>
-			<SearchSelect
-				options={statusOptions}
-				value={filters.status}
-				onChange={(value) => setFilters({ status: value })}
+			<Search
+				placeholder="Search members..."
+				onHandleSearch={(value) => setFilters({ q: value })}
+				defaultValue={filters.q}
 			/>
-			{/* <SearchSelect
-				options={statusOptions}
-				value={undefined}
+			<ComboBox
+				items={statusOptions}
+				value={filters.status ?? "all"}
 				onChange={(value) => setFilters({ status: value })}
-			/> */}
+				placeholder="Select Status...."
+			/>
+			<ComboBox
+				items={[{ value: "all", label: "All Plans" }, ...plans]}
+				value={filters.plan ?? "all"}
+				onChange={(value) => setFilters({ plan: value })}
+				placeholder="Select Plan...."
+			/>
 		</div>
 	);
 }

@@ -14,10 +14,22 @@ import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MemberDashboardRouteImport } from './routes/member/dashboard'
+import { Route as AppUnauthorizedRouteImport } from './routes/app/unauthorized'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
+import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
+import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
+import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
+import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
+import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
+import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
+import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
+import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
+import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
+import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 
 const MemberRouteRoute = MemberRouteRouteImport.update({
   id: '/member',
@@ -43,6 +55,11 @@ const MemberDashboardRoute = MemberDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => MemberRouteRoute,
 } as any)
+const AppUnauthorizedRoute = AppUnauthorizedRouteImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -58,21 +75,88 @@ const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => authRouteRoute,
 } as any)
+const AppUsersRouteRoute = AppUsersRouteRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppMembersRouteRoute = AppMembersRouteRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppMembersRouteRoute,
+} as any)
+const AppUsersNewRoute = AppUsersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppMembersNewRoute = AppMembersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppMembersRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppUsersRolesIndexRoute = AppUsersRolesIndexRouteImport.update({
+  id: '/roles/',
+  path: '/roles/',
+  getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppUsersRolesNewRoute = AppUsersRolesNewRouteImport.update({
+  id: '/roles/new',
+  path: '/roles/new',
+  getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppUsersUserIdResetRoute = AppUsersUserIdResetRouteImport.update({
+  id: '/$userId/reset',
+  path: '/$userId/reset',
+  getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppUsersUserIdEditRoute = AppUsersUserIdEditRouteImport.update({
+  id: '/$userId/edit',
+  path: '/$userId/edit',
+  getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
+  id: '/roles/$roleId/edit',
+  path: '/roles/$roleId/edit',
+  getParentRoute: () => AppUsersRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/members': typeof AppMembersRouteRouteWithChildren
+  '/app/users': typeof AppUsersRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/members/new': typeof AppMembersNewRoute
+  '/app/users/new': typeof AppUsersNewRoute
+  '/app/members/': typeof AppMembersIndexRoute
+  '/app/users/': typeof AppUsersIndexRoute
+  '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
+  '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
+  '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/users/roles': typeof AppUsersRolesIndexRoute
+  '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -81,8 +165,18 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/members/new': typeof AppMembersNewRoute
+  '/app/users/new': typeof AppUsersNewRoute
+  '/app/members': typeof AppMembersIndexRoute
+  '/app/users': typeof AppUsersIndexRoute
+  '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
+  '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
+  '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/users/roles': typeof AppUsersRolesIndexRoute
+  '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -90,11 +184,23 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/members': typeof AppMembersRouteRouteWithChildren
+  '/app/users': typeof AppUsersRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/members/new': typeof AppMembersNewRoute
+  '/app/users/new': typeof AppUsersNewRoute
+  '/app/members/': typeof AppMembersIndexRoute
+  '/app/users/': typeof AppUsersIndexRoute
+  '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
+  '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
+  '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/users/roles/': typeof AppUsersRolesIndexRoute
+  '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -102,11 +208,23 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/member'
+    | '/app/members'
+    | '/app/users'
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/app/members/new'
+    | '/app/users/new'
+    | '/app/members/'
+    | '/app/users/'
+    | '/app/users/$userId/edit'
+    | '/app/users/$userId/reset'
+    | '/app/users/roles/new'
+    | '/app/users/roles'
+    | '/app/users/roles/$roleId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -115,19 +233,41 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/app/members/new'
+    | '/app/users/new'
+    | '/app/members'
+    | '/app/users'
+    | '/app/users/$userId/edit'
+    | '/app/users/$userId/reset'
+    | '/app/users/roles/new'
+    | '/app/users/roles'
+    | '/app/users/roles/$roleId/edit'
   id:
     | '__root__'
     | '/'
     | '/(auth)'
     | '/app'
     | '/member'
+    | '/app/members'
+    | '/app/users'
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
     | '/app/dashboard'
+    | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/app/members/new'
+    | '/app/users/new'
+    | '/app/members/'
+    | '/app/users/'
+    | '/app/users/$userId/edit'
+    | '/app/users/$userId/reset'
+    | '/app/users/roles/new'
+    | '/app/users/roles/'
+    | '/app/users/roles/$roleId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -175,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MemberDashboardRouteImport
       parentRoute: typeof MemberRouteRoute
     }
+    '/app/unauthorized': {
+      id: '/app/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/app/unauthorized'
+      preLoaderRoute: typeof AppUnauthorizedRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/dashboard': {
       id: '/app/dashboard'
       path: '/dashboard'
@@ -196,12 +343,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/app/users': {
+      id: '/app/users'
+      path: '/users'
+      fullPath: '/app/users'
+      preLoaderRoute: typeof AppUsersRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/members': {
+      id: '/app/members'
+      path: '/members'
+      fullPath: '/app/members'
+      preLoaderRoute: typeof AppMembersRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/users/': {
+      id: '/app/users/'
+      path: '/'
+      fullPath: '/app/users/'
+      preLoaderRoute: typeof AppUsersIndexRouteImport
+      parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/members/': {
+      id: '/app/members/'
+      path: '/'
+      fullPath: '/app/members/'
+      preLoaderRoute: typeof AppMembersIndexRouteImport
+      parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/users/new': {
+      id: '/app/users/new'
+      path: '/new'
+      fullPath: '/app/users/new'
+      preLoaderRoute: typeof AppUsersNewRouteImport
+      parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/members/new': {
+      id: '/app/members/new'
+      path: '/new'
+      fullPath: '/app/members/new'
+      preLoaderRoute: typeof AppMembersNewRouteImport
+      parentRoute: typeof AppMembersRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/users/roles/': {
+      id: '/app/users/roles/'
+      path: '/roles'
+      fullPath: '/app/users/roles'
+      preLoaderRoute: typeof AppUsersRolesIndexRouteImport
+      parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/users/roles/new': {
+      id: '/app/users/roles/new'
+      path: '/roles/new'
+      fullPath: '/app/users/roles/new'
+      preLoaderRoute: typeof AppUsersRolesNewRouteImport
+      parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/users/$userId/reset': {
+      id: '/app/users/$userId/reset'
+      path: '/$userId/reset'
+      fullPath: '/app/users/$userId/reset'
+      preLoaderRoute: typeof AppUsersUserIdResetRouteImport
+      parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/users/$userId/edit': {
+      id: '/app/users/$userId/edit'
+      path: '/$userId/edit'
+      fullPath: '/app/users/$userId/edit'
+      preLoaderRoute: typeof AppUsersUserIdEditRouteImport
+      parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/users/roles/$roleId/edit': {
+      id: '/app/users/roles/$roleId/edit'
+      path: '/roles/$roleId/edit'
+      fullPath: '/app/users/roles/$roleId/edit'
+      preLoaderRoute: typeof AppUsersRolesRoleIdEditRouteImport
+      parentRoute: typeof AppUsersRouteRoute
     }
   }
 }
@@ -220,12 +444,56 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface AppMembersRouteRouteChildren {
+  AppMembersNewRoute: typeof AppMembersNewRoute
+  AppMembersIndexRoute: typeof AppMembersIndexRoute
+}
+
+const AppMembersRouteRouteChildren: AppMembersRouteRouteChildren = {
+  AppMembersNewRoute: AppMembersNewRoute,
+  AppMembersIndexRoute: AppMembersIndexRoute,
+}
+
+const AppMembersRouteRouteWithChildren = AppMembersRouteRoute._addFileChildren(
+  AppMembersRouteRouteChildren,
+)
+
+interface AppUsersRouteRouteChildren {
+  AppUsersNewRoute: typeof AppUsersNewRoute
+  AppUsersIndexRoute: typeof AppUsersIndexRoute
+  AppUsersUserIdEditRoute: typeof AppUsersUserIdEditRoute
+  AppUsersUserIdResetRoute: typeof AppUsersUserIdResetRoute
+  AppUsersRolesNewRoute: typeof AppUsersRolesNewRoute
+  AppUsersRolesIndexRoute: typeof AppUsersRolesIndexRoute
+  AppUsersRolesRoleIdEditRoute: typeof AppUsersRolesRoleIdEditRoute
+}
+
+const AppUsersRouteRouteChildren: AppUsersRouteRouteChildren = {
+  AppUsersNewRoute: AppUsersNewRoute,
+  AppUsersIndexRoute: AppUsersIndexRoute,
+  AppUsersUserIdEditRoute: AppUsersUserIdEditRoute,
+  AppUsersUserIdResetRoute: AppUsersUserIdResetRoute,
+  AppUsersRolesNewRoute: AppUsersRolesNewRoute,
+  AppUsersRolesIndexRoute: AppUsersRolesIndexRoute,
+  AppUsersRolesRoleIdEditRoute: AppUsersRolesRoleIdEditRoute,
+}
+
+const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
+  AppUsersRouteRouteChildren,
+)
+
 interface AppRouteRouteChildren {
+  AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
+  AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppUnauthorizedRoute: typeof AppUnauthorizedRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppMembersRouteRoute: AppMembersRouteRouteWithChildren,
+  AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppUnauthorizedRoute: AppUnauthorizedRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
