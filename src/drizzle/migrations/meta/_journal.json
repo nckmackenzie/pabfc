@@ -71,6 +71,13 @@
       "when": 1764175605357,
       "tag": "0009_stale_anita_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1764178679879,
+      "tag": "0010_opposite_nightmare",
+      "breakpoints": true
     }
   ]
 }

@@ -7,8 +7,10 @@ import {
 	pgEnum,
 	pgTable,
 	text,
+	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
+import { attendanceLogs } from "@/drizzle/schema";
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 
 export const gender = ["male", "female", "unspecified", "other"] as const;
@@ -70,6 +72,7 @@ export const members = pgTable(
 		deviceId: varchar("device_id", { length: 255 }),
 		notes: text("notes"),
 		image: varchar("image", { length: 255 }),
+		deletedAt: timestamp("deleted_at"),
 		createdAt,
 		updatedAt,
 	},
@@ -79,6 +82,11 @@ export const members = pgTable(
 		index("idx_member_status").on(table.memberStatus),
 	],
 );
+
+export const memberRelations = relations(members, ({ many }) => ({
+	memberships: many(memberMemberships),
+	attendances: many(attendanceLogs),
+}));
 
 export const membershipPlans = pgTable(
 	"membership_plans",
