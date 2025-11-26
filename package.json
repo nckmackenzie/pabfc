@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio",
+     "db:seed": "tsx ./src/drizzle/seed/index.ts",
     "auth:secret": "npx @better-auth/cli@latest secret",
     "auth:generate": "npx @better-auth/cli@latest generate --config ./src/lib/auth/index.ts --output ./src/drizzle/schemas/new-auth-schema.ts --yes",
     "format": "biome format",

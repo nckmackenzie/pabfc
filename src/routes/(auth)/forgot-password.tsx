@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Wip } from "@/components/ui/wip";
 
 export const Route = createFileRoute("/(auth)/forgot-password")({
 	component: RouteComponent,
@@ -8,5 +9,5 @@ export const Route = createFileRoute("/(auth)/forgot-password")({
 });
 
 function RouteComponent() {
-	return <div>Hello "/(auth)/forgot-password"!</div>;
+	return <Wip />;
 }

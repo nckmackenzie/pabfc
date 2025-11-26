@@ -18,13 +18,13 @@ export function SubmitButton({
 	disabled,
 	isLoading,
 	orientation,
-	withReset = false,
+	withReset = true,
 }: SubmitButtonProps & ComponentProps<"button">) {
 	const form = useFormContext();
 	return (
 		<form.Subscribe selector={(state) => [state.isSubmitting]}>
 			{([isSubmitting]) => (
-				<Field orientation={orientation || "responsive"}>
+				<Field orientation={orientation || "horizontal"}>
 					<Button
 						type="submit"
 						className="flex"

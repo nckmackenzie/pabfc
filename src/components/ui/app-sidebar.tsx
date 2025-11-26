@@ -1,5 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useRouter } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
 	BarChartIcon,
 	CalendarIcon,
@@ -24,7 +23,6 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth/client";
 
 const menuItems = [
 	{
@@ -71,17 +69,7 @@ const menuItems = [
 
 export function AppSidebar() {
 	const { pathname } = useLocation();
-	const queryClient = useQueryClient();
 	const { setOpenMobile, openMobile } = useSidebar();
-	const router = useRouter();
-
-	async function handleLogout() {
-		setOpenMobile(!openMobile);
-		await authClient.signOut();
-		router.navigate({ to: "/sign-in", replace: true });
-		router.invalidate();
-		await queryClient.invalidateQueries();
-	}
 
 	return (
 		<Sidebar>
@@ -106,9 +94,7 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{menuItems.map((item) => {
-								const recreatedPathName = `${pathname.split("/app")[1]}`;
-								// const isActive = recreatedPathName === item.url;
-								const isActive = item.url.includes(recreatedPathName);
+								const isActive = pathname.startsWith(item.url);
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton
