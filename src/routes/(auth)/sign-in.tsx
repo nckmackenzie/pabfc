@@ -55,7 +55,7 @@ function DummyDataWarning() {
 			</AlertIcon>
 			{/* <AlertTitle>Using dummy data</AlertTitle> */}
 			<AlertDescription>
-				All data used in this application is dummy data,{" "}
+				All data used in this environment is dummy data,{" "}
 				<span className="font-semibold">for development purposes only</span>.
 			</AlertDescription>
 		</Alert>
