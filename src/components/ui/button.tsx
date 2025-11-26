@@ -1,7 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
-
+import { ChevronDownIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -57,4 +57,22 @@ function Button({
 	);
 }
 
-export { Button, buttonVariants };
+interface ButtonArrowProps extends React.SVGProps<SVGSVGElement> {
+	icon?: React.ElementType; // Allows passing any Lucide icon
+}
+
+function ButtonArrow({
+	icon: Icon = ChevronDownIcon,
+	className,
+	...props
+}: ButtonArrowProps) {
+	return (
+		<Icon
+			data-slot="button-arrow"
+			className={cn("ms-auto -me-1", className)}
+			{...props}
+		/>
+	);
+}
+
+export { Button, ButtonArrow, buttonVariants };
