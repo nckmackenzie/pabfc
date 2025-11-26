@@ -1,8 +1,8 @@
 import {
-	ChevronsUpDownIcon as CaretSortIcon,
+	ChevronUpDownIcon as CaretSortIcon,
 	CheckIcon,
-	X as CloseIcon,
-} from "lucide-react";
+	XIcon as CloseIcon,
+} from "@/components/ui/icons";
 import type {
 	ClearIndicatorProps,
 	DropdownIndicatorProps,

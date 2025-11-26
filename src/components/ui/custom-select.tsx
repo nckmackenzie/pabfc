@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from "lucide-react";
+import { CheckIcon, ChevronUpDownIcon } from "@/components/ui/icons";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +38,7 @@ export function ComboBox({ value, setValue, items }: ComboBoxProps) {
 					{value
 						? items.find((item) => item.value === value)?.label
 						: "Select framework..."}
-					<ChevronsUpDown className="opacity-50" />
+					<ChevronUpDownIcon className="opacity-50" />
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent className="max-w-md p-0">
@@ -57,7 +57,7 @@ export function ComboBox({ value, setValue, items }: ComboBoxProps) {
 									}}
 								>
 									{item.label}
-									<Check
+									<CheckIcon
 										className={cn(
 											"ml-auto",
 											value === item.value ? "opacity-100" : "opacity-0",
