@@ -1,9 +1,10 @@
 import type { ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { CheckIcon } from "@/components/ui/icons";
 import { LoadingSwap } from "@/components/ui/loading-swap";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useFormContext } from "@/lib/form";
-import { Field } from "../ui/field";
 
 type SubmitButtonProps = {
 	buttonText: string;
@@ -21,10 +22,13 @@ export function SubmitButton({
 	withReset = true,
 }: SubmitButtonProps & ComponentProps<"button">) {
 	const form = useFormContext();
+	const isMobile = useIsMobile();
 	return (
 		<form.Subscribe selector={(state) => [state.isSubmitting]}>
 			{([isSubmitting]) => (
-				<Field orientation={orientation || "horizontal"}>
+				<Field
+					orientation={isMobile ? "vertical" : orientation || "horizontal"}
+				>
 					<Button
 						type="submit"
 						className="flex"

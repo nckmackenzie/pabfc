@@ -7,7 +7,6 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { useFieldContext } from "@/lib/form";
-import { Switch } from "../ui/switch";
 
 type CheckboxProps = {
 	label: string;
@@ -27,25 +26,15 @@ export function FormCheckbox(props: CheckboxProps) {
 			className={props.fieldClassName}
 			orientation="horizontal"
 		>
-			{props.switch ? (
-				<Switch
-					id={field.name}
-					name={field.name}
-					checked={field.state.value}
-					onBlur={field.handleBlur}
-					onCheckedChange={(e) => field.handleChange(e === true)}
-					aria-invalid={isInvalid}
-				/>
-			) : (
-				<Checkbox
-					id={field.name}
-					name={field.name}
-					checked={field.state.value}
-					onBlur={field.handleBlur}
-					onCheckedChange={(e) => field.handleChange(e === true)}
-					aria-invalid={isInvalid}
-				/>
-			)}
+			<Checkbox
+				id={field.name}
+				name={field.name}
+				checked={field.state.value}
+				onBlur={field.handleBlur}
+				onCheckedChange={(e) => field.handleChange(e === true)}
+				aria-invalid={isInvalid}
+			/>
+
 			<FieldContent>
 				<FieldLabel htmlFor={field.name}>
 					{props.label} {props.required ? "*" : ""}

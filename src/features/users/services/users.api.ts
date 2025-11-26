@@ -209,7 +209,7 @@ export const updateUser = createServerFn({ method: "POST" })
 export const deleteUser = createServerFn()
 	.inputValidator((userId: string) => userId)
 	.handler(async ({ data: userId }) => {
-		if (!getUserWithRole({ data: { userId } })) {
+		if (!(await getUserWithRole({ data: { userId } }))) {
 			throw new NotFoundError("User");
 		}
 
