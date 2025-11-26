@@ -20,6 +20,7 @@ export const Route = createFileRoute("/app/users/roles/new")({
 		return await context.queryClient.ensureQueryData(permissionsQueries.list());
 	},
 	pendingComponent: () => <FormLoader />,
+	ssr: "data-only",
 });
 
 function RouteComponent() {
