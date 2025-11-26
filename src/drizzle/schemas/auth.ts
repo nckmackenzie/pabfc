@@ -12,6 +12,7 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
+import { activityLogs } from "@/drizzle/schema";
 import { active, id } from "@/drizzle/schema-helpers";
 
 export const usersType = ["admin", "staff", "member"] as const;
@@ -188,6 +189,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	loginAttempts: many(loginAttempts),
 	accounts: many(accounts),
 	twoFactors: many(twoFactors),
+	activityLogs: many(activityLogs),
 }));
 
 export const attempRelations = relations(loginAttempts, ({ one }) => ({
