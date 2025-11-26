@@ -5,6 +5,7 @@ import {
 	index,
 	integer,
 	pgEnum,
+	pgMaterializedView,
 	pgTable,
 	text,
 	timestamp,
@@ -157,3 +158,18 @@ export const memberMembershipsRelations = relations(
 		}),
 	}),
 );
+
+export const membersOverview = pgMaterializedView("vw_member_overview", {
+	id: varchar("id").notNull(),
+	memberNo: integer("member_no").notNull(),
+	firstName: varchar("first_name").notNull(),
+	lastName: varchar("last_name").notNull(),
+	fullName: varchar("full_name").notNull(),
+	contact: varchar("contact", { length: 15 }).unique(),
+	gender: genderEnum("gender").notNull(),
+	memberStatus: memberStatusEnum("member_status").notNull(),
+	image: varchar("image"),
+	activePlanName: varchar("active_plan_name"),
+	nextRenewalDate: date("next_renewal_date"),
+	lastVisit: timestamp("last_visit"),
+}).existing();
