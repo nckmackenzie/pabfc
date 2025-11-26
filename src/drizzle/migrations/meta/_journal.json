@@ -50,6 +50,20 @@
       "when": 1764148762382,
       "tag": "0006_numerous_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1764151712503,
+      "tag": "0007_elite_darkhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1764153980789,
+      "tag": "0008_wandering_nico_minoru",
+      "breakpoints": true
     }
   ]
 }
