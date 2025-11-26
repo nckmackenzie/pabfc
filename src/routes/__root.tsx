@@ -26,6 +26,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 		return { userSession };
 	},
+	ssr: "data-only",
 	head: () => ({
 		meta: [
 			{
