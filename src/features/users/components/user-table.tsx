@@ -64,7 +64,7 @@ export function UsersTable() {
 				const status = row.original.active ? "active" : "inactive";
 				return (
 					<Badge
-						variant={status === "active" ? "success" : "destructive"}
+						variant={status === "active" ? "success" : "danger"}
 						className="uppercase"
 					>
 						{status}
