@@ -4,6 +4,7 @@ import {
 	CalendarIcon,
 	ChartPieIcon,
 	ChatMessageIcon,
+	ConstructionIcon,
 	PaymentCardIcon,
 	PercentBadgeIcon,
 	Users2Icon,
@@ -23,8 +24,17 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import type { Permission } from "@/lib/permissions/constants";
 
-const menuItems = [
+type MenuItem = {
+	title: string;
+	url: string;
+	icon: React.ComponentType<{ className?: string }>;
+	permission?: Permission;
+	wip?: boolean;
+};
+
+const menuItems: MenuItem[] = [
 	{
 		title: "Dashboard",
 		url: "/app/dashboard",
@@ -44,26 +54,31 @@ const menuItems = [
 		title: "Plans & Packages",
 		url: "/app/plans",
 		icon: PercentBadgeIcon,
+		wip: true,
 	},
 	{
 		title: "Payments & Billing",
 		url: "/app/payments",
 		icon: PaymentCardIcon,
+		wip: true,
 	},
 	{
 		title: "Attendance",
 		url: "/app/attendance",
 		icon: CalendarIcon,
+		wip: true,
 	},
 	{
 		title: "Communication",
 		url: "/app/communication",
 		icon: ChatMessageIcon,
+		wip: true,
 	},
 	{
 		title: "Reports",
 		url: "/reports",
 		icon: BarChartIcon,
+		wip: true,
 	},
 ];
 
@@ -106,6 +121,9 @@ export function AppSidebar() {
 											<Link to={item.url}>
 												<item.icon className="size-5!" />
 												<span>{item.title}</span>
+												{item.wip && (
+													<ConstructionIcon className="ml-auto size-4! text-muted-foreground" />
+												)}
 											</Link>
 										</SidebarMenuButton>
 									</SidebarMenuItem>
