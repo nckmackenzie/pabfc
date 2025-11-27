@@ -9,6 +9,7 @@ interface PermissionGateProps {
 	requireAll?: boolean;
 	role?: string;
 	fallback?: ReactNode;
+	loadingComponent?: ReactNode;
 }
 
 export function PermissionGate({
@@ -18,6 +19,7 @@ export function PermissionGate({
 	requireAll = false,
 	role,
 	fallback = null,
+	loadingComponent = null,
 }: PermissionGateProps) {
 	const {
 		hasPermission,
@@ -28,7 +30,7 @@ export function PermissionGate({
 	} = usePermissions();
 
 	if (isLoading) {
-		return null;
+		return loadingComponent;
 	}
 
 	let hasAccess = false;
