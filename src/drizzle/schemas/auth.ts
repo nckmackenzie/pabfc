@@ -42,6 +42,7 @@ export const users = pgTable(
 		displayUsername: text("display_username"),
 		contact: text("contact").notNull(),
 		active: boolean("active").default(true).notNull(),
+		memberId: varchar("member_id", { length: 255 }).unique(),
 		deleted_at: timestamp("deleted_at"),
 	},
 	(table) => [
