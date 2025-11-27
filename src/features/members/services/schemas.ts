@@ -48,6 +48,13 @@ export const memberFormSchema = z
 				path: ["idNumber"],
 			});
 		}
+		if (data.idNumber && !data.idType) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Provide a valid identifier",
+				path: ["idType"],
+			});
+		}
 		if (data.emergencyContactName && data.emergencyContactNo) {
 			ctx.addIssue({
 				code: "custom",

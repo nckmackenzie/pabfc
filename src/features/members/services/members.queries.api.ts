@@ -72,4 +72,15 @@ export const checkColumnExists = createServerFn()
 		});
 	});
 
+export const getMemberNo = createServerFn()
+	.middleware([permissionsMiddleware(["members:create"])])
+	.handler(async () => {
+		return db
+			.select({
+				memberNo: sql<number>`COALESCE(MAX(${members.memberNo}), 1000)`,
+			})
+			.from(members)
+			.then((res) => res[0].memberNo + 1);
+	});
+
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];

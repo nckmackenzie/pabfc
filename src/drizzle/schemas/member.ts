@@ -66,7 +66,7 @@ export const members = pgTable(
 		emergencyContactName: varchar("emergency_contact_name", { length: 100 }),
 		emergencyContactNo: varchar("emergency_contact_no", {
 			length: 15,
-		}).unique(),
+		}),
 		emergencyContactRelationship: varchar("emergency_contact_relationship", {
 			length: 100,
 		}),
