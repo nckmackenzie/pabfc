@@ -27,7 +27,12 @@ export const Route = createFileRoute("/app/members/")({
 		meta: [{ title: "Members / Prime Age Beauty & Fitness Center" }],
 	}),
 	component: RouteComponent,
-	pendingComponent: () => <BasePageLoadingSkeleton />,
+	pendingComponent: () => (
+		<BasePageLoadingSkeleton
+			pageTitle="Members"
+			pageDescription="View and manage members"
+		/>
+	),
 	loader: async ({ context }) => {
 		const [activePlans] = await Promise.all([
 			context.queryClient.ensureQueryData(planQueries.active()),
@@ -45,9 +50,10 @@ function RouteComponent() {
 			pageDescription="View and manage members"
 			buttonText="Create new Member"
 			hasNewButtonLink={true}
-			newButtonLinkPath="/app/members"
+			newButtonLinkPath="/app/members/new"
 			filterClassName="md:justify-end"
 			customFilters={<MemberFilters />}
+			createPermissions={["members:create"]}
 		>
 			<MemberTable />
 		</BasePageComponent>

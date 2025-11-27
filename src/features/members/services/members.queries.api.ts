@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, ne, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { membersOverview } from "@/drizzle/schema";
+import { members, membersOverview } from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { permissionsMiddleware } from "@/middlewares/permission-middleware";
 
@@ -48,6 +48,28 @@ export const getMembers = createServerFn()
 			.from(membersOverview)
 			.where(and(...filters))
 			.orderBy(desc(membersOverview.memberNo));
+	});
+
+export const checkColumnExists = createServerFn()
+	.inputValidator(
+		(data: { column: "contact" | "idNo"; value: string; memberId?: string }) =>
+			data,
+	)
+	.handler(async ({ data }) => {
+		const filter: Array<SQL> = [];
+		if (data.column === "contact") {
+			filter.push(eq(members.contact, data.value));
+		}
+		if (data.column === "idNo") {
+			filter.push(eq(members.idNumber, data.value));
+		}
+		if (data.memberId) {
+			filter.push(ne(members.id, data.memberId));
+		}
+
+		return db.query.members.findFirst({
+			where: and(...filter),
+		});
 	});
 
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];
