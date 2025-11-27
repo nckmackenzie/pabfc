@@ -8,8 +8,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Search } from "@/components/ui/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
+import type { Permission } from "@/lib/permissions/constants";
 import { cn } from "@/lib/utils";
 import type { Route } from "@/types/index.types";
+import { PermissionGate } from "./permission-gate";
 
 type BaseProps = {
 	className?: string;
@@ -30,6 +32,7 @@ type PropsWithButton = BaseProps & {
 	newButtonLinkPath: Route;
 	buttonText?: string;
 	buttonIcon?: React.ReactNode;
+	createPermissions?: Array<Permission>;
 };
 
 type PropsWithoutButton = BaseProps & {
@@ -37,6 +40,7 @@ type PropsWithoutButton = BaseProps & {
 	newButtonLinkPath?: never;
 	buttonText?: never;
 	buttonIcon?: never;
+	createPermissions?: never;
 };
 
 type Props = PropsWithButton | PropsWithoutButton;
@@ -58,6 +62,7 @@ export function BasePageComponent({
 	defaultSearchValue,
 	customFilters,
 	filterClassName,
+	createPermissions,
 }: PropsWithChildren<Props>) {
 	return (
 		<Wrapper className={cn("space-y-6", className)} size={size}>
@@ -76,15 +81,26 @@ export function BasePageComponent({
 					/>
 				)}
 				<div className="flex flex-col sm:flex-row sm:items-center gap-2">
-					{hasNewButtonLink && (
-						<ButtonLink
-							path={newButtonLinkPath}
-							variant="default"
-							icon={buttonIcon ?? <PlusIcon />}
-						>
-							{buttonText}
-						</ButtonLink>
-					)}
+					{hasNewButtonLink &&
+						(!createPermissions ? (
+							<ButtonLink
+								path={newButtonLinkPath}
+								variant="default"
+								icon={buttonIcon ?? <PlusIcon />}
+							>
+								{buttonText}
+							</ButtonLink>
+						) : (
+							<PermissionGate permissions={createPermissions}>
+								<ButtonLink
+									path={newButtonLinkPath}
+									variant="default"
+									icon={buttonIcon ?? <PlusIcon />}
+								>
+									{buttonText}
+								</ButtonLink>
+							</PermissionGate>
+						))}
 					{extraActionButtons}
 				</div>
 			</div>
