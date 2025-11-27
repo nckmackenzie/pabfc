@@ -6,7 +6,7 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { members } from "@/drizzle/schema";
+import { members } from "./member";
 
 export const attendanceLogs = pgTable("attendance_logs", {
 	id: bigserial("id", { mode: "bigint" }).primaryKey(),

@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import { index, pgTable, serial, varchar } from "drizzle-orm/pg-core";
-import { users } from "@/drizzle/schema";
+import { users } from "./auth";
 
 export const activityLogs = pgTable(
 	"activity_logs",

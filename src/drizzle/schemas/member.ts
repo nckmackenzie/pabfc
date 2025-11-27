@@ -11,8 +11,8 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { attendanceLogs } from "@/drizzle/schema";
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
+import { attendanceLogs } from "./attendance";
 
 export const gender = ["male", "female", "unspecified", "other"] as const;
 export type Gender = (typeof gender)[number];
@@ -66,7 +66,7 @@ export const members = pgTable(
 		emergencyContactName: varchar("emergency_contact_name", { length: 100 }),
 		emergencyContactNo: varchar("emergency_contact_no", {
 			length: 15,
-		}).unique(),
+		}),
 		emergencyContactRelationship: varchar("emergency_contact_relationship", {
 			length: 100,
 		}),

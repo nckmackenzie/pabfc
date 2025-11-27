@@ -6,10 +6,24 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { EditAction } from "@/components/ui/custom-button";
 import { DataTable } from "@/components/ui/datatable";
+import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DataTableColumnHeader } from "@/components/ui/datatable-column-header";
+import { DeleteActionButton } from "@/components/ui/delete-action";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty";
-import { UsersIcon } from "@/components/ui/icons";
+import {
+	ChatMessageIcon,
+	CheckCircleIcon,
+	NoSymbolIcon,
+	PauseIcon,
+	Users2Icon,
+	UsersIcon,
+	XCircleIcon,
+} from "@/components/ui/icons";
+import { PermissionGate } from "@/components/ui/permission-gate";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { MemberOverview } from "@/features/members/services/members.queries.api";
 import { memberQueries } from "@/features/members/services/queries";
 import { useFilters } from "@/hooks/use-filters";
@@ -36,7 +50,7 @@ export function MemberTable() {
 				return (
 					<div className="flex items-center gap-2">
 						<MemberAvatar memberName={member.fullName} image={member.image} />
-						<span>{member.fullName}</span>
+						<span>{toTitleCase(member.fullName)}</span>
 					</div>
 				);
 			},
@@ -63,6 +77,15 @@ export function MemberTable() {
 										: "secondary"
 						}
 					>
+						{memberStatus === "active" ? (
+							<CheckCircleIcon className="size-4!" />
+						) : memberStatus === "inactive" ? (
+							<NoSymbolIcon className="size-4!" />
+						) : memberStatus === "terminated" ? (
+							<XCircleIcon className="size-4!" />
+						) : (
+							<PauseIcon className="size-4!" />
+						)}
 						{toTitleCase(memberStatus)}
 					</Badge>
 				);
@@ -113,6 +136,50 @@ export function MemberTable() {
 						? formatDistanceToNow(new Date(lastVisit), { addSuffix: true })
 						: "No visits yet"}
 				</Badge>
+			),
+		},
+		{
+			id: "actions",
+			cell: ({
+				row: {
+					original: { id, memberStatus },
+				},
+			}) => (
+				<DatatableActions>
+					<PermissionGate
+						permission="members:update"
+						loadingComponent={<Skeleton className="h-4 w-32" />}
+					>
+						<DropdownMenuItem>
+							<EditAction />
+						</DropdownMenuItem>
+					</PermissionGate>
+					<PermissionGate permission="members:view-profile">
+						<DropdownMenuItem>
+							<Users2Icon className="size-4" />
+							<span className="-ml-1">View Profile</span>
+						</DropdownMenuItem>
+					</PermissionGate>
+					<DropdownMenuItem>
+						<ChatMessageIcon className="size-4" />
+						<span className="-ml-1">Send Message</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem>
+						<Users2Icon className="size-4" />
+						<span className="-ml-1">
+							{memberStatus === "active" ? "Deactivate" : "Activate"}
+						</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem>
+						<XCircleIcon className="size-4" />
+						<span className="-ml-1">Revoke Portal Access</span>
+					</DropdownMenuItem>
+					<DeleteActionButton
+						queryKey={["members"]}
+						resourceId={id}
+						deleteAction={async () => {}}
+					/>
+				</DatatableActions>
 			),
 		},
 	];

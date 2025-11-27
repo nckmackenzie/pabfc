@@ -12,8 +12,9 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { activityLogs } from "@/drizzle/schema";
+
 import { active, id } from "@/drizzle/schema-helpers";
+import { activityLogs } from "./audit-logs";
 
 export const usersType = ["admin", "staff", "member"] as const;
 export type UserType = (typeof usersType)[number];
@@ -24,7 +25,7 @@ export const users = pgTable(
 	{
 		id,
 		name: text("name").notNull(),
-		email: text("email").unique(),
+		email: text("email"),
 		emailVerified: boolean("email_verified").default(false).notNull(),
 		image: text("image"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -41,6 +42,7 @@ export const users = pgTable(
 		displayUsername: text("display_username"),
 		contact: text("contact").notNull(),
 		active: boolean("active").default(true).notNull(),
+		memberId: varchar("member_id", { length: 255 }).unique(),
 		deleted_at: timestamp("deleted_at"),
 	},
 	(table) => [

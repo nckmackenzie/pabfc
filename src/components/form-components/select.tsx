@@ -18,6 +18,7 @@ export function FormSelect({
 	fieldClassName,
 	className,
 	disabled,
+	placeholder,
 }: TextFieldProps & ComponentProps<"select">) {
 	const field = useFieldContext<string>();
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
@@ -38,7 +39,7 @@ export function FormSelect({
 					className={cn("h-10", className)}
 					disabled={disabled}
 				>
-					<SelectValue />
+					<SelectValue placeholder={placeholder ?? "Select an option"} />
 				</SelectTrigger>
 				<SelectContent>{children}</SelectContent>
 			</Select>
