@@ -1029,6 +1029,25 @@ export function PersonBadgeIcon({ ...props }: React.ComponentProps<"svg">) {
 	);
 }
 
+export function PhoneIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			strokeWidth={1.5}
+			stroke="currentColor"
+			{...props}
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
+			/>
+		</svg>
+	);
+}
+
 export function PrinterIcon({ ...props }: React.ComponentProps<"svg">) {
 	return (
 		<svg
@@ -1162,6 +1181,30 @@ export function ShoppingCartIcon({ ...props }: React.ComponentProps<"svg">) {
 	);
 }
 
+export function SirenIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={1.5}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			{...props}
+		>
+			<path d="M7 18v-6a5 5 0 1 1 10 0v6" />
+			<path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z" />
+			<path d="M21 12h1" />
+			<path d="M18.5 4.5 18 5" />
+			<path d="M2 12h1" />
+			<path d="M12 2v1" />
+			<path d="m4.929 4.929.707.707" />
+			<path d="M12 12v6" />
+		</svg>
+	);
+}
+
 export function SparkleIcon({ ...props }: React.ComponentProps<"svg">) {
 	return (
 		<svg
@@ -1196,6 +1239,26 @@ export function TrashIcon({ ...props }: React.ComponentProps<"svg">) {
 				strokeLinejoin="round"
 				d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
 			/>
+		</svg>
+	);
+}
+
+export function UserIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			{...props}
+		>
+			<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+			<circle cx="12" cy="7" r="4" />
 		</svg>
 	);
 }
