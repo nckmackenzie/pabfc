@@ -12,8 +12,9 @@ import {
 	timestamp,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { activityLogs } from "@/drizzle/schema";
+
 import { active, id } from "@/drizzle/schema-helpers";
+import { activityLogs } from "./audit-logs";
 
 export const usersType = ["admin", "staff", "member"] as const;
 export type UserType = (typeof usersType)[number];
