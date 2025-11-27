@@ -85,6 +85,13 @@
       "when": 1764245023912,
       "tag": "0011_cute_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1764262048130,
+      "tag": "0012_late_wrecking_crew",
+      "breakpoints": true
     }
   ]
 }
