@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { nanoid } from "nanoid";
 import { UAParser } from "ua-parser-js";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
@@ -9,11 +10,12 @@ const loggingSchema = z.object({
 	userId: z.string().min(1, { error: "User is required" }),
 	action: z.string().min(1, { error: "Action is required" }),
 	description: z.string().min(1, { error: "Description is required" }),
+	id: z.string().optional(),
 });
 
 export const logActivity = createServerFn({ method: "POST" })
 	.inputValidator(loggingSchema)
-	.handler(async ({ data: { userId, action, description } }) => {
+	.handler(async ({ data: { userId, action, description, id: insertId } }) => {
 		const request = getRequest();
 		const userAgent = request.headers.get("user-agent") ?? "unknown";
 		const ipAddress =
@@ -22,11 +24,15 @@ export const logActivity = createServerFn({ method: "POST" })
 			"127.0.0.1";
 		const { browser } = UAParser(userAgent);
 
-		await db.insert(activityLogs).values({
-			userId,
-			action,
-			description,
-			userAgent: browser.name,
-			ipAddress,
-		});
+		await db
+			.insert(activityLogs)
+			.values({
+				id: insertId ?? nanoid(),
+				userId,
+				action,
+				description,
+				userAgent: browser.name,
+				ipAddress,
+			})
+			.onConflictDoNothing();
 	});
