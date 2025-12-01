@@ -20,7 +20,7 @@ export const memberFormSchema = z
 	.object({
 		firstName: z.string().min(1, { error: "First name is required" }),
 		lastName: z.string().min(1, "Last name is required"),
-		dateOfBirth: z.date().nullish(),
+		dateOfBirth: z.iso.date().nullish(),
 		gender: z.enum(["male", "female", "unspecified", "other"]).nullish(),
 		email: z.string().nullish(),
 		contact: z.string().min(1, "Contact is required"),
