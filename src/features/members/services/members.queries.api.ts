@@ -50,6 +50,17 @@ export const getMembers = createServerFn()
 			.orderBy(desc(membersOverview.memberNo));
 	});
 
+export const getMemberProfileData = createServerFn()
+	.middleware([permissionsMiddleware(["members:view-profile"])])
+	.inputValidator((memberId: string) => memberId)
+	.handler(async ({ data: memberId }) => {
+		const member = await db
+			.select()
+			.from(membersOverview)
+			.where(eq(membersOverview.id, memberId));
+		return member[0];
+	});
+
 export const checkColumnExists = createServerFn()
 	.inputValidator(
 		(data: { column: "contact" | "idNo"; value: string; memberId?: string }) =>

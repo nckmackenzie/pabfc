@@ -29,6 +29,8 @@ import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
+import { Route as AppMembersMemberIdProfileRouteImport } from './routes/app/members/$memberId.profile'
+import { Route as AppMembersMemberIdEditRouteImport } from './routes/app/members/$memberId.edit'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 
 const MemberRouteRoute = MemberRouteRouteImport.update({
@@ -130,6 +132,17 @@ const AppUsersUserIdEditRoute = AppUsersUserIdEditRouteImport.update({
   path: '/$userId/edit',
   getParentRoute: () => AppUsersRouteRoute,
 } as any)
+const AppMembersMemberIdProfileRoute =
+  AppMembersMemberIdProfileRouteImport.update({
+    id: '/$memberId/profile',
+    path: '/$memberId/profile',
+    getParentRoute: () => AppMembersRouteRoute,
+  } as any)
+const AppMembersMemberIdEditRoute = AppMembersMemberIdEditRouteImport.update({
+  id: '/$memberId/edit',
+  path: '/$memberId/edit',
+  getParentRoute: () => AppMembersRouteRoute,
+} as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/roles/$roleId/edit',
   path: '/roles/$roleId/edit',
@@ -152,6 +165,8 @@ export interface FileRoutesByFullPath {
   '/app/users/new': typeof AppUsersNewRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
+  '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
@@ -172,6 +187,8 @@ export interface FileRoutesByTo {
   '/app/users/new': typeof AppUsersNewRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/users': typeof AppUsersIndexRoute
+  '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
+  '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
@@ -196,6 +213,8 @@ export interface FileRoutesById {
   '/app/users/new': typeof AppUsersNewRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
+  '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
@@ -220,6 +239,8 @@ export interface FileRouteTypes {
     | '/app/users/new'
     | '/app/members/'
     | '/app/users/'
+    | '/app/members/$memberId/edit'
+    | '/app/members/$memberId/profile'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
@@ -240,6 +261,8 @@ export interface FileRouteTypes {
     | '/app/users/new'
     | '/app/members'
     | '/app/users'
+    | '/app/members/$memberId/edit'
+    | '/app/members/$memberId/profile'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
@@ -263,6 +286,8 @@ export interface FileRouteTypes {
     | '/app/users/new'
     | '/app/members/'
     | '/app/users/'
+    | '/app/members/$memberId/edit'
+    | '/app/members/$memberId/profile'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
@@ -420,6 +445,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersUserIdEditRouteImport
       parentRoute: typeof AppUsersRouteRoute
     }
+    '/app/members/$memberId/profile': {
+      id: '/app/members/$memberId/profile'
+      path: '/$memberId/profile'
+      fullPath: '/app/members/$memberId/profile'
+      preLoaderRoute: typeof AppMembersMemberIdProfileRouteImport
+      parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/members/$memberId/edit': {
+      id: '/app/members/$memberId/edit'
+      path: '/$memberId/edit'
+      fullPath: '/app/members/$memberId/edit'
+      preLoaderRoute: typeof AppMembersMemberIdEditRouteImport
+      parentRoute: typeof AppMembersRouteRoute
+    }
     '/app/users/roles/$roleId/edit': {
       id: '/app/users/roles/$roleId/edit'
       path: '/roles/$roleId/edit'
@@ -447,11 +486,15 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 interface AppMembersRouteRouteChildren {
   AppMembersNewRoute: typeof AppMembersNewRoute
   AppMembersIndexRoute: typeof AppMembersIndexRoute
+  AppMembersMemberIdEditRoute: typeof AppMembersMemberIdEditRoute
+  AppMembersMemberIdProfileRoute: typeof AppMembersMemberIdProfileRoute
 }
 
 const AppMembersRouteRouteChildren: AppMembersRouteRouteChildren = {
   AppMembersNewRoute: AppMembersNewRoute,
   AppMembersIndexRoute: AppMembersIndexRoute,
+  AppMembersMemberIdEditRoute: AppMembersMemberIdEditRoute,
+  AppMembersMemberIdProfileRoute: AppMembersMemberIdProfileRoute,
 }
 
 const AppMembersRouteRouteWithChildren = AppMembersRouteRoute._addFileChildren(

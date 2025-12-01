@@ -4,6 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
+import { nanoid } from "nanoid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EditAction } from "@/components/ui/custom-button";
@@ -65,30 +66,7 @@ export function MemberTable() {
 					original: { memberStatus },
 				},
 			}) => {
-				return (
-					<Badge
-						variant={
-							memberStatus === "active"
-								? "success"
-								: memberStatus === "terminated"
-									? "danger"
-									: memberStatus === "inactive"
-										? "warning"
-										: "secondary"
-						}
-					>
-						{memberStatus === "active" ? (
-							<CheckCircleIcon className="size-4!" />
-						) : memberStatus === "inactive" ? (
-							<NoSymbolIcon className="size-4!" />
-						) : memberStatus === "terminated" ? (
-							<XCircleIcon className="size-4!" />
-						) : (
-							<PauseIcon className="size-4!" />
-						)}
-						{toTitleCase(memberStatus)}
-					</Badge>
-				);
+				return <MemberBadge status={memberStatus} />;
 			},
 		},
 		{
@@ -157,9 +135,15 @@ export function MemberTable() {
 						</DropdownMenuItem>
 					</PermissionGate>
 					<PermissionGate permission="members:view-profile">
-						<DropdownMenuItem>
-							<Users2Icon className="size-4" />
-							<span className="-ml-1">View Profile</span>
+						<DropdownMenuItem asChild>
+							<Link
+								to="/app/members/$memberId/profile"
+								params={{ memberId: id }}
+								search={{ vid: nanoid() }}
+							>
+								<Users2Icon className="size-4" />
+								<span className="-ml-1">View Profile</span>
+							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
 					<DropdownMenuItem>
@@ -201,7 +185,7 @@ export function MemberTable() {
 	return <DataTable columns={columns} data={data} />;
 }
 
-function MemberAvatar({
+export function MemberAvatar({
 	memberName,
 	image,
 	className,
@@ -212,11 +196,43 @@ function MemberAvatar({
 }) {
 	const avatar = createAvatar(initials, {
 		seed: memberName,
+		size: 24,
 	});
 	return (
 		<Avatar className={cn("h-8 w-8", className)}>
 			<AvatarImage src={image ?? avatar.toDataUri()} alt={memberName} />
 			<AvatarFallback>{memberName.charAt(0).toUpperCase()}</AvatarFallback>
 		</Avatar>
+	);
+}
+
+export function MemberBadge({
+	status,
+}: {
+	status: MemberOverview["memberStatus"];
+}) {
+	return (
+		<Badge
+			variant={
+				status === "active"
+					? "success"
+					: status === "terminated"
+						? "danger"
+						: status === "inactive"
+							? "warning"
+							: "secondary"
+			}
+		>
+			{status === "active" ? (
+				<CheckCircleIcon className="size-4!" />
+			) : status === "inactive" ? (
+				<NoSymbolIcon className="size-4!" />
+			) : status === "terminated" ? (
+				<XCircleIcon className="size-4!" />
+			) : (
+				<PauseIcon className="size-4!" />
+			)}
+			{toTitleCase(status)}
+		</Badge>
 	);
 }
