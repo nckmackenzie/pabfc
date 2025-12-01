@@ -24,7 +24,9 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { useSession } from "@/lib/auth/client";
 import type { Permission } from "@/lib/permissions/constants";
+import { Skeleton } from "./skeleton";
 
 type MenuItem = {
 	title: string;
@@ -85,6 +87,7 @@ const menuItems: MenuItem[] = [
 export function AppSidebar() {
 	const { pathname } = useLocation();
 	const { setOpenMobile, openMobile } = useSidebar();
+	const { data, isPending, error } = useSession();
 
 	return (
 		<Sidebar>
@@ -136,7 +139,20 @@ export function AppSidebar() {
 			<SidebarFooter>
 				<SidebarGroup>
 					<SidebarGroupContent>
-						<p className="text-xs text-muted-foreground">Logged In as here</p>
+						{error && (
+							<p className="text-xs text-destructive">
+								You need to login again!!
+							</p>
+						)}
+						{isPending && <Skeleton className="h-4 w-56" />}
+						{data && (
+							<p className="text-xs text-muted-foreground">
+								Logged In as:{" "}
+								<span className="font-semibold capitalize text-primary">
+									{data.user.name.split(" ")[0]}
+								</span>
+							</p>
+						)}
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarFooter>
