@@ -172,4 +172,6 @@ export const membersOverview = pgMaterializedView("vw_member_overview", {
 	activePlanName: varchar("active_plan_name"),
 	nextRenewalDate: date("next_renewal_date"),
 	lastVisit: timestamp("last_visit"),
+	notes: text("notes"),
+	createdAt,
 }).existing();
