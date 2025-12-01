@@ -83,4 +83,14 @@ export const getMemberNo = createServerFn()
 			.then((res) => res[0].memberNo + 1);
 	});
 
+export const getMember = createServerFn()
+	.middleware([permissionsMiddleware(["members:view"])])
+	.inputValidator((memberId: string) => memberId)
+	.handler(async ({ data: memberId }) => {
+		return db.query.members.findFirst({
+			columns: { createdAt: false, updatedAt: false },
+			where: eq(members.id, memberId),
+		});
+	});
+
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];

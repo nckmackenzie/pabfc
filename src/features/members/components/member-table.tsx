@@ -1,7 +1,7 @@
 import { initials } from "@dicebear/collection";
 import { createAvatar } from "@dicebear/core";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -150,8 +150,10 @@ export function MemberTable() {
 						permission="members:update"
 						loadingComponent={<Skeleton className="h-4 w-32" />}
 					>
-						<DropdownMenuItem>
-							<EditAction />
+						<DropdownMenuItem asChild>
+							<Link to="/app/members/$memberId/edit" params={{ memberId: id }}>
+								<EditAction />
+							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
 					<PermissionGate permission="members:view-profile">

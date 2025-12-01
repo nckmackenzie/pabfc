@@ -16,7 +16,10 @@ import {
 	GENDER,
 	ID_TYPES,
 } from "@/features/members/lib/constants";
-import { createMember } from "@/features/members/services/member.mutations.api";
+import {
+	createMember,
+	updateMember,
+} from "@/features/members/services/member.mutations.api";
 import {
 	type MemberFormSchema,
 	memberFormSchema,
@@ -24,6 +27,7 @@ import {
 import { useFormMutation } from "@/hooks/use-form-mutation";
 import { useAppForm } from "@/lib/form";
 import { cn, generateRandomId } from "@/lib/utils";
+import type { WithId } from "@/types/index.types";
 
 const tabs = [
 	{ id: "personal", label: "Personal Info", icon: UserIcon },
@@ -31,7 +35,23 @@ const tabs = [
 	{ id: "emergency", label: "Emergency Info", icon: SirenIcon },
 ];
 
-export function MemberForm() {
+const defaultValues = {
+	firstName: "",
+	lastName: "",
+	dateOfBirth: null,
+	gender: "unspecified",
+	email: null,
+	contact: "",
+	idType: null,
+	idNumber: null,
+	memberStatus: "active",
+	address: "",
+	emergencyContactName: null,
+	emergencyContactNo: null,
+	emergencyContactRelationship: null,
+	notes: null,
+} as MemberFormSchema;
+export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 	const [activeTab, setActiveTab] = useState("personal");
 
 	const currentTabIndex = tabs.findIndex((t) => t.id === activeTab);
@@ -50,33 +70,20 @@ export function MemberForm() {
 
 	const memberMutation = useFormMutation({
 		createFn: (values: MemberFormSchema) => createMember({ data: values }),
+		updateFn: (id: string, values: MemberFormSchema) =>
+			updateMember({ data: { value: values, id } }),
 		entityName: "Member",
 		queryKey: ["members"],
 		navigateTo: "/app/members",
 	});
 
 	const form = useAppForm({
-		defaultValues: {
-			firstName: "",
-			lastName: "",
-			dateOfBirth: null,
-			gender: "unspecified",
-			email: null,
-			contact: "",
-			idType: null,
-			idNumber: null,
-			memberStatus: "active",
-			address: "",
-			emergencyContactName: null,
-			emergencyContactNo: null,
-			emergencyContactRelationship: null,
-			notes: null,
-		} as MemberFormSchema,
+		defaultValues: member ?? defaultValues,
 		validators: {
 			onSubmit: memberFormSchema,
 		},
 		onSubmit: ({ value }) => {
-			memberMutation.mutate({ data: value });
+			memberMutation.mutate({ data: value, id: member?.id });
 		},
 	});
 
@@ -89,8 +96,12 @@ export function MemberForm() {
 	return (
 		<>
 			<PageHeader
-				title="New Member"
-				description="Complete all sections to register a new member."
+				title={member ? "Edit Member" : "New Member"}
+				description={
+					member
+						? "Edit member details."
+						: "Complete all sections to register a new member."
+				}
 			/>
 			<div className="bg-muted text-muted-foreground inline-flex h-9 w-full items-center justify-between rounded-lg p-[3px]">
 				{tabs.map((tab) => {
@@ -312,7 +323,7 @@ export function MemberForm() {
 									>
 										<LoadingSwap isLoading={state || memberMutation.isPending}>
 											<CheckIcon />
-											Submit
+											{member ? "Update" : "Submit"}
 										</LoadingSwap>
 									</Button>
 								)}
