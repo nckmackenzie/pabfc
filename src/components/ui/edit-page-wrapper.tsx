@@ -19,15 +19,17 @@ export function EditPageWrapper(
 	props: EditPageWrapperProps & Required<PropsWithChildren>,
 ) {
 	return (
-		<Wrapper
-			size={props.wrapperSize}
-			className={cn("space-y-6", props.className)}
-		>
+		<div className="space-y-6">
 			<BackLink size={props.size} variant={props.variant} href={props.backPath}>
 				{props.buttonText || "Bak to List"}
 			</BackLink>
-			{props.children}
-		</Wrapper>
+			<Wrapper
+				size={props.wrapperSize}
+				className={cn("space-y-6", props.className)}
+			>
+				{props.children}
+			</Wrapper>
+		</div>
 	);
 }
 
