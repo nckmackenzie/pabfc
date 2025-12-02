@@ -1,6 +1,11 @@
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { memberMemberships, members, membershipPlans } from "@/drizzle/schema";
+import { accounts, users } from "@/drizzle/schemas/auth";
+import {
+	memberMemberships,
+	members,
+	membershipPlans,
+} from "@/drizzle/schemas/member";
 
 export const seedMembershipPlans: InferInsertModel<typeof membershipPlans>[] = [
 	{
@@ -252,6 +257,35 @@ export const seedMemberMemberships: InferInsertModel<
 	},
 ];
 
+const usersData: InferInsertModel<typeof users>[] = seedMembers.map(
+	(member) => ({
+		id: member.id,
+		memberId: member.id,
+		name: `${member.firstName} ${member.lastName}`,
+		email: member.email,
+		// Generate a simple username from email or name
+		username: member.contact as string,
+		contact: member.contact as string,
+		role: "member",
+		emailVerified: true,
+		active: member.memberStatus === "active",
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	}),
+);
+
+// Generate accounts for each user
+export const accountsData: InferInsertModel<typeof accounts>[] =
+	seedMembers.map((member) => ({
+		id: `acc_${member.id}`, // specific ID for the account
+		userId: member.id as string,
+		accountId: member.id as string,
+		providerId: "credential",
+		password: "$2b$12$QJcycob/UcPlsGmiODPhhOXTS.iYPIoI0zwT7XHv7YEXq3FUZjqCy", // Default password for seeded users
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	}));
+
 export async function seedMemberData() {
 	try {
 		console.log("🌱 Seeding member data...");
@@ -262,6 +296,8 @@ export async function seedMemberData() {
 				.onConflictDoNothing();
 
 			await tx.insert(members).values(seedMembers).onConflictDoNothing();
+			await tx.insert(users).values(usersData).onConflictDoNothing();
+			await tx.insert(accounts).values(accountsData).onConflictDoNothing();
 			await tx
 				.insert(memberMemberships)
 				.values(seedMemberMemberships)
