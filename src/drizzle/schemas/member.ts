@@ -177,5 +177,6 @@ export const membersOverview = pgMaterializedView("vw_member_overview", {
 	emergencyContactNo: varchar("emergency_contact_no", {
 		length: 15,
 	}),
+	banned: boolean("banned").notNull().default(false),
 	createdAt,
 }).existing();
