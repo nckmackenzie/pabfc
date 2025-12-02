@@ -12,6 +12,7 @@ type SubmitButtonProps = {
 	isLoading?: boolean;
 	orientation?: "horizontal" | "vertical" | "responsive";
 	withReset?: boolean;
+	onReset?: () => void;
 };
 
 export function SubmitButton({
@@ -20,6 +21,7 @@ export function SubmitButton({
 	isLoading,
 	orientation,
 	withReset = true,
+	onReset,
 }: SubmitButtonProps & ComponentProps<"button">) {
 	const form = useFormContext();
 	const isMobile = useIsMobile();
@@ -44,7 +46,7 @@ export function SubmitButton({
 							type="button"
 							disabled={isSubmitting}
 							variant="outline"
-							onClick={() => form.reset()}
+							onClick={onReset ? () => onReset() : () => form.reset()}
 						>
 							Cancel
 						</Button>

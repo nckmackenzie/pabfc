@@ -1,5 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getMembers } from "@/features/members/services/members.queries.api";
+import {
+	getMember,
+	getMemberProfileData,
+	getMembers,
+} from "@/features/members/services/members.queries.api";
 import type { MemberValidateSearch } from "@/features/members/services/schemas";
 export const memberQueries = {
 	all: ["members"],
@@ -7,5 +11,15 @@ export const memberQueries = {
 		queryOptions({
 			queryKey: [...memberQueries.all, "list", filters],
 			queryFn: () => getMembers({ data: filters }),
+		}),
+	detail: (memberId: string) =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "detail", memberId],
+			queryFn: () => getMember({ data: memberId }),
+		}),
+	overview: (memberId: string) =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "overview", memberId],
+			queryFn: () => getMemberProfileData({ data: memberId }),
 		}),
 };

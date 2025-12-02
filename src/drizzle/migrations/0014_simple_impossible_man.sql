@@ -1,0 +1,1 @@
+ALTER TABLE "activity_logs" ADD COLUMN "activity_date" timestamp DEFAULT now() NOT NULL;

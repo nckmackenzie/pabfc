@@ -44,10 +44,22 @@ export const getMembers = createServerFn()
 				activePlanName: membersOverview.activePlanName,
 				nextRenewalDate: membersOverview.nextRenewalDate,
 				lastVisit: membersOverview.lastVisit,
+				portalAccess: membersOverview.banned,
 			})
 			.from(membersOverview)
 			.where(and(...filters))
 			.orderBy(desc(membersOverview.memberNo));
+	});
+
+export const getMemberProfileData = createServerFn()
+	.middleware([permissionsMiddleware(["members:view-profile"])])
+	.inputValidator((memberId: string) => memberId)
+	.handler(async ({ data: memberId }) => {
+		const member = await db
+			.select()
+			.from(membersOverview)
+			.where(eq(membersOverview.id, memberId));
+		return member[0];
 	});
 
 export const checkColumnExists = createServerFn()
@@ -81,6 +93,16 @@ export const getMemberNo = createServerFn()
 			})
 			.from(members)
 			.then((res) => res[0].memberNo + 1);
+	});
+
+export const getMember = createServerFn()
+	.middleware([permissionsMiddleware(["members:view"])])
+	.inputValidator((memberId: string) => memberId)
+	.handler(async ({ data: memberId }) => {
+		return db.query.members.findFirst({
+			columns: { createdAt: false, updatedAt: false },
+			where: eq(members.id, memberId),
+		});
 	});
 
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];

@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
 	BellIcon,
+	ClipboardClockIcon,
 	CogIcon,
+	ConstructionIcon,
 	LogOutIcon,
 	UsersIcon,
 } from "@/components/ui/icons";
@@ -23,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authClient, useSession } from "@/lib/auth/client";
 
 export function UserAvatar() {
+	// TODO: Add user profile, notifications, activity logs, and settings
 	const { data: session, isPending } = useSession();
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -63,19 +66,27 @@ export function UserAvatar() {
 			<DropdownMenuContent className="w-56" align="start">
 				<DropdownMenuLabel>My Account</DropdownMenuLabel>
 				<DropdownMenuGroup>
-					<DropdownMenuItem className="cursor-pointer">
+					<DropdownMenuItem className="cursor-pointer" disabled>
 						<UsersIcon />
 						Your Profile
+						<ConstructionIcon className="ml-auto" />
 					</DropdownMenuItem>
 
-					<DropdownMenuItem>
+					<DropdownMenuItem disabled>
 						<BellIcon />
 						Notifications
+						<ConstructionIcon className="ml-auto" />
+					</DropdownMenuItem>
+					<DropdownMenuItem disabled>
+						<ClipboardClockIcon />
+						Activty Logs
+						<ConstructionIcon className="ml-auto" />
 					</DropdownMenuItem>
 					{session?.user.role === "admin" && (
-						<DropdownMenuItem>
+						<DropdownMenuItem disabled>
 							<CogIcon />
 							Settings
+							<ConstructionIcon className="ml-auto" />
 						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>

@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 import { ErrorComponent } from "@/components/ui/error-component";
 import { NotFoundComponent } from "@/components/ui/not-found";
 import { Spinner } from "@/components/ui/spinner";
+import { ModalProvider } from "@/integrations/modal-provider";
 import { authQueries } from "@/lib/session/queries";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -52,7 +53,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			},
 			{
 				rel: "stylesheet",
-				href: "https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap",
+				href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap",
 			},
 			{
 				rel: "stylesheet",
@@ -85,7 +86,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				{children}
+				<ModalProvider>{children}</ModalProvider>
 				<Toaster
 					position="top-center"
 					toastOptions={{
