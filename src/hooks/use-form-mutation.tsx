@@ -21,6 +21,7 @@ interface UseFormMutationOptions<TData, TResult = void> {
 	};
 	onSuccessCallback?: (result: TResult, isEdit: boolean) => void;
 	displaySuccessToast?: boolean;
+	onReset?: () => void;
 }
 
 export function useFormMutation<TData, TResult = void>({
@@ -33,6 +34,7 @@ export function useFormMutation<TData, TResult = void>({
 	errorMessage,
 	onSuccessCallback,
 	displaySuccessToast = true,
+	onReset,
 }: UseFormMutationOptions<TData, TResult>) {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
@@ -84,10 +86,15 @@ export function useFormMutation<TData, TResult = void>({
 				));
 			}
 
+			onReset?.();
+
 			queryClient.invalidateQueries({ queryKey });
 			onSuccessCallback?.(result, isEdit);
 			if (navigateTo) {
-				navigate({ to: navigateTo });
+				// navigate({ to: navigateTo });
+				setTimeout(() => {
+					navigate({ to: navigateTo });
+				}, 0);
 			}
 		},
 	});
