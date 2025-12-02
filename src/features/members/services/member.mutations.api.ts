@@ -5,12 +5,18 @@ import { accounts, members, users } from "@/drizzle/schema";
 import {
 	type MemberFormSchema,
 	memberFormSchema,
+	memberRevokePortalAccessSchema,
+	memberToggleActiveSchema,
 } from "@/features/members/services/schemas";
 import { hashPassword } from "@/features/users/services/users.api";
-import { ConflictError } from "@/lib/error-handling/app-error";
+import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { permissionsMiddleware } from "@/middlewares/permission-middleware";
 import { logActivity } from "@/services/activity-logger";
-import { checkColumnExists, getMemberNo } from "./members.queries.api";
+import {
+	checkColumnExists,
+	getMember,
+	getMemberNo,
+} from "./members.queries.api";
 
 export const createMember = createServerFn({ method: "POST" })
 	.middleware([permissionsMiddleware(["members:create"])])
@@ -115,6 +121,93 @@ export const updateMember = createServerFn({ method: "POST" })
 			});
 
 			return id;
+		},
+	);
+
+export const revokePortalAccess = createServerFn({ method: "POST" })
+	.middleware([permissionsMiddleware(["members:update"])])
+	.inputValidator(memberRevokePortalAccessSchema)
+	.handler(
+		async ({
+			data: { memberId, revokeReason, banned },
+			context: {
+				user: { id: loggedUserId },
+			},
+		}) => {
+			if (!(await getMember({ data: memberId }))) {
+				throw new NotFoundError("Member not found");
+			}
+
+			const user = await db.query.users.findFirst({
+				columns: { id: true, name: true },
+				where: eq(users.memberId, memberId),
+			});
+			if (!user) {
+				throw new NotFoundError("User");
+			}
+
+			await db.transaction(async (tx) => {
+				await tx
+					.update(users)
+					.set({ banned: !banned, banReason: revokeReason ?? null })
+					.where(eq(users.id, user.id));
+
+				await logActivity({
+					data: {
+						action: "revoke portal access",
+						description: `Revoked portal access for member ${user.name}`,
+						userId: loggedUserId,
+					},
+				});
+			});
+
+			return memberId;
+		},
+	);
+
+export const toggleActive = createServerFn({ method: "POST" })
+	.middleware([permissionsMiddleware(["members:update"])])
+	.inputValidator(memberToggleActiveSchema)
+	.handler(
+		async ({
+			data: { memberId, active },
+			context: {
+				user: { id: loggedUserId },
+			},
+		}) => {
+			if (!(await getMember({ data: memberId }))) {
+				throw new NotFoundError("Member");
+			}
+
+			const user = await db.query.users.findFirst({
+				columns: { id: true, name: true },
+				where: eq(users.memberId, memberId),
+			});
+			if (!user) {
+				throw new NotFoundError("User");
+			}
+
+			await db.transaction(async (tx) => {
+				await tx
+					.update(members)
+					.set({ memberStatus: active ? "active" : "inactive" })
+					.where(eq(members.id, memberId));
+
+				await tx
+					.update(users)
+					.set({ active: !active })
+					.where(eq(users.id, user.id));
+
+				await logActivity({
+					data: {
+						action: "toggle active",
+						description: `${active ? "Activated" : "Deactivated"} member ${user.name}`,
+						userId: loggedUserId,
+					},
+				});
+			});
+
+			return memberId;
 		},
 	);
 

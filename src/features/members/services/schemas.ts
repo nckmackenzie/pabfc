@@ -64,5 +64,30 @@ export const memberFormSchema = z
 		}
 	});
 
+export const memberRevokePortalAccessSchema = z
+	.object({
+		memberId: z.string(),
+		revokeReason: z.string().nullish(),
+		banned: z.boolean(),
+	})
+	.superRefine((data, ctx) => {
+		if (!data.banned && !data.revokeReason) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Revoke reason is required",
+				path: ["revokeReason"],
+			});
+		}
+	});
+
+export const memberToggleActiveSchema = z.object({
+	memberId: z.string(),
+	active: z.boolean(),
+});
+
 export type MemberValidateSearch = z.infer<typeof memberValidateSearch>;
 export type MemberFormSchema = z.infer<typeof memberFormSchema>;
+export type MemberRevokePortalAccessSchema = z.infer<
+	typeof memberRevokePortalAccessSchema
+>;
+export type MemberToggleActiveSchema = z.infer<typeof memberToggleActiveSchema>;

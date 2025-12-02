@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { nanoid } from "nanoid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EditAction } from "@/components/ui/custom-button";
 import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
@@ -17,6 +18,8 @@ import { EmptyState } from "@/components/ui/empty";
 import {
 	ChatMessageIcon,
 	CheckCircleIcon,
+	ConstructionIcon,
+	MonitorPhoneIcon,
 	NoSymbolIcon,
 	PauseIcon,
 	Users2Icon,
@@ -29,10 +32,12 @@ import type { MemberOverview } from "@/features/members/services/members.queries
 import { memberQueries } from "@/features/members/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { cn, toTitleCase } from "@/lib/utils";
+import { useMemberActions } from "../hooks/use-member-actions";
 
 export function MemberTable() {
 	const { filters } = useFilters(getRouteApi("/app/members/").id);
 	const { data } = useSuspenseQuery(memberQueries.list(filters));
+	const { handleRevokePortalAccess, handleToggleActive } = useMemberActions();
 
 	const columns: Array<ColumnDef<MemberOverview>> = [
 		{
@@ -117,10 +122,25 @@ export function MemberTable() {
 			),
 		},
 		{
+			accessorKey: "portalAccess",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Portal Access" />
+			),
+			cell: ({
+				row: {
+					original: { portalAccess },
+				},
+			}) => (
+				<div className="flex items-center justify-center">
+					<Checkbox checked={!portalAccess} />
+				</div>
+			),
+		},
+		{
 			id: "actions",
 			cell: ({
 				row: {
-					original: { id, memberStatus },
+					original: { id, memberStatus, portalAccess, fullName },
 				},
 			}) => (
 				<DatatableActions>
@@ -146,19 +166,40 @@ export function MemberTable() {
 							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
-					<DropdownMenuItem>
+					<DropdownMenuItem disabled>
 						<ChatMessageIcon className="size-4" />
 						<span className="-ml-1">Send Message</span>
+						<ConstructionIcon className="size-4" />
 					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<Users2Icon className="size-4" />
+					{memberStatus !== "terminated" && (
+						<DropdownMenuItem
+							onSelect={() =>
+								handleToggleActive({
+									memberId: id,
+									memberName: fullName,
+									active: memberStatus === "active",
+								})
+							}
+						>
+							<Users2Icon className="size-4" />
+							<span className="-ml-1">
+								{memberStatus === "active" ? "Deactivate" : "Activate"}
+							</span>
+						</DropdownMenuItem>
+					)}
+					<DropdownMenuItem
+						onSelect={() =>
+							handleRevokePortalAccess({
+								memberId: id,
+								memberName: fullName,
+								banned: portalAccess,
+							})
+						}
+					>
+						<MonitorPhoneIcon className="size-4" />
 						<span className="-ml-1">
-							{memberStatus === "active" ? "Deactivate" : "Activate"}
+							{!portalAccess ? "Revoke" : "Grant"} Portal Access
 						</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<XCircleIcon className="size-4" />
-						<span className="-ml-1">Revoke Portal Access</span>
 					</DropdownMenuItem>
 					<DeleteActionButton
 						queryKey={["members"]}
@@ -208,8 +249,10 @@ export function MemberAvatar({
 
 export function MemberBadge({
 	status,
+	textContent,
 }: {
 	status: MemberOverview["memberStatus"];
+	textContent?: string;
 }) {
 	return (
 		<Badge
@@ -232,7 +275,7 @@ export function MemberBadge({
 			) : (
 				<PauseIcon className="size-4!" />
 			)}
-			{toTitleCase(status)}
+			{toTitleCase(textContent ?? status)}
 		</Badge>
 	);
 }

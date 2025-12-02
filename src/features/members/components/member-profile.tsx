@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +10,7 @@ import {
 import {
 	CalendarIcon,
 	ChevronDownIcon,
+	ConstructionIcon,
 	DollarSignIcon,
 	PencilIcon,
 } from "@/components/ui/icons";
@@ -16,13 +18,21 @@ import {
 	MemberAvatar,
 	MemberBadge,
 } from "@/features/members/components/member-table";
+import { useMemberActions } from "@/features/members/hooks/use-member-actions";
+import type { getMemberProfileData } from "@/features/members/services/members.queries.api";
+import { memberQueries } from "@/features/members/services/queries";
 import { dateFormat } from "@/lib/helpers";
 import { cn, toTitleCase } from "@/lib/utils";
-import type { getMemberProfileData } from "../services/members.queries.api";
 
 export function MemberProfile() {
 	const route = getRouteApi("/app/members/$memberId/profile");
-	const memberData = route.useLoaderData();
+	const memberLoaderData = route.useLoaderData();
+	const { data: memberOverview } = useQuery(
+		memberQueries.overview(route.useParams().memberId),
+	);
+	const memberData = memberOverview ?? memberLoaderData;
+	const { handleRevokePortalAccess, handleToggleActive } = useMemberActions();
+
 	return (
 		<div className="space-y-6">
 			<div className="bg-background border border-gray-200 p-4 rounded-md flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -37,7 +47,19 @@ export function MemberProfile() {
 							<h1 className="text-base md:text-lg font-bold">
 								{toTitleCase(`${memberData.firstName} ${memberData.lastName}`)}
 							</h1>
-							<MemberBadge status={memberData.memberStatus} />
+							<div className="flex items-center gap-2">
+								<MemberBadge status={memberData.memberStatus} />
+								{memberData.banned && (
+									<MemberBadge
+										status={memberData.banned ? "terminated" : "active"}
+										textContent={
+											memberData.banned
+												? "Portal Access Revoked"
+												: "Portal Access Active"
+										}
+									/>
+								)}
+							</div>
 						</div>
 						<div className="text-muted-foreground">
 							<span className="text-sm">Member No: {memberData.memberNo}</span>
@@ -67,9 +89,39 @@ export function MemberProfile() {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent>
-							<DropdownMenuItem>Deactivate</DropdownMenuItem>
-							<DropdownMenuItem>Revoke Portal Access</DropdownMenuItem>
-							<DropdownMenuItem>Send Message</DropdownMenuItem>
+							{(memberData.memberStatus === "active" ||
+								memberData.memberStatus === "inactive") && (
+								<DropdownMenuItem
+									onSelect={() =>
+										handleToggleActive({
+											memberId: memberData.id,
+											memberName: memberData.fullName,
+											active: memberData.memberStatus === "active",
+										})
+									}
+								>
+									{memberData.memberStatus === "active"
+										? "Deactivate"
+										: "Activate"}
+								</DropdownMenuItem>
+							)}
+							<DropdownMenuItem
+								onSelect={() =>
+									handleRevokePortalAccess({
+										memberId: memberData.id,
+										memberName: memberData.fullName,
+										banned: memberData.banned,
+									})
+								}
+							>
+								{memberData.banned
+									? "Restore Portal Access"
+									: "Revoke Portal Access"}
+							</DropdownMenuItem>
+							{/* TODO: Implement */}
+							<DropdownMenuItem disabled>
+								Send Message <ConstructionIcon />
+							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
