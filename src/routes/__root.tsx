@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 import { ErrorComponent } from "@/components/ui/error-component";
 import { NotFoundComponent } from "@/components/ui/not-found";
 import { Spinner } from "@/components/ui/spinner";
+import { ModalProvider } from "@/integrations/modal-provider";
 import { authQueries } from "@/lib/session/queries";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -85,7 +86,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				{children}
+				<ModalProvider>{children}</ModalProvider>
 				<Toaster
 					position="top-center"
 					toastOptions={{
