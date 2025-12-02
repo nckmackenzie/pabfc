@@ -4,6 +4,7 @@ import { z } from "zod";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { MemberProfile } from "@/features/members/components/member-profile";
+import { MemberProfileSkeleton } from "@/features/members/components/member-profile-skeleton";
 import { memberQueries } from "@/features/members/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { logActivity } from "@/services/activity-logger";
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/app/members/$memberId/profile")({
 
 		return member;
 	},
+	pendingComponent: MemberProfileSkeleton,
 });
 
 function RouteComponent() {

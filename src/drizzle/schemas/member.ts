@@ -173,5 +173,9 @@ export const membersOverview = pgMaterializedView("vw_member_overview", {
 	nextRenewalDate: date("next_renewal_date"),
 	lastVisit: timestamp("last_visit"),
 	notes: text("notes"),
+	emergencyContactName: varchar("emergency_contact_name", { length: 100 }),
+	emergencyContactNo: varchar("emergency_contact_no", {
+		length: 15,
+	}),
 	createdAt,
 }).existing();

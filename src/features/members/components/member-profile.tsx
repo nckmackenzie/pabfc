@@ -6,13 +6,19 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDownIcon, PencilIcon } from "@/components/ui/icons";
+import {
+	CalendarIcon,
+	ChevronDownIcon,
+	DollarSignIcon,
+	PencilIcon,
+} from "@/components/ui/icons";
 import {
 	MemberAvatar,
 	MemberBadge,
 } from "@/features/members/components/member-table";
 import { dateFormat } from "@/lib/helpers";
-import { toTitleCase } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
+import type { getMemberProfileData } from "../services/members.queries.api";
 
 export function MemberProfile() {
 	const route = getRouteApi("/app/members/$memberId/profile");
@@ -69,13 +75,91 @@ export function MemberProfile() {
 				</div>
 			</div>
 			<div className="grid md:grid-cols-2 gap-4">
-				<div>
-					<h2>Personal Info</h2>
-				</div>
-				<div>
-					<h2>Membership Info</h2>
+				<PersonalDetails memberData={memberData} />
+				<div className="grid gap-4">
+					<div className="rounded-md border border-gray-200 p-4 self-start">
+						<h2 className="text-base font-bold font-display">
+							Payment History
+						</h2>
+						<div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+							<DollarSignIcon className="size-12" />
+							<p className="text-sm mt-2">No payment history found.</p>
+						</div>
+					</div>
+					<div className="rounded-md border border-gray-200 p-4 self-start">
+						<h2 className="text-base font-bold font-display">
+							Attendance History
+						</h2>
+						<div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+							<CalendarIcon className="size-12" />
+							<p className="text-sm mt-2">No attendance history found.</p>
+						</div>
+					</div>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function PersonalDetails({
+	memberData,
+}: {
+	memberData: Awaited<ReturnType<typeof getMemberProfileData>>;
+}) {
+	return (
+		<div className="rounded-md border border-gray-200 p-4">
+			<div className="space-y-2">
+				<div className="flex items-center gap-2">
+					<h2 className="text-base font-bold font-display">Personal Info</h2>
+				</div>
+				<div className="grid grid-cols-2 gap-x-8 gap-y-4 md:gap-x-12">
+					<MemberInfo label="First Name" value={memberData.firstName} />
+					<MemberInfo label="Last Name" value={memberData.lastName} />
+					<MemberInfo label="Gender" value={memberData.gender} />
+					<MemberInfo label="Contact" value={memberData.contact} />
+					<MemberInfo label="Member Status" value={memberData.memberStatus} />
+					<MemberInfo
+						label="Last Visit"
+						value={memberData.lastVisit?.toString()}
+					/>
+					<MemberInfo
+						label="Emergency Contact Name"
+						value={memberData.emergencyContactName}
+					/>
+					<MemberInfo
+						label="Emergency Contact No"
+						value={memberData.emergencyContactNo}
+					/>
+					<MemberInfo label="Active Plan" value={memberData.activePlanName} />
+					<MemberInfo
+						label="Next Renewal Date"
+						value={memberData.nextRenewalDate?.toString()}
+					/>
+
+					<MemberInfo
+						className="col-span-2"
+						label="Notes"
+						value={memberData.notes}
+					/>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function MemberInfo({
+	label,
+	value,
+	className,
+}: {
+	label: string;
+	value?: string | null;
+	className?: string;
+}) {
+	return (
+		<div className={cn("grid gap-0.5", className)}>
+			<h3 className="text-muted-foreground text-xs">{label}</h3>
+			<p className="text-sm capitalize font-medium">{value || "-"}</p>
 		</div>
 	);
 }
