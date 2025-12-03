@@ -126,7 +126,9 @@ export const deletePlan = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
-			const plan = await getPlan({ data: planId });
+			const plan = await db.query.membershipPlans.findFirst({
+				where: eq(membershipPlans.id, planId),
+			});
 			if (!plan) {
 				throw new NotFoundError("Plan");
 			}
