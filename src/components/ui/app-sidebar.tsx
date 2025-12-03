@@ -56,7 +56,6 @@ const menuItems: MenuItem[] = [
 		title: "Plans & Packages",
 		url: "/app/plans",
 		icon: PercentBadgeIcon,
-		wip: true,
 	},
 	{
 		title: "Payments & Billing",
