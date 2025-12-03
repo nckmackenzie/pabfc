@@ -6,19 +6,21 @@ import { useFormMutation } from "@/hooks/use-form-mutation";
 import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
 import type { WithId } from "@/types/index.types";
-import { createPlan } from "../services/plans.api";
+import { createPlan, updatePlan } from "../services/plans.api";
+
+const defaultValues = {
+	name: "",
+	duration: 0,
+	price: 0,
+	description: "",
+	isSessionBased: false,
+	sessionCount: null,
+	active: true,
+} as PlanSchema;
 
 export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 	const form = useAppForm({
-		defaultValues: {
-			name: "",
-			duration: 0,
-			price: 0,
-			description: "",
-			isSessionBased: false,
-			sessionCount: null,
-			active: true,
-		} as PlanSchema,
+		defaultValues: plan || defaultValues,
 		validators: {
 			onSubmit: planSchema,
 		},
@@ -39,7 +41,8 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 		entityName: "Plan",
 		queryKey: ["plans"],
 		navigateTo: "/app/plans",
-		// updateFn: (values: PlanSchema) => updatePlan({ data: values }),
+		updateFn: (id: string, values: PlanSchema) =>
+			updatePlan({ data: { values, planId: id } }),
 	});
 
 	const [isDirty, isSessionBased] = useStore(form.store, (state) => [
@@ -52,8 +55,12 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 	return (
 		<div className="space-y-6">
 			<PageHeader
-				title="Create Plan"
-				description="Provide the details of the plan"
+				title={plan ? "Edit Plan" : "Create Plan"}
+				description={
+					plan
+						? "Update the details of the plan"
+						: "Provide the details of the plan"
+				}
 			/>
 			<form
 				onSubmit={(e) => {
@@ -126,7 +133,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 					<form.AppForm>
 						<form.SubmitButton
 							isLoading={planMutation.isPending}
-							buttonText="Create Plan"
+							buttonText={plan ? "Update Plan" : "Create Plan"}
 						/>
 					</form.AppForm>
 				</FieldGroup>
