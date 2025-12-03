@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/plans/$planId/edit")({
 	beforeLoad: async () => {
-		await requirePermission("plans:view");
+		await requirePermission("plans:update");
 	},
 	component: RouteComponent,
 	head: () => ({

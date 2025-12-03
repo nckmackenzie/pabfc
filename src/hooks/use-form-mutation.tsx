@@ -41,7 +41,12 @@ export function useFormMutation<TData, TResult = void>({
 
 	return useMutation({
 		mutationFn: async ({ data, id }: { data: TData; id?: string }) => {
-			if (id && updateFn) {
+			if (id) {
+				if (!updateFn) {
+					throw new Error(
+						`Update function not provided for ${entityName} mutation`,
+					);
+				}
 				return await updateFn(id, data);
 			}
 			return await createFn(data);

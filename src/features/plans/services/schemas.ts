@@ -11,11 +11,16 @@ export const planSchema = z
 		active: z.boolean(),
 	})
 	.superRefine((data, ctx) => {
-		if (data.isSessionBased && !data.sessionCount) {
+		if (
+			data.isSessionBased &&
+			(data.sessionCount === null ||
+				data.sessionCount === undefined ||
+				data.sessionCount < 1)
+		) {
 			ctx.addIssue({
 				code: "custom",
 				path: ["sessionCount"],
-				message: "Session count is required",
+				message: "Session count must be at least 1",
 			});
 		}
 	});

@@ -116,6 +116,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 						<form.AppField name="sessionCount">
 							{(field) => (
 								<field.Input
+									type="number"
 									label="Session Count"
 									placeholder="Enter session count"
 									disabled={!isSessionBased}
