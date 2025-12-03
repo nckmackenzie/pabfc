@@ -21,6 +21,7 @@ interface UseFormMutationOptions<TData, TResult = void> {
 	};
 	onSuccessCallback?: (result: TResult, isEdit: boolean) => void;
 	displaySuccessToast?: boolean;
+	onReset?: () => void;
 }
 
 export function useFormMutation<TData, TResult = void>({
@@ -33,13 +34,19 @@ export function useFormMutation<TData, TResult = void>({
 	errorMessage,
 	onSuccessCallback,
 	displaySuccessToast = true,
+	onReset,
 }: UseFormMutationOptions<TData, TResult>) {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 
 	return useMutation({
 		mutationFn: async ({ data, id }: { data: TData; id?: string }) => {
-			if (id && updateFn) {
+			if (id) {
+				if (!updateFn) {
+					throw new Error(
+						`Update function not provided for ${entityName} mutation`,
+					);
+				}
 				return await updateFn(id, data);
 			}
 			return await createFn(data);
@@ -84,10 +91,15 @@ export function useFormMutation<TData, TResult = void>({
 				));
 			}
 
+			onReset?.();
+
 			queryClient.invalidateQueries({ queryKey });
 			onSuccessCallback?.(result, isEdit);
 			if (navigateTo) {
-				navigate({ to: navigateTo });
+				// navigate({ to: navigateTo });
+				setTimeout(() => {
+					navigate({ to: navigateTo });
+				}, 0);
 			}
 		},
 	});

@@ -1,3 +1,4 @@
+import { useStore } from "@tanstack/react-form";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
 	memberFormSchema,
 } from "@/features/members/services/schemas";
 import { useFormMutation } from "@/hooks/use-form-mutation";
+import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
 import { cn, generateRandomId } from "@/lib/utils";
 import type { WithId } from "@/types/index.types";
@@ -75,6 +77,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 		entityName: "Member",
 		queryKey: ["members"],
 		navigateTo: "/app/members",
+		onReset: () => form.reset(),
 	});
 
 	const form = useAppForm({
@@ -83,9 +86,20 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 			onSubmit: memberFormSchema,
 		},
 		onSubmit: ({ value }) => {
-			memberMutation.mutate({ data: value, id: member?.id });
+			memberMutation.mutate(
+				{ data: value, id: member?.id },
+				{
+					onSuccess: () => {
+						form.reset();
+					},
+				},
+			);
 		},
 	});
+
+	const isDirty = useStore(form.store, (state) => state.isDirty);
+
+	usePreventUnsavedChanges(isDirty);
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
