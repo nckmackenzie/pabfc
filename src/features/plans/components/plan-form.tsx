@@ -39,6 +39,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 		entityName: "Plan",
 		queryKey: ["plans"],
 		navigateTo: "/app/plans",
+		onReset: () => form.reset(),
 		// updateFn: (values: PlanSchema) => updatePlan({ data: values }),
 	});
 
