@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
-import { getPlans } from "@/features/plans/services/plans.api";
+import { getPlan, getPlans } from "@/features/plans/services/plans.api";
 import type { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 
@@ -10,6 +10,11 @@ export const planQueries = {
 		queryOptions({
 			queryKey: [...planQueries.all, "list", filters],
 			queryFn: () => getPlans({ data: { q: filters?.q } }),
+		}),
+	detail: (id: string) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "detail", id],
+			queryFn: () => getPlan({ data: id }),
 		}),
 	active: () =>
 		queryOptions({

@@ -14,8 +14,11 @@ import {
 	Users2Icon,
 	XCircleIcon,
 } from "@/components/ui/icons";
+import { PermissionGate } from "@/components/ui/permission-gate";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter } from "@/lib/helpers";
+import { deletePlan } from "../services/plans.api";
 import { planQueries } from "../services/queries";
 
 export function PlansTable() {
@@ -81,24 +84,41 @@ export function PlansTable() {
 				},
 			}) => (
 				<DatatableActions>
-					<DropdownMenuItem asChild>
-						<Link to={`/app/plans/$planId/edit`} params={{ planId: id }}>
-							<EditAction />
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<Users2Icon />
-						<span className="-ml-1">View Members On Plan</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<DollarSignIcon />
-						<span className="-ml-1">View Plan Revenue</span>
-					</DropdownMenuItem>
-					<DeleteActionButton
-						queryKey={["plans"]}
-						resourceId={id}
-						deleteAction={async () => {}}
-					/>
+					<PermissionGate
+						permissions={["plans:update"]}
+						loadingComponent={<Skeleton className="h-4 w-24" />}
+					>
+						<DropdownMenuItem asChild>
+							<Link to={`/app/plans/$planId/edit`} params={{ planId: id }}>
+								<EditAction />
+							</Link>
+						</DropdownMenuItem>
+					</PermissionGate>
+					{/* TODO: IMPLEMENT */}
+					<PermissionGate
+						permissions={["plans:view"]}
+						loadingComponent={<Skeleton className="h-4 w-24" />}
+					>
+						<DropdownMenuItem disabled>
+							<Users2Icon />
+							<span className="-ml-1">View Members On Plan</span>
+						</DropdownMenuItem>
+						<DropdownMenuItem disabled>
+							<DollarSignIcon />
+							<span className="-ml-1">View Plan Revenue</span>
+						</DropdownMenuItem>
+					</PermissionGate>
+					<PermissionGate
+						permissions={["plans:delete"]}
+						loadingComponent={<Skeleton className="h-4 w-24" />}
+					>
+						<DeleteActionButton
+							queryKey={["plans"]}
+							resourceId={id}
+							deleteAction={deletePlan}
+							fallbackMessage="Error deleting plan"
+						/>
+					</PermissionGate>
 				</DatatableActions>
 			),
 		},

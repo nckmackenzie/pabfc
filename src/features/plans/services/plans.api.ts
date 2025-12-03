@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { membershipPlans } from "@/drizzle/schema";
-import { planSchema } from "@/features/plans/services/schemas";
-import { ConflictError } from "@/lib/error-handling/app-error";
+import { memberMemberships, membershipPlans } from "@/drizzle/schema";
+import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
+import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { permissionsMiddleware } from "@/middlewares/permission-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -65,6 +65,90 @@ export const createPlan = createServerFn({ method: "POST" })
 			});
 
 			return planId;
+		},
+	);
+
+export const getPlan = createServerFn()
+	.middleware([permissionsMiddleware(["plans:view"])])
+	.inputValidator((data: string) => data)
+	.handler(async ({ data: planId }) => {
+		return db.query.membershipPlans.findFirst({
+			where: eq(membershipPlans.id, planId),
+		});
+	});
+
+export const updatePlan = createServerFn({ method: "POST" })
+	.middleware([permissionsMiddleware(["plans:update"])])
+	.inputValidator((data: { values: PlanSchema; planId: string }) => data)
+	.handler(
+		async ({
+			data: { values, planId },
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			if (await planNameExists({ data: { value: values.name, planId } })) {
+				throw new ConflictError("Plan");
+			}
+
+			await db.transaction(async (tx) => {
+				await tx
+					.update(membershipPlans)
+					.set({
+						...values,
+						sessionCount: values.isSessionBased
+							? (values.sessionCount ?? 0)
+							: 0,
+						description: values.description ?? null,
+					})
+					.where(eq(membershipPlans.id, planId));
+
+				await logActivity({
+					data: {
+						description: `Updated plan ${values.name} details`,
+						userId,
+						action: "update plan",
+					},
+				});
+			});
+
+			return planId;
+		},
+	);
+
+export const deletePlan = createServerFn({ method: "POST" })
+	.middleware([permissionsMiddleware(["plans:delete"])])
+	.inputValidator((data: string) => data)
+	.handler(
+		async ({
+			data: planId,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			const plan = await getPlan({ data: planId });
+			if (!plan) {
+				throw new NotFoundError("Plan");
+			}
+
+			const referenced = await db.query.memberMemberships.findFirst({
+				columns: { id: true },
+				where: eq(memberMemberships.membershipPlanId, planId),
+			});
+
+			if (referenced) {
+				throw new Error("Plan is being referenced and cannot be deleted!!");
+			}
+
+			await db.delete(membershipPlans).where(eq(membershipPlans.id, planId));
+
+			await logActivity({
+				data: {
+					description: `Deleted plan ${plan.name}`,
+					userId,
+					action: "delete plan",
+				},
+			});
 		},
 	);
 

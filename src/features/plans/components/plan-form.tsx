@@ -42,7 +42,8 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 		queryKey: ["plans"],
 		navigateTo: "/app/plans",
 		onReset: () => form.reset(),
-		// updateFn: (values: PlanSchema) => updatePlan({ data: values }),
+		updateFn: (planId: string, values: PlanSchema) =>
+			updatePlan({ data: { values, planId } }),
 	});
 
 	const [isDirty, isSessionBased] = useStore(form.store, (state) => [
