@@ -77,6 +77,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 		entityName: "Member",
 		queryKey: ["members"],
 		navigateTo: "/app/members",
+		onReset: () => form.reset(),
 	});
 
 	const form = useAppForm({
