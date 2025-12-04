@@ -78,7 +78,11 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 					Forgot Password?
 				</Link>
 				<form.AppForm>
-					<form.SubmitButton buttonText="Login" withReset={false} />
+					<form.SubmitButton
+						buttonText="Login"
+						withReset={false}
+						orientation="vertical"
+					/>
 				</form.AppForm>
 			</FieldGroup>
 		</form>
