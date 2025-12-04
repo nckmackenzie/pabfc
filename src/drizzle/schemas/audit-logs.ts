@@ -10,7 +10,9 @@ export const activityLogs = pgTable(
 		userId: varchar("user_id")
 			.notNull()
 			.references(() => users.id),
-		activityDate: timestamp("activity_date").notNull().defaultNow(),
+		activityDate: timestamp("activity_date", { mode: "string" })
+			.notNull()
+			.defaultNow(),
 		action: varchar("action").notNull(),
 		ipAddress: varchar("ip_address", { length: 45 }),
 		description: varchar("description").notNull(),

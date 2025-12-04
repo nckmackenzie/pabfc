@@ -24,6 +24,7 @@ import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
+import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
@@ -111,6 +112,11 @@ const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppMembersRouteRoute,
 } as any)
+const AppActivityLogsIndexRoute = AppActivityLogsIndexRouteImport.update({
+  id: '/activity-logs/',
+  path: '/activity-logs/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppUsersNewRoute = AppUsersNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/activity-logs/': typeof AppActivityLogsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/app/activity-logs'
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/app/activity-logs'
     | '/app/members'
     | '/app/plans'
     | '/app/users'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/app/activity-logs/'
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
@@ -455,6 +467,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/members/'
       preLoaderRoute: typeof AppMembersIndexRouteImport
       parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/activity-logs/': {
+      id: '/app/activity-logs/'
+      path: '/activity-logs'
+      fullPath: '/app/activity-logs'
+      preLoaderRoute: typeof AppActivityLogsIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/app/users/new': {
       id: '/app/users/new'
@@ -621,6 +640,7 @@ interface AppRouteRouteChildren {
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
+  AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -629,6 +649,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
+  AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
