@@ -5,11 +5,11 @@ import { memberMemberships, membershipPlans } from "@/drizzle/schema";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { searchValidateSchema } from "@/lib/schema-rules";
-import { permissionsMiddleware } from "@/middlewares/permission-middleware";
+import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
 export const getPlans = createServerFn()
-	.middleware([permissionsMiddleware(["plans:view"])])
+	.middleware([authMiddleware])
 	.inputValidator(searchValidateSchema)
 	.handler(async ({ data }) => {
 		return db.query.membershipPlans.findMany({
@@ -30,7 +30,7 @@ export const getPlans = createServerFn()
 	});
 
 export const createPlan = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["plans:create"])])
+	.middleware([authMiddleware])
 	.inputValidator(planSchema)
 	.handler(
 		async ({
@@ -69,7 +69,7 @@ export const createPlan = createServerFn({ method: "POST" })
 	);
 
 export const getPlan = createServerFn()
-	.middleware([permissionsMiddleware(["plans:view"])])
+	.middleware([authMiddleware])
 	.inputValidator((data: string) => data)
 	.handler(async ({ data: planId }) => {
 		return db.query.membershipPlans.findFirst({
@@ -78,7 +78,7 @@ export const getPlan = createServerFn()
 	});
 
 export const updatePlan = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["plans:update"])])
+	.middleware([authMiddleware])
 	.inputValidator((data: { values: PlanSchema; planId: string }) => data)
 	.handler(
 		async ({
@@ -117,7 +117,7 @@ export const updatePlan = createServerFn({ method: "POST" })
 	);
 
 export const deletePlan = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["plans:delete"])])
+	.middleware([authMiddleware])
 	.inputValidator((data: string) => data)
 	.handler(
 		async ({
@@ -155,7 +155,7 @@ export const deletePlan = createServerFn({ method: "POST" })
 	);
 
 export const planNameExists = createServerFn()
-	.middleware([permissionsMiddleware(["plans:create"])])
+	.middleware([authMiddleware])
 	.inputValidator((data: { value: string; planId?: string }) => data)
 	.handler(async ({ data: { value, planId } }) => {
 		return db.query.membershipPlans.findFirst({

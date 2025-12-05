@@ -10,7 +10,7 @@ import {
 } from "@/features/members/services/schemas";
 import { hashPassword } from "@/features/users/services/users.api";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
-import { permissionsMiddleware } from "@/middlewares/permission-middleware";
+import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import {
 	checkColumnExists,
@@ -19,7 +19,7 @@ import {
 } from "./members.queries.api";
 
 export const createMember = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["members:create"])])
+	.middleware([authMiddleware])
 	.inputValidator(memberFormSchema)
 	.handler(
 		async ({
@@ -82,7 +82,7 @@ export const createMember = createServerFn({ method: "POST" })
 	);
 
 export const updateMember = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["members:update"])])
+	.middleware([authMiddleware])
 	.inputValidator((values: { value: MemberFormSchema; id: string }) => values)
 	.handler(
 		async ({
@@ -125,7 +125,7 @@ export const updateMember = createServerFn({ method: "POST" })
 	);
 
 export const revokePortalAccess = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["members:update"])])
+	.middleware([authMiddleware])
 	.inputValidator(memberRevokePortalAccessSchema)
 	.handler(
 		async ({
@@ -166,7 +166,7 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 	);
 
 export const toggleActive = createServerFn({ method: "POST" })
-	.middleware([permissionsMiddleware(["members:update"])])
+	.middleware([authMiddleware])
 	.inputValidator(memberToggleActiveSchema)
 	.handler(
 		async ({
