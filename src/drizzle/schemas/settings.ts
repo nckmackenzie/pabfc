@@ -16,11 +16,12 @@ export const settings = pgTable("settings", {
 		.$type<{
 			logRetentionDays?: number;
 			inactiveUserDays?: number;
-			inactiveUserDeleteDays?: boolean;
+			inactiveUserDeleteDays?: number;
 			inactiveMemberDays?: number;
 			inactiveMemberDeleteDays?: number;
 		}>(),
 	notification: jsonb("notification").default({}).$type<{
+		enableSmsNotifications?: boolean;
 		daysBeforeRenewalReminder?: number;
 		sendPaymentReceiptByEmail?: boolean;
 	}>(),
