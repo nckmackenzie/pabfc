@@ -84,10 +84,11 @@ export function UserAvatar() {
 						</Link>
 					</DropdownMenuItem>
 					{session?.user.role === "admin" && (
-						<DropdownMenuItem disabled>
-							<CogIcon />
-							Settings
-							<ConstructionIcon className="ml-auto" />
+						<DropdownMenuItem asChild>
+							<Link to="/app/settings">
+								<CogIcon />
+								Settings
+							</Link>
 						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>
