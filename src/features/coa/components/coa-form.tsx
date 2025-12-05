@@ -48,10 +48,7 @@ export function ChartOfAccountsForm() {
 
 	return (
 		<div className="space-y-6">
-			<PageHeader
-				title="New Chart of Account"
-				description="Create a new chart of account"
-			/>
+			<PageHeader title="New Account" description="Create a new account" />
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();

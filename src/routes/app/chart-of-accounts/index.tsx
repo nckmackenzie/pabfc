@@ -19,7 +19,6 @@ function RouteComponent() {
 				hasNewButtonLink={true}
 				newButtonLinkPath={"/app/chart-of-accounts/new"}
 				createPermissions={["chart-of-accounts:create"]}
-				buttonText="New Chart of Account"
 			>
 				<Wip transparent />
 			</BasePageComponent>
