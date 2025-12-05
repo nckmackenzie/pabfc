@@ -1,15 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import {
-	BarChartIcon,
-	CalendarIcon,
-	ChartPieIcon,
-	ChatMessageIcon,
-	ConstructionIcon,
-	PaymentCardIcon,
-	PercentBadgeIcon,
-	Users2Icon,
-	UsersIcon,
-} from "@/components/ui/icons";
+import { ConstructionIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 
 import {
 	Sidebar,
@@ -22,68 +12,26 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	SidebarMenuSub,
+	SidebarMenuSubButton,
+	SidebarMenuSubItem,
+	SidebarSeparator,
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth/client";
-import type { Permission } from "@/lib/permissions/constants";
+import {
+	collapsibleMenuItems,
+	type MenuItem as MenuItemType,
+	menuItems,
+} from "@/lib/constants";
+import type { Route } from "@/types/index.types";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "./collapsible";
 import { PermissionGate } from "./permission-gate";
 import { Skeleton } from "./skeleton";
-
-type MenuItem = {
-	title: string;
-	url: string;
-	icon: React.ComponentType<{ className?: string }>;
-	permission?: Permission;
-	wip?: boolean;
-};
-
-const menuItems: MenuItem[] = [
-	{
-		title: "Dashboard",
-		url: "/app/dashboard",
-		icon: ChartPieIcon,
-	},
-	{
-		title: "User Management",
-		url: "/app/users",
-		icon: UsersIcon,
-	},
-	{
-		title: "Member Management",
-		url: "/app/members",
-		icon: Users2Icon,
-		permission: "members:view",
-	},
-	{
-		title: "Plans & Packages",
-		url: "/app/plans",
-		icon: PercentBadgeIcon,
-	},
-	{
-		title: "Payments & Billing",
-		url: "/app/payments",
-		icon: PaymentCardIcon,
-		wip: true,
-	},
-	{
-		title: "Attendance",
-		url: "/app/attendance",
-		icon: CalendarIcon,
-		wip: true,
-	},
-	{
-		title: "Communication",
-		url: "/app/communication",
-		icon: ChatMessageIcon,
-		wip: true,
-	},
-	{
-		title: "Reports",
-		url: "/reports",
-		icon: BarChartIcon,
-		wip: true,
-	},
-];
 
 export function AppSidebar() {
 	const { data, isPending, error } = useSession();
@@ -106,7 +54,7 @@ export function AppSidebar() {
 				</div>
 			</SidebarHeader>
 			<SidebarContent>
-				<SidebarGroup>
+				<SidebarGroup className="pb-0">
 					<SidebarGroupLabel>Navigation</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
@@ -119,6 +67,55 @@ export function AppSidebar() {
 									</PermissionGate>
 								);
 							})}
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+				<SidebarSeparator />
+				<SidebarGroup className="pt-0">
+					<SidebarGroupContent>
+						<SidebarMenu>
+							{collapsibleMenuItems.map((item) => (
+								<Collapsible
+									key={item.title}
+									asChild
+									className="group/collapsible"
+								>
+									<SidebarMenuItem>
+										<CollapsibleTrigger asChild>
+											<SidebarMenuButton
+												className="capitalize"
+												tooltip={item.title}
+											>
+												{
+													<item.icon className="text-muted-foreground size-5!" />
+												}
+												<span>{item.title}</span>
+												<PlusIcon className="ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:hidden" />
+												<MinusIcon className="hidden ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:block" />
+											</SidebarMenuButton>
+										</CollapsibleTrigger>
+										<CollapsibleContent>
+											<SidebarMenuSub>
+												{item.items.map((subItem) => (
+													<SidebarMenuSubItem key={subItem.title}>
+														<SidebarMenuSubButton
+															asChild
+															className="text-xs font-medium text-muted-foreground"
+														>
+															<Link
+																to={`${subItem.url}` as Route}
+																className="capitalize"
+															>
+																{subItem.title}
+															</Link>
+														</SidebarMenuSubButton>
+													</SidebarMenuSubItem>
+												))}
+											</SidebarMenuSub>
+										</CollapsibleContent>
+									</SidebarMenuItem>
+								</Collapsible>
+							))}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
@@ -147,7 +144,7 @@ export function AppSidebar() {
 	);
 }
 
-function MenuItem({ item }: { item: MenuItem }) {
+function MenuItem({ item }: { item: MenuItemType }) {
 	const { pathname } = useLocation();
 	const { setOpenMobile, openMobile } = useSidebar();
 	const isActive = pathname.startsWith(item.url);
@@ -160,7 +157,7 @@ function MenuItem({ item }: { item: MenuItem }) {
 				data-testid={`link-${item.title.toLowerCase().replace(/\s/g, "-")}`}
 			>
 				<Link to={item.url}>
-					<item.icon className="size-5!" />
+					<item.icon className="size-5! text-muted-foreground" />
 					<span>{item.title}</span>
 					{item.wip && (
 						<ConstructionIcon className="ml-auto size-4! text-muted-foreground" />
