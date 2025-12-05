@@ -22,7 +22,7 @@ export const logActivity = createServerFn({ method: "POST" })
 			request.headers.get("x-forwarded-for") ||
 			request.headers.get("x-real-ip") ||
 			"127.0.0.1";
-		const { browser } = UAParser(userAgent);
+		const { browser, os } = UAParser(userAgent);
 
 		await db
 			.insert(activityLogs)
@@ -33,6 +33,7 @@ export const logActivity = createServerFn({ method: "POST" })
 				description,
 				userAgent: browser.name,
 				ipAddress,
+				os: os.name,
 			})
 			.onConflictDoNothing();
 	});

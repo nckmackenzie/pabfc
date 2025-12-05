@@ -74,6 +74,7 @@ export const members = pgTable(
 		notes: text("notes"),
 		image: varchar("image", { length: 255 }),
 		deletedAt: timestamp("deleted_at"),
+		deactivatedAt: timestamp("deactivated_at"),
 		createdAt,
 		updatedAt,
 	},

@@ -3,10 +3,9 @@ import { and, desc, eq, ilike, ne, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { members, membersOverview } from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
-import { permissionsMiddleware } from "@/middlewares/permission-middleware";
+import { authMiddleware } from "@/middlewares/auth-middleware";
 
 export const getMembers = createServerFn()
-	.middleware([permissionsMiddleware(["members:view"])])
 	.inputValidator(memberValidateSearch)
 	.handler(async ({ data: { q, status, plan } }) => {
 		const filters: Array<SQL> = [];
@@ -52,7 +51,7 @@ export const getMembers = createServerFn()
 	});
 
 export const getMemberProfileData = createServerFn()
-	.middleware([permissionsMiddleware(["members:view-profile"])])
+	.middleware([authMiddleware])
 	.inputValidator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		const member = await db
@@ -85,7 +84,7 @@ export const checkColumnExists = createServerFn()
 	});
 
 export const getMemberNo = createServerFn()
-	.middleware([permissionsMiddleware(["members:create"])])
+	.middleware([authMiddleware])
 	.handler(async () => {
 		return db
 			.select({
@@ -96,7 +95,7 @@ export const getMemberNo = createServerFn()
 	});
 
 export const getMember = createServerFn()
-	.middleware([permissionsMiddleware(["members:view"])])
+	.middleware([authMiddleware])
 	.inputValidator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		return db.query.members.findFirst({

@@ -15,6 +15,7 @@ import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MemberDashboardRouteImport } from './routes/member/dashboard'
 import { Route as AppUnauthorizedRouteImport } from './routes/app/unauthorized'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
@@ -24,6 +25,7 @@ import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
+import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
@@ -64,6 +66,11 @@ const MemberDashboardRoute = MemberDashboardRouteImport.update({
 const AppUnauthorizedRoute = AppUnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -110,6 +117,11 @@ const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppMembersRouteRoute,
+} as any)
+const AppActivityLogsIndexRoute = AppActivityLogsIndexRouteImport.update({
+  id: '/activity-logs/',
+  path: '/activity-logs/',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppUsersNewRoute = AppUsersNewRouteImport.update({
   id: '/new',
@@ -183,12 +195,14 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -208,12 +222,14 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
@@ -238,12 +254,14 @@ export interface FileRoutesById {
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/activity-logs/': typeof AppActivityLogsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -268,12 +286,14 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/app/activity-logs'
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
@@ -293,12 +313,14 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/app/activity-logs'
     | '/app/members'
     | '/app/plans'
     | '/app/users'
@@ -322,12 +344,14 @@ export interface FileRouteTypes {
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
     | '/app/dashboard'
+    | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/app/activity-logs/'
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
@@ -393,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUnauthorizedRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/dashboard': {
       id: '/app/dashboard'
       path: '/dashboard'
@@ -455,6 +486,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/members/'
       preLoaderRoute: typeof AppMembersIndexRouteImport
       parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/activity-logs/': {
+      id: '/app/activity-logs/'
+      path: '/activity-logs'
+      fullPath: '/app/activity-logs'
+      preLoaderRoute: typeof AppActivityLogsIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/app/users/new': {
       id: '/app/users/new'
@@ -620,7 +658,9 @@ interface AppRouteRouteChildren {
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
+  AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -628,7 +668,9 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
+  AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

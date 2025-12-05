@@ -1,5 +1,4 @@
 import { redirect } from "@tanstack/react-router";
-import { cache } from "react";
 import type { Permission } from "@/lib/permissions/constants";
 import {
 	hasAnyPermission,
@@ -16,7 +15,7 @@ export async function getLoggedInUser() {
 	}
 }
 
-export const requirePermission = cache(async (permission: Permission) => {
+export const requirePermission = async (permission: Permission) => {
 	await getLoggedInUser();
 	const userHasPermission = await hasPermission({ data: permission });
 
@@ -25,7 +24,7 @@ export const requirePermission = cache(async (permission: Permission) => {
 			"You do not have the required permissions to access this resource.",
 		);
 	}
-});
+};
 
 export async function requireAnyPermission(permissionList: Array<Permission>) {
 	await getLoggedInUser();

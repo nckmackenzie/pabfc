@@ -76,6 +76,14 @@ export const auth = betterAuth({
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
 		},
 	},
+	session: {
+		expiresIn: 60 * 60 * 24 * 7,
+		updateAge: 60 * 60 * 24, // 1 day
+		cookieCache: {
+			enabled: true,
+			maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
+		},
+	},
 	plugins: [twoFactor(), admin(), username(), reactStartCookies()],
 	hooks: {
 		after: createAuthMiddleware(async (ctx) => {
