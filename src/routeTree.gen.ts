@@ -22,13 +22,16 @@ import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-p
 import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
 import { Route as AppPlansRouteRouteImport } from './routes/app/plans/route'
 import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
+import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-of-accounts/route'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
+import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
+import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
@@ -103,6 +106,11 @@ const AppMembersRouteRoute = AppMembersRouteRouteImport.update({
   path: '/members',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppChartOfAccountsRouteRoute = AppChartOfAccountsRouteRouteImport.update({
+  id: '/chart-of-accounts',
+  path: '/chart-of-accounts',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -117,6 +125,11 @@ const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppMembersRouteRoute,
+} as any)
+const AppChartOfAccountsIndexRoute = AppChartOfAccountsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppChartOfAccountsRouteRoute,
 } as any)
 const AppActivityLogsIndexRoute = AppActivityLogsIndexRouteImport.update({
   id: '/activity-logs/',
@@ -137,6 +150,11 @@ const AppMembersNewRoute = AppMembersNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppMembersRouteRoute,
+} as any)
+const AppChartOfAccountsNewRoute = AppChartOfAccountsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppChartOfAccountsRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -189,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
@@ -199,10 +218,12 @@ export interface FileRoutesByFullPath {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
+  '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -226,10 +247,12 @@ export interface FileRoutesByTo {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
+  '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
@@ -248,6 +271,7 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
@@ -258,10 +282,12 @@ export interface FileRoutesById {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
+  '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -280,6 +306,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/member'
+    | '/app/chart-of-accounts'
     | '/app/members'
     | '/app/plans'
     | '/app/users'
@@ -290,10 +317,12 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/app/chart-of-accounts/new'
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
     | '/app/activity-logs'
+    | '/app/chart-of-accounts/'
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
@@ -317,10 +346,12 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/app/chart-of-accounts/new'
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
     | '/app/activity-logs'
+    | '/app/chart-of-accounts'
     | '/app/members'
     | '/app/plans'
     | '/app/users'
@@ -338,6 +369,7 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/app'
     | '/member'
+    | '/app/chart-of-accounts'
     | '/app/members'
     | '/app/plans'
     | '/app/users'
@@ -348,10 +380,12 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/app/chart-of-accounts/new'
     | '/app/members/new'
     | '/app/plans/new'
     | '/app/users/new'
     | '/app/activity-logs/'
+    | '/app/chart-of-accounts/'
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
@@ -466,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/chart-of-accounts': {
+      id: '/app/chart-of-accounts'
+      path: '/chart-of-accounts'
+      fullPath: '/app/chart-of-accounts'
+      preLoaderRoute: typeof AppChartOfAccountsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/users/': {
       id: '/app/users/'
       path: '/'
@@ -486,6 +527,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/members/'
       preLoaderRoute: typeof AppMembersIndexRouteImport
       parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/chart-of-accounts/': {
+      id: '/app/chart-of-accounts/'
+      path: '/'
+      fullPath: '/app/chart-of-accounts/'
+      preLoaderRoute: typeof AppChartOfAccountsIndexRouteImport
+      parentRoute: typeof AppChartOfAccountsRouteRoute
     }
     '/app/activity-logs/': {
       id: '/app/activity-logs/'
@@ -514,6 +562,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/members/new'
       preLoaderRoute: typeof AppMembersNewRouteImport
       parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/chart-of-accounts/new': {
+      id: '/app/chart-of-accounts/new'
+      path: '/new'
+      fullPath: '/app/chart-of-accounts/new'
+      preLoaderRoute: typeof AppChartOfAccountsNewRouteImport
+      parentRoute: typeof AppChartOfAccountsRouteRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -595,6 +650,22 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface AppChartOfAccountsRouteRouteChildren {
+  AppChartOfAccountsNewRoute: typeof AppChartOfAccountsNewRoute
+  AppChartOfAccountsIndexRoute: typeof AppChartOfAccountsIndexRoute
+}
+
+const AppChartOfAccountsRouteRouteChildren: AppChartOfAccountsRouteRouteChildren =
+  {
+    AppChartOfAccountsNewRoute: AppChartOfAccountsNewRoute,
+    AppChartOfAccountsIndexRoute: AppChartOfAccountsIndexRoute,
+  }
+
+const AppChartOfAccountsRouteRouteWithChildren =
+  AppChartOfAccountsRouteRoute._addFileChildren(
+    AppChartOfAccountsRouteRouteChildren,
+  )
+
 interface AppMembersRouteRouteChildren {
   AppMembersNewRoute: typeof AppMembersNewRoute
   AppMembersIndexRoute: typeof AppMembersIndexRoute
@@ -654,6 +725,7 @@ const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
 )
 
 interface AppRouteRouteChildren {
+  AppChartOfAccountsRouteRoute: typeof AppChartOfAccountsRouteRouteWithChildren
   AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
@@ -664,6 +736,7 @@ interface AppRouteRouteChildren {
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppChartOfAccountsRouteRoute: AppChartOfAccountsRouteRouteWithChildren,
   AppMembersRouteRoute: AppMembersRouteRouteWithChildren,
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,

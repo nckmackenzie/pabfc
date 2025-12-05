@@ -13,5 +13,9 @@ export const PERMISSIONS = [
 	"plans:update",
 	"plans:delete",
 	"dashboard:view",
+	"chart-of-accounts:view",
+	"chart-of-accounts:create",
+	"chart-of-accounts:update",
+	"chart-of-accounts:delete",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
