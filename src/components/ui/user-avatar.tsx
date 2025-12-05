@@ -1,7 +1,7 @@
 import { initials } from "@dicebear/collection";
 import { createAvatar } from "@dicebear/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,10 +83,11 @@ export function UserAvatar() {
 						<ConstructionIcon className="ml-auto" />
 					</DropdownMenuItem>
 					{session?.user.role === "admin" && (
-						<DropdownMenuItem disabled>
-							<CogIcon />
-							Settings
-							<ConstructionIcon className="ml-auto" />
+						<DropdownMenuItem asChild>
+							<Link to="/app/settings">
+								<CogIcon />
+								Settings
+							</Link>
 						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>

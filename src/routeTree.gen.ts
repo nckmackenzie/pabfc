@@ -15,6 +15,7 @@ import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MemberDashboardRouteImport } from './routes/member/dashboard'
 import { Route as AppUnauthorizedRouteImport } from './routes/app/unauthorized'
+import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
@@ -64,6 +65,11 @@ const MemberDashboardRoute = MemberDashboardRouteImport.update({
 const AppUnauthorizedRoute = AppUnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
     | '/app/dashboard'
+    | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
@@ -391,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/unauthorized'
       fullPath: '/app/unauthorized'
       preLoaderRoute: typeof AppUnauthorizedRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/dashboard': {
@@ -620,6 +639,7 @@ interface AppRouteRouteChildren {
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
 }
 
@@ -628,6 +648,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
 }
 
