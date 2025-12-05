@@ -15,7 +15,6 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
-	SidebarSeparator,
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth/client";
@@ -70,7 +69,6 @@ export function AppSidebar() {
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
-				<SidebarSeparator />
 				<SidebarGroup className="pt-0">
 					<SidebarGroupContent>
 						<SidebarMenu>
