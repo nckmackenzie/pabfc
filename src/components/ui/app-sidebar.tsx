@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth/client";
 import type { Permission } from "@/lib/permissions/constants";
+import { PermissionGate } from "./permission-gate";
 import { Skeleton } from "./skeleton";
 
 type MenuItem = {
@@ -51,6 +52,7 @@ const menuItems: MenuItem[] = [
 		title: "Member Management",
 		url: "/app/members",
 		icon: Users2Icon,
+		permission: "members:view",
 	},
 	{
 		title: "Plans & Packages",
@@ -84,8 +86,6 @@ const menuItems: MenuItem[] = [
 ];
 
 export function AppSidebar() {
-	const { pathname } = useLocation();
-	const { setOpenMobile, openMobile } = useSidebar();
 	const { data, isPending, error } = useSession();
 
 	return (
@@ -111,24 +111,12 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{menuItems.map((item) => {
-								const isActive = pathname.startsWith(item.url);
-								return (
-									<SidebarMenuItem key={item.title}>
-										<SidebarMenuButton
-											asChild
-											isActive={isActive}
-											onClick={() => setOpenMobile(!openMobile)}
-											data-testid={`link-${item.title.toLowerCase().replace(/\s/g, "-")}`}
-										>
-											<Link to={item.url}>
-												<item.icon className="size-5!" />
-												<span>{item.title}</span>
-												{item.wip && (
-													<ConstructionIcon className="ml-auto size-4! text-muted-foreground" />
-												)}
-											</Link>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
+								return data?.user.role === "admin" ? (
+									<MenuItem key={item.title} item={item} />
+								) : (
+									<PermissionGate key={item.title} permission={item.permission}>
+										<MenuItem item={item} />
+									</PermissionGate>
 								);
 							})}
 						</SidebarMenu>
@@ -156,5 +144,29 @@ export function AppSidebar() {
 				</SidebarGroup>
 			</SidebarFooter>
 		</Sidebar>
+	);
+}
+
+function MenuItem({ item }: { item: MenuItem }) {
+	const { pathname } = useLocation();
+	const { setOpenMobile, openMobile } = useSidebar();
+	const isActive = pathname.startsWith(item.url);
+	return (
+		<SidebarMenuItem>
+			<SidebarMenuButton
+				asChild
+				isActive={isActive}
+				onClick={() => setOpenMobile(!openMobile)}
+				data-testid={`link-${item.title.toLowerCase().replace(/\s/g, "-")}`}
+			>
+				<Link to={item.url}>
+					<item.icon className="size-5!" />
+					<span>{item.title}</span>
+					{item.wip && (
+						<ConstructionIcon className="ml-auto size-4! text-muted-foreground" />
+					)}
+				</Link>
+			</SidebarMenuButton>
+		</SidebarMenuItem>
 	);
 }
