@@ -120,6 +120,13 @@
       "when": 1764919402406,
       "tag": "0016_freezing_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1764955018981,
+      "tag": "0017_public_chamber",
+      "breakpoints": true
     }
   ]
 }
