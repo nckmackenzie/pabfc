@@ -44,6 +44,7 @@ export const users = pgTable(
 		active: boolean("active").default(true).notNull(),
 		memberId: varchar("member_id", { length: 255 }).unique(),
 		deleted_at: timestamp("deleted_at"),
+		deactivatedAt: timestamp("deactivated_at"),
 	},
 	(table) => [
 		index("users_name_idx").on(table.email),
