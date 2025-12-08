@@ -1,0 +1,2 @@
+ALTER TABLE "membership_plans" ADD COLUMN "revenue_account_id" integer;--> statement-breakpoint
+ALTER TABLE "membership_plans" ADD CONSTRAINT "membership_plans_revenue_account_id_ledger_accounts_id_fk" FOREIGN KEY ("revenue_account_id") REFERENCES "public"."ledger_accounts"("id") ON DELETE no action ON UPDATE no action;

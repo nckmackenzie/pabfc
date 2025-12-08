@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 import { attendanceLogs } from "./attendance";
+import { ledgerAccounts } from "./chart-of-accounts";
 
 export const gender = ["male", "female", "unspecified", "other"] as const;
 export type Gender = (typeof gender)[number];
@@ -102,6 +103,9 @@ export const membershipPlans = pgTable(
 		price: integer("price").notNull().default(0),
 		validFrom: date("valid_from"),
 		validTo: date("valid_to"),
+		revenueAccountId: integer("revenue_account_id").references(
+			() => ledgerAccounts.id,
+		),
 		active,
 		createdAt,
 		updatedAt,
