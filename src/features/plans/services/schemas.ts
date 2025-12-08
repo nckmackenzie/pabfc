@@ -9,6 +9,7 @@ export const planSchema = z
 		isSessionBased: z.boolean(),
 		sessionCount: z.number().nullish(),
 		active: z.boolean(),
+		revenueAccountId: z.string({ error: "Revenue account is required" }),
 	})
 	.superRefine((data, ctx) => {
 		if (

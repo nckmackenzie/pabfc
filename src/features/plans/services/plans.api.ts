@@ -50,6 +50,7 @@ export const createPlan = createServerFn({ method: "POST" })
 						...data,
 						sessionCount: data.isSessionBased ? (data.sessionCount ?? 0) : 0,
 						description: data.description ?? null,
+						revenueAccountId: +data.revenueAccountId,
 					})
 					.returning({ id: membershipPlans.id });
 
@@ -100,6 +101,7 @@ export const updatePlan = createServerFn({ method: "POST" })
 							? (values.sessionCount ?? 0)
 							: 0,
 						description: values.description ?? null,
+						revenueAccountId: +values.revenueAccountId,
 					})
 					.where(eq(membershipPlans.id, planId));
 

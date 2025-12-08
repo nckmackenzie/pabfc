@@ -127,6 +127,13 @@
       "when": 1764955018981,
       "tag": "0017_public_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1765194067522,
+      "tag": "0018_sour_cerise",
+      "breakpoints": true
     }
   ]
 }
