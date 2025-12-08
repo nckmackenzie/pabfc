@@ -1,9 +1,12 @@
 import { useStore } from "@tanstack/react-form";
+import { useQuery } from "@tanstack/react-query";
+import { useRouteContext } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
+import { SelectItem } from "@/components/ui/select";
+import { accountQueries } from "@/features/coa/services/queries";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
 import { useFormMutation } from "@/hooks/use-form-mutation";
-import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
 import type { WithId } from "@/types/index.types";
 import { createPlan, updatePlan } from "../services/plans.api";
@@ -16,9 +19,16 @@ const defaultValues = {
 	isSessionBased: false,
 	sessionCount: null,
 	active: true,
+	revenueAccountId: "",
 } as PlanSchema;
 
 export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
+	const contextAccounts = useRouteContext({
+		from: "/app/plans",
+		select: (ctx) => ctx.accounts,
+	});
+	const { data: freshAccounts } = useQuery(accountQueries.list({}));
+	const accounts = freshAccounts || contextAccounts;
 	const form = useAppForm({
 		defaultValues: plan || defaultValues,
 		validators: {
@@ -46,12 +56,9 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 			updatePlan({ data: { values, planId } }),
 	});
 
-	const [isDirty, isSessionBased] = useStore(form.store, (state) => [
-		state.isDirty,
+	const [isSessionBased] = useStore(form.store, (state) => [
 		state.values.isSessionBased,
 	]);
-
-	usePreventUnsavedChanges(isDirty);
 
 	return (
 		<div className="space-y-6">
@@ -107,24 +114,45 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 							/>
 						)}
 					</form.AppField>
-					<FieldGroup className="col-span-2 ">
+					<div className="col-span-2 ">
 						<div className="flex items-center gap-2">
 							<form.AppField name="isSessionBased">
 								{(field) => <field.Checkbox label="Is Session Based" />}
 							</form.AppField>
 						</div>
-						<form.AppField name="sessionCount">
-							{(field) => (
-								<field.Input
-									type="number"
-									label="Session Count"
-									placeholder="Enter session count"
-									disabled={!isSessionBased}
-									required={isSessionBased}
-								/>
-							)}
-						</form.AppField>
-					</FieldGroup>
+					</div>
+					<form.AppField name="sessionCount">
+						{(field) => (
+							<field.Input
+								type="number"
+								label="Session Count"
+								placeholder="Enter session count"
+								disabled={!isSessionBased}
+								required={isSessionBased}
+							/>
+						)}
+					</form.AppField>
+					<form.AppField name="revenueAccountId">
+						{(field) => (
+							<field.Select label="Revenue Account" required>
+								{accounts
+									.filter(
+										(account) =>
+											account.type === "revenue" &&
+											account.isActive &&
+											account.isPosting,
+									)
+									.map((account) => (
+										<SelectItem
+											key={account.id.toString()}
+											value={account.id.toString()}
+										>
+											{account.name}
+										</SelectItem>
+									))}
+							</field.Select>
+						)}
+					</form.AppField>
 					{plan && (
 						<FieldGroup className="col-span-2">
 							<form.AppField name="active">

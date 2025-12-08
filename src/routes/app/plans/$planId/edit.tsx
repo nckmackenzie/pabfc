@@ -34,7 +34,12 @@ function RouteComponent() {
 			hasBackLink
 			backPath="/app/plans"
 		>
-			<PlanForm plan={plan} />
+			<PlanForm
+				plan={{
+					...plan,
+					revenueAccountId: plan.revenueAccountId?.toString() ?? "",
+				}}
+			/>
 		</ProtectedPageWithWrapper>
 	);
 }
