@@ -13,6 +13,8 @@ import { EditAction } from "@/components/ui/custom-button";
 import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DeleteActionButton } from "@/components/ui/delete-action";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { PermissionGate } from "@/components/ui/permission-gate";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
 	TableBody,
@@ -113,19 +115,29 @@ export const ChartOfAccountsTable = () => {
 					},
 				}) => (
 					<DatatableActions>
-						<DropdownMenuItem asChild>
-							<Link
-								to="/app/chart-of-accounts/$accountId/edit"
-								params={{ accountId: id.toString() }}
-							>
-								<EditAction />
-							</Link>
-						</DropdownMenuItem>
-						<DeleteActionButton
-							deleteAction={deleteAccount}
-							resourceId={id.toString()}
-							queryKey={["accounts"]}
-						/>
+						<PermissionGate
+							permission="chart-of-accounts:update"
+							loadingComponent={<Skeleton className="h-4 w-56" />}
+						>
+							<DropdownMenuItem asChild>
+								<Link
+									to="/app/chart-of-accounts/$accountId/edit"
+									params={{ accountId: id.toString() }}
+								>
+									<EditAction />
+								</Link>
+							</DropdownMenuItem>
+						</PermissionGate>
+						<PermissionGate
+							permission="chart-of-accounts:delete"
+							loadingComponent={<Skeleton className="h-4 w-56" />}
+						>
+							<DeleteActionButton
+								deleteAction={deleteAccount}
+								resourceId={id.toString()}
+								queryKey={["accounts"]}
+							/>
+						</PermissionGate>
 					</DatatableActions>
 				),
 			},
