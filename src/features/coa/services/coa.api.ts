@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, ilike, or, sql } from "drizzle-orm";
+import { asc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { type AccountType, ledgerAccounts } from "@/drizzle/schema";
 import {
@@ -41,7 +41,8 @@ export const getAccounts = createServerFn({ method: "GET" })
 							ilike(sql`cast(${ledgerAccounts.type} as text)`, `%${q}%`),
 						)
 					: undefined,
-			);
+			)
+			.orderBy(asc(ledgerAccounts.name));
 	});
 
 export const getAccount = createServerFn({ method: "GET" })
