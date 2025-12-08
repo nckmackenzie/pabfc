@@ -3,15 +3,15 @@ import { useRouteContext } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
+import { ACCOUNT_TYPES } from "@/features/coa/lib/constants";
+import { createAccount, updateAccount } from "@/features/coa/services/coa.api";
 import {
 	type AccountsFormSchema,
 	accountsFormSchema,
 } from "@/features/coa/services/schemas";
 import { useFormMutation } from "@/hooks/use-form-mutation";
-import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
-import { ACCOUNT_TYPES } from "../lib/constants";
-import { createAccount } from "../services/coa.api";
+import { toTitleCase } from "@/lib/utils";
 
 const defaultValues = {
 	name: "",
@@ -22,39 +22,50 @@ const defaultValues = {
 	isActive: true,
 } as AccountsFormSchema;
 
-export function ChartOfAccountsForm() {
+export function ChartOfAccountsForm({
+	account,
+}: {
+	account?: AccountsFormSchema & { id: number };
+}) {
 	const parentAccounts = useRouteContext({
-		from: "/app/chart-of-accounts/new",
+		from: "/app/chart-of-accounts",
 		select: (context) => context.parentAccounts,
 	});
 	const accountMutation = useFormMutation({
 		createFn: (values: AccountsFormSchema) => createAccount({ data: values }),
+		updateFn: (accountId: string, values: AccountsFormSchema) =>
+			updateAccount({ data: { values, id: Number(accountId) } }),
 		entityName: "Account",
 		queryKey: ["accounts"],
 		onReset: () => form.reset(),
+		navigateTo: "/app/chart-of-accounts",
 	});
 
 	const form = useAppForm({
-		defaultValues,
+		defaultValues: account || defaultValues,
 		validators: {
 			onSubmit: accountsFormSchema,
 		},
 		onSubmit: ({ value }) => {
-			accountMutation.mutate({ data: value });
+			accountMutation.mutate({ data: value, id: account?.id.toString() });
 		},
 	});
 
-	const [isDirty, isSubcategory, type] = useStore(form.store, (state) => [
-		state.isDirty,
+	const [isSubcategory, type] = useStore(form.store, (state) => [
 		state.values.isSubcategory,
 		state.values.type,
 	]);
 
-	usePreventUnsavedChanges(isDirty);
-
 	return (
 		<div className="space-y-6">
-			<PageHeader title="New Account" description="Create a new account" />
+			<PageHeader
+				title={account ? "Edit Account" : "New Account"}
+				description={
+					account
+						? `Editing ${toTitleCase(account.name)} details`
+						: "Create a new account"
+				}
+			/>
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
@@ -113,7 +124,7 @@ export function ChartOfAccountsForm() {
 					<form.AppForm>
 						<form.SubmitButton
 							isLoading={accountMutation.isPending}
-							buttonText="Save"
+							buttonText={account ? "Update" : "Create"}
 							withReset
 						/>
 					</form.AppForm>

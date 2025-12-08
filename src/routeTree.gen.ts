@@ -40,6 +40,7 @@ import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$user
 import { Route as AppPlansPlanIdEditRouteImport } from './routes/app/plans/$planId/edit'
 import { Route as AppMembersMemberIdProfileRouteImport } from './routes/app/members/$memberId.profile'
 import { Route as AppMembersMemberIdEditRouteImport } from './routes/app/members/$memberId.edit'
+import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 
 const MemberRouteRoute = MemberRouteRouteImport.update({
@@ -197,6 +198,12 @@ const AppMembersMemberIdEditRoute = AppMembersMemberIdEditRouteImport.update({
   path: '/$memberId/edit',
   getParentRoute: () => AppMembersRouteRoute,
 } as any)
+const AppChartOfAccountsAccountIdEditRoute =
+  AppChartOfAccountsAccountIdEditRouteImport.update({
+    id: '/$accountId/edit',
+    path: '/$accountId/edit',
+    getParentRoute: () => AppChartOfAccountsRouteRoute,
+  } as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/roles/$roleId/edit',
   path: '/roles/$roleId/edit',
@@ -227,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
@@ -256,6 +264,7 @@ export interface FileRoutesByTo {
   '/app/members': typeof AppMembersIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
+  '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
@@ -291,6 +300,7 @@ export interface FileRoutesById {
   '/app/members/': typeof AppMembersIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
+    | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
     | '/app/plans/$planId/edit'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/app/members'
     | '/app/plans'
     | '/app/users'
+    | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
     | '/app/plans/$planId/edit'
@@ -389,6 +401,7 @@ export interface FileRouteTypes {
     | '/app/members/'
     | '/app/plans/'
     | '/app/users/'
+    | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
     | '/app/plans/$planId/edit'
@@ -626,6 +639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersMemberIdEditRouteImport
       parentRoute: typeof AppMembersRouteRoute
     }
+    '/app/chart-of-accounts/$accountId/edit': {
+      id: '/app/chart-of-accounts/$accountId/edit'
+      path: '/$accountId/edit'
+      fullPath: '/app/chart-of-accounts/$accountId/edit'
+      preLoaderRoute: typeof AppChartOfAccountsAccountIdEditRouteImport
+      parentRoute: typeof AppChartOfAccountsRouteRoute
+    }
     '/app/users/roles/$roleId/edit': {
       id: '/app/users/roles/$roleId/edit'
       path: '/roles/$roleId/edit'
@@ -653,12 +673,14 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 interface AppChartOfAccountsRouteRouteChildren {
   AppChartOfAccountsNewRoute: typeof AppChartOfAccountsNewRoute
   AppChartOfAccountsIndexRoute: typeof AppChartOfAccountsIndexRoute
+  AppChartOfAccountsAccountIdEditRoute: typeof AppChartOfAccountsAccountIdEditRoute
 }
 
 const AppChartOfAccountsRouteRouteChildren: AppChartOfAccountsRouteRouteChildren =
   {
     AppChartOfAccountsNewRoute: AppChartOfAccountsNewRoute,
     AppChartOfAccountsIndexRoute: AppChartOfAccountsIndexRoute,
+    AppChartOfAccountsAccountIdEditRoute: AppChartOfAccountsAccountIdEditRoute,
   }
 
 const AppChartOfAccountsRouteRouteWithChildren =
