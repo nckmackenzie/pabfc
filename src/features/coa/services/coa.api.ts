@@ -19,6 +19,13 @@ function defaultNormalBalanceForType(type: AccountType): "debit" | "credit" {
 	}
 }
 
+export const getAccounts = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("chart-of-accounts:view");
+		return db.select().from(ledgerAccounts);
+	});
+
 export const createAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator(accountsFormSchema)

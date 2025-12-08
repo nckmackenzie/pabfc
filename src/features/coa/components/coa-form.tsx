@@ -1,4 +1,5 @@
 import { useStore } from "@tanstack/react-form";
+import { useRouteContext } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
@@ -22,6 +23,10 @@ const defaultValues = {
 } as AccountsFormSchema;
 
 export function ChartOfAccountsForm() {
+	const parentAccounts = useRouteContext({
+		from: "/app/chart-of-accounts/new",
+		select: (context) => context.parentAccounts,
+	});
 	const accountMutation = useFormMutation({
 		createFn: (values: AccountsFormSchema) => createAccount({ data: values }),
 		entityName: "Account",
@@ -39,9 +44,10 @@ export function ChartOfAccountsForm() {
 		},
 	});
 
-	const [isDirty, isSubcategory] = useStore(form.store, (state) => [
+	const [isDirty, isSubcategory, type] = useStore(form.store, (state) => [
 		state.isDirty,
 		state.values.isSubcategory,
+		state.values.type,
 	]);
 
 	usePreventUnsavedChanges(isDirty);
@@ -86,9 +92,16 @@ export function ChartOfAccountsForm() {
 								label="Parent Account"
 								disabled={!isSubcategory}
 							>
-								<SelectItem value="some value">
-									Select a parent account
-								</SelectItem>
+								{parentAccounts
+									.filter((acc) => acc.type === type)
+									.map((account) => (
+										<SelectItem
+											key={account.value}
+											value={account.value.toString()}
+										>
+											{account.label}
+										</SelectItem>
+									))}
 							</field.Select>
 						)}
 					</form.AppField>
