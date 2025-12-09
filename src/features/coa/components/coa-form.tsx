@@ -1,4 +1,5 @@
 import { useStore } from "@tanstack/react-form";
+import { useQuery } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
@@ -12,6 +13,7 @@ import {
 import { useFormMutation } from "@/hooks/use-form-mutation";
 import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
+import { accountQueries } from "../services/queries";
 
 const defaultValues = {
 	name: "",
@@ -27,10 +29,14 @@ export function ChartOfAccountsForm({
 }: {
 	account?: AccountsFormSchema & { id: number };
 }) {
-	const parentAccounts = useRouteContext({
+	const loaderParentAccounts = useRouteContext({
 		from: "/app/chart-of-accounts",
 		select: (context) => context.parentAccounts,
 	});
+	const { data: parentAccountsFreshData } = useQuery(
+		accountQueries.parentAccounts(),
+	);
+	const parentAccounts = parentAccountsFreshData || loaderParentAccounts;
 	const accountMutation = useFormMutation({
 		createFn: (values: AccountsFormSchema) => createAccount({ data: values }),
 		updateFn: (accountId: string, values: AccountsFormSchema) =>
