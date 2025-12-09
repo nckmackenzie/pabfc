@@ -42,7 +42,7 @@ export const getAccounts = createServerFn({ method: "GET" })
 						)
 					: undefined,
 			)
-			.orderBy(asc(ledgerAccounts.name));
+			.orderBy(asc(ledgerAccounts.type), asc(ledgerAccounts.name));
 	});
 
 export const getAccount = createServerFn({ method: "GET" })
