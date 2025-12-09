@@ -1,4 +1,5 @@
 import { useStore } from "@tanstack/react-form";
+import { getRouteApi } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { SelectItem } from "@/components/ui/select";
 import { useSettingsMutation } from "@/features/settings/hooks/useSettingsMutation";
@@ -14,6 +15,7 @@ export function BillingForm({
 }: {
 	billingSettings?: BillingSchema;
 }) {
+	const { accounts } = getRouteApi("/app/settings").useLoaderData();
 	const dataMutation = useSettingsMutation({
 		actionFn: upsertBillingSettings,
 		queryKey: ["settings"],
@@ -28,6 +30,7 @@ export function BillingForm({
 				invoiceNumberPadding: null,
 				applyTaxToMembership: false,
 				vatType: null,
+				vatAccountId: null,
 			} as BillingSchema),
 		validators: {
 			onSubmit: billingSchema,
@@ -80,18 +83,34 @@ export function BillingForm({
 						)}
 					</form.AppField>
 				</div>
-				<form.AppField name="vatType">
-					{(field) => (
-						<field.Select
-							disabled={!applyTaxToMembership}
-							label="VAT Type"
-							helperText="VAT type for invoices."
-						>
-							<SelectItem value="inclusive">Inclusive</SelectItem>
-							<SelectItem value="exclusive">Exclusive</SelectItem>
-						</field.Select>
-					)}
-				</form.AppField>
+				<div className="grid lg:grid-cols-2 gap-4">
+					<form.AppField name="vatType">
+						{(field) => (
+							<field.Select
+								disabled={!applyTaxToMembership}
+								label="VAT Type"
+								helperText="VAT type for invoices."
+							>
+								<SelectItem value="inclusive">Inclusive</SelectItem>
+								<SelectItem value="exclusive">Exclusive</SelectItem>
+							</field.Select>
+						)}
+					</form.AppField>
+					<form.AppField name="vatAccountId">
+						{(field) => (
+							<field.Select
+								label="VAT Account"
+								helperText="VAT account for invoices."
+							>
+								{accounts.map((acc) => (
+									<SelectItem key={acc.id} value={acc.id.toString()}>
+										{acc.name}
+									</SelectItem>
+								))}
+							</field.Select>
+						)}
+					</form.AppField>
+				</div>
 
 				<div className="col-span-full">
 					<form.AppForm>

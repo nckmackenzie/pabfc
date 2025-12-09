@@ -35,6 +35,7 @@ export const settings = pgTable("settings", {
 		invoiceNumberPadding?: number;
 		applyTaxToMembership?: boolean;
 		vatType?: VatType;
+		vatAccountId?: number;
 	}>(),
 	createdAt,
 	updatedAt,
