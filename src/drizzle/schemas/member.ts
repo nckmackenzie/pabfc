@@ -4,6 +4,7 @@ import {
 	date,
 	index,
 	integer,
+	numeric,
 	pgEnum,
 	pgMaterializedView,
 	pgTable,
@@ -14,6 +15,7 @@ import {
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 import { attendanceLogs } from "./attendance";
 import { ledgerAccounts } from "./chart-of-accounts";
+import { customerInvoices, payments } from "./payments";
 
 export const gender = ["male", "female", "unspecified", "other"] as const;
 export type Gender = (typeof gender)[number];
@@ -89,6 +91,8 @@ export const members = pgTable(
 export const memberRelations = relations(members, ({ many }) => ({
 	memberships: many(memberMemberships),
 	attendances: many(attendanceLogs),
+	invoices: many(customerInvoices),
+	payments: many(payments),
 }));
 
 export const membershipPlans = pgTable(
@@ -139,6 +143,12 @@ export const memberMemberships = pgTable(
 		freezeReason: varchar("freeze_reason", { length: 255 }),
 		terminatedAt: date("terminated_at"),
 		terminatedReason: varchar("terminated_reason", { length: 255 }),
+		priceCharged: numeric("price_charged", { precision: 10, scale: 2 }),
+		invoiceId: varchar("invoice_id", { length: 255 }),
+		paymentId: varchar("payment_id", { length: 255 }),
+		previousMembershipPlanId: varchar("previous_membership_plan_id", {
+			length: 255,
+		}),
 		createdAt,
 		updatedAt,
 	},
