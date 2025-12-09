@@ -21,15 +21,18 @@ import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
 import { Route as AppPlansRouteRouteImport } from './routes/app/plans/route'
+import { Route as AppPaymentsRouteRouteImport } from './routes/app/payments/route'
 import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
 import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-of-accounts/route'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
+import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
 import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
+import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -102,6 +105,11 @@ const AppPlansRouteRoute = AppPlansRouteRouteImport.update({
   path: '/plans',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppPaymentsRouteRoute = AppPaymentsRouteRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppMembersRouteRoute = AppMembersRouteRouteImport.update({
   id: '/members',
   path: '/members',
@@ -121,6 +129,11 @@ const AppPlansIndexRoute = AppPlansIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppPlansRouteRoute,
+} as any)
+const AppPaymentsIndexRoute = AppPaymentsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppPaymentsRouteRoute,
 } as any)
 const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   id: '/',
@@ -146,6 +159,11 @@ const AppPlansNewRoute = AppPlansNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppPlansRouteRoute,
+} as any)
+const AppPaymentsNewRoute = AppPaymentsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppPaymentsRouteRoute,
 } as any)
 const AppMembersNewRoute = AppMembersNewRouteImport.update({
   id: '/new',
@@ -216,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/member': typeof MemberRouteRouteWithChildren
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
+  '/app/payments': typeof AppPaymentsRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
@@ -227,11 +246,13 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
+  '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
+  '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
@@ -257,11 +278,13 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
+  '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
+  '/app/payments': typeof AppPaymentsIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
@@ -282,6 +305,7 @@ export interface FileRoutesById {
   '/member': typeof MemberRouteRouteWithChildren
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
+  '/app/payments': typeof AppPaymentsRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
@@ -293,11 +317,13 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
+  '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
+  '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
@@ -318,6 +344,7 @@ export interface FileRouteTypes {
     | '/member'
     | '/app/chart-of-accounts'
     | '/app/members'
+    | '/app/payments'
     | '/app/plans'
     | '/app/users'
     | '/forgot-password'
@@ -329,11 +356,13 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/app/chart-of-accounts/new'
     | '/app/members/new'
+    | '/app/payments/new'
     | '/app/plans/new'
     | '/app/users/new'
     | '/app/activity-logs'
     | '/app/chart-of-accounts/'
     | '/app/members/'
+    | '/app/payments/'
     | '/app/plans/'
     | '/app/users/'
     | '/app/chart-of-accounts/$accountId/edit'
@@ -359,11 +388,13 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/app/chart-of-accounts/new'
     | '/app/members/new'
+    | '/app/payments/new'
     | '/app/plans/new'
     | '/app/users/new'
     | '/app/activity-logs'
     | '/app/chart-of-accounts'
     | '/app/members'
+    | '/app/payments'
     | '/app/plans'
     | '/app/users'
     | '/app/chart-of-accounts/$accountId/edit'
@@ -383,6 +414,7 @@ export interface FileRouteTypes {
     | '/member'
     | '/app/chart-of-accounts'
     | '/app/members'
+    | '/app/payments'
     | '/app/plans'
     | '/app/users'
     | '/(auth)/forgot-password'
@@ -394,11 +426,13 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/app/chart-of-accounts/new'
     | '/app/members/new'
+    | '/app/payments/new'
     | '/app/plans/new'
     | '/app/users/new'
     | '/app/activity-logs/'
     | '/app/chart-of-accounts/'
     | '/app/members/'
+    | '/app/payments/'
     | '/app/plans/'
     | '/app/users/'
     | '/app/chart-of-accounts/$accountId/edit'
@@ -506,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlansRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/payments': {
+      id: '/app/payments'
+      path: '/payments'
+      fullPath: '/app/payments'
+      preLoaderRoute: typeof AppPaymentsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/members': {
       id: '/app/members'
       path: '/members'
@@ -533,6 +574,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/plans/'
       preLoaderRoute: typeof AppPlansIndexRouteImport
       parentRoute: typeof AppPlansRouteRoute
+    }
+    '/app/payments/': {
+      id: '/app/payments/'
+      path: '/'
+      fullPath: '/app/payments/'
+      preLoaderRoute: typeof AppPaymentsIndexRouteImport
+      parentRoute: typeof AppPaymentsRouteRoute
     }
     '/app/members/': {
       id: '/app/members/'
@@ -568,6 +616,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/plans/new'
       preLoaderRoute: typeof AppPlansNewRouteImport
       parentRoute: typeof AppPlansRouteRoute
+    }
+    '/app/payments/new': {
+      id: '/app/payments/new'
+      path: '/new'
+      fullPath: '/app/payments/new'
+      preLoaderRoute: typeof AppPaymentsNewRouteImport
+      parentRoute: typeof AppPaymentsRouteRoute
     }
     '/app/members/new': {
       id: '/app/members/new'
@@ -706,6 +761,19 @@ const AppMembersRouteRouteWithChildren = AppMembersRouteRoute._addFileChildren(
   AppMembersRouteRouteChildren,
 )
 
+interface AppPaymentsRouteRouteChildren {
+  AppPaymentsNewRoute: typeof AppPaymentsNewRoute
+  AppPaymentsIndexRoute: typeof AppPaymentsIndexRoute
+}
+
+const AppPaymentsRouteRouteChildren: AppPaymentsRouteRouteChildren = {
+  AppPaymentsNewRoute: AppPaymentsNewRoute,
+  AppPaymentsIndexRoute: AppPaymentsIndexRoute,
+}
+
+const AppPaymentsRouteRouteWithChildren =
+  AppPaymentsRouteRoute._addFileChildren(AppPaymentsRouteRouteChildren)
+
 interface AppPlansRouteRouteChildren {
   AppPlansNewRoute: typeof AppPlansNewRoute
   AppPlansIndexRoute: typeof AppPlansIndexRoute
@@ -749,6 +817,7 @@ const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
 interface AppRouteRouteChildren {
   AppChartOfAccountsRouteRoute: typeof AppChartOfAccountsRouteRouteWithChildren
   AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
+  AppPaymentsRouteRoute: typeof AppPaymentsRouteRouteWithChildren
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
@@ -760,6 +829,7 @@ interface AppRouteRouteChildren {
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppChartOfAccountsRouteRoute: AppChartOfAccountsRouteRouteWithChildren,
   AppMembersRouteRoute: AppMembersRouteRouteWithChildren,
+  AppPaymentsRouteRoute: AppPaymentsRouteRouteWithChildren,
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,

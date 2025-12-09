@@ -22,4 +22,9 @@ export const memberQueries = {
 			queryKey: [...memberQueries.all, "overview", memberId],
 			queryFn: () => getMemberProfileData({ data: memberId }),
 		}),
+	activeMembers: () =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "activeMembers"],
+			queryFn: () => getMembers({ data: { status: "active" } }),
+		}),
 };
