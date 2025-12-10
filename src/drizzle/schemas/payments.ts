@@ -210,9 +210,9 @@ export const mpesaStkRequests = pgTable("mpesa_stk_requests", {
 	memberId: varchar("member_id")
 		.notNull()
 		.references(() => members.id),
-	invoiceId: varchar("invoice_id")
-		.notNull()
-		.references(() => customerInvoices.id, { onDelete: "cascade" }),
+	invoiceId: varchar("invoice_id").references(() => customerInvoices.id, {
+		onDelete: "cascade",
+	}),
 	paymentId: varchar("payment_id").references(() => payments.id),
 	phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
 	amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
@@ -227,5 +227,6 @@ export const mpesaStkRequests = pgTable("mpesa_stk_requests", {
 	initiatedChannel: paymentChannelEnum("initiated_channel").notNull(),
 	initiatedByUserId: varchar("initiated_by_user_id"),
 	createdAt,
+	updatedAt,
 	callbackReceivedAt: timestamp("callback_received_at", { withTimezone: true }),
 });
