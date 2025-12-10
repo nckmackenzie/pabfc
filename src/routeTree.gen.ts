@@ -35,6 +35,7 @@ import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
+import { Route as ApiMpesaCallbackRouteImport } from './routes/api/mpesa/callback'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
@@ -175,6 +176,11 @@ const AppChartOfAccountsNewRoute = AppChartOfAccountsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppChartOfAccountsRouteRoute,
 } as any)
+const ApiMpesaCallbackRoute = ApiMpesaCallbackRouteImport.update({
+  id: '/api/mpesa/callback',
+  path: '/api/mpesa/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/api/mpesa/callback'
     | '/app/chart-of-accounts/new'
     | '/app/members/new'
     | '/app/payments/new'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/api/mpesa/callback'
     | '/app/chart-of-accounts/new'
     | '/app/members/new'
     | '/app/payments/new'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/api/mpesa/callback'
     | '/app/chart-of-accounts/new'
     | '/app/members/new'
     | '/app/payments/new'
@@ -452,6 +464,7 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   MemberRouteRoute: typeof MemberRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -637,6 +650,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/chart-of-accounts/new'
       preLoaderRoute: typeof AppChartOfAccountsNewRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
+    }
+    '/api/mpesa/callback': {
+      id: '/api/mpesa/callback'
+      path: '/api/mpesa/callback'
+      fullPath: '/api/mpesa/callback'
+      preLoaderRoute: typeof ApiMpesaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -860,6 +880,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   MemberRouteRoute: MemberRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
