@@ -1,10 +1,17 @@
+import { useStore } from "@tanstack/react-form";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { CheckIcon, ResetIcon, XIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { SelectItem } from "@/components/ui/select";
+import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
+import { memberQueries } from "@/features/members/services/queries";
 import {
 	type PaymentSchema,
 	paymentSchema,
@@ -20,11 +27,46 @@ export function PaymentForm() {
 			memberId: "",
 			paymentDate: new Date().toISOString(),
 			amount: 0,
+			phoneNumber: "",
 		} as PaymentSchema,
 		validators: {
 			onSubmit: paymentSchema,
 		},
 	});
+
+	const [memberId] = useStore(form.store, (state) => [state.values.memberId]);
+
+	const [
+		{ data: activeMembership, isLoading: isLoadingPlan },
+		{ data: member, isLoading: isLoadingMember },
+	] = useQueries({
+		queries: [
+			{
+				queryKey: ["member-active-plan", memberId],
+				queryFn: () => getMemberPreviousPlanDetails({ data: memberId }),
+				enabled: !!memberId,
+				refetchOnWindowFocus: false,
+			},
+			memberQueries.detail(memberId),
+		],
+	});
+
+	useEffect(() => {
+		if (member?.contact) {
+			form.setFieldValue("phoneNumber", member?.contact);
+		}
+	}, [member?.contact, form]);
+
+	const isFetchingDetails = isLoadingPlan || isLoadingMember;
+
+	const currentPlanName = activeMembership?.membershipPlan?.name || "";
+	const startDate = activeMembership?.startDate
+		? format(new Date(activeMembership.startDate), "PP")
+		: "";
+	const endDate = activeMembership?.endDate
+		? format(new Date(activeMembership.endDate), "PP")
+		: "";
+
 	return (
 		<form
 			onSubmit={(e) => {
@@ -48,20 +90,28 @@ export function PaymentForm() {
 					)}
 				</form.AppField>
 			</FieldGroup>
-			<FieldGroup className="grid lg:grid-cols-3 gap-4">
+			<FieldGroup className="grid lg:grid-cols-3 gap-4 relative">
+				{isLoadingPlan && (
+					<div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-md">
+						<div className="flex items-center gap-2 bg-background border rounded-md px-4 py-2 shadow-sm">
+							<Loader2 className="animate-spin h-4 w-4" />
+							<span className="text-sm font-medium">Fetching plan...</span>
+						</div>
+					</div>
+				)}
 				<ReadonlyFields
 					label="Current Plan"
-					value=""
+					value={currentPlanName}
 					id={generateRandomId("member")}
 				/>
 				<ReadonlyFields
 					label="Start Date"
-					value=""
+					value={startDate}
 					id={generateRandomId("startDate")}
 				/>
 				<ReadonlyFields
 					label="End Date"
-					value=""
+					value={endDate}
 					id={generateRandomId("endDate")}
 				/>
 			</FieldGroup>
@@ -94,18 +144,26 @@ export function PaymentForm() {
 				/>
 			</FieldGroup>
 			<FieldGroup>
-				<Field>
-					<FieldLabel>Phone Number</FieldLabel>
-					<Input />
-				</Field>
+				<form.AppField name="phoneNumber">
+					{(field) => (
+						<field.Input label="Phone Number" required type="number" />
+					)}
+				</form.AppField>
 			</FieldGroup>
 			<Alert variant="warning">
 				<AlertTitle>Alert Title</AlertTitle>
-				<AlertDescription>This is the content of the alert.</AlertDescription>
+				<AlertDescription>
+					{format(new Date(), "yyyyMMddHHmmss")}
+				</AlertDescription>
 			</Alert>
 
 			<div className="flex items-center gap-4">
-				<Button type="submit" size="lg" className="self-end">
+				<Button
+					disabled={isFetchingDetails}
+					type="submit"
+					size="lg"
+					className="self-end"
+				>
 					<CheckIcon />
 					Prompt Payment
 				</Button>
@@ -114,6 +172,7 @@ export function PaymentForm() {
 					variant="secondary"
 					size="lg"
 					className="self-end"
+					disabled={isFetchingDetails}
 				>
 					<ResetIcon />
 					Select from Pending Payments
@@ -126,6 +185,7 @@ export function PaymentForm() {
 					size="lg"
 					className="self-end"
 					type="reset"
+					disabled={isFetchingDetails}
 				>
 					<XIcon />
 					Cancel
