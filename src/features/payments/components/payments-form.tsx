@@ -1,5 +1,5 @@
 import { useStore } from "@tanstack/react-form";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -18,9 +18,17 @@ import {
 } from "@/features/payments/services/schemas";
 import { useAppForm } from "@/lib/form";
 import { generateRandomId } from "@/lib/utils";
+import { usePaymentStatus } from "../hooks/use-payment-status";
+import { useStkPush } from "../hooks/use-stk-push";
 
 export function PaymentForm() {
 	const { members, plans } = getRouteApi("/app/payments/new").useLoaderData();
+
+	const stkMutation = useStkPush();
+	const statusQuery = usePaymentStatus(
+		stkMutation.data?.checkoutRequestId ?? null,
+	);
+
 	const form = useAppForm({
 		defaultValues: {
 			planId: "",
@@ -31,6 +39,9 @@ export function PaymentForm() {
 		} as PaymentSchema,
 		validators: {
 			onSubmit: paymentSchema,
+		},
+		onSubmit: ({ value }) => {
+			stkMutation.mutate(value);
 		},
 	});
 
@@ -145,21 +156,30 @@ export function PaymentForm() {
 			</FieldGroup>
 			<FieldGroup>
 				<form.AppField name="phoneNumber">
-					{(field) => (
-						<field.Input label="Phone Number" required type="number" />
-					)}
+					{(field) => <field.Input label="Phone Number" required />}
 				</form.AppField>
 			</FieldGroup>
-			<Alert variant="warning">
-				<AlertTitle>Alert Title</AlertTitle>
-				<AlertDescription>
-					{format(new Date(), "yyyyMMddHHmmss")}
-				</AlertDescription>
-			</Alert>
-
+			{stkMutation.error && (
+				<Alert variant="destructive">
+					<AlertTitle>Error</AlertTitle>
+					<AlertDescription>{stkMutation.error.message}</AlertDescription>
+				</Alert>
+			)}
+			{stkMutation.data?.checkoutRequestId && (
+				<Alert variant="warning">
+					<AlertTitle>Payment Status</AlertTitle>
+					<AlertDescription>
+						{statusQuery.isLoading && "Checking payment status..."}
+						{statusQuery.data && !statusQuery.data.exists && (
+							<p>Payment not found (yet).</p>
+						)}
+						{statusQuery.data?.status}
+					</AlertDescription>
+				</Alert>
+			)}
 			<div className="flex items-center gap-4">
 				<Button
-					disabled={isFetchingDetails}
+					disabled={isFetchingDetails || stkMutation.isPending}
 					type="submit"
 					size="lg"
 					className="self-end"
@@ -172,7 +192,7 @@ export function PaymentForm() {
 					variant="secondary"
 					size="lg"
 					className="self-end"
-					disabled={isFetchingDetails}
+					disabled={isFetchingDetails || stkMutation.isPending}
 				>
 					<ResetIcon />
 					Select from Pending Payments
@@ -185,7 +205,7 @@ export function PaymentForm() {
 					size="lg"
 					className="self-end"
 					type="reset"
-					disabled={isFetchingDetails}
+					disabled={isFetchingDetails || stkMutation.isPending}
 				>
 					<XIcon />
 					Cancel
