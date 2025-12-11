@@ -169,6 +169,27 @@
       "when": 1765372768306,
       "tag": "0023_rainy_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1765436056250,
+      "tag": "0024_tranquil_lifeguard",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1765436500968,
+      "tag": "0025_spicy_white_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1765447453032,
+      "tag": "0026_broad_newton_destine",
+      "breakpoints": true
     }
   ]
 }

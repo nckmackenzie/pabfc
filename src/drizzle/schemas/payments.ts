@@ -19,6 +19,10 @@ import {
 } from "@/drizzle/schemas/member";
 import { ledgerAccounts } from "./chart-of-accounts";
 
+export const DISCOUNT_TYPES = ["none", "amount", "percentage"] as const;
+export type DiscountType = (typeof DISCOUNT_TYPES)[number];
+export const discountTypeEnum = pgEnum("discount_type", DISCOUNT_TYPES);
+
 export const paymentChannelEnum = pgEnum("payment_channel", [
 	"portal",
 	"staff",
@@ -157,7 +161,18 @@ export const payments = pgTable("payments", {
 	memberId: varchar("member_id")
 		.notNull()
 		.references(() => members.id),
+	planId: varchar("plan_id").references(() => membershipPlans.id),
+	paymentNo: varchar("payment_no", { length: 50 }).notNull().unique(),
 	amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+	discountType: discountTypeEnum("discount_type").notNull().default("none"),
+	discount: numeric("discount", { precision: 18, scale: 2 }),
+	discountedAmount: numeric("discount_amount", { precision: 18, scale: 2 })
+		.notNull()
+		.default("0"),
+	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 })
+		.notNull()
+		.default("0"),
+	totalAmount: numeric("total_amount", { precision: 18, scale: 2 }).notNull(),
 	currency: varchar("currency", { length: 10 }).notNull().default("KES"),
 	status: paymentStatusEnum("status").notNull().default("pending"),
 	method: paymentMethodEnum("method").notNull(),
@@ -174,6 +189,10 @@ export const paymentRelations = relations(payments, ({ one }) => ({
 	member: one(members, {
 		fields: [payments.memberId],
 		references: [members.id],
+	}),
+	plan: one(membershipPlans, {
+		fields: [payments.planId],
+		references: [membershipPlans.id],
 	}),
 }));
 

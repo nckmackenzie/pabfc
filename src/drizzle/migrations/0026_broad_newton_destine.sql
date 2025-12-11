@@ -1,0 +1,2 @@
+ALTER TABLE "payments" ADD COLUMN "plan_id" varchar;--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_plan_id_membership_plans_id_fk" FOREIGN KEY ("plan_id") REFERENCES "public"."membership_plans"("id") ON DELETE no action ON UPDATE no action;
