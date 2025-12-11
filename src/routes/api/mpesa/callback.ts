@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { eq } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { mpesaStkRequests } from "@/drizzle/schema";
+import { inngest } from "@/lib/inngest/client";
 
 export const Route = createFileRoute("/api/mpesa/callback")({
 	server: {
@@ -25,6 +26,16 @@ export const Route = createFileRoute("/api/mpesa/callback")({
 							callbackPayload: stkCallback ?? null,
 						})
 						.where(eq(mpesaStkRequests.checkoutRequestId, checkoutRequestId));
+
+					if (status === "success") {
+						await inngest.send({
+							name: "app/payments.create",
+							data: {
+								checkoutRequestId,
+								stkCallback,
+							},
+						});
+					}
 				}
 
 				return new Response(JSON.stringify({ status: "ok, we did it" }), {
