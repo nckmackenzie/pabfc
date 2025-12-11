@@ -18,6 +18,7 @@ import {
 	membershipPlans,
 } from "@/drizzle/schemas/member";
 import { ledgerAccounts } from "./chart-of-accounts";
+import { vatTypeEnum } from "./settings";
 
 export const DISCOUNT_TYPES = ["none", "amount", "percentage"] as const;
 export type DiscountType = (typeof DISCOUNT_TYPES)[number];
@@ -169,6 +170,8 @@ export const payments = pgTable("payments", {
 	discountedAmount: numeric("discount_amount", { precision: 18, scale: 2 })
 		.notNull()
 		.default("0"),
+	lineTotal: numeric("line_total", { precision: 18, scale: 2 }).notNull(),
+	vatType: vatTypeEnum("vat_type").notNull().default("none"),
 	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 })
 		.notNull()
 		.default("0"),
