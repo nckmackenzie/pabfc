@@ -107,12 +107,13 @@ export const getMember = createServerFn()
 export const getMemberPreviousPlanDetails = createServerFn()
 	.inputValidator((data: string) => data)
 	.handler(async ({ data: memberId }) => {
-		return db.query.memberMemberships.findFirst({
+		const plan = await db.query.memberMemberships.findFirst({
 			columns: { createdAt: false, updatedAt: false },
 			with: { membershipPlan: { columns: { name: true } } },
 			where: eq(memberMemberships.memberId, memberId),
 			orderBy: desc(memberMemberships.endDate),
 		});
+		return plan ?? null;
 	});
 
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];
