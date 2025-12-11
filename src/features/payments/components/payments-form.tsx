@@ -1,28 +1,40 @@
 import { useStore } from "@tanstack/react-form";
 import { useQueries } from "@tanstack/react-query";
-import { getRouteApi } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import { addDays, format } from "date-fns";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { CustomAlert } from "@/components/ui/custom-alert";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { CheckIcon, ResetIcon, XIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { SelectItem } from "@/components/ui/select";
+import { ToastContent } from "@/components/ui/toast-content";
 import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
 import { memberQueries } from "@/features/members/services/queries";
+import { usePaymentStatus } from "@/features/payments/hooks/use-payment-status";
+import { useStkPush } from "@/features/payments/hooks/use-stk-push";
 import {
 	type PaymentSchema,
 	paymentSchema,
 } from "@/features/payments/services/schemas";
 import { useAppForm } from "@/lib/form";
+import { discountCalculator, internationalizePhoneNumber } from "@/lib/helpers";
 import { generateRandomId } from "@/lib/utils";
-import { usePaymentStatus } from "../hooks/use-payment-status";
-import { useStkPush } from "../hooks/use-stk-push";
+
+const DISCOUNT_TYPES = [
+	{ value: "none", label: "None" },
+	{ value: "amount", label: "Flat" },
+	{ value: "percentage", label: "Percentage" },
+];
 
 export function PaymentForm() {
 	const { members, plans } = getRouteApi("/app/payments/new").useLoaderData();
+	const navigate = useNavigate({ from: "/app/payments/new" });
+	const [newDates, setNewDates] = useState({
+		startDate: "",
+		endDate: "",
+	});
 
 	const stkMutation = useStkPush();
 	const statusQuery = usePaymentStatus(
@@ -33,9 +45,11 @@ export function PaymentForm() {
 		defaultValues: {
 			planId: "",
 			memberId: "",
-			paymentDate: new Date().toISOString(),
+			paymentDate: format(new Date(), "yyyy-MM-dd"),
 			amount: 0,
 			phoneNumber: "",
+			discountType: "none",
+			discount: 0,
 		} as PaymentSchema,
 		validators: {
 			onSubmit: paymentSchema,
@@ -45,17 +59,26 @@ export function PaymentForm() {
 		},
 	});
 
-	const [memberId] = useStore(form.store, (state) => [state.values.memberId]);
+	const [memberId, planId, discountType, discount, paymentDate] = useStore(
+		form.store,
+		(state) => [
+			state.values.memberId,
+			state.values.planId,
+			state.values.discountType,
+			state.values.discount,
+			state.values.paymentDate,
+		],
+	);
 
 	const [
 		{ data: activeMembership, isLoading: isLoadingPlan },
-		{ data: member, isLoading: isLoadingMember },
+		{ data: member },
 	] = useQueries({
 		queries: [
 			{
 				queryKey: ["member-active-plan", memberId],
 				queryFn: () => getMemberPreviousPlanDetails({ data: memberId }),
-				enabled: !!memberId,
+				enabled: memberId.trim().length > 0,
 				refetchOnWindowFocus: false,
 			},
 			memberQueries.detail(memberId),
@@ -64,11 +87,57 @@ export function PaymentForm() {
 
 	useEffect(() => {
 		if (member?.contact) {
-			form.setFieldValue("phoneNumber", member?.contact);
+			form.setFieldValue(
+				"phoneNumber",
+				internationalizePhoneNumber(member.contact),
+			);
 		}
 	}, [member?.contact, form]);
 
-	const isFetchingDetails = isLoadingPlan || isLoadingMember;
+	useEffect(() => {
+		const plan = plans.find((plan) => plan.id === planId);
+		if (!plan) return;
+
+		// Calculate Amount
+		const basePrice = plan.price ?? 0;
+		const deduction = discountCalculator(
+			discountType,
+			discount ?? 0,
+			basePrice,
+		);
+		const discountedAmount = Math.max(0, basePrice - deduction);
+
+		// Only update if value is different to avoid loops
+		if (form.getFieldValue("amount") !== discountedAmount) {
+			form.setFieldValue("amount", discountedAmount);
+		}
+
+		// Reset discount if type is none
+		if (discountType === "none" && (discount ?? 0) !== 0) {
+			form.setFieldValue("discount", 0);
+		}
+
+		// Calculate Dates based on Payment Date
+		const effectiveDate = paymentDate ? new Date(paymentDate) : new Date();
+		setNewDates({
+			startDate: format(effectiveDate, "PP"),
+			endDate: format(addDays(effectiveDate, plan.duration), "PP"),
+		});
+	}, [planId, plans, form, discountType, discount, paymentDate]);
+
+	useEffect(() => {
+		if (statusQuery.data?.status === "success") {
+			form.reset();
+			toast.success((t) => (
+				<ToastContent
+					title="Payment successful"
+					t={t}
+					message="Payment has been processed successfully"
+				/>
+			));
+			navigate({ to: "/app/payments" });
+		}
+	}, [statusQuery.data?.status, form, navigate]);
 
 	const currentPlanName = activeMembership?.membershipPlan?.name || "";
 	const startDate = activeMembership?.startDate
@@ -101,6 +170,11 @@ export function PaymentForm() {
 					)}
 				</form.AppField>
 			</FieldGroup>
+			<FieldGroup>
+				<form.AppField name="phoneNumber">
+					{(field) => <field.Input label="Phone Number" required />}
+				</form.AppField>
+			</FieldGroup>
 			<FieldGroup className="grid lg:grid-cols-3 gap-4 relative">
 				{isLoadingPlan && (
 					<div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-md">
@@ -131,86 +205,112 @@ export function PaymentForm() {
 					{(field) => (
 						<field.Select label="Plan" required placeholder="Select a plan">
 							{plans.map((plan) => (
-								<SelectItem key={plan.value} value={plan.value}>
-									{plan.label}
+								<SelectItem key={plan.id} value={plan.id}>
+									{plan.name}
 								</SelectItem>
 							))}
 						</field.Select>
 					)}
 				</form.AppField>
-				<form.AppField name="amount">
-					{(field) => <field.Input label="Amount" required type="number" />}
-				</form.AppField>
+				<ReadonlyFields
+					label="Plan Price"
+					value={
+						plans.find((plan) => plan.id === planId)?.price.toFixed(2) ?? ""
+					}
+					id={generateRandomId("amount")}
+				/>
 			</FieldGroup>
 			<FieldGroup className="grid lg:grid-cols-2 gap-4">
 				<ReadonlyFields
 					label="New Start Date"
-					value=""
+					value={newDates.startDate}
 					id={generateRandomId("newStartDate")}
 				/>
 				<ReadonlyFields
 					label="New End Date"
-					value=""
+					value={newDates.endDate}
 					id={generateRandomId("newEndDate")}
 				/>
 			</FieldGroup>
-			<FieldGroup>
-				<form.AppField name="phoneNumber">
-					{(field) => <field.Input label="Phone Number" required />}
+			<FieldGroup className="grid lg:grid-cols-3 gap-4">
+				<form.AppField name="discountType">
+					{(field) => (
+						<field.Select
+							label="Discount Type"
+							required
+							placeholder="Select a discount type"
+						>
+							{DISCOUNT_TYPES.map((discount) => (
+								<SelectItem key={discount.value} value={discount.value}>
+									{discount.label}
+								</SelectItem>
+							))}
+						</field.Select>
+					)}
+				</form.AppField>
+				<form.AppField name="discount">
+					{(field) => (
+						<field.Input
+							label="Discount"
+							disabled={discountType === "none"}
+							required={discountType !== "none"}
+							type="number"
+						/>
+					)}
+				</form.AppField>
+				<form.AppField name="amount">
+					{(field) => (
+						<field.Input
+							label="Amount"
+							readOnly
+							type="number"
+							className="bg-secondary"
+						/>
+					)}
 				</form.AppField>
 			</FieldGroup>
-			{stkMutation.error && (
-				<Alert variant="destructive">
-					<AlertTitle>Error</AlertTitle>
-					<AlertDescription>{stkMutation.error.message}</AlertDescription>
-				</Alert>
-			)}
-			{stkMutation.data?.checkoutRequestId && (
-				<Alert variant="warning">
-					<AlertTitle>Payment Status</AlertTitle>
-					<AlertDescription>
-						{statusQuery.isLoading && "Checking payment status..."}
-						{statusQuery.data && !statusQuery.data.exists && (
-							<p>Payment not found (yet).</p>
-						)}
-						{statusQuery.data?.status}
-					</AlertDescription>
-				</Alert>
-			)}
-			<div className="flex items-center gap-4">
-				<Button
-					disabled={isFetchingDetails || stkMutation.isPending}
-					type="submit"
-					size="lg"
-					className="self-end"
-				>
-					<CheckIcon />
-					Prompt Payment
-				</Button>
-				<Button
-					type="button"
-					variant="secondary"
-					size="lg"
-					className="self-end"
-					disabled={isFetchingDetails || stkMutation.isPending}
-				>
-					<ResetIcon />
-					Select from Pending Payments
-				</Button>
-				<Button
-					onClick={() => {
-						form.reset();
-					}}
-					variant="outline"
-					size="lg"
-					className="self-end"
-					type="reset"
-					disabled={isFetchingDetails || stkMutation.isPending}
-				>
-					<XIcon />
-					Cancel
-				</Button>
+			<div className="max-w-lg mx-auto">
+				{stkMutation.error && (
+					<CustomAlert
+						variant="destructive"
+						title="Error"
+						description={stkMutation.error.message}
+					/>
+				)}
+				{stkMutation.data?.checkoutRequestId && (
+					<CustomAlert
+						variant={
+							statusQuery.data && !statusQuery.data.exists
+								? "destructive"
+								: "info"
+						}
+						title="Payment Status"
+						description={
+							statusQuery.isLoading ? (
+								<div className="flex gap-2 items-center">
+									<Loader2 className="animate-spin h-4 w-4" />
+									<span className="text-sm">Checking payment status...</span>
+								</div>
+							) : statusQuery.data && !statusQuery.data.exists ? (
+								<p>Payment not found (yet).</p>
+							) : (
+								<p className="text-sm capitalize">{statusQuery.data?.status}</p>
+							)
+						}
+					/>
+				)}
 			</div>
+			<form.AppForm>
+				<form.SubmitButton
+					buttonText="Prompt Payment"
+					withReset
+					isLoading={
+						stkMutation.isPending ||
+						statusQuery.isLoading ||
+						statusQuery.data?.status === "pending"
+					}
+				/>
+			</form.AppForm>
 		</form>
 	);
 }

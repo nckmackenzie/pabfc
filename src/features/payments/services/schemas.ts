@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DISCOUNT_TYPES } from "@/drizzle/schema";
 
 export const paymentSchema = z.object({
 	memberId: z.string().min(1, { error: "Member is required" }),
@@ -10,6 +11,8 @@ export const paymentSchema = z.object({
 		.min(1, { error: "Phone Number is required" })
 		.regex(/254\d{9}/, { error: "Invalid phone number" }),
 	accountReference: z.string().optional(),
+	discountType: z.enum(DISCOUNT_TYPES),
+	discount: z.number().nullish(),
 });
 
 export type PaymentSchema = z.infer<typeof paymentSchema>;

@@ -30,6 +30,7 @@ import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/inde
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
 import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
+import { Route as ApiInngestIndexRouteImport } from './routes/api/inngest/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
@@ -151,6 +152,11 @@ const AppActivityLogsIndexRoute = AppActivityLogsIndexRouteImport.update({
   path: '/activity-logs/',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const ApiInngestIndexRoute = ApiInngestIndexRouteImport.update({
+  id: '/api/inngest/',
+  path: '/api/inngest/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppUsersNewRoute = AppUsersNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/api/inngest': typeof ApiInngestIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/api/inngest': typeof ApiInngestIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/api/inngest/': typeof ApiInngestIndexRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/app/payments/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/api/inngest'
     | '/app/activity-logs'
     | '/app/chart-of-accounts/'
     | '/app/members/'
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/app/payments/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/api/inngest'
     | '/app/activity-logs'
     | '/app/chart-of-accounts'
     | '/app/members'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/app/payments/new'
     | '/app/plans/new'
     | '/app/users/new'
+    | '/api/inngest/'
     | '/app/activity-logs/'
     | '/app/chart-of-accounts/'
     | '/app/members/'
@@ -465,6 +477,7 @@ export interface RootRouteChildren {
   MemberRouteRoute: typeof MemberRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
+  ApiInngestIndexRoute: typeof ApiInngestIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -615,6 +628,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/activity-logs'
       preLoaderRoute: typeof AppActivityLogsIndexRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/api/inngest/': {
+      id: '/api/inngest/'
+      path: '/api/inngest'
+      fullPath: '/api/inngest'
+      preLoaderRoute: typeof ApiInngestIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/users/new': {
       id: '/app/users/new'
@@ -881,6 +901,7 @@ const rootRouteChildren: RootRouteChildren = {
   MemberRouteRoute: MemberRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
+  ApiInngestIndexRoute: ApiInngestIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

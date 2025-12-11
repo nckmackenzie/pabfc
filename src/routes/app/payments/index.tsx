@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
+import { PaymentTable } from "@/features/payments/components/payment-table";
 import { useFilters } from "@/hooks/use-filters";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
@@ -25,7 +26,9 @@ function RouteComponent() {
 				defaultSearchValue={filters.q}
 				onSearch={(val) => setFilters({ q: val })}
 				buttonText="Add Payment"
-			/>
+			>
+				<PaymentTable />
+			</BasePageComponent>
 		</ProtectedPage>
 	);
 }
