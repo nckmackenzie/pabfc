@@ -27,10 +27,10 @@ export const getPaymentStatusFn = createServerFn()
 export const getPaymentNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const { rows } = await db.execute<{ paymentNo: number }>(
-			sql`SELECT coalesce(MAX(payment_no),'0') FROM payments`,
+		const { rows } = await db.execute<{ maxno: number }>(
+			sql`SELECT coalesce(MAX(CAST(payment_no AS integer)), 0) as maxno FROM payments`,
 		);
-		return +rows[0].paymentNo + 1;
+		return +rows[0].maxno + 1;
 	});
 
 export const getPayments = createServerFn()
