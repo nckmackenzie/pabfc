@@ -121,6 +121,7 @@ export const mebershipPlansRelations = relations(
 	membershipPlans,
 	({ many }) => ({
 		members: many(memberMemberships),
+		payments: many(payments),
 	}),
 );
 
