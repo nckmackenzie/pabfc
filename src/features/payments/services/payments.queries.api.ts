@@ -1,7 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, sql } from "drizzle-orm";
+import { eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { mpesaStkRequests } from "@/drizzle/schema";
+import {
+	members,
+	membershipPlans,
+	mpesaStkRequests,
+	payments,
+} from "@/drizzle/schema";
+import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
 export const getPaymentStatusFn = createServerFn()
@@ -35,12 +41,48 @@ export const getPaymentNo = createServerFn()
 
 export const getPayments = createServerFn()
 	.middleware([authMiddleware])
-	.handler(async () => {
-		const payments = await db.query.payments.findMany({
-			columns: { createdAt: false, updatedAt: false },
+	.inputValidator(searchValidateSchema)
+	.handler(async ({ data: { q } }) => {
+		return db
+			.select({
+				id: payments.id,
+				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
+				image: members.image,
+				plan: membershipPlans.name,
+				paymentNo: payments.paymentNo,
+				amount: payments.lineTotal,
+				reference: payments.reference,
+				paymentDate: payments.paymentDate,
+				channel: payments.channel,
+				status: payments.status,
+			})
+			.from(payments)
+			.innerJoin(members, eq(payments.memberId, members.id))
+			.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
+			.where(
+				q
+					? or(
+							ilike(members.firstName, `%${q}%`),
+							ilike(members.lastName, `%${q}%`),
+							ilike(membershipPlans.name, `%${q}%`),
+							ilike(payments.paymentNo, `%${q}%`),
+							ilike(payments.reference, `%${q}%`),
+							ilike(sql`CAST(${payments.lineTotal} AS TEXT)`, `%${q}%`),
+							ilike(sql`CAST(${payments.paymentDate} AS TEXT)`, `%${q}%`),
+						)
+					: undefined,
+			);
+	});
+
+export const getPayment = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((id: string) => id)
+	.handler(async ({ data: id }) => {
+		return db.query.payments.findFirst({
 			with: {
-				member: { columns: { lastName: true, firstName: true, image: true } },
+				member: { columns: { firstName: true, lastName: true, image: true } },
+				plan: { columns: { name: true } },
 			},
+			where: eq(payments.id, id),
 		});
-		return payments;
 	});
