@@ -81,7 +81,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				taxType,
 			);
 
-			await db.transaction(async (tx) => {
+			const paymentId = await db.transaction(async (tx) => {
 				await tx.insert(mpesaStkRequests).values({
 					memberId,
 					amount: amount.toString(),
@@ -92,25 +92,30 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 					status: "pending",
 				});
 
-				await tx.insert(payments).values({
-					paymentDate: new Date(paymentDate),
-					amount: plan.price.toString(),
-					lineTotal: amountExlusiveTax.toString(),
-					memberId,
-					planId,
-					paymentNo: paymentNo.toString(),
-					status: "pending",
-					discountType,
-					discount: discount ? discount.toString() : null,
-					discountedAmount: discountedAmount.toString(),
-					method: "mpesa_stk",
-					channel: "staff",
-					taxAmount: taxAmount.toString(),
-					totalAmount: totalInclusiveTax.toString(),
-					externalReference: checkoutRequestId,
-					createdByUserId: userId,
-					vatType: taxType,
-				});
+				const [{ id }] = await tx
+					.insert(payments)
+					.values({
+						paymentDate: new Date(paymentDate),
+						amount: plan.price.toString(),
+						lineTotal: amountExlusiveTax.toString(),
+						memberId,
+						planId,
+						paymentNo: paymentNo.toString(),
+						status: "pending",
+						discountType,
+						discount: discount ? discount.toString() : null,
+						discountedAmount: discountedAmount.toString(),
+						method: "mpesa_stk",
+						channel: "staff",
+						taxAmount: taxAmount.toString(),
+						totalAmount: totalInclusiveTax.toString(),
+						externalReference: checkoutRequestId,
+						createdByUserId: userId,
+						vatType: taxType,
+					})
+					.returning({ id: payments.id });
+
+				return id;
 			});
 
 			return {
@@ -118,6 +123,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				merchantRequestId,
 				customerMessage: mpesaRes.CustomerMessage,
 				responseDescription: mpesaRes.ResponseDescription,
+				paymentId,
 			};
 		},
 	);
