@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { PaymentTable } from "@/features/payments/components/payment-table";
+import { paymentsSearchValidateSchema } from "@/features/payments/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
-import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/payments/")({
 	component: RouteComponent,
-	validateSearch: searchValidateSchema,
+	validateSearch: paymentsSearchValidateSchema,
 	head: () => ({
 		meta: [{ title: "Payments / Prime Age Beauty & Fitness Club" }],
 	}),
