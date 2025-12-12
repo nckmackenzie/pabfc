@@ -135,9 +135,12 @@ export function PaymentForm() {
 					message="Payment has been processed successfully"
 				/>
 			));
-			navigate({ to: "/app/payments" });
+			navigate({
+				to: "/app/payments",
+				search: { payment: stkMutation.data?.paymentId },
+			});
 		}
-	}, [statusQuery.data?.status, form, navigate]);
+	}, [statusQuery.data?.status, form, navigate, stkMutation.data?.paymentId]);
 
 	const currentPlanName = activeMembership?.membershipPlan?.name || "";
 	const startDate = activeMembership?.startDate
