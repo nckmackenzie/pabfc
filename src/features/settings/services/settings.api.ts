@@ -209,6 +209,9 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 					invoiceNumberPadding: data.invoiceNumberPadding ?? undefined,
 					applyTaxToMembership: data.applyTaxToMembership ?? false,
 					vatType: data.vatType ?? undefined,
+					vatAccountId: data.vatAccountId
+						? Number(data.vatAccountId)
+						: undefined,
 				},
 				createdBy: user.id,
 			})
@@ -220,6 +223,9 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 						invoiceNumberPadding: data.invoiceNumberPadding ?? undefined,
 						applyTaxToMembership: data.applyTaxToMembership ?? false,
 						vatType: data.vatType ?? undefined,
+						vatAccountId: data.vatAccountId
+							? Number(data.vatAccountId)
+							: undefined,
 					},
 					updatedBy: user.id,
 				},

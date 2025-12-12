@@ -5,8 +5,16 @@ import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
+import { loadEnv } from 'vite'
+
+// Load environment variables
+const env = loadEnv('development', process.cwd(), '')
+
 
 const config = defineConfig({
+  server:{
+    allowedHosts: env.NODE_ENV !== 'production' ? ['localhost', '127.0.0.1', '0.0.0.0', 'localhost:3000',env.NGROK_DOMAIN!] : true,
+  },
   plugins: [
     devtools(),
     nitro(),

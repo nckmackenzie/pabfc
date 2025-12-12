@@ -1,0 +1,1 @@
+ALTER TABLE "mpesa_stk_requests" ALTER COLUMN "invoice_id" DROP NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE "mpesa_stk_requests" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;

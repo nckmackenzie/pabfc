@@ -49,6 +49,7 @@ export const billingSchema = z.object({
 	invoiceNumberPadding: z.number().nullish(),
 	applyTaxToMembership: z.boolean().nullish(),
 	vatType: z.enum(vatTypes).nullish(),
+	vatAccountId: z.string().nullish(),
 });
 
 export type SettingsDataSchema = z.infer<typeof settingsDataSchema>;

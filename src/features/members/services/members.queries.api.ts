@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, ilike, ne, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { members, membersOverview } from "@/drizzle/schema";
+import { memberMemberships, members, membersOverview } from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
@@ -102,6 +102,18 @@ export const getMember = createServerFn()
 			columns: { createdAt: false, updatedAt: false },
 			where: eq(members.id, memberId),
 		});
+	});
+
+export const getMemberPreviousPlanDetails = createServerFn()
+	.inputValidator((data: string) => data)
+	.handler(async ({ data: memberId }) => {
+		const plan = await db.query.memberMemberships.findFirst({
+			columns: { createdAt: false, updatedAt: false },
+			with: { membershipPlan: { columns: { name: true } } },
+			where: eq(memberMemberships.memberId, memberId),
+			orderBy: desc(memberMemberships.endDate),
+		});
+		return plan ?? null;
 	});
 
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];

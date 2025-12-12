@@ -24,7 +24,8 @@ const tabs = [
 
 export function SettingsForm() {
 	const [activeTab, setActiveTab] = useState("data");
-	const settingsLoaderData = getRouteApi("/app/settings").useLoaderData();
+	const { settings: settingsLoaderData } =
+		getRouteApi("/app/settings").useLoaderData();
 	const { data: freshData } = useQuery(settingsQuery());
 	const settingsData = freshData || settingsLoaderData;
 
@@ -99,6 +100,7 @@ export function SettingsForm() {
 							? {
 									id: settingsData.id,
 									...settingsData.billing,
+									vatAccountId: settingsData.billing.vatAccountId?.toString(),
 								}
 							: undefined
 					}
