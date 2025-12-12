@@ -30,6 +30,7 @@ import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/inde
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
 import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
+import { Route as ApiMockApiIndexRouteImport } from './routes/api/mock-api/index'
 import { Route as ApiInngestIndexRouteImport } from './routes/api/inngest/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
@@ -152,6 +153,11 @@ const AppActivityLogsIndexRoute = AppActivityLogsIndexRouteImport.update({
   path: '/activity-logs/',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const ApiMockApiIndexRoute = ApiMockApiIndexRouteImport.update({
+  id: '/api/mock-api/',
+  path: '/api/mock-api/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInngestIndexRoute = ApiInngestIndexRouteImport.update({
   id: '/api/inngest/',
   path: '/api/inngest/',
@@ -263,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/api/inngest': typeof ApiInngestIndexRoute
+  '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/api/inngest': typeof ApiInngestIndexRoute
+  '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/api/inngest/': typeof ApiInngestIndexRoute
+  '/api/mock-api/': typeof ApiMockApiIndexRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/app/plans/new'
     | '/app/users/new'
     | '/api/inngest'
+    | '/api/mock-api'
     | '/app/activity-logs'
     | '/app/chart-of-accounts/'
     | '/app/members/'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/app/plans/new'
     | '/app/users/new'
     | '/api/inngest'
+    | '/api/mock-api'
     | '/app/activity-logs'
     | '/app/chart-of-accounts'
     | '/app/members'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/app/plans/new'
     | '/app/users/new'
     | '/api/inngest/'
+    | '/api/mock-api/'
     | '/app/activity-logs/'
     | '/app/chart-of-accounts/'
     | '/app/members/'
@@ -478,6 +490,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
   ApiInngestIndexRoute: typeof ApiInngestIndexRoute
+  ApiMockApiIndexRoute: typeof ApiMockApiIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -628,6 +641,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/activity-logs'
       preLoaderRoute: typeof AppActivityLogsIndexRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/api/mock-api/': {
+      id: '/api/mock-api/'
+      path: '/api/mock-api'
+      fullPath: '/api/mock-api'
+      preLoaderRoute: typeof ApiMockApiIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/inngest/': {
       id: '/api/inngest/'
@@ -902,6 +922,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
   ApiInngestIndexRoute: ApiInngestIndexRoute,
+  ApiMockApiIndexRoute: ApiMockApiIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
