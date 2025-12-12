@@ -15,4 +15,17 @@ export const paymentSchema = z.object({
 	discount: z.number().nullish(),
 });
 
+export const paymentsSearchValidateSchema = z.object({
+	q: z.string().optional().catch(""),
+	payment: z.string().optional().catch(""),
+	channel: z.enum(["all", "portal", "staff"]).optional().catch("all"),
+	status: z
+		.enum(["all", "completed", "pending", "refunded", "failed"])
+		.optional()
+		.catch("all"),
+});
+
 export type PaymentSchema = z.infer<typeof paymentSchema>;
+export type PaymentsSearchValidateSchema = z.infer<
+	typeof paymentsSearchValidateSchema
+>;
