@@ -73,7 +73,7 @@ export async function initiateMpesaStkPush(params: StkPushParams) {
 		PartyA: phoneNumber,
 		PartyB: MPESA_SHORTCODE,
 		PhoneNumber: phoneNumber,
-		CallBackURL: `${MPESA_CALLBACK_DOMAIN}/api/mpesa/callback`,
+		CallBackURL: `${MPESA_CALLBACK_DOMAIN}/api/payments/pabfc/stk/callback`,
 		AccountReference: accountReference ?? "DefaultRef",
 		TransactionDesc: transactionDesc ?? "Payment",
 	};
