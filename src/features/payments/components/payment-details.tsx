@@ -372,3 +372,166 @@ export function PaymentDetails() {
 		</div>
 	);
 }
+
+export function PaymentDetailsSkeleton() {
+	return (
+		<div className="space-y-6">
+			{/* Header Skeleton */}
+			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<div className="space-y-2">
+					<Skeleton className="h-8 w-48" />
+					<Skeleton className="h-4 w-64" />
+				</div>
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-9 w-32" />
+					{/* <Skeleton className="h-9 w-32" /> */}
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* Main Column */}
+				<div className="lg:col-span-2 space-y-6">
+					{/* Payment Summary Skeleton */}
+					<Card>
+						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+							<div className="space-y-2">
+								<Skeleton className="h-5 w-32" />
+								<Skeleton className="h-4 w-48" />
+							</div>
+							<Skeleton className="h-6 w-16" />
+						</CardHeader>
+						<CardContent className="pt-6">
+							<div className="mb-6">
+								<div className="flex items-baseline gap-2">
+									<Skeleton className="h-9 w-32" />
+									<Skeleton className="h-4 w-24" />
+								</div>
+							</div>
+
+							<div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+								{[1, 2, 3, 4, 5].map((i) => (
+									<div key={i} className="space-y-2">
+										<Skeleton className="h-4 w-20" />
+										<Skeleton className="h-5 w-32" />
+										{i === 1 && <Skeleton className="h-3 w-24" />}
+									</div>
+								))}
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* Line Items Skeleton */}
+					<Card>
+						<CardHeader>
+							<Skeleton className="h-6 w-24 mb-2" />
+							<Skeleton className="h-4 w-48" />
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-4">
+								<div className="grid grid-cols-12 pb-2 border-b">
+									<div className="col-span-6">
+										<Skeleton className="h-4 w-24" />
+									</div>
+									<div className="col-span-2">
+										<Skeleton className="h-4 w-8" />
+									</div>
+									<div className="col-span-2">
+										<Skeleton className="h-4 w-16" />
+									</div>
+									<div className="col-span-2">
+										<Skeleton className="h-4 w-16 ml-auto" />
+									</div>
+								</div>
+								<div className="grid grid-cols-12 py-2 border-b items-center">
+									<div className="col-span-6 space-y-1">
+										<Skeleton className="h-5 w-32" />
+										<Skeleton className="h-3 w-24" />
+									</div>
+									<div className="col-span-2">
+										<Skeleton className="h-4 w-4" />
+									</div>
+									<div className="col-span-2">
+										<Skeleton className="h-4 w-16" />
+									</div>
+									<div className="col-span-2">
+										<Skeleton className="h-4 w-16 ml-auto" />
+									</div>
+								</div>
+								<div className="space-y-2 pt-4">
+									<div className="flex justify-between">
+										<Skeleton className="h-4 w-16" />
+										<Skeleton className="h-4 w-16" />
+									</div>
+									<div className="flex justify-between">
+										<Skeleton className="h-4 w-16" />
+										<Skeleton className="h-4 w-16" />
+									</div>
+									<div className="flex justify-between pt-2">
+										<Skeleton className="h-5 w-24" />
+										<Skeleton className="h-5 w-24" />
+									</div>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* Timeline Skeleton */}
+					<Card>
+						<CardHeader>
+							<Skeleton className="h-6 w-32 mb-2" />
+							<Skeleton className="h-4 w-48" />
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-6 pl-4 border-l">
+								{[1, 2].map((i) => (
+									<div key={i} className="space-y-1">
+										<Skeleton className="h-4 w-32" />
+										<Skeleton className="h-3 w-48" />
+									</div>
+								))}
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* Sidebar Column */}
+				<div className="space-y-6">
+					{/* Linked Membership Skeleton */}
+					<Card>
+						<CardHeader>
+							<Skeleton className="h-6 w-40 mb-2" />
+							<Skeleton className="h-4 w-56" />
+						</CardHeader>
+						<CardContent className="space-y-6">
+							<div>
+								<div className="flex justify-between mb-2">
+									<Skeleton className="h-5 w-32" />
+								</div>
+								<Skeleton className="h-4 w-40" />
+							</div>
+							<div className="grid grid-cols-2 gap-4">
+								{[1, 2, 3, 4].map((i) => (
+									<div key={i} className="space-y-1">
+										<Skeleton className="h-3 w-20" />
+										<Skeleton className="h-4 w-24" />
+									</div>
+								))}
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* Notes Skeleton */}
+					<Card>
+						<CardHeader>
+							<Skeleton className="h-5 w-16" />
+						</CardHeader>
+						<CardContent>
+							<Skeleton className="h-4 w-full" />
+							<Skeleton className="h-4 w-2/3 mt-2" />
+						</CardContent>
+					</Card>
+				</div>
+			</div>
+		</div>
+	);
+}
