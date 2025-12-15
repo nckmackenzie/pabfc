@@ -145,5 +145,5 @@ export function generateFullPaymentInvoiceNo(
 	const paddedPaymentNo = padding
 		? paymentNo.toString().padStart(padding, "0")
 		: paymentNo.toString();
-	return `${prefix ?? ""}${paddedPaymentNo}`;
+	return `${prefix ? `${prefix.toUpperCase()}-` : ""}${paddedPaymentNo}`;
 }

@@ -90,6 +90,7 @@ export const getPayment = createServerFn()
 					},
 				},
 				plan: { columns: { name: true, price: true } },
+				user: { columns: { name: true } },
 			},
 			where: eq(payments.id, id),
 		});
