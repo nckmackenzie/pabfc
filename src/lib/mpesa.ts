@@ -104,3 +104,38 @@ export async function initiateMpesaStkPush(params: StkPushParams) {
 		ResponseDescription: string;
 	};
 }
+
+export async function registerUrlCallacks() {
+	const { MPESA_SHORTCODE, MPESA_CONFIRMATION_URL, MPESA_VALIDATION_URL } =
+		process.env;
+	if (!MPESA_SHORTCODE || !MPESA_CONFIRMATION_URL || !MPESA_VALIDATION_URL)
+		throw new Error(
+			"MPESA_SHORTCODE or MPESA_CONFIRMATION_URL or MPESA_VALIDATION_URL is not set",
+		);
+
+	const accessToken = await getAccessToken();
+
+	const payload = {
+		ShortCode: MPESA_SHORTCODE,
+		ResponseType: "Completed",
+		ConfirmationURL: MPESA_CONFIRMATION_URL,
+		ValidationURL: MPESA_VALIDATION_URL,
+	};
+
+	const res = await fetch(`${baseUrl}/mpesa/c2b/v1/registerurl`, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(payload),
+	});
+
+	const json = await res.json();
+	if (!res.ok) {
+		console.error("C2B register error:", json);
+		throw new Error("C2B register failed");
+	}
+
+	return json;
+}

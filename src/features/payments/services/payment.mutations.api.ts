@@ -10,7 +10,7 @@ import {
 	generateFullPaymentInvoiceNo,
 	taxCalculator,
 } from "@/lib/helpers";
-import { initiateMpesaStkPush } from "@/lib/mpesa";
+import { initiateMpesaStkPush, registerUrlCallacks } from "@/lib/mpesa";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
@@ -127,3 +127,10 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 			};
 		},
 	);
+
+export const registerUrlCallacksFn = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await registerUrlCallacks();
+		return { success: true };
+	});
