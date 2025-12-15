@@ -44,9 +44,12 @@ import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.n
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
 import { Route as AppPlansPlanIdEditRouteImport } from './routes/app/plans/$planId/edit'
+import { Route as AppPaymentsPaymentIdDetailsRouteImport } from './routes/app/payments/$paymentId/details'
 import { Route as AppMembersMemberIdProfileRouteImport } from './routes/app/members/$memberId.profile'
 import { Route as AppMembersMemberIdEditRouteImport } from './routes/app/members/$memberId.edit'
 import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
+import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc-c2b/validate'
+import { Route as ApiPaymentsPabfcC2bConfRouteImport } from './routes/api/payments/pabfc-c2b/conf'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 
 const MemberRouteRoute = MemberRouteRouteImport.update({
@@ -223,6 +226,12 @@ const AppPlansPlanIdEditRoute = AppPlansPlanIdEditRouteImport.update({
   path: '/$planId/edit',
   getParentRoute: () => AppPlansRouteRoute,
 } as any)
+const AppPaymentsPaymentIdDetailsRoute =
+  AppPaymentsPaymentIdDetailsRouteImport.update({
+    id: '/$paymentId/details',
+    path: '/$paymentId/details',
+    getParentRoute: () => AppPaymentsRouteRoute,
+  } as any)
 const AppMembersMemberIdProfileRoute =
   AppMembersMemberIdProfileRouteImport.update({
     id: '/$memberId/profile',
@@ -240,6 +249,17 @@ const AppChartOfAccountsAccountIdEditRoute =
     path: '/$accountId/edit',
     getParentRoute: () => AppChartOfAccountsRouteRoute,
   } as any)
+const ApiPaymentsPabfcC2bValidateRoute =
+  ApiPaymentsPabfcC2bValidateRouteImport.update({
+    id: '/api/payments/pabfc-c2b/validate',
+    path: '/api/payments/pabfc-c2b/validate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPaymentsPabfcC2bConfRoute = ApiPaymentsPabfcC2bConfRouteImport.update({
+  id: '/api/payments/pabfc-c2b/conf',
+  path: '/api/payments/pabfc-c2b/conf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/roles/$roleId/edit',
   path: '/roles/$roleId/edit',
@@ -276,9 +296,12 @@ export interface FileRoutesByFullPath {
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/api/payments/pabfc-c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
+  '/api/payments/pabfc-c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
+  '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -311,9 +334,12 @@ export interface FileRoutesByTo {
   '/app/payments': typeof AppPaymentsIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
+  '/api/payments/pabfc-c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
+  '/api/payments/pabfc-c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
+  '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -353,9 +379,12 @@ export interface FileRoutesById {
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/api/payments/pabfc-c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
+  '/api/payments/pabfc-c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
+  '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -395,9 +424,12 @@ export interface FileRouteTypes {
     | '/app/payments/'
     | '/app/plans/'
     | '/app/users/'
+    | '/api/payments/pabfc-c2b/conf'
+    | '/api/payments/pabfc-c2b/validate'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
+    | '/app/payments/$paymentId/details'
     | '/app/plans/$planId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -430,9 +462,12 @@ export interface FileRouteTypes {
     | '/app/payments'
     | '/app/plans'
     | '/app/users'
+    | '/api/payments/pabfc-c2b/conf'
+    | '/api/payments/pabfc-c2b/validate'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
+    | '/app/payments/$paymentId/details'
     | '/app/plans/$planId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -471,9 +506,12 @@ export interface FileRouteTypes {
     | '/app/payments/'
     | '/app/plans/'
     | '/app/users/'
+    | '/api/payments/pabfc-c2b/conf'
+    | '/api/payments/pabfc-c2b/validate'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
+    | '/app/payments/$paymentId/details'
     | '/app/plans/$planId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -491,6 +529,8 @@ export interface RootRouteChildren {
   ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
   ApiInngestIndexRoute: typeof ApiInngestIndexRoute
   ApiMockApiIndexRoute: typeof ApiMockApiIndexRoute
+  ApiPaymentsPabfcC2bConfRoute: typeof ApiPaymentsPabfcC2bConfRoute
+  ApiPaymentsPabfcC2bValidateRoute: typeof ApiPaymentsPabfcC2bValidateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -740,6 +780,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlansPlanIdEditRouteImport
       parentRoute: typeof AppPlansRouteRoute
     }
+    '/app/payments/$paymentId/details': {
+      id: '/app/payments/$paymentId/details'
+      path: '/$paymentId/details'
+      fullPath: '/app/payments/$paymentId/details'
+      preLoaderRoute: typeof AppPaymentsPaymentIdDetailsRouteImport
+      parentRoute: typeof AppPaymentsRouteRoute
+    }
     '/app/members/$memberId/profile': {
       id: '/app/members/$memberId/profile'
       path: '/$memberId/profile'
@@ -760,6 +807,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/chart-of-accounts/$accountId/edit'
       preLoaderRoute: typeof AppChartOfAccountsAccountIdEditRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
+    }
+    '/api/payments/pabfc-c2b/validate': {
+      id: '/api/payments/pabfc-c2b/validate'
+      path: '/api/payments/pabfc-c2b/validate'
+      fullPath: '/api/payments/pabfc-c2b/validate'
+      preLoaderRoute: typeof ApiPaymentsPabfcC2bValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payments/pabfc-c2b/conf': {
+      id: '/api/payments/pabfc-c2b/conf'
+      path: '/api/payments/pabfc-c2b/conf'
+      fullPath: '/api/payments/pabfc-c2b/conf'
+      preLoaderRoute: typeof ApiPaymentsPabfcC2bConfRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/users/roles/$roleId/edit': {
       id: '/app/users/roles/$roleId/edit'
@@ -824,11 +885,13 @@ const AppMembersRouteRouteWithChildren = AppMembersRouteRoute._addFileChildren(
 interface AppPaymentsRouteRouteChildren {
   AppPaymentsNewRoute: typeof AppPaymentsNewRoute
   AppPaymentsIndexRoute: typeof AppPaymentsIndexRoute
+  AppPaymentsPaymentIdDetailsRoute: typeof AppPaymentsPaymentIdDetailsRoute
 }
 
 const AppPaymentsRouteRouteChildren: AppPaymentsRouteRouteChildren = {
   AppPaymentsNewRoute: AppPaymentsNewRoute,
   AppPaymentsIndexRoute: AppPaymentsIndexRoute,
+  AppPaymentsPaymentIdDetailsRoute: AppPaymentsPaymentIdDetailsRoute,
 }
 
 const AppPaymentsRouteRouteWithChildren =
@@ -923,6 +986,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
   ApiInngestIndexRoute: ApiInngestIndexRoute,
   ApiMockApiIndexRoute: ApiMockApiIndexRoute,
+  ApiPaymentsPabfcC2bConfRoute: ApiPaymentsPabfcC2bConfRoute,
+  ApiPaymentsPabfcC2bValidateRoute: ApiPaymentsPabfcC2bValidateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

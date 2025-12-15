@@ -3,7 +3,7 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -11,13 +11,7 @@ import { ViewDetailsAction } from "@/components/ui/custom-button";
 import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import {
-	CheckIcon,
-	ConstructionIcon,
-	LoaderIcon,
-	ResetIcon,
-	XIcon,
-} from "@/components/ui/icons";
+import { CheckIcon, LoaderIcon, ResetIcon, XIcon } from "@/components/ui/icons";
 import { MemberAvatar } from "@/features/members/components/member-table";
 import { paymentsQueries } from "@/features/payments/services/queries";
 import { useFilters } from "@/hooks/use-filters";
@@ -123,11 +117,15 @@ export function PaymentTable() {
 		},
 		{
 			id: "actions",
-			cell: () => (
+			cell: ({ row }) => (
 				<DatatableActions>
-					<DropdownMenuItem disabled>
-						<ViewDetailsAction />
-						<ConstructionIcon />
+					<DropdownMenuItem asChild>
+						<Link
+							to="/app/payments/$paymentId/details"
+							params={{ paymentId: row.original.id }}
+						>
+							<ViewDetailsAction />
+						</Link>
 					</DropdownMenuItem>
 				</DatatableActions>
 			),
