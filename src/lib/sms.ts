@@ -1,11 +1,9 @@
-import { createServerFn } from "@tanstack/react-start";
 import africastalking from "africastalking";
 import { z } from "zod";
-import { authMiddleware } from "@/middlewares/auth-middleware";
 
 const credentials = {
-	apiKey: process.env.SMS_API_KEY as string, // use your sandbox app API key for development in the test environment
-	username: process.env.SMS_USERNAME as string, // use 'sandbox' for development in the test environment
+	apiKey: process.env.SMS_API_KEY as string,
+	username: process.env.SMS_USERNAME as string,
 };
 
 const AfricasTalking = africastalking(credentials);
@@ -19,20 +17,17 @@ export const smsSchema = z.object({
 	message: z.string(),
 });
 
-export const sendSms = createServerFn()
-	.middleware([authMiddleware])
-	.inputValidator(smsSchema)
-	.handler(async ({ data: { to, message } }) => {
-		const options = {
-			to,
-			message,
-			from: "PANESAR",
-		};
+export async function sendSms(data: z.infer<typeof smsSchema>) {
+	const options = {
+		to: data.to,
+		message: data.message,
+		from: process.env.SMS_SENDERID as string,
+	};
 
-		try {
-			const response = await sms.send(options);
-			return response;
-		} catch (error) {
-			console.log(error);
-		}
-	});
+	try {
+		const response = await sms.send(options);
+		return response;
+	} catch (error) {
+		console.log(error);
+	}
+}
