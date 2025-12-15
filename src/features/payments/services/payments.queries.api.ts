@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
+	memberMemberships,
 	members,
 	membershipPlans,
 	mpesaStkRequests,
@@ -78,11 +79,36 @@ export const getPayment = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((id: string) => id)
 	.handler(async ({ data: id }) => {
-		return db.query.payments.findFirst({
+		const payment = await db.query.payments.findFirst({
 			with: {
-				member: { columns: { firstName: true, lastName: true, image: true } },
-				plan: { columns: { name: true } },
+				member: {
+					columns: {
+						firstName: true,
+						lastName: true,
+						image: true,
+						memberNo: true,
+					},
+				},
+				plan: { columns: { name: true, price: true } },
+				user: { columns: { name: true } },
 			},
 			where: eq(payments.id, id),
 		});
+
+		if (!payment) return null;
+
+		const membership = await db.query.memberMemberships.findFirst({
+			where: eq(memberMemberships.paymentId, id),
+			columns: {
+				startDate: true,
+				endDate: true,
+				status: true,
+				autoRenew: true,
+			},
+		});
+
+		return {
+			...payment,
+			membership,
+		};
 	});

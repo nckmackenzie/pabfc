@@ -17,6 +17,7 @@ import {
 	members,
 	membershipPlans,
 } from "@/drizzle/schemas/member";
+import { users } from "./auth";
 import { ledgerAccounts } from "./chart-of-accounts";
 import { vatTypeEnum } from "./settings";
 
@@ -196,6 +197,10 @@ export const paymentRelations = relations(payments, ({ one }) => ({
 	plan: one(membershipPlans, {
 		fields: [payments.planId],
 		references: [membershipPlans.id],
+	}),
+	user: one(users, {
+		fields: [payments.createdByUserId],
+		references: [users.id],
 	}),
 }));
 
