@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
 import { admin, twoFactor, username } from "better-auth/plugins";
-import { reactStartCookies } from "better-auth/react-start";
+import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { UAParser } from "ua-parser-js";
 
 import { db } from "@/drizzle/db";
@@ -84,7 +84,7 @@ export const auth = betterAuth({
 			maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
 		},
 	},
-	plugins: [twoFactor(), admin(), username(), reactStartCookies()],
+	plugins: [twoFactor(), admin(), username(), tanstackStartCookies()],
 	hooks: {
 		after: createAuthMiddleware(async (ctx) => {
 			if (!ctx.path.startsWith("/sign-in")) return;
