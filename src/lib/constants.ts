@@ -108,3 +108,22 @@ export const collapsibleMenuItems = [
 		],
 	},
 ];
+
+export const PAYMENT_METHODS = [
+	{
+		value: "cash",
+		label: "Cash",
+	},
+	{
+		value: "mpesa",
+		label: "M-Pesa",
+	},
+	{
+		value: "cheque",
+		label: "Cheque",
+	},
+	{
+		value: "bank",
+		label: "Bank",
+	},
+];
