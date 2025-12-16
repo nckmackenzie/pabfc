@@ -48,9 +48,10 @@ import { Route as AppPaymentsPaymentIdDetailsRouteImport } from './routes/app/pa
 import { Route as AppMembersMemberIdProfileRouteImport } from './routes/app/members/$memberId.profile'
 import { Route as AppMembersMemberIdEditRouteImport } from './routes/app/members/$memberId.edit'
 import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
-import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc-c2b/validate'
-import { Route as ApiPaymentsPabfcC2bConfRouteImport } from './routes/api/payments/pabfc-c2b/conf'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
+import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/payments/pabfc/stk/callback'
+import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc/c2b/validate'
+import { Route as ApiPaymentsPabfcC2bConfRouteImport } from './routes/api/payments/pabfc/c2b/conf'
 
 const MemberRouteRoute = MemberRouteRouteImport.update({
   id: '/member',
@@ -249,21 +250,27 @@ const AppChartOfAccountsAccountIdEditRoute =
     path: '/$accountId/edit',
     getParentRoute: () => AppChartOfAccountsRouteRoute,
   } as any)
-const ApiPaymentsPabfcC2bValidateRoute =
-  ApiPaymentsPabfcC2bValidateRouteImport.update({
-    id: '/api/payments/pabfc-c2b/validate',
-    path: '/api/payments/pabfc-c2b/validate',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPaymentsPabfcC2bConfRoute = ApiPaymentsPabfcC2bConfRouteImport.update({
-  id: '/api/payments/pabfc-c2b/conf',
-  path: '/api/payments/pabfc-c2b/conf',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/roles/$roleId/edit',
   path: '/roles/$roleId/edit',
   getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const ApiPaymentsPabfcStkCallbackRoute =
+  ApiPaymentsPabfcStkCallbackRouteImport.update({
+    id: '/api/payments/pabfc/stk/callback',
+    path: '/api/payments/pabfc/stk/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPaymentsPabfcC2bValidateRoute =
+  ApiPaymentsPabfcC2bValidateRouteImport.update({
+    id: '/api/payments/pabfc/c2b/validate',
+    path: '/api/payments/pabfc/c2b/validate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPaymentsPabfcC2bConfRoute = ApiPaymentsPabfcC2bConfRouteImport.update({
+  id: '/api/payments/pabfc/c2b/conf',
+  path: '/api/payments/pabfc/c2b/conf',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -296,8 +303,6 @@ export interface FileRoutesByFullPath {
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
-  '/api/payments/pabfc-c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
-  '/api/payments/pabfc-c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
@@ -307,6 +312,9 @@ export interface FileRoutesByFullPath {
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/app/users/roles': typeof AppUsersRolesIndexRoute
+  '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
+  '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
+  '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -334,8 +342,6 @@ export interface FileRoutesByTo {
   '/app/payments': typeof AppPaymentsIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/users': typeof AppUsersIndexRoute
-  '/api/payments/pabfc-c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
-  '/api/payments/pabfc-c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
@@ -345,6 +351,9 @@ export interface FileRoutesByTo {
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/app/users/roles': typeof AppUsersRolesIndexRoute
+  '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
+  '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
+  '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRoutesById {
@@ -379,8 +388,6 @@ export interface FileRoutesById {
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
-  '/api/payments/pabfc-c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
-  '/api/payments/pabfc-c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
@@ -390,6 +397,9 @@ export interface FileRoutesById {
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
+  '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
+  '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
+  '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRouteTypes {
@@ -424,8 +434,6 @@ export interface FileRouteTypes {
     | '/app/payments/'
     | '/app/plans/'
     | '/app/users/'
-    | '/api/payments/pabfc-c2b/conf'
-    | '/api/payments/pabfc-c2b/validate'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
@@ -435,6 +443,9 @@ export interface FileRouteTypes {
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
     | '/app/users/roles'
+    | '/api/payments/pabfc/c2b/conf'
+    | '/api/payments/pabfc/c2b/validate'
+    | '/api/payments/pabfc/stk/callback'
     | '/app/users/roles/$roleId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -462,8 +473,6 @@ export interface FileRouteTypes {
     | '/app/payments'
     | '/app/plans'
     | '/app/users'
-    | '/api/payments/pabfc-c2b/conf'
-    | '/api/payments/pabfc-c2b/validate'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
@@ -473,6 +482,9 @@ export interface FileRouteTypes {
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
     | '/app/users/roles'
+    | '/api/payments/pabfc/c2b/conf'
+    | '/api/payments/pabfc/c2b/validate'
+    | '/api/payments/pabfc/stk/callback'
     | '/app/users/roles/$roleId/edit'
   id:
     | '__root__'
@@ -506,8 +518,6 @@ export interface FileRouteTypes {
     | '/app/payments/'
     | '/app/plans/'
     | '/app/users/'
-    | '/api/payments/pabfc-c2b/conf'
-    | '/api/payments/pabfc-c2b/validate'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
@@ -517,6 +527,9 @@ export interface FileRouteTypes {
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
     | '/app/users/roles/'
+    | '/api/payments/pabfc/c2b/conf'
+    | '/api/payments/pabfc/c2b/validate'
+    | '/api/payments/pabfc/stk/callback'
     | '/app/users/roles/$roleId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -531,6 +544,7 @@ export interface RootRouteChildren {
   ApiMockApiIndexRoute: typeof ApiMockApiIndexRoute
   ApiPaymentsPabfcC2bConfRoute: typeof ApiPaymentsPabfcC2bConfRoute
   ApiPaymentsPabfcC2bValidateRoute: typeof ApiPaymentsPabfcC2bValidateRoute
+  ApiPaymentsPabfcStkCallbackRoute: typeof ApiPaymentsPabfcStkCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -808,26 +822,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChartOfAccountsAccountIdEditRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
     }
-    '/api/payments/pabfc-c2b/validate': {
-      id: '/api/payments/pabfc-c2b/validate'
-      path: '/api/payments/pabfc-c2b/validate'
-      fullPath: '/api/payments/pabfc-c2b/validate'
-      preLoaderRoute: typeof ApiPaymentsPabfcC2bValidateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/payments/pabfc-c2b/conf': {
-      id: '/api/payments/pabfc-c2b/conf'
-      path: '/api/payments/pabfc-c2b/conf'
-      fullPath: '/api/payments/pabfc-c2b/conf'
-      preLoaderRoute: typeof ApiPaymentsPabfcC2bConfRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/users/roles/$roleId/edit': {
       id: '/app/users/roles/$roleId/edit'
       path: '/roles/$roleId/edit'
       fullPath: '/app/users/roles/$roleId/edit'
       preLoaderRoute: typeof AppUsersRolesRoleIdEditRouteImport
       parentRoute: typeof AppUsersRouteRoute
+    }
+    '/api/payments/pabfc/stk/callback': {
+      id: '/api/payments/pabfc/stk/callback'
+      path: '/api/payments/pabfc/stk/callback'
+      fullPath: '/api/payments/pabfc/stk/callback'
+      preLoaderRoute: typeof ApiPaymentsPabfcStkCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payments/pabfc/c2b/validate': {
+      id: '/api/payments/pabfc/c2b/validate'
+      path: '/api/payments/pabfc/c2b/validate'
+      fullPath: '/api/payments/pabfc/c2b/validate'
+      preLoaderRoute: typeof ApiPaymentsPabfcC2bValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payments/pabfc/c2b/conf': {
+      id: '/api/payments/pabfc/c2b/conf'
+      path: '/api/payments/pabfc/c2b/conf'
+      fullPath: '/api/payments/pabfc/c2b/conf'
+      preLoaderRoute: typeof ApiPaymentsPabfcC2bConfRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -988,6 +1009,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMockApiIndexRoute: ApiMockApiIndexRoute,
   ApiPaymentsPabfcC2bConfRoute: ApiPaymentsPabfcC2bConfRoute,
   ApiPaymentsPabfcC2bValidateRoute: ApiPaymentsPabfcC2bValidateRoute,
+  ApiPaymentsPabfcStkCallbackRoute: ApiPaymentsPabfcStkCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
