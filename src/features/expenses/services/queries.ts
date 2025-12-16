@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { getExpenseNo } from "@/features/expenses/services/expenses.api";
 import { getPayees } from "@/features/expenses/services/payees.api";
 
 export const payeeQueries = {
@@ -7,5 +8,13 @@ export const payeeQueries = {
 		queryOptions({
 			queryKey: [...payeeQueries.all, "list"],
 			queryFn: () => getPayees(),
+		}),
+};
+
+export const expenseQueries = {
+	expenseNo: () =>
+		queryOptions({
+			queryKey: ["expenseNo"],
+			queryFn: () => getExpenseNo(),
 		}),
 };

@@ -1,6 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useStore } from "@tanstack/react-form";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
 import { nanoid } from "nanoid";
+import { useMemo } from "react";
+import Dropzone, { type DropzoneState } from "shadcn-dropzone";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -9,20 +12,26 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-
+import { AddPayee } from "@/features/expenses/components/add-payee";
+import { createExpense } from "@/features/expenses/services/expenses.api";
 import { payeeQueries } from "@/features/expenses/services/queries";
 import {
 	type ExpenseSchema,
 	expenseSchema,
 } from "@/features/expenses/services/schemas";
+import { calculateExpenseRequest } from "@/features/expenses/utils";
 import { useFormMutation } from "@/hooks/use-form-mutation";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { useAppForm } from "@/lib/form";
+import { currencyFormatter } from "@/lib/helpers";
 import { transformOptions } from "@/lib/utils";
-import { createExpense } from "../services/expenses.api";
-import { AddPayee } from "./add-payee";
 
-export function ExpenseForm() {
+type ExpenseFormProps = {
+	expenseNo: number;
+};
+
+export function ExpenseForm({ expenseNo }: ExpenseFormProps) {
+	const queryClient = useQueryClient();
 	const { accounts, payees: loaderPayees } = useRouteContext({
 		from: "/app/expenses",
 	});
@@ -32,25 +41,40 @@ export function ExpenseForm() {
 		createFn: (values: ExpenseSchema) => createExpense({ data: values }),
 		entityName: "Expense",
 		queryKey: ["expenses"],
+		navigateTo: "/app/expenses",
 	});
 
 	const form = useAppForm({
 		defaultValues: {
-			expenseNo: 1,
-			expenseDate: new Date().toISOString(),
+			expenseNo,
+			expenseDate: new Date().toISOString().split("T")[0],
 			payeeId: "",
 			paymentMethod: "cash",
 			reference: "",
 			details: [],
+			attachments: [],
 		} as ExpenseSchema,
 		validators: {
 			onSubmit: expenseSchema,
 		},
 		onSubmit: ({ value }) => {
-			console.log(value);
-			mutate({ data: value });
+			mutate(
+				{ data: value },
+				{
+					onSuccess: () => {
+						queryClient.invalidateQueries({
+							queryKey: ["expenseNo"],
+						});
+					},
+				},
+			);
 		},
 	});
+
+	const formValues = useStore(form.store, (state) => state.values);
+	const summary = useMemo(() => {
+		return calculateExpenseRequest(formValues.details || []);
+	}, [formValues.details]);
 
 	return (
 		<div className="space-y-6">
@@ -136,7 +160,7 @@ export function ExpenseForm() {
 										type="button"
 										variant="ghost"
 										onClick={() => field.clearValues()}
-										className="bg-destructive/20 text-destructive hover:bg-destructive/40"
+										className="bg-destructive/10 text-destructive hover:bg-destructive/40"
 									>
 										<MinusIcon className="size-4" aria-hidden="true" />
 										Clear Lines
@@ -232,6 +256,123 @@ export function ExpenseForm() {
 						</div>
 					)}
 				</form.Field>
+				<Separator className="my-4" />
+				<div className="my-4 grid md:grid-cols-3 gap-4">
+					<form.AppField name="attachments" mode="array">
+						{(field) => (
+							<div className="lg:col-span-2 max-w-lg">
+								<h2 className="text-sm font-semibold">Attachments</h2>
+								<Dropzone
+									onDrop={(acceptedFiles: File[]) => {
+										if (acceptedFiles.length > 0) {
+											field.pushValue(acceptedFiles[0]);
+										}
+									}}
+									containerClassName="p-4 border border-dashed rounded-md hover:border-primary transition-colors hover:bg-transparent!"
+									dropZoneClassName="hover:bg-transparent!"
+								>
+									{(dropzone: DropzoneState) => (
+										<div>
+											{dropzone.isDragAccept ? (
+												<div className="text-sm font-medium">
+													Drop your files here!
+												</div>
+											) : (
+												<div className="flex items-center flex-col gap-1.5">
+													<div className="flex items-center flex-row gap-0.5 text-sm font-medium">
+														Upload files
+													</div>
+												</div>
+											)}
+											<div className="text-xs text-gray-400 font-medium">
+												{field.state.value?.length === 0
+													? "No files uploaded"
+													: field.state.value?.length === 1
+														? "1 file uploaded"
+														: `${field.state.value?.length} files uploaded`}
+											</div>
+										</div>
+									)}
+								</Dropzone>
+								<div className="mt-4 space-y-2">
+									{field.state.value?.map(
+										(file: File | string, index: number) => {
+											// Handle case where it might be a string (URL) vs File object
+											const isFile = file instanceof File;
+											const fileName = isFile
+												? file.name
+												: String(file).split("/").pop();
+											const fileSize = isFile
+												? `${(file.size / 1024).toFixed(1)} KB`
+												: "";
+											return (
+												<div
+													// biome-ignore lint/suspicious/noArrayIndexKey: <>
+													key={index}
+													className="flex items-center justify-between p-3 border rounded-lg bg-card shadow-sm"
+												>
+													<div className="flex items-center gap-3">
+														<div className="p-2 bg-primary/10 rounded-full">
+															{/* Icon placeholder */}
+															<span className="text-primary text-xs">📄</span>
+														</div>
+														<div className="flex flex-col">
+															<span className="text-sm font-medium truncate max-w-[200px]">
+																{fileName}
+															</span>
+															{isFile && (
+																<span className="text-xs text-muted-foreground">
+																	{fileSize}
+																</span>
+															)}
+														</div>
+													</div>
+													<Button
+														type="button"
+														variant="ghost"
+														size="icon"
+														onClick={() => field.removeValue(index)}
+														className="text-destructive hover:text-destructive/80"
+													>
+														<TrashIcon className="size-4" />
+													</Button>
+												</div>
+											);
+										},
+									)}
+								</div>
+							</div>
+						)}
+					</form.AppField>
+
+					<div className="bg-secondary p-4 rounded-md space-y-4">
+						<h2 className="text-sm font-semibold">Expense Summary</h2>
+						<div className="flex items-center justify-between">
+							<div className="text-xs font-medium text-muted-foreground">
+								Sub Total
+							</div>
+							<div className="text-xs font-medium">
+								{currencyFormatter(summary.subTotal)}
+							</div>
+						</div>
+						<div className="flex items-center justify-between">
+							<div className="text-xs font-medium text-muted-foreground">
+								Tax Amount
+							</div>
+							<div className="text-xs font-medium">
+								{currencyFormatter(summary.taxAmount)}
+							</div>
+						</div>
+						<div className="flex items-center justify-between">
+							<div className="text-xs font-medium text-muted-foreground">
+								Grand Total
+							</div>
+							<div className="text-xs font-medium">
+								{currencyFormatter(summary.grandTotal)}
+							</div>
+						</div>
+					</div>
+				</div>
 				<FieldGroup className="mt-4">
 					<form.AppForm>
 						<form.SubmitButton

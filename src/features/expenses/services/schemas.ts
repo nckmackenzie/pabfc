@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { PAYMENT_METHODS, vatTypes } from "@/drizzle/schema";
 
+const isBrowser = typeof window !== "undefined";
+
 export const expenseSchema = z
 	.object({
 		expenseDate: z.iso.date({ error: "Select a valid date" }),
@@ -21,6 +23,9 @@ export const expenseSchema = z
 				id: z.string(),
 			}),
 		),
+		attachments: z
+			.array(isBrowser ? z.instanceof(File).or(z.string()) : z.string())
+			.optional(),
 	})
 	.superRefine(({ expenseDate, paymentMethod, reference, details }, ctx) => {
 		if (new Date(expenseDate) > new Date()) {
