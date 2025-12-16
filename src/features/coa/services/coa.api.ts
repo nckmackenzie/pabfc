@@ -163,3 +163,29 @@ export const deleteAccount = createServerFn({ method: "POST" })
 			});
 		});
 	});
+
+export const getVatAccountId = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		const billing = await db.query.settings.findFirst({
+			columns: { billing: true },
+		});
+
+		return billing?.billing?.vatAccountId ?? null;
+	});
+
+export const getCashEquivalentsAccountId = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((account: string) => account)
+	.handler(async ({ data: account }) => {
+		const ledgerAccount = await db.query.ledgerAccounts.findFirst({
+			columns: { id: true },
+			where: (accounts, { eq }) =>
+				eq(
+					sql`lower(${accounts.name})`,
+					account === "cash" ? "cash at hand" : "cash at bank",
+				),
+		});
+
+		return ledgerAccount?.id;
+	});
