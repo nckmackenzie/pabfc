@@ -72,11 +72,11 @@ export const collapsibleMenuItems = [
 				url: "/app/payments",
 				permission: "payments:view",
 			},
-			{
-				title: "Invoices",
-				url: "/app/invoices",
-				permission: "invoices:view",
-			},
+			// {
+			// 	title: "Invoices",
+			// 	url: "/app/invoices",
+			// 	permission: "invoices:view",
+			// },
 			{
 				title: "Expenses",
 				url: "/app/expenses",
