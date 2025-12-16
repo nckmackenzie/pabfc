@@ -15,6 +15,7 @@ import {
 import { inngest } from "@/lib/inngest/client";
 import { sendSms } from "@/lib/sms";
 import { toTitleCase } from "@/lib/utils";
+import { logActivity } from "@/services/activity-logger";
 
 export const createPayment = inngest.createFunction(
 	{ id: "create-payment" },
@@ -92,7 +93,6 @@ export const createPayment = inngest.createFunction(
 			"update-payment-records",
 			async () => {
 				const payment = await db.transaction(async (tx) => {
-					// TODO: GET PREVIOUS MEMBERSHIP
 					await tx.insert(memberMemberships).values({
 						memberId: fetchedPayment.memberId,
 						membershipPlanId: fetchedPayment.planId as string,
@@ -149,6 +149,14 @@ export const createPayment = inngest.createFunction(
 						})
 						.where(eq(payments.id, fetchedPayment.id))
 						.returning({ id: payments.id });
+
+					await logActivity({
+						data: {
+							action: "initiate payment",
+							description: `Initiated membership payment for payment ${fetchedPayment.paymentNo}.`,
+							userId: fetchedPayment.createdByUserId as string,
+						},
+					});
 
 					return paymentId;
 				});
