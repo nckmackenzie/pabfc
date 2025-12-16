@@ -204,6 +204,13 @@
       "when": 1765874811651,
       "tag": "0028_living_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1765908760830,
+      "tag": "0029_fuzzy_sphinx",
+      "breakpoints": true
     }
   ]
 }

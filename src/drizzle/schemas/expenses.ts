@@ -7,6 +7,7 @@ import {
 	numeric,
 	pgEnum,
 	pgTable,
+	serial,
 	text,
 	varchar,
 } from "drizzle-orm/pg-core";
@@ -73,6 +74,7 @@ export const expenseHeadersRelations = relations(
 			references: [users.id],
 		}),
 		details: many(expenseDetails),
+		attachments: many(expenseAttachments),
 	}),
 );
 
@@ -106,3 +108,15 @@ export const expenseLinesRelations = relations(expenseDetails, ({ one }) => ({
 		references: [expenseHeaders.id],
 	}),
 }));
+
+export const expenseAttachments = pgTable("expense_attachments", {
+	id: serial("id").primaryKey(),
+	expenseHeaderId: varchar("expense_header_id")
+		.notNull()
+		.references(() => expenseHeaders.id),
+	fileUrl: varchar("file_url").notNull(),
+	fileName: varchar("file_name"),
+	fileType: varchar("file_type"),
+	createdAt,
+	updatedAt,
+});
