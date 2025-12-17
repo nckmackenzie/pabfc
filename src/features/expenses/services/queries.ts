@@ -1,6 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getExpenseNo } from "@/features/expenses/services/expenses.api";
+import {
+	getExpense,
+	getExpenseNo,
+	getExpenses,
+} from "@/features/expenses/services/expenses.api";
 import { getPayees } from "@/features/expenses/services/payees.api";
+import type { ExpenseValidateSearch } from "@/features/expenses/services/schemas";
 
 export const payeeQueries = {
 	all: ["payees"] as const,
@@ -12,9 +17,20 @@ export const payeeQueries = {
 };
 
 export const expenseQueries = {
+	all: ["expenses"] as const,
 	expenseNo: () =>
 		queryOptions({
 			queryKey: ["expenseNo"],
 			queryFn: () => getExpenseNo(),
+		}),
+	list: (filters: ExpenseValidateSearch) =>
+		queryOptions({
+			queryKey: [...expenseQueries.all, "list", filters],
+			queryFn: () => getExpenses({ data: filters }),
+		}),
+	detail: (expenseId: string) =>
+		queryOptions({
+			queryKey: [...expenseQueries.all, "detail", expenseId],
+			queryFn: () => getExpense({ data: expenseId }),
 		}),
 };

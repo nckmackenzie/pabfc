@@ -13,14 +13,17 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { AddPayee } from "@/features/expenses/components/add-payee";
-import { createExpense } from "@/features/expenses/services/expenses.api";
+import {
+	createExpense,
+	type getExpense,
+} from "@/features/expenses/services/expenses.api";
 import { payeeQueries } from "@/features/expenses/services/queries";
 import {
 	type ExpenseSchema,
 	expenseSchema,
 } from "@/features/expenses/services/schemas";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { useAppForm } from "@/lib/form";
 import { currencyFormatter } from "@/lib/helpers";
@@ -28,38 +31,49 @@ import { transformOptions } from "@/lib/utils";
 
 type ExpenseFormProps = {
 	expenseNo: number;
+	expense?: Awaited<ReturnType<typeof getExpense>>;
 };
 
-export function ExpenseForm({ expenseNo }: ExpenseFormProps) {
+export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 	const queryClient = useQueryClient();
 	const { accounts, payees: loaderPayees } = useRouteContext({
 		from: "/app/expenses",
 	});
 	const { data: payees } = useQuery(payeeQueries.list());
 
-	const { mutate, isPending } = useFormMutation({
-		createFn: (values: ExpenseSchema) => createExpense({ data: values }),
+	const { mutate, isPending } = useFormUpsert({
+		upsertFn: (values: ExpenseSchema) => createExpense({ data: values }),
 		entityName: "Expense",
 		queryKey: ["expenses"],
 		navigateTo: "/app/expenses",
 	});
 
+	const expenseDetails =
+		expense?.details.map(({ accountId, id, quantity, vatType, unitPrice }) => ({
+			accountId: accountId.toString(),
+			id,
+			quantity: Number(quantity),
+			unitPrice: Number(unitPrice),
+			vatType,
+		})) || [];
+
 	const form = useAppForm({
 		defaultValues: {
 			expenseNo,
-			expenseDate: new Date().toISOString().split("T")[0],
-			payeeId: "",
-			paymentMethod: "cash",
-			reference: "",
-			details: [],
-			attachments: [],
+			expenseDate:
+				expense?.expenseDate || new Date().toISOString().split("T")[0],
+			payeeId: expense?.payeeId || "",
+			paymentMethod: expense?.paymentMethod || "cash",
+			reference: expense?.reference?.toUpperCase() || "",
+			details: expenseDetails,
+			attachments: expense?.attachments.map((att) => att.fileUrl) || [],
 		} as ExpenseSchema,
 		validators: {
 			onSubmit: expenseSchema,
 		},
 		onSubmit: ({ value }) => {
 			mutate(
-				{ data: value },
+				{ ...value, id: expense?.id },
 				{
 					onSuccess: () => {
 						queryClient.invalidateQueries({

@@ -1,28 +1,122 @@
 import { createServerFn } from "@tanstack/react-start";
-import { sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	ilike,
+	lte,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
+	expenseAttachments,
 	expenseDetails,
 	expenseHeaders,
 	journalEntries,
 	journalLines,
+	payees,
 } from "@/drizzle/schema";
 import {
 	getCashEquivalentsAccountId,
 	getVatAccountId,
 } from "@/features/coa/services/coa.api";
-import { expenseSchema } from "@/features/expenses/services/schemas";
+import {
+	expenseSchema,
+	expenseValidateSearch,
+} from "@/features/expenses/services/schemas";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
+import { normalizeDateRange } from "@/lib/helpers";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
-export const getExpenseNo = createServerFn({ method: "GET" })
+export const getExpenseNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		const { rows } = await db.execute<{ expenseNo: number }>(
 			sql`SELECT COALESCE(MAX(expense_no),0) + 1 as "expenseNo" FROM expense_headers`,
 		);
 		return rows[0].expenseNo;
+	});
+
+export const getExpenses = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(expenseValidateSearch)
+	.handler(async ({ data }) => {
+		const { q, from, to } = data;
+
+		const filters: Array<SQL> = [];
+
+		if (q) {
+			const searchFilters = or(
+				ilike(sql`CAST(${expenseHeaders.expenseNo} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${expenseHeaders.expenseDate} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${expenseHeaders.totalAmount} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${expenseHeaders.paymentMethod} AS TEXT)`, `%${q}%`),
+				ilike(expenseHeaders.reference, `%${q}%`),
+				ilike(payees.name, `%${q}%`),
+			);
+			if (searchFilters) {
+				filters.push(searchFilters);
+			}
+		}
+
+		if (from && to) {
+			const { from: normalizedFrom, to: normalizedTo } = normalizeDateRange(
+				from,
+				to,
+			);
+			filters.push(gte(expenseHeaders.expenseDate, normalizedFrom));
+			filters.push(lte(expenseHeaders.expenseDate, normalizedTo));
+		}
+
+		return db
+			.select({
+				id: expenseHeaders.id,
+				expenseNo: expenseHeaders.expenseNo,
+				expenseDate: expenseHeaders.expenseDate,
+				expenseAmount: expenseHeaders.totalAmount,
+				payee: payees.name,
+				paymentMethod: expenseHeaders.paymentMethod,
+				reference: expenseHeaders.reference,
+				attachmentCount: sql<number>`COUNT(${expenseAttachments.id})`,
+			})
+			.from(expenseHeaders)
+			.innerJoin(payees, eq(expenseHeaders.payeeId, payees.id))
+			.leftJoin(
+				expenseAttachments,
+				eq(expenseHeaders.id, expenseAttachments.expenseHeaderId),
+			)
+			.where(and(...filters))
+			.groupBy(
+				expenseHeaders.id,
+				expenseHeaders.expenseNo,
+				expenseHeaders.expenseDate,
+				expenseHeaders.totalAmount,
+				payees.name,
+				expenseHeaders.paymentMethod,
+				expenseHeaders.reference,
+			)
+			.orderBy(desc(expenseHeaders.expenseNo));
+	});
+
+export const getExpense = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((expenseId: string) => expenseId)
+	.handler(async ({ data: expenseId }) => {
+		return db.query.expenseHeaders.findFirst({
+			with: {
+				attachments: { columns: { updatedAt: false, createdAt: false } },
+				details: {
+					columns: { updatedAt: false, createdAt: false },
+					orderBy: asc(expenseDetails.lineNumber),
+				},
+			},
+			where: eq(expenseHeaders.id, expenseId),
+		});
 	});
 
 export const createExpense = createServerFn({ method: "POST" })
@@ -35,7 +129,14 @@ export const createExpense = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
-			const { details, expenseDate, payeeId, paymentMethod, reference } = data;
+			const {
+				details,
+				expenseDate,
+				payeeId,
+				paymentMethod,
+				reference,
+				expenseNo: expenseNoFormData,
+			} = data;
 			const expenseNo = await getExpenseNo();
 
 			const { subTotal, taxAmount, grandTotal, lines } =
@@ -47,21 +148,55 @@ export const createExpense = createServerFn({ method: "POST" })
 				throw new Error("VAT Account not found. Define one in settings.");
 			}
 
-			const expenseId = await db.transaction(async (tx) => {
-				const [{ id: expenseId }] = await tx
-					.insert(expenseHeaders)
-					.values({
-						expenseDate,
-						expenseNo,
-						payeeId,
-						paymentMethod,
-						reference,
-						subTotal: subTotal.toString(),
-						taxAmount: taxAmount.toString(),
-						totalAmount: grandTotal.toString(),
-						createdByUserId: userId,
-					})
-					.returning({ id: expenseHeaders.id });
+			const returnedId = await db.transaction(async (tx) => {
+				let expenseId: string;
+				if (data.id) {
+					expenseId = data.id;
+					await tx
+						.update(expenseHeaders)
+						.set({
+							expenseDate,
+							payeeId,
+							paymentMethod,
+							reference,
+							subTotal: subTotal.toString(),
+							taxAmount: taxAmount.toString(),
+							totalAmount: grandTotal.toString(),
+							createdByUserId: userId,
+						})
+						.where(eq(expenseHeaders.id, data.id));
+				} else {
+					const [{ id }] = await tx
+						.insert(expenseHeaders)
+						.values({
+							expenseDate,
+							expenseNo,
+							payeeId,
+							paymentMethod,
+							reference,
+							subTotal: subTotal.toString(),
+							taxAmount: taxAmount.toString(),
+							totalAmount: grandTotal.toString(),
+							createdByUserId: userId,
+						})
+						.returning({ id: expenseHeaders.id });
+					expenseId = id;
+				}
+
+				await tx
+					.delete(expenseDetails)
+					.where(eq(expenseDetails.expenseHeaderId, expenseId));
+				await tx
+					.delete(expenseAttachments)
+					.where(eq(expenseAttachments.expenseHeaderId, expenseId));
+				await tx
+					.delete(journalEntries)
+					.where(
+						and(
+							eq(journalEntries.sourceId, expenseId),
+							eq(journalEntries.source, "expenses"),
+						),
+					);
 
 				if (lines.length > 0) {
 					await tx.insert(expenseDetails).values(
@@ -86,7 +221,9 @@ export const createExpense = createServerFn({ method: "POST" })
 						entryDate: expenseDate,
 						source: "expenses",
 						sourceId: expenseId,
-						reference: expenseNo.toString(),
+						reference: data.id
+							? expenseNoFormData.toString()
+							: expenseNo.toString(),
 					})
 					.returning({ id: journalEntries.id });
 
@@ -124,15 +261,17 @@ export const createExpense = createServerFn({ method: "POST" })
 
 				await logActivity({
 					data: {
-						action: "create expense",
+						action: data.id ? "update expense" : "create expense",
 						userId,
-						description: `Created expense ${expenseNo}`,
+						description: data.id
+							? `Updated expense ${expenseNoFormData}`
+							: `Created expense ${expenseNo}`,
 					},
 				});
 
 				return expenseId;
 			});
 
-			return expenseId;
+			return returnedId;
 		},
 	);

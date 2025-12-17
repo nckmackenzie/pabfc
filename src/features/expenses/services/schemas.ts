@@ -5,6 +5,7 @@ const isBrowser = typeof window !== "undefined";
 
 export const expenseSchema = z
 	.object({
+		id: z.string().optional(),
 		expenseDate: z.iso.date({ error: "Select a valid date" }),
 		expenseNo: z.number(),
 		payeeId: z.string().min(1, { error: "Select Payee" }),
@@ -55,5 +56,12 @@ export const payeeSchema = z.object({
 	name: z.string().min(1, { error: "Enter Payee Name" }),
 });
 
+export const expenseValidateSearch = z.object({
+	q: z.string().optional(),
+	from: z.iso.date().optional(),
+	to: z.iso.date().optional(),
+});
+
 export type ExpenseSchema = z.infer<typeof expenseSchema>;
 export type PayeeSchema = z.infer<typeof payeeSchema>;
+export type ExpenseValidateSearch = z.infer<typeof expenseValidateSearch>;
