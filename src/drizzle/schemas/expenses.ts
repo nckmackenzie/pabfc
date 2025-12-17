@@ -120,3 +120,13 @@ export const expenseAttachments = pgTable("expense_attachments", {
 	createdAt,
 	updatedAt,
 });
+
+export const expenseAttachmentsRelations = relations(
+	expenseAttachments,
+	({ one }) => ({
+		expenseHeader: one(expenseHeaders, {
+			fields: [expenseAttachments.expenseHeaderId],
+			references: [expenseHeaders.id],
+		}),
+	}),
+);
