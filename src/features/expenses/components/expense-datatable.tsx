@@ -15,7 +15,6 @@ import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DeleteActionButton } from "@/components/ui/delete-action";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { PhoneIcon } from "@/components/ui/icons";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { expenseQueries } from "@/features/expenses/services/queries";
@@ -111,7 +110,7 @@ export function ExpenseDatatable() {
 					)}
 					<DropdownMenuItem>
 						<NotepadTextIcon className="size-4! text-muted-foreground" />
-						<span className="text-xs -ml-1">Journal Entry</span>
+						<span className="text-xs -ml-1">Transaction Journal</span>
 					</DropdownMenuItem>
 					<PermissionGate
 						permission="expenses:delete"
