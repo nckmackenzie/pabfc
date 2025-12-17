@@ -4,12 +4,13 @@ import {
 	BasePageLoadingSkeleton,
 } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
-import { useFilters } from "@/hooks/use-filters";
-import { searchValidateSchema } from "@/lib/schema-rules";
+import { ExpenseDatatable } from "@/features/expenses/components/expense-datatable";
+import { ExpenseFilters } from "@/features/expenses/components/filters";
+import { expenseValidateSearch } from "@/features/expenses/services/schemas";
 
 export const Route = createFileRoute("/app/expenses/")({
 	component: RouteComponent,
-	validateSearch: searchValidateSchema,
+	validateSearch: expenseValidateSearch,
 	head: () => ({
 		meta: [{ title: "Expenses / Prime Age Beauty & Fitness Center" }],
 	}),
@@ -22,7 +23,6 @@ export const Route = createFileRoute("/app/expenses/")({
 });
 
 function RouteComponent() {
-	const { filters, setFilters } = useFilters(Route.id);
 	return (
 		<ProtectedPage permissions={["expenses:view"]}>
 			<BasePageComponent
@@ -31,10 +31,10 @@ function RouteComponent() {
 				hasNewButtonLink={true}
 				newButtonLinkPath={"/app/expenses/new"}
 				createPermissions={["expenses:create"]}
-				defaultSearchValue={filters.q}
-				onSearch={(val) => setFilters({ q: val })}
+				filterClassName="md:justify-end"
+				customFilters={<ExpenseFilters />}
 			>
-				null
+				<ExpenseDatatable />
 			</BasePageComponent>
 		</ProtectedPage>
 	);
