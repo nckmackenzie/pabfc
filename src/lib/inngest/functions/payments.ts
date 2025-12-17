@@ -7,8 +7,15 @@ import {
 	memberMemberships,
 	payments,
 } from "@/drizzle/schema";
-import { dateFormat } from "@/lib/helpers";
+import {
+	currencyFormatter,
+	dateFormat,
+	internationalizePhoneNumber,
+} from "@/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
+import { sendSms } from "@/lib/sms";
+import { toTitleCase } from "@/lib/utils";
+import { logActivity } from "@/services/activity-logger";
 
 export const createPayment = inngest.createFunction(
 	{ id: "create-payment" },
@@ -82,64 +89,101 @@ export const createPayment = inngest.createFunction(
 				item.Name === "MpesaReceiptNumber",
 		)?.Value;
 
-		await step.run("update-payment-records", async () => {
-			return await db.transaction(async (tx) => {
-				await tx
-					.update(payments)
-					.set({
-						status: "completed",
-						reference: mpesaReceiptNumber?.toString(),
-					})
-					.where(eq(payments.id, fetchedPayment.id));
+		const updatePayments = await step.run(
+			"update-payment-records",
+			async () => {
+				const payment = await db.transaction(async (tx) => {
+					await tx.insert(memberMemberships).values({
+						memberId: fetchedPayment.memberId,
+						membershipPlanId: fetchedPayment.planId as string,
+						startDate: dateFormat(planDetails.startDate),
+						endDate: dateFormat(planDetails.endDate),
+						autoRenew: false,
+						status: "active",
+						paymentId: fetchedPayment.id,
+						previousMembershipPlanId: planDetails?.previousPlanId,
+						priceCharged: fetchedPayment.totalAmount,
+					});
 
-				// TODO: GET PREVIOUS MEMBERSHIP
-				await tx.insert(memberMemberships).values({
-					memberId: fetchedPayment.memberId,
-					membershipPlanId: fetchedPayment.planId as string,
-					startDate: dateFormat(planDetails.startDate),
-					endDate: dateFormat(planDetails.endDate),
-					autoRenew: false,
-					status: "active",
-					paymentId: fetchedPayment.id,
-					previousMembershipPlanId: planDetails?.previousPlanId,
-					priceCharged: fetchedPayment.totalAmount,
-				});
+					const [{ id: journalEntryId }] = await tx
+						.insert(journalEntries)
+						.values({
+							entryDate: fetchedPayment.paymentDate,
+							reference: fetchedPayment.paymentNo,
+							source: "plan payment",
+							sourceId: fetchedPayment.id,
+						})
+						.returning({ id: journalEntries.id });
 
-				const [{ id: journalEntryId }] = await tx
-					.insert(journalEntries)
-					.values({
-						entryDate: fetchedPayment.paymentDate,
-						reference: fetchedPayment.paymentNo,
-						source: "plan payment",
-						sourceId: fetchedPayment.id,
-					})
-					.returning({ id: journalEntries.id });
-
-				await tx.insert(journalLines).values({
-					lineNumber: 1,
-					accountId: ledgerDetails.revenueAccountId,
-					journalEntryId,
-					amount: fetchedPayment.lineTotal,
-					dc: "credit",
-				});
-
-				if (parseFloat(fetchedPayment.taxAmount) > 0) {
 					await tx.insert(journalLines).values({
-						lineNumber: 2,
-						accountId: ledgerDetails.vatAccountId as number,
+						lineNumber: 1,
+						accountId: ledgerDetails.revenueAccountId,
 						journalEntryId,
-						amount: fetchedPayment.amount,
+						amount: fetchedPayment.lineTotal,
 						dc: "credit",
 					});
-				}
 
-				await tx.insert(journalLines).values({
-					lineNumber: 3,
-					accountId: ledgerDetails.bankAccountId as number,
-					journalEntryId,
-					amount: fetchedPayment.totalAmount,
-					dc: "debit",
+					if (parseFloat(fetchedPayment.taxAmount) > 0) {
+						await tx.insert(journalLines).values({
+							lineNumber: 2,
+							accountId: ledgerDetails.vatAccountId as number,
+							journalEntryId,
+							amount: fetchedPayment.amount,
+							dc: "credit",
+						});
+					}
+
+					await tx.insert(journalLines).values({
+						lineNumber: 3,
+						accountId: ledgerDetails.bankAccountId as number,
+						journalEntryId,
+						amount: fetchedPayment.totalAmount,
+						dc: "debit",
+					});
+
+					const [{ id: paymentId }] = await tx
+						.update(payments)
+						.set({
+							status: "completed",
+							reference: mpesaReceiptNumber?.toString(),
+						})
+						.where(eq(payments.id, fetchedPayment.id))
+						.returning({ id: payments.id });
+
+					await logActivity({
+						data: {
+							action: "initiate payment",
+							description: `Initiated membership payment for payment ${fetchedPayment.paymentNo}.`,
+							userId: fetchedPayment.createdByUserId as string,
+						},
+					});
+
+					return paymentId;
 				});
+
+				if (!payment) {
+					return { success: false, error: "Something went wrong" };
+				}
+				return { success: true, error: null };
+			},
+		);
+
+		await step.run("send-sms", async () => {
+			if (!updatePayments.success) return;
+
+			const member = await db.query.members.findFirst({
+				columns: { firstName: true, contact: true },
+				where: (members, { eq }) => eq(members.id, fetchedPayment.memberId),
+			});
+
+			if (!member) {
+				return { success: false, error: "Member not found" };
+			}
+
+			const message = `Dear ${toTitleCase(member.firstName)}, your payment of ${currencyFormatter(fetchedPayment.totalAmount)} has been completed successfully.We're glad you're continuing with us`;
+			await sendSms({
+				to: [internationalizePhoneNumber(member.contact as string, true)],
+				message,
 			});
 		});
 	},

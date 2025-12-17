@@ -72,11 +72,11 @@ export const collapsibleMenuItems = [
 				url: "/app/payments",
 				permission: "payments:view",
 			},
-			{
-				title: "Invoices",
-				url: "/app/invoices",
-				permission: "invoices:view",
-			},
+			// {
+			// 	title: "Invoices",
+			// 	url: "/app/invoices",
+			// 	permission: "invoices:view",
+			// },
 			{
 				title: "Expenses",
 				url: "/app/expenses",
@@ -106,5 +106,24 @@ export const collapsibleMenuItems = [
 				url: "/app/reports/finance",
 			},
 		],
+	},
+];
+
+export const PAYMENT_METHODS = [
+	{
+		value: "cash",
+		label: "Cash",
+	},
+	{
+		value: "mpesa",
+		label: "M-Pesa",
+	},
+	{
+		value: "cheque",
+		label: "Cheque",
+	},
+	{
+		value: "bank",
+		label: "Bank",
 	},
 ];

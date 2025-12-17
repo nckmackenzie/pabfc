@@ -7,6 +7,7 @@ import {
 	CommandInput,
 	CommandItem,
 	CommandList,
+	CommandSeparator,
 } from "@/components/ui/command";
 import { CheckIcon, ChevronUpDownIcon } from "@/components/ui/icons";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { Option } from "@/types/index.types";
+import { ScrollArea } from "./scroll-area";
 
 interface ComboBoxProps {
 	items: Array<Option>;
@@ -24,6 +26,7 @@ interface ComboBoxProps {
 	placeholder: string;
 	commandPlaceholder?: string;
 	isInvalid?: boolean;
+	addNew?: React.ReactNode;
 }
 
 export function ComboBox({
@@ -33,6 +36,7 @@ export function ComboBox({
 	placeholder,
 	commandPlaceholder,
 	isInvalid,
+	addNew,
 }: ComboBoxProps) {
 	const [open, setOpen] = React.useState(false);
 
@@ -63,26 +67,34 @@ export function ComboBox({
 					<CommandList>
 						<CommandEmpty>No options found.</CommandEmpty>
 						<CommandGroup>
-							{items.map((item) => (
-								<CommandItem
-									key={item.value}
-									value={item.value}
-									onSelect={(currentValue) => {
-										onChange(currentValue === value ? "" : currentValue);
-										setOpen(false);
-									}}
-								>
-									{item.label}
-									<CheckIcon
-										className={cn(
-											"ml-auto",
-											value === item.value ? "opacity-100" : "opacity-0",
-										)}
-									/>
-								</CommandItem>
-							))}
+							<ScrollArea className="max-h-[300px] [&>div]:block!">
+								{items.map((item) => (
+									<CommandItem
+										key={item.value}
+										value={item.value}
+										onSelect={(currentValue) => {
+											onChange(currentValue === value ? "" : currentValue);
+											setOpen(false);
+										}}
+									>
+										{item.label}
+										<CheckIcon
+											className={cn(
+												"ml-auto",
+												value === item.value ? "opacity-100" : "opacity-0",
+											)}
+										/>
+									</CommandItem>
+								))}
+							</ScrollArea>
 						</CommandGroup>
 					</CommandList>
+					{addNew && (
+						<>
+							<CommandSeparator />
+							<CommandGroup>{addNew}</CommandGroup>
+						</>
+					)}
 				</Command>
 			</PopoverContent>
 		</Popover>

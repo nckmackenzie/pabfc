@@ -147,3 +147,41 @@ export function generateFullPaymentInvoiceNo(
 		: paymentNo.toString();
 	return `${prefix ? `${prefix.toUpperCase()}-` : ""}${paddedPaymentNo}`;
 }
+
+/**
+ * Normalizes a date range by setting the 'from' date to start of day (00:00:00.000)
+ * and the 'to' date to end of day (23:59:59.999)
+ *
+ * @param from - The start date (can be string, Date, or undefined)
+ * @param to - The end date (can be string, Date, or undefined)
+ * @returns Object with normalized from and to dates as ISO strings
+ */
+export function normalizeDateRange(from: string | Date, to: string | Date) {
+	const processDate = (date: string | Date, type: "from" | "to") => {
+		const d = new Date(date);
+		if (Number.isNaN(d.getTime())) {
+			throw new Error(`Invalid "${type}" date provided`);
+		}
+		if (type === "from") {
+			d.setUTCHours(0, 0, 0, 0);
+		} else {
+			d.setUTCHours(23, 59, 59, 999);
+		}
+		return d;
+	};
+
+	const fromDate = processDate(from, "from");
+	const normalizedFrom = fromDate.toISOString();
+
+	const toDate = processDate(to, "to");
+	const normalizedTo = toDate.toISOString();
+
+	if (fromDate && toDate && fromDate > toDate) {
+		throw new Error('"from" date cannot be greater than "to" date');
+	}
+
+	return {
+		from: normalizedFrom,
+		to: normalizedTo,
+	};
+}
