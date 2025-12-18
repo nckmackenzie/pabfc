@@ -7,6 +7,7 @@ export const calculateExpenseRequest = (
 		unitPrice: number | string;
 		vatType: VatType;
 		accountId: string;
+		description?: string;
 	}[],
 ) => {
 	let subTotal = 0;
