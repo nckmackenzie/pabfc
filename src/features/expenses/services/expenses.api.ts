@@ -109,7 +109,13 @@ export const getExpense = createServerFn()
 	.handler(async ({ data: expenseId }) => {
 		return db.query.expenseHeaders.findFirst({
 			with: {
-				attachments: { columns: { updatedAt: false, createdAt: false } },
+				attachments: {
+					columns: {
+						updatedAt: false,
+						createdAt: false,
+						expenseHeaderId: false,
+					},
+				},
 				details: {
 					columns: { updatedAt: false, createdAt: false },
 					orderBy: asc(expenseDetails.lineNumber),
@@ -136,6 +142,7 @@ export const createExpense = createServerFn({ method: "POST" })
 				paymentMethod,
 				reference,
 				expenseNo: expenseNoFormData,
+				attachments,
 			} = data;
 			const expenseNo = await getExpenseNo();
 
@@ -197,6 +204,16 @@ export const createExpense = createServerFn({ method: "POST" })
 							eq(journalEntries.source, "expenses"),
 						),
 					);
+
+				if (attachments && attachments.length > 0) {
+					const formattedAttachments = attachments.map((attachment) => ({
+						expenseHeaderId: expenseId,
+						fileUrl: attachment.url,
+						fileName: attachment.filename,
+						fileType: attachment.mimeType,
+					}));
+					await tx.insert(expenseAttachments).values(formattedAttachments);
+				}
 
 				if (lines.length > 0) {
 					await tx.insert(expenseDetails).values(
