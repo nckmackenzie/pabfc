@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { PAYMENT_METHODS, vatTypes } from "@/drizzle/schema";
 
-const isBrowser = typeof window !== "undefined";
-
 export const expenseSchema = z
 	.object({
 		id: z.string().optional(),
@@ -21,11 +19,18 @@ export const expenseSchema = z
 					.number()
 					.min(1, { error: "Unit Price must be greater than 0" }),
 				vatType: z.enum(vatTypes),
+				description: z.string().optional(),
 				id: z.string(),
 			}),
 		),
 		attachments: z
-			.array(isBrowser ? z.instanceof(File).or(z.string()) : z.string())
+			.array(
+				z.object({
+					url: z.string(),
+					filename: z.string(),
+					mimeType: z.string(),
+				}),
+			)
 			.optional(),
 	})
 	.superRefine(({ expenseDate, paymentMethod, reference, details }, ctx) => {

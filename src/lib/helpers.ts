@@ -46,11 +46,12 @@ export const nonEmptyObjectRefinement = (obj: Record<string, any> | null) =>
 
 export const currencyFormatter = (
 	value: string | number,
+	isCurrency = true,
 	compact?: boolean,
 ) => {
 	const numberValue = typeof value === "string" ? parseFloat(value) : value;
 	return new Intl.NumberFormat("en-KE", {
-		style: "currency",
+		style: isCurrency ? "currency" : "decimal",
 		currency: "KES",
 		notation: compact ? "compact" : "standard",
 		compactDisplay: "short",

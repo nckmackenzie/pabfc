@@ -4,8 +4,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
 	BanknoteIcon,
 	CreditCardIcon,
-	FileIcon,
-	NotepadTextIcon,
 	ReceiptTextIcon,
 	SmartphoneIcon,
 } from "lucide-react";
@@ -21,6 +19,7 @@ import { expenseQueries } from "@/features/expenses/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
+import { ExpenseJournal } from "./expense-sheet";
 
 export function ExpenseDatatable() {
 	const { filters } = useFilters(getRouteApi("/app/expenses/").id);
@@ -85,7 +84,7 @@ export function ExpenseDatatable() {
 			id: "actions",
 			cell: ({
 				row: {
-					original: { attachmentCount, id },
+					original: { id },
 				},
 			}) => (
 				<DatatableActions>
@@ -102,16 +101,7 @@ export function ExpenseDatatable() {
 							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
-					{attachmentCount > 0 && (
-						<DropdownMenuItem>
-							<FileIcon className="size-4! text-muted-foreground" />
-							<span className="text-xs -ml-1">View Attachment</span>
-						</DropdownMenuItem>
-					)}
-					<DropdownMenuItem>
-						<NotepadTextIcon className="size-4! text-muted-foreground" />
-						<span className="text-xs -ml-1">Transaction Journal</span>
-					</DropdownMenuItem>
+					<ExpenseJournal expenseId={id} />
 					<PermissionGate
 						permission="expenses:delete"
 						loadingComponent={<Skeleton className="h-4 w-56" />}

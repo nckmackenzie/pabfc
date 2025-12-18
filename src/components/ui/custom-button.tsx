@@ -63,9 +63,9 @@ export function AutomateAction({ text }: { text: string }) {
 
 export function DeleteAction() {
 	return (
-		<div className="flex items-center gap-1 ml-1">
+		<div className="flex items-center gap-1 ml-0.5">
 			<TrashIcon className="size-4! text-destructive" />
-			<span className="text-destructive text-xs">Delete</span>
+			<span className="text-destructive text-xs ">Delete</span>
 		</div>
 	);
 }

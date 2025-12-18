@@ -18,6 +18,7 @@ import {
 	expenseHeaders,
 	journalEntries,
 	journalLines,
+	ledgerAccounts,
 	payees,
 } from "@/drizzle/schema";
 import {
@@ -109,7 +110,13 @@ export const getExpense = createServerFn()
 	.handler(async ({ data: expenseId }) => {
 		return db.query.expenseHeaders.findFirst({
 			with: {
-				attachments: { columns: { updatedAt: false, createdAt: false } },
+				attachments: {
+					columns: {
+						updatedAt: false,
+						createdAt: false,
+						expenseHeaderId: false,
+					},
+				},
 				details: {
 					columns: { updatedAt: false, createdAt: false },
 					orderBy: asc(expenseDetails.lineNumber),
@@ -136,6 +143,7 @@ export const createExpense = createServerFn({ method: "POST" })
 				paymentMethod,
 				reference,
 				expenseNo: expenseNoFormData,
+				attachments,
 			} = data;
 			const expenseNo = await getExpenseNo();
 
@@ -198,6 +206,16 @@ export const createExpense = createServerFn({ method: "POST" })
 						),
 					);
 
+				if (attachments && attachments.length > 0) {
+					const formattedAttachments = attachments.map((attachment) => ({
+						expenseHeaderId: expenseId,
+						fileUrl: attachment.url,
+						fileName: attachment.filename,
+						fileType: attachment.mimeType,
+					}));
+					await tx.insert(expenseAttachments).values(formattedAttachments);
+				}
+
 				if (lines.length > 0) {
 					await tx.insert(expenseDetails).values(
 						lines.map((line, index) => ({
@@ -210,7 +228,7 @@ export const createExpense = createServerFn({ method: "POST" })
 							vatType: line.vatType,
 							taxAmount: line.taxAmount.toString(),
 							lineTotal: line.totalInclusiveTax.toString(),
-							description: "",
+							description: line.description,
 						})),
 					);
 				}
@@ -233,6 +251,7 @@ export const createExpense = createServerFn({ method: "POST" })
 						lineNumber: index + 1,
 						accountId: parseInt(line.accountId, 10),
 						amount: line.amountExlusiveTax.toString(),
+						memo: line.description,
 						dc: "debit",
 					});
 				});
@@ -275,3 +294,32 @@ export const createExpense = createServerFn({ method: "POST" })
 			return returnedId;
 		},
 	);
+
+export const getExpenseJournal = createServerFn()
+	.inputValidator((expenseId: string) => expenseId)
+	.handler(async ({ data: expenseId }) => {
+		return db
+			.select({
+				id: journalLines.id,
+				reference: journalEntries.reference,
+				date: journalEntries.entryDate,
+				lineNumber: journalLines.lineNumber,
+				amount: journalLines.amount,
+				dc: journalLines.dc,
+				memo: journalLines.memo,
+				account: ledgerAccounts.name,
+			})
+			.from(journalLines)
+			.innerJoin(
+				journalEntries,
+				eq(journalLines.journalEntryId, journalEntries.id),
+			)
+			.innerJoin(ledgerAccounts, eq(journalLines.accountId, ledgerAccounts.id))
+			.where(
+				and(
+					eq(journalEntries.sourceId, expenseId),
+					eq(journalEntries.source, "expenses"),
+				),
+			)
+			.orderBy(desc(journalLines.lineNumber));
+	});

@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
 	getExpense,
+	getExpenseJournal,
 	getExpenseNo,
 	getExpenses,
 } from "@/features/expenses/services/expenses.api";
@@ -32,5 +33,10 @@ export const expenseQueries = {
 		queryOptions({
 			queryKey: [...expenseQueries.all, "detail", expenseId],
 			queryFn: () => getExpense({ data: expenseId }),
+		}),
+	journal: (expenseId: string) =>
+		queryOptions({
+			queryKey: [...expenseQueries.all, "journal", expenseId],
+			queryFn: () => getExpenseJournal({ data: expenseId }),
 		}),
 };

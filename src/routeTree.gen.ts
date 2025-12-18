@@ -40,7 +40,7 @@ import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
 import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
-import { Route as ApiMpesaCallbackRouteImport } from './routes/api/mpesa/callback'
+import { Route as ApiUploadsExpenseAttachmentRouteImport } from './routes/api/uploads/expense-attachment'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
@@ -211,11 +211,12 @@ const AppChartOfAccountsNewRoute = AppChartOfAccountsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppChartOfAccountsRouteRoute,
 } as any)
-const ApiMpesaCallbackRoute = ApiMpesaCallbackRouteImport.update({
-  id: '/api/mpesa/callback',
-  path: '/api/mpesa/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiUploadsExpenseAttachmentRoute =
+  ApiUploadsExpenseAttachmentRouteImport.update({
+    id: '/api/uploads/expense-attachment',
+    path: '/api/uploads/expense-attachment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -315,7 +316,7 @@ export interface FileRoutesByFullPath {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
+  '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/members/new': typeof AppMembersNewRoute
@@ -357,7 +358,7 @@ export interface FileRoutesByTo {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
+  '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/members/new': typeof AppMembersNewRoute
@@ -407,7 +408,7 @@ export interface FileRoutesById {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
+  '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/members/new': typeof AppMembersNewRoute
@@ -457,7 +458,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
-    | '/api/mpesa/callback'
+    | '/api/uploads/expense-attachment'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
     | '/app/members/new'
@@ -499,7 +500,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
-    | '/api/mpesa/callback'
+    | '/api/uploads/expense-attachment'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
     | '/app/members/new'
@@ -548,7 +549,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
-    | '/api/mpesa/callback'
+    | '/api/uploads/expense-attachment'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
     | '/app/members/new'
@@ -586,7 +587,7 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   MemberRouteRoute: typeof MemberRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
+  ApiUploadsExpenseAttachmentRoute: typeof ApiUploadsExpenseAttachmentRoute
   ApiInngestIndexRoute: typeof ApiInngestIndexRoute
   ApiMockApiIndexRoute: typeof ApiMockApiIndexRoute
   ApiPaymentsPabfcC2bConfRoute: typeof ApiPaymentsPabfcC2bConfRoute
@@ -813,11 +814,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChartOfAccountsNewRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
     }
-    '/api/mpesa/callback': {
-      id: '/api/mpesa/callback'
-      path: '/api/mpesa/callback'
-      fullPath: '/api/mpesa/callback'
-      preLoaderRoute: typeof ApiMpesaCallbackRouteImport
+    '/api/uploads/expense-attachment': {
+      id: '/api/uploads/expense-attachment'
+      path: '/api/uploads/expense-attachment'
+      fullPath: '/api/uploads/expense-attachment'
+      preLoaderRoute: typeof ApiUploadsExpenseAttachmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -1096,7 +1097,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   MemberRouteRoute: MemberRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
+  ApiUploadsExpenseAttachmentRoute: ApiUploadsExpenseAttachmentRoute,
   ApiInngestIndexRoute: ApiInngestIndexRoute,
   ApiMockApiIndexRoute: ApiMockApiIndexRoute,
   ApiPaymentsPabfcC2bConfRoute: ApiPaymentsPabfcC2bConfRoute,
