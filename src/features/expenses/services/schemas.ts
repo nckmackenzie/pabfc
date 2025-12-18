@@ -19,6 +19,7 @@ export const expenseSchema = z
 					.number()
 					.min(1, { error: "Unit Price must be greater than 0" }),
 				vatType: z.enum(vatTypes),
+				description: z.string().optional(),
 				id: z.string(),
 			}),
 		),

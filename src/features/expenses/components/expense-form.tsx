@@ -191,7 +191,10 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 									parseFloat(item.quantity?.toString() ?? "1") *
 									parseFloat(item.unitPrice?.toString() ?? "0");
 								return (
-									<div className="p-4 border rounded-md" key={item.id}>
+									<div
+										className="p-4 border rounded-md space-y-4"
+										key={item.id}
+									>
 										<FieldGroup className="grid md:grid-cols-2 lg:grid-cols-12 gap-4">
 											<div className="col-span-full lg:col-span-4">
 												<form.AppField name={`details[${index}].accountId`}>
@@ -259,6 +262,13 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 													readOnly
 												/>
 											</Field>
+										</FieldGroup>
+										<FieldGroup className="flex flex-row! items-center justify-between">
+											<div className="flex-1">
+												<form.AppField name={`details[${index}].description`}>
+													{(field) => <field.Input label="Description" />}
+												</form.AppField>
+											</div>
 											<Button
 												type="button"
 												variant="destructive"
