@@ -41,7 +41,7 @@ export function ExpenseJournal({ expenseId }: { expenseId: string }) {
 			<SheetTrigger asChild>
 				<div className="drop-item">
 					<NotepadTextIcon className="size-4! text-muted-foreground" />
-					<span className="text-xs -ml-1">Journal Entry</span>
+					<span className="text-xs -ml-1">Transaction Journal</span>
 				</div>
 			</SheetTrigger>
 			<SheetContent className="h-[calc(100vh-10rem)] " side="bottom">
@@ -55,7 +55,7 @@ export function ExpenseJournal({ expenseId }: { expenseId: string }) {
 									Transaction Journal
 								</SheetTitle>
 								<SheetDescription>
-									Transaction journals for expense {journals?.[0].reference}
+									Transaction journals for expense {journals?.[0]?.reference}
 								</SheetDescription>
 							</SheetHeader>
 							<div className="rounded-md border overflow-x-auto bg-card">
