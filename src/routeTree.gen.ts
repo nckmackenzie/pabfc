@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MemberDashboardRouteImport } from './routes/member/dashboard'
 import { Route as AppUnauthorizedRouteImport } from './routes/app/unauthorized'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
+import { Route as AppJournalEntriesRouteImport } from './routes/app/journal-entries'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
@@ -89,6 +90,11 @@ const AppUnauthorizedRoute = AppUnauthorizedRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppJournalEntriesRoute = AppJournalEntriesRouteImport.update({
+  id: '/journal-entries',
+  path: '/journal-entries',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -312,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/journal-entries': typeof AppJournalEntriesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
@@ -354,6 +361,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/journal-entries': typeof AppJournalEntriesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
@@ -404,6 +412,7 @@ export interface FileRoutesById {
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/journal-entries': typeof AppJournalEntriesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/journal-entries'
     | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
+    | '/app/journal-entries'
     | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
@@ -545,6 +556,7 @@ export interface FileRouteTypes {
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
     | '/app/dashboard'
+    | '/app/journal-entries'
     | '/app/settings'
     | '/app/unauthorized'
     | '/member/dashboard'
@@ -644,6 +656,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/journal-entries': {
+      id: '/app/journal-entries'
+      path: '/journal-entries'
+      fullPath: '/app/journal-entries'
+      preLoaderRoute: typeof AppJournalEntriesRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/dashboard': {
@@ -1057,6 +1076,7 @@ interface AppRouteRouteChildren {
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppJournalEntriesRoute: typeof AppJournalEntriesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
   AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
@@ -1070,6 +1090,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppJournalEntriesRoute: AppJournalEntriesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
   AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
