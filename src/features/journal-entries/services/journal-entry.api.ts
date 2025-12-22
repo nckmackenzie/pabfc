@@ -1,17 +1,37 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { journalEntries, journalLines } from "@/drizzle/schema";
 import { journalEntrySchema } from "@/features/journal-entries/services/schemas";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+
 export const getJournalNo = createServerFn().handler(async () => {
 	const { rows } = await db.execute<{ journalNo: number }>(
 		sql`SELECT COALESCE(MAX(journal_no),0) + 1 as "journalNo" FROM journal_entries`,
 	);
 	return rows[0].journalNo;
 });
+
+export const getJournalEntry = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((journalNo: number) => journalNo)
+	.handler(async ({ data }) => {
+		const journalEntry = await db.query.journalEntries.findFirst({
+			columns: { entryDate: true, journalNo: true, id: true },
+			where: eq(journalEntries.journalNo, data),
+			with: {
+				lines: {
+					columns: { journalEntryId: false },
+					orderBy: asc(journalLines.lineNumber),
+				},
+			},
+		});
+
+		if (!journalEntry) return null;
+		return journalEntry;
+	});
 
 export const upsertJournalEntries = createServerFn()
 	.middleware([authMiddleware])
@@ -56,10 +76,7 @@ export const upsertJournalEntries = createServerFn()
 					await tx
 						.update(journalEntries)
 						.set({
-							journalNo,
 							entryDate: date,
-							source: "journal",
-							sourceId: journalNo.toString(),
 						})
 						.where(eq(journalEntries.id, +id));
 					await tx
@@ -95,5 +112,38 @@ export const upsertJournalEntries = createServerFn()
 			});
 
 			return journalId;
+		},
+	);
+
+export const deleteJournalEntry = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((id: string) => id)
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			const journal = await db.query.journalEntries.findFirst({
+				columns: { id: true, journalNo: true },
+				where: eq(journalEntries.id, +data),
+			});
+
+			if (!journal) {
+				return { error: true, message: `Journal not found` };
+			}
+
+			await db.delete(journalEntries).where(eq(journalEntries.id, journal.id));
+
+			await logActivity({
+				data: {
+					action: "delete journal",
+					description: `Deleted journal ${journal.journalNo}`,
+					userId,
+				},
+			});
+
+			return { error: false, message: `Deleted journal ${journal.journalNo}` };
 		},
 	);
