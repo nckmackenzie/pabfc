@@ -33,6 +33,8 @@ import { calculateExpenseRequest } from "@/features/expenses/utils";
 import { normalizeDateRange } from "@/lib/helpers";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { requirePermission } from "@/lib/permissions/permissions";
+import { NotFoundError } from "@/lib/error-handling/app-error";
 
 export const getExpenseNo = createServerFn()
 	.middleware([authMiddleware])
@@ -323,3 +325,36 @@ export const getExpenseJournal = createServerFn()
 			)
 			.orderBy(desc(journalLines.lineNumber));
 	});
+
+	export const deleteExpense = createServerFn({ method: "POST" })
+		.middleware([authMiddleware])
+		.inputValidator((expenseId: string) => expenseId)
+		.handler(async ({ data: expenseId, context: { user: { id: userId } } }) => {
+
+			await requirePermission('expenses:delete')
+
+			const expense = await db.query.expenseHeaders.findFirst({
+				columns: {expenseNo:true},
+				where: eq(expenseHeaders.id, expenseId),
+			})
+
+			if (!expense) {
+				throw new NotFoundError("Expense");
+			}
+
+			await db.transaction(async (tx) => {
+				await tx.delete(expenseDetails).where(eq(expenseDetails.expenseHeaderId, expenseId));
+				await tx.delete(expenseAttachments).where(eq(expenseAttachments.expenseHeaderId, expenseId));
+				await tx.delete(journalEntries).where(and(eq(journalEntries.sourceId, expenseId), eq(journalEntries.source, "expenses")));
+				await tx.delete(expenseHeaders).where(eq(expenseHeaders.id, expenseId));
+
+				await logActivity({
+					data: {
+						action: "delete expense",
+						userId,
+						description: `Deleted expense ${expense.expenseNo}`,
+					},
+				});
+			})
+			
+		});

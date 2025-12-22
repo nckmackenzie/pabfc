@@ -84,7 +84,7 @@ export const collapsibleMenuItems = [
 			},
 			{
 				title: "Jounal Entries",
-				url: "/app/jounal-entries",
+				url: "/app/journal-entries",
 				permission: "chart-of-accounts",
 			},
 		],

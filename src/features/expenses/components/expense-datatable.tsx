@@ -19,7 +19,8 @@ import { expenseQueries } from "@/features/expenses/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
-import { ExpenseJournal } from "./expense-sheet";
+import { ExpenseJournal } from "@/features/expenses/components/expense-sheet";
+import { deleteExpense } from "@/features/expenses/services/expenses.api";
 
 export function ExpenseDatatable() {
 	const { filters } = useFilters(getRouteApi("/app/expenses/").id);
@@ -109,7 +110,7 @@ export function ExpenseDatatable() {
 						<DeleteActionButton
 							resourceId={id}
 							queryKey={["expenses"]}
-							deleteAction={async () => {}}
+							deleteAction={deleteExpense}
 						/>
 					</PermissionGate>
 				</DatatableActions>
