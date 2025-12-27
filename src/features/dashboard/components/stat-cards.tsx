@@ -19,6 +19,8 @@ export function StatCards() {
 			totalAttendance,
 			averageAttendanceDuration,
 			newMembersLastMonth,
+			totalAttendancePreviousPeriod,
+			expiredMemberships,
 		},
 	} = useSuspenseQuery(dashboardQueries.stats());
 
@@ -53,14 +55,18 @@ export function StatCards() {
 				value={totalAttendance}
 				subtitle={`${averageAttendanceDuration} average session duration`}
 				icon={DoorOpenIcon}
+				trend={percentageChangeCalculator(
+					totalAttendance,
+					totalAttendancePreviousPeriod,
+				)}
 				variant="default"
 			/>
 			<KPICard
-				title="Duration"
-				value={averageAttendanceDuration}
-				subtitle={`Average attendance duration`}
+				title="Expired Memberships"
+				value={expiredMemberships}
+				subtitle={`Expired memberships in last 30 days`}
 				icon={Clock11Icon}
-				variant="default"
+				variant="destructive"
 			/>
 		</div>
 	);
