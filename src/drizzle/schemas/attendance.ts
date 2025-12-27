@@ -1,6 +1,9 @@
 import { relations } from "drizzle-orm";
 import {
 	bigserial,
+	integer,
+	numeric,
+	pgMaterializedView,
 	pgTable,
 	text,
 	timestamp,
@@ -27,3 +30,14 @@ export const attendanceLogsRelations = relations(attendanceLogs, ({ one }) => ({
 		references: [members.id],
 	}),
 }));
+
+export const attendanceOverview = pgMaterializedView("vw_attendance_details", {
+	id: bigserial("id", { mode: "bigint" }).notNull(),
+	memberName: varchar("member_name").notNull(),
+	image: varchar("image"),
+	checkInTime: timestamp("check_in_time").notNull(),
+	checkOutTime: timestamp("check_out_time").notNull(),
+	duration: numeric("duration"),
+	activePlanName: varchar("active_plan_name"),
+	nextRenewalDate: timestamp("next_renewal_date"),
+}).existing();
