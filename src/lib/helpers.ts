@@ -186,3 +186,16 @@ export function normalizeDateRange(from: string | Date, to: string | Date) {
 		to: normalizedTo,
 	};
 }
+
+export function percentageChangeCalculator(current: number, previous: number) {
+	if (previous === 0) {
+		return { value: current === 0 ? 0 : 100, isPositive: current >= 0 };
+	}
+
+	const change = ((current - previous) / previous) * 100;
+
+	return {
+		value: Math.abs(Number(change.toFixed(1))),
+		isPositive: change >= 0,
+	};
+}
