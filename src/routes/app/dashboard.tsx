@@ -105,7 +105,7 @@ function DashboardTabs() {
 							)}
 						>
 							<Icon />
-							<span className="hidden md:inline text-sm font-medium">
+							<span className="inline text-sm font-medium">
 								{tab.label}
 							</span>
 						</Button>
