@@ -66,10 +66,11 @@ export function UserAvatar() {
 			<DropdownMenuContent className="w-56" align="start">
 				<DropdownMenuLabel>My Account</DropdownMenuLabel>
 				<DropdownMenuGroup>
-					<DropdownMenuItem className="cursor-pointer" disabled>
-						<UsersIcon />
-						Your Profile
-						<ConstructionIcon className="ml-auto" />
+					<DropdownMenuItem className="cursor-pointer" asChild>
+						<Link to="/app/profile">
+							<UsersIcon />
+							Your Profile
+						</Link>
 					</DropdownMenuItem>
 
 					<DropdownMenuItem disabled>
