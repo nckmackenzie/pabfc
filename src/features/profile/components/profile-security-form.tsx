@@ -3,8 +3,8 @@ import toast from "react-hot-toast";
 import { FieldGroup } from "@/components/ui/field";
 import { ToastContent } from "@/components/ui/toast-content";
 import {
-	profileSecuritySchema,
 	type ProfileSecuritySchema,
+	profileSecuritySchema,
 } from "@/features/profile/services/schema";
 import { authClient } from "@/lib/auth/client";
 import { parseErrorMessage } from "@/lib/error-handling/error-handling";
@@ -24,9 +24,7 @@ export function ProfileSecurityForm() {
 		}) => {
 			const response = await authClient.changePassword(data);
 			if (response.error) {
-				throw new Error(
-					response.error.message || "Failed to update password",
-				);
+				throw new Error(response.error.message || "Failed to update password");
 			}
 			return response.data;
 		},
@@ -39,11 +37,7 @@ export function ProfileSecurityForm() {
 				return;
 			}
 			toast.error((t) => (
-				<ToastContent
-					t={t}
-					title="Error"
-					message="Error updating password"
-				/>
+				<ToastContent t={t} title="Error" message="Error updating password" />
 			));
 		},
 		onSuccess: () => {
@@ -84,8 +78,9 @@ export function ProfileSecurityForm() {
 				event.stopPropagation();
 				form.handleSubmit();
 			}}
+			className="max-w-xl mx-auto rounded-lg p-6 border"
 		>
-			<FieldGroup className="grid lg:grid-cols-2 gap-4">
+			<FieldGroup className="space-y-6">
 				<form.AppField name="currentPassword">
 					{(field) => (
 						<field.Input
