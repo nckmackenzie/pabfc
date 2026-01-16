@@ -31,5 +31,9 @@ export const PERMISSIONS = [
 	"journal-entries:create",
 	"journal-entries:update",
 	"journal-entries:delete",
+	"communication:view",
+	"communication:create",
+	"communication:update",
+	"communication:delete",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
