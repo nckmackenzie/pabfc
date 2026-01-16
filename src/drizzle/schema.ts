@@ -6,3 +6,4 @@ export * from "@/drizzle/schemas/expenses";
 export * from "@/drizzle/schemas/member";
 export * from "@/drizzle/schemas/payments";
 export * from "@/drizzle/schemas/settings";
+export * from "@/drizzle/schemas/sms";
