@@ -1,16 +1,10 @@
 import { z } from "zod";
 
-export const attachmentSchema = z.object({
-	url: z.string().min(1),
-	filename: z.string().min(1),
-	mimeType: z.string().min(1),
-});
 
 export const profileDetailsSchema = z.object({
 	name: z.string().min(1, { error: "Name is required" }),
 	email: z.string().email().nullish(),
 	contact: z.string().min(1, { error: "Contact is required" }),
-	image: z.array(attachmentSchema).nullish(),
 });
 
 export const profileSecuritySchema = z
