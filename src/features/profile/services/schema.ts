@@ -23,7 +23,7 @@ export const profileSecuritySchema = z
 			.min(8, { error: "Password must be at least 8 characters" }),
 		confirmPassword: z
 			.string()
-			.min(8, { error: "Confirm password is required" }),
+			.min(8, { error: "Password must be at least 8 characters" }),
 	})
 	.superRefine((data, ctx) => {
 		if (data.newPassword !== data.confirmPassword) {
