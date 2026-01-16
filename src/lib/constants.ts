@@ -53,7 +53,7 @@ export const menuItems: MenuItem[] = [
 		title: "Communication",
 		url: "/app/communication",
 		icon: ChatMessageIcon,
-		wip: true,
+		permission: "communication:view",
 	},
 ];
 
