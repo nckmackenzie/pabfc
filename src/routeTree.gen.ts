@@ -31,6 +31,7 @@ import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
 import { Route as AppExpensesIndexRouteImport } from './routes/app/expenses/index'
+import { Route as AppCommunicationIndexRouteImport } from './routes/app/communication/index'
 import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as ApiMockApiIndexRouteImport } from './routes/api/mock-api/index'
@@ -166,6 +167,11 @@ const AppExpensesIndexRoute = AppExpensesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppExpensesRouteRoute,
+} as any)
+const AppCommunicationIndexRoute = AppCommunicationIndexRouteImport.update({
+  id: '/communication/',
+  path: '/communication/',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppChartOfAccountsIndexRoute = AppChartOfAccountsIndexRouteImport.update({
   id: '/',
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
+  '/app/communication': typeof AppCommunicationIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
@@ -377,6 +384,7 @@ export interface FileRoutesByTo {
   '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
+  '/app/communication': typeof AppCommunicationIndexRoute
   '/app/expenses': typeof AppExpensesIndexRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/payments': typeof AppPaymentsIndexRoute
@@ -428,6 +436,7 @@ export interface FileRoutesById {
   '/api/mock-api/': typeof ApiMockApiIndexRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
+  '/app/communication/': typeof AppCommunicationIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
@@ -479,6 +488,7 @@ export interface FileRouteTypes {
     | '/api/mock-api'
     | '/app/activity-logs'
     | '/app/chart-of-accounts/'
+    | '/app/communication'
     | '/app/expenses/'
     | '/app/members/'
     | '/app/payments/'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/api/mock-api'
     | '/app/activity-logs'
     | '/app/chart-of-accounts'
+    | '/app/communication'
     | '/app/expenses'
     | '/app/members'
     | '/app/payments'
@@ -572,6 +583,7 @@ export interface FileRouteTypes {
     | '/api/mock-api/'
     | '/app/activity-logs/'
     | '/app/chart-of-accounts/'
+    | '/app/communication/'
     | '/app/expenses/'
     | '/app/members/'
     | '/app/payments/'
@@ -762,6 +774,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/expenses/'
       preLoaderRoute: typeof AppExpensesIndexRouteImport
       parentRoute: typeof AppExpensesRouteRoute
+    }
+    '/app/communication/': {
+      id: '/app/communication/'
+      path: '/communication'
+      fullPath: '/app/communication'
+      preLoaderRoute: typeof AppCommunicationIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/app/chart-of-accounts/': {
       id: '/app/chart-of-accounts/'
@@ -1080,6 +1099,7 @@ interface AppRouteRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
   AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
+  AppCommunicationIndexRoute: typeof AppCommunicationIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -1094,6 +1114,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
   AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
+  AppCommunicationIndexRoute: AppCommunicationIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
