@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/communication/")({
 function RouteComponent() {
 	return (
 		<ProtectedPage permissions={["communication:view"]}>
-			<div className="grid md:grid-cols-3 gap-4">
+			<div className="grid md:grid-cols-3 gap-4 items-start">
 				<Wrapper className="col-span-2">message area</Wrapper>
 
 				<TemplateArea />
