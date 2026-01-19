@@ -218,6 +218,13 @@
       "when": 1768560298080,
       "tag": "0030_blue_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1768804240491,
+      "tag": "0031_tired_mathemanic",
+      "breakpoints": true
     }
   ]
 }

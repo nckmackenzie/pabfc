@@ -29,9 +29,9 @@ export const smsTemplatesRelations = relations(smsTemplates, ({ many }) => ({
 
 export const smsLogs = pgTable("sms_logs", {
 	id,
-	templateId: varchar("template_id")
-		.notNull()
-		.references(() => smsTemplates.id),
+	templateId: varchar("template_id").references(() => smsTemplates.id, {
+		onDelete: "set null",
+	}),
 	message: text("message").notNull(),
 	receipients: text().array().notNull(),
 	sentAt: timestamp("sent_at").notNull(),
