@@ -1,0 +1,1 @@
+ALTER TYPE "public"."sms_broadcast_status" ADD VALUE 'failed';
