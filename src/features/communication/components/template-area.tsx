@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import CustomModal from "@/components/ui/custom-modal";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
 import { PlusIcon } from "@/components/ui/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
 import type { smsTemplates } from "@/drizzle/schema";
 import { TemplateForm } from "@/features/communication/components/template-form";
@@ -37,7 +38,7 @@ export function TemplateArea() {
 			</header>
 			<ErrorBoundaryWithSuspense
 				errorMessage="Failed to load templates"
-				loader={<p>Loading...</p>}
+				loader={<TemplatesSkeleton />}
 			>
 				<Templates />
 			</ErrorBoundaryWithSuspense>
@@ -106,6 +107,28 @@ function Template({
 					? description.charAt(0).toUpperCase() + description.slice(1)
 					: "No description"}
 			</p>
+		</li>
+	);
+}
+
+function TemplatesSkeleton() {
+	return (
+		<ul className="-mx-2 space-y-2">
+			{Array.from({ length: 5 }).map((_, i) => (
+				<TemplateSkeleton key={i.toString()} />
+			))}
+		</ul>
+	);
+}
+
+function TemplateSkeleton() {
+	return (
+		<li className="p-2 rounded-md">
+			<div className="flex items-center justify-between mb-2">
+				<Skeleton className="h-5 w-32" />
+				<Skeleton className="h-4 w-20" />
+			</div>
+			<Skeleton className="h-4 w-full" />
 		</li>
 	);
 }
