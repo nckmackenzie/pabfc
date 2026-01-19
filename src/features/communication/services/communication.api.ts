@@ -4,7 +4,7 @@ import { db } from "@/drizzle/db";
 import { smsLogs, smsTemplates } from "@/drizzle/schema";
 import { extractVariables } from "@/features/communication/lib/utils";
 import { templateFormSchema } from "@/features/communication/services/schemas";
-import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { ConflictError } from "@/lib/error-handling/app-error";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
@@ -83,13 +83,19 @@ export const deleteTemplate = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((templateId: string) => templateId)
 	.handler(async ({ data }) => {
-		const template = await db.query.smsTemplates.findFirst({
-			where: eq(smsTemplates.id, data),
-		});
-		if (!template) {
-			throw new NotFoundError("Template");
-		}
+		try {
+			const template = await db.query.smsTemplates.findFirst({
+				where: eq(smsTemplates.id, data),
+			});
+			if (!template) {
+				// throw new NotFoundError("Template");
+				return { error: true, message: "Template not found" };
+			}
 
-		await db.delete(smsTemplates).where(eq(smsTemplates.id, data));
-		return "Completed successfully";
+			await db.delete(smsTemplates).where(eq(smsTemplates.id, data));
+			return { error: false, message: "Completed successfully" };
+		} catch (error) {
+			console.error(error);
+			return { error: true, message: "Failed to delete template" };
+		}
 	});

@@ -1,7 +1,10 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { CheckIcon, TrashIcon } from "@/components/ui/icons";
 import { LoadingSwap } from "@/components/ui/loading-swap";
+import { ToastContent } from "@/components/ui/toast-content";
 import {
 	type TemplateFormSchema,
 	templateFormSchema,
@@ -10,12 +13,22 @@ import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useModal } from "@/integrations/modal-provider";
 import { useAppForm } from "@/lib/form";
-import { upsertTemplate } from "../services/communication.api";
+import { deleteTemplate, upsertTemplate } from "../services/communication.api";
 
 export function TemplateForm({ template }: { template?: TemplateFormSchema }) {
 	const { setClose } = useModal();
+	const queryClient = useQueryClient();
+	const { isPending: isDeleting, mutate: deleteMutate } = useMutation({
+		mutationFn: async (templateId: string) => {
+			const res = await deleteTemplate({ data: templateId });
+			if (res.error) {
+				throw new Error(res.message);
+			}
+			return res;
+		},
+	});
 	const isMobile = useIsMobile();
-	const { isPending, mutate } = useFormUpsert({
+	const { isPending: isUpserting, mutate } = useFormUpsert({
 		upsertFn: (values: TemplateFormSchema) => upsertTemplate({ data: values }),
 		entityName: "SMS Template",
 		queryKey: ["sms-templates"],
@@ -48,6 +61,34 @@ export function TemplateForm({ template }: { template?: TemplateFormSchema }) {
 	function handleReset() {
 		form.reset();
 		setClose();
+	}
+
+	function handleDelete() {
+		if (!template?.id) return;
+		deleteMutate(template.id, {
+			onSuccess: () => {
+				handleReset();
+				queryClient.invalidateQueries({
+					queryKey: ["sms-templates"],
+				});
+				toast.success((t) => (
+					<ToastContent
+						title="Success"
+						t={t}
+						message="Template deleted successfully"
+					/>
+				));
+			},
+			onError: (error) => {
+				toast.error((t) => (
+					<ToastContent
+						title="Failed to delete template"
+						t={t}
+						message={error.message}
+					/>
+				));
+			},
+		});
 	}
 
 	return (
@@ -91,9 +132,11 @@ export function TemplateForm({ template }: { template?: TemplateFormSchema }) {
 						<Button
 							type="submit"
 							className="flex"
-							disabled={isSubmitting || isPending}
+							disabled={isSubmitting || isDeleting || isUpserting}
 						>
-							<LoadingSwap isLoading={isSubmitting || !!isPending}>
+							<LoadingSwap
+								isLoading={isSubmitting || !!isDeleting || !!isUpserting}
+							>
 								<CheckIcon />
 								{template ? "Update Template" : "Create Template"}
 							</LoadingSwap>
@@ -107,9 +150,17 @@ export function TemplateForm({ template }: { template?: TemplateFormSchema }) {
 							Cancel
 						</Button>
 						{template && (
-							<Button variant="destructive" className="ml-auto">
-								<TrashIcon />
-								Delete
+							<Button
+								variant="destructive"
+								type="button"
+								className="ml-auto"
+								disabled={isDeleting || isUpserting}
+								onClick={handleDelete}
+							>
+								<LoadingSwap isLoading={isDeleting}>
+									<TrashIcon />
+									Delete
+								</LoadingSwap>
 							</Button>
 						)}
 					</Field>
