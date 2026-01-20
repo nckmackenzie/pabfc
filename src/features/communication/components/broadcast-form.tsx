@@ -1,11 +1,14 @@
 import { useStore } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { SendIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { XIcon } from "@/components/ui/icons";
 import { MultiSelectItem } from "@/components/ui/multi-select";
 import { SelectItem } from "@/components/ui/select";
+import { ToastContent } from "@/components/ui/toast-content";
 import { useFormData } from "@/features/communication/hooks/use-get-form-data";
 import { FILTER_CRITERIA_OPTIONS } from "@/features/communication/lib/constants";
 import { getMembers } from "@/features/communication/lib/utils";
@@ -17,18 +20,17 @@ import {
 import { MEMBER_STATUS } from "@/features/members/lib/constants";
 import { useFormMutation } from "@/hooks/use-form-mutation";
 import { useAppForm } from "@/lib/form";
-import type { Option } from "@/types/index.types";
 
 export function BroadcastForm() {
-	const { templates, plans, freshTemplates } = useFormData();
-	const [members, setMembers] = useState<Option[]>([]);
+	const { templates, plans, freshTemplates, members } = useFormData();
 	const submitTypeRef = useRef<"SUBMIT" | "SEND_TEST">("SUBMIT");
 	const formRef = useRef<HTMLFormElement>(null);
+	const queryClient = useQueryClient();
 
 	const { isPending, mutate } = useFormMutation({
 		createFn: (values: BroadcastFormSchema) => sendBroadCast({ data: values }),
 		entityName: "broadcast",
-		queryKey: ["broadcasts"],
+		queryKey: ["sms-broadcasts"],
 		successMessage: {
 			create: "Broadcast sent successfully",
 		},
@@ -37,7 +39,7 @@ export function BroadcastForm() {
 	const form = useAppForm({
 		defaultValues: {
 			filterCriteria: "by status",
-			criteria: "",
+			criteria: null,
 			smsTemplateId: null,
 			content: "",
 			receipients: [],
@@ -48,6 +50,19 @@ export function BroadcastForm() {
 			onSubmit: broadcastFormSchema,
 		},
 		onSubmit: ({ value }) => {
+			if (
+				value.receipients.length === 0 &&
+				submitTypeRef.current === "SUBMIT"
+			) {
+				toast((t) => (
+					<ToastContent
+						t={t}
+						title="No receipients selected"
+						message="Please select at least one receipient"
+					/>
+				));
+				return;
+			}
 			mutate(
 				{ data: { ...value, submitType: submitTypeRef.current } },
 				{
@@ -56,6 +71,9 @@ export function BroadcastForm() {
 							return;
 						}
 						form.reset();
+						queryClient.invalidateQueries({
+							queryKey: ["sms-templates"],
+						});
 					},
 				},
 			);
@@ -84,11 +102,17 @@ export function BroadcastForm() {
 	}, [templateId, freshTemplates, form]);
 
 	useEffect(() => {
-		if (!filterCriteria || !criteria) {
+		form.setFieldValue("receipients", []);
+		if (!filterCriteria || filterCriteria === "specific members") {
+			return;
+		}
+		if (
+			(filterCriteria === "by plan" || filterCriteria === "by status") &&
+			!criteria
+		) {
 			return;
 		}
 		getMembers(filterCriteria, criteria).then((members) => {
-			setMembers(members);
 			form.setFieldValue(
 				"receipients",
 				members.map((member) => member.value),
@@ -96,11 +120,16 @@ export function BroadcastForm() {
 		});
 	}, [filterCriteria, criteria, form]);
 
+	const formErrors = useStore(form.store, (state) => state.errors);
+	console.log("Form Errors:", formErrors);
+
 	return (
 		<div className="flex-1">
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
+					e.stopPropagation();
+					console.log("Native form submitted");
 					form.handleSubmit();
 				}}
 				ref={formRef}
@@ -126,6 +155,10 @@ export function BroadcastForm() {
 								placeholder={
 									filterCriteria === "by plan" ? "Select plan" : "Select status"
 								}
+								disabled={
+									filterCriteria === "all members" ||
+									filterCriteria === "specific members"
+								}
 							>
 								{(filterCriteria === "by plan" ? plans : MEMBER_STATUS).map(
 									(option) => (
@@ -137,22 +170,24 @@ export function BroadcastForm() {
 							</field.Select>
 						)}
 					</form.AppField>
-					<form.AppField name="receipients">
-						{(field) => (
-							<field.MultiSelect
-								required
-								label="Receipients"
-								placeholder="Select receipients"
-								className="col-span-2"
-							>
-								{members.map((member) => (
-									<MultiSelectItem key={member.value} value={member.value}>
-										{member.label}
-									</MultiSelectItem>
-								))}
-							</field.MultiSelect>
-						)}
-					</form.AppField>
+					{filterCriteria === "specific members" && (
+						<form.AppField name="receipients">
+							{(field) => (
+								<field.MultiSelect
+									required
+									label="Receipients"
+									placeholder="Select receipients"
+									className="col-span-2"
+								>
+									{members.map((member) => (
+										<MultiSelectItem key={member.value} value={member.value}>
+											{member.label}
+										</MultiSelectItem>
+									))}
+								</field.MultiSelect>
+							)}
+						</form.AppField>
+					)}
 					<form.AppField name="smsTemplateId">
 						{(field) => (
 							<field.Select
