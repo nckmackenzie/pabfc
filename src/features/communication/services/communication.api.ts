@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { smsLogs, smsTemplates, users } from "@/drizzle/schema";
+import { smsBroadcasts, smsTemplates, users } from "@/drizzle/schema";
 import { extractVariables } from "@/features/communication/lib/utils";
 import {
 	broadcastFormSchema,
@@ -23,10 +23,55 @@ export const getSmsTemplates = createServerFn()
 				content: smsTemplates.content,
 				variables: smsTemplates.variables,
 				description: smsTemplates.description,
-				usedCount: db.$count(smsLogs, eq(smsLogs.templateId, smsTemplates.id)),
+				usedCount: db.$count(
+					smsBroadcasts,
+					eq(smsBroadcasts.smsTemplateId, smsTemplates.id),
+				),
 			})
 			.from(smsTemplates)
 			.orderBy(desc(smsTemplates.createdAt));
+	});
+
+export const getSmsBroadcasts = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		const broadcasts = await db
+			.select({
+				id: smsBroadcasts.id,
+				sentAt: smsBroadcasts.sentAt,
+				receipients: smsBroadcasts.receipients,
+				smsBroadcastStatus: smsBroadcasts.smsBroadcastStatus,
+				name: smsTemplates.name,
+				response: smsBroadcasts.response,
+			})
+			.from(smsBroadcasts)
+			.innerJoin(smsTemplates, eq(smsTemplates.id, smsBroadcasts.smsTemplateId))
+			.orderBy(desc(smsBroadcasts.sentAt))
+			.limit(100);
+
+		return broadcasts.map((broadcast) => ({
+			id: broadcast.id,
+			sentAt: broadcast.sentAt,
+			receipients: broadcast.receipients,
+			smsBroadcastStatus: broadcast.smsBroadcastStatus,
+			name: broadcast.name,
+			totalCost: broadcast.response?.reduce((acc, cur) => {
+				const formattedCost = Number(cur.cost.split("KES ")[1]);
+				return acc + formattedCost;
+			}, 0),
+			totalSuccess: broadcast.response
+				? broadcast.response?.reduce(
+						(acc, cur) => acc + (cur.status === "Success" ? 1 : 0),
+						0,
+					)
+				: 0,
+			totalFailed: broadcast.response
+				? broadcast.response?.reduce(
+						(acc, cur) => acc + (cur.status !== "Success" ? 1 : 0),
+						0,
+					)
+				: 0,
+		}));
 	});
 
 export const upsertTemplate = createServerFn()
@@ -121,11 +166,8 @@ export const sendBroadCast = createServerFn({ method: "POST" })
 				receipients,
 				smsTemplateId,
 				content,
-				smsBroadcastStatus,
 				submitType,
 			} = data;
-
-			console.log(data);
 
 			if (submitType === "SEND_TEST") {
 				const user = await db.query.users.findFirst({
@@ -144,8 +186,31 @@ export const sendBroadCast = createServerFn({ method: "POST" })
 						contact: [internationalizePhoneNumber(user.contact, true)],
 					},
 				});
+
+				return "Completed successfully";
 			}
 
-			return "Completed successfully";
+			if (submitType === "SUBMIT") {
+				const [{ id: broadcastId }] = await db
+					.insert(smsBroadcasts)
+					.values({
+						filterCriteria,
+						criteria,
+						smsTemplateId,
+						smsBroadcastStatus: "sending",
+						content,
+						receipients,
+						sentAt: new Date(),
+					})
+					.returning({ id: smsBroadcasts.id });
+
+				await inngest.send({
+					name: "app/communications.send-sms-broadcast",
+					data: {
+						broadcastId,
+					},
+				});
+				return broadcastId;
+			}
 		},
 	);

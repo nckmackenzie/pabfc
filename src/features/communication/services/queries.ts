@@ -1,5 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getSmsTemplates } from "@/features/communication/services/communication.api";
+import {
+	getSmsBroadcasts,
+	getSmsTemplates,
+} from "@/features/communication/services/communication.api";
 
 export const smsTemplateQueries = {
 	all: ["sms-templates"] as const,
@@ -7,5 +10,14 @@ export const smsTemplateQueries = {
 		queryOptions({
 			queryKey: [...smsTemplateQueries.all, "list"],
 			queryFn: () => getSmsTemplates(),
+		}),
+};
+
+export const smsBroadcastQueries = {
+	all: ["sms-broadcasts"] as const,
+	list: () =>
+		queryOptions({
+			queryKey: [...smsBroadcastQueries.all, "list"],
+			queryFn: () => getSmsBroadcasts(),
 		}),
 };
