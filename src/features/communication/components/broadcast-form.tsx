@@ -75,6 +75,9 @@ export function BroadcastForm() {
 							queryKey: ["sms-templates"],
 						});
 					},
+					onSettled: () => {
+						submitTypeRef.current = "SUBMIT";
+					},
 				},
 			);
 		},
@@ -119,9 +122,6 @@ export function BroadcastForm() {
 			);
 		});
 	}, [filterCriteria, criteria, form]);
-
-	const formErrors = useStore(form.store, (state) => state.errors);
-	console.log("Form Errors:", formErrors);
 
 	return (
 		<div className="flex-1">
