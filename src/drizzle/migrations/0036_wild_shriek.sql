@@ -1,0 +1,1 @@
+ALTER TABLE "sms_broadcasts" ALTER COLUMN "criteria" DROP NOT NULL;

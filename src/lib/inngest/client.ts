@@ -20,6 +20,17 @@ type Events = {
 			stkCallback: StkCallback;
 		};
 	};
+	"app/communications.send-sms-broadcast": {
+		data: {
+			broadcastId: string;
+		};
+	};
+	"app/communications.send-test-to-user": {
+		data: {
+			content: string;
+			contact: Array<string>;
+		};
+	};
 };
 
 export const inngest = new Inngest({

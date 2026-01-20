@@ -50,3 +50,22 @@ export const EMERGENCY_CONTACT_RELATIONSHIPS = [
 		label: "Other",
 	},
 ];
+
+export const MEMBER_STATUS = [
+	{
+		value: "active",
+		label: "Active",
+	},
+	{
+		value: "inactive",
+		label: "Inactive",
+	},
+	{
+		value: "frozen",
+		label: "Frozen",
+	},
+	{
+		value: "terminated",
+		label: "Terminated",
+	},
+];

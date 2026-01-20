@@ -185,6 +185,7 @@ export const membersOverview = pgMaterializedView("vw_member_overview", {
 	gender: genderEnum("gender").notNull(),
 	memberStatus: memberStatusEnum("member_status").notNull(),
 	image: varchar("image"),
+	activePlanId: varchar("active_plan_id"),
 	activePlanName: varchar("active_plan_name"),
 	nextRenewalDate: date("next_renewal_date"),
 	lastVisit: timestamp("last_visit"),
