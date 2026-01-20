@@ -246,6 +246,20 @@
       "when": 1768829646645,
       "tag": "0034_plain_omega_flight",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1768884404754,
+      "tag": "0035_cynical_peter_quill",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1768894059246,
+      "tag": "0036_wild_shriek",
+      "breakpoints": true
     }
   ]
 }

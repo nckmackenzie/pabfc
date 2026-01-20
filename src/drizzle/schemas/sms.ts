@@ -10,7 +10,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 
-export const FILTER_CRITERIA = ["by status", "by plan"] as const;
+export const FILTER_CRITERIA = [
+	"by status",
+	"by plan",
+	"all members",
+	"specific members",
+] as const;
 export const SMS_BROADCAST_STATUS = [
 	"draft",
 	"sent",
@@ -74,7 +79,7 @@ export const smsLogs = pgTable("sms_logs", {
 export const smsBroadcasts = pgTable("sms_broadcasts", {
 	id,
 	filterCriteria: smsFilterCriteriaEnum("filter_criteria").notNull(),
-	criteria: varchar("criteria", { length: 255 }).notNull(),
+	criteria: varchar("criteria", { length: 255 }),
 	smsTemplateId: varchar("sms_template_id").references(() => smsTemplates.id, {
 		onDelete: "set null",
 	}),
@@ -84,7 +89,10 @@ export const smsBroadcasts = pgTable("sms_broadcasts", {
 		.notNull()
 		.default("draft"),
 	sentAt: timestamp("sent_at"),
-	response: jsonb("response").$type<SMSBroadcastResponse>(),
+	response:
+		jsonb("response").$type<
+			Array<SMSBroadcastResponse["SMSMessageData"]["Recipients"][number]>
+		>(),
 	createdAt,
 	updatedAt,
 });
