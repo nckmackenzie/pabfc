@@ -1,5 +1,6 @@
 import africastalking from "africastalking";
 import { z } from "zod";
+import type { SMSBroadcastResponse } from "@/drizzle/schema";
 
 const credentials = {
 	apiKey: process.env.SMS_API_KEY as string,
@@ -26,7 +27,7 @@ export async function sendSms(data: z.infer<typeof smsSchema>) {
 
 	try {
 		const response = await sms.send(options);
-		return response;
+		return response as unknown as SMSBroadcastResponse;
 	} catch (error) {
 		console.log(error);
 	}
