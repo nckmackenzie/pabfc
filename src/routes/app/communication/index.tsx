@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
+import { DatatableSkeleton } from "@/components/ui/loaders";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { BroadcastArea } from "@/features/communication/components/broadcast-area";
+import { Broadcasts } from "@/features/communication/components/broadcasts";
 import { TemplateArea } from "@/features/communication/components/template-area";
 import { smsTemplateQueries } from "@/features/communication/services/queries";
+import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
 
 export const Route = createFileRoute("/app/communication/")({
@@ -11,11 +15,16 @@ export const Route = createFileRoute("/app/communication/")({
 		meta: [{ title: "Communication / Prime Age Beauty & Fitness Center" }],
 	}),
 	loader: async ({ context: { queryClient } }) => {
-		const [templates, plans] = await Promise.all([
+		const [templates, plans, members] = await Promise.all([
 			queryClient.ensureQueryData(smsTemplateQueries.list()),
 			queryClient.ensureQueryData(planQueries.active()),
+			queryClient.ensureQueryData(memberQueries.list({})),
 		]);
-		return { templates, plans };
+		return {
+			templates,
+			plans,
+			members,
+		};
 	},
 });
 
@@ -27,6 +36,12 @@ function RouteComponent() {
 					<BroadcastArea />
 					<TemplateArea />
 				</div>
+				<ErrorBoundaryWithSuspense
+					errorMessage="Failed to load broadcasts"
+					loader={<DatatableSkeleton />}
+				>
+					<Broadcasts />
+				</ErrorBoundaryWithSuspense>
 			</div>
 		</ProtectedPage>
 	);
