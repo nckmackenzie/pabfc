@@ -4,12 +4,12 @@ import type { Option } from "@/types/index.types";
 export const VARIABLE_SOURCES = {
 	firstName: {
 		table: "members",
-		field: "first_name",
+		field: "firstName",
 		description: "Member's first name",
 	},
 	lastName: {
 		table: "members",
-		field: "last_name",
+		field: "lastName",
 		description: "Member's last name",
 	},
 } as const;
@@ -40,8 +40,9 @@ export async function getMembers(
 ): Promise<Array<Option>> {
 	const urlSearchParams = new URLSearchParams();
 	urlSearchParams.append("filterCriteria", filterCriteria);
-	urlSearchParams.append("criteria", criteria);
-	console.log(urlSearchParams.toString());
+	if (criteria) {
+		urlSearchParams.append("criteria", criteria);
+	}
 	const res = await fetch(`/api/communications/get-members?${urlSearchParams}`);
 	if (!res.ok) {
 		throw new Error("Failed to get members");
