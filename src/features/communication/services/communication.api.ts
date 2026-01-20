@@ -1,10 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { smsLogs, smsTemplates } from "@/drizzle/schema";
+import { smsLogs, smsTemplates, users } from "@/drizzle/schema";
 import { extractVariables } from "@/features/communication/lib/utils";
-import { templateFormSchema } from "@/features/communication/services/schemas";
-import { ConflictError } from "@/lib/error-handling/app-error";
+import {
+	broadcastFormSchema,
+	templateFormSchema,
+} from "@/features/communication/services/schemas";
+import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { internationalizePhoneNumber } from "@/lib/helpers";
+import { inngest } from "@/lib/inngest/client";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
@@ -99,3 +104,48 @@ export const deleteTemplate = createServerFn()
 			return { error: true, message: "Failed to delete template" };
 		}
 	});
+
+export const sendBroadCast = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(broadcastFormSchema)
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			const {
+				filterCriteria,
+				criteria,
+				receipients,
+				smsTemplateId,
+				content,
+				smsBroadcastStatus,
+				submitType,
+			} = data;
+
+			console.log(data);
+
+			if (submitType === "SEND_TEST") {
+				const user = await db.query.users.findFirst({
+					columns: { contact: true },
+					where: eq(users.id, userId),
+				});
+
+				if (!user?.contact) {
+					throw new NotFoundError("User");
+				}
+
+				await inngest.send({
+					name: "app/communications.send-test-to-user",
+					data: {
+						content,
+						contact: [internationalizePhoneNumber(user.contact, true)],
+					},
+				});
+			}
+
+			return "Completed successfully";
+		},
+	);

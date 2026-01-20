@@ -1,49 +1,39 @@
 import { useStore } from "@tanstack/react-form";
-import { useQueries } from "@tanstack/react-query";
-import { getRouteApi } from "@tanstack/react-router";
 import { SendIcon } from "lucide-react";
-import { useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { XIcon } from "@/components/ui/icons";
 import { MultiSelectItem } from "@/components/ui/multi-select";
 import { SelectItem } from "@/components/ui/select";
-import { smsTemplateQueries } from "@/features/communication/services/queries";
+import { useFormData } from "@/features/communication/hooks/use-get-form-data";
+import { FILTER_CRITERIA_OPTIONS } from "@/features/communication/lib/constants";
+import { getMembers } from "@/features/communication/lib/utils";
+import { sendBroadCast } from "@/features/communication/services/communication.api";
 import {
 	type BroadcastFormSchema,
 	broadcastFormSchema,
 } from "@/features/communication/services/schemas";
 import { MEMBER_STATUS } from "@/features/members/lib/constants";
-import { planQueries } from "@/features/plans/services/queries";
+import { useFormMutation } from "@/hooks/use-form-mutation";
 import { useAppForm } from "@/lib/form";
-import { toTitleCase } from "@/lib/utils";
-
-const FILTER_CRITERIA_OPTIONS = [
-	{ label: "By Status", value: "by status" },
-	{ label: "By Plan", value: "by plan" },
-];
+import type { Option } from "@/types/index.types";
 
 export function BroadcastForm() {
-	const { templates: loaderTemplates, plans: loaderPlans } = getRouteApi(
-		"/app/communication/",
-	).useLoaderData();
+	const { templates, plans, freshTemplates } = useFormData();
+	const [members, setMembers] = useState<Option[]>([]);
 	const submitTypeRef = useRef<"SUBMIT" | "SEND_TEST">("SUBMIT");
 	const formRef = useRef<HTMLFormElement>(null);
-	const [{ data: freshTemplates }, { data: freshPlans }] = useQueries({
-		queries: [smsTemplateQueries.list(), planQueries.active()],
+
+	const { isPending, mutate } = useFormMutation({
+		createFn: (values: BroadcastFormSchema) => sendBroadCast({ data: values }),
+		entityName: "broadcast",
+		queryKey: ["broadcasts"],
+		successMessage: {
+			create: "Broadcast sent successfully",
+		},
 	});
-	const { templates, plans } = useMemo(() => {
-		return {
-			templates: (freshTemplates || loaderTemplates).map((template) => ({
-				value: template.id,
-				label: toTitleCase(template.name),
-			})),
-			plans: (freshPlans || loaderPlans).map((plan) => ({
-				value: plan.value,
-				label: toTitleCase(plan.label),
-			})),
-		};
-	}, [loaderTemplates, freshTemplates, loaderPlans, freshPlans]);
+
 	const form = useAppForm({
 		defaultValues: {
 			filterCriteria: "by status",
@@ -57,12 +47,54 @@ export function BroadcastForm() {
 		validators: {
 			onSubmit: broadcastFormSchema,
 		},
+		onSubmit: ({ value }) => {
+			mutate(
+				{ data: { ...value, submitType: submitTypeRef.current } },
+				{
+					onSuccess: () => {
+						if (submitTypeRef.current === "SEND_TEST") {
+							return;
+						}
+						form.reset();
+					},
+				},
+			);
+		},
 	});
 
-	const [filterCriteria, receipients] = useStore(form.store, (state) => [
-		state.values.filterCriteria,
-		state.values.receipients,
-	]);
+	const [filterCriteria, receipients, templateId, criteria] = useStore(
+		form.store,
+		(state) => [
+			state.values.filterCriteria,
+			state.values.receipients,
+			state.values.smsTemplateId,
+			state.values.criteria,
+		],
+	);
+
+	useEffect(() => {
+		if (templateId) {
+			const template = freshTemplates?.find(
+				(template) => template.id === templateId,
+			);
+			if (template) {
+				form.setFieldValue("content", template.content);
+			}
+		}
+	}, [templateId, freshTemplates, form]);
+
+	useEffect(() => {
+		if (!filterCriteria || !criteria) {
+			return;
+		}
+		getMembers(filterCriteria, criteria).then((members) => {
+			setMembers(members);
+			form.setFieldValue(
+				"receipients",
+				members.map((member) => member.value),
+			);
+		});
+	}, [filterCriteria, criteria, form]);
 
 	return (
 		<div className="flex-1">
@@ -113,9 +145,9 @@ export function BroadcastForm() {
 								placeholder="Select receipients"
 								className="col-span-2"
 							>
-								{plans.map((plan) => (
-									<MultiSelectItem key={plan.value} value={plan.value}>
-										{plan.label}
+								{members.map((member) => (
+									<MultiSelectItem key={member.value} value={member.value}>
+										{member.label}
 									</MultiSelectItem>
 								))}
 							</field.MultiSelect>
@@ -165,10 +197,11 @@ export function BroadcastForm() {
 								formRef.current?.requestSubmit();
 							}}
 							className="text-muted-foreground"
+							disabled={isPending}
 						>
 							Send test to me
 						</Button>
-						<Button type="submit">
+						<Button type="submit" disabled={isPending}>
 							<SendIcon />
 							Send
 						</Button>
@@ -178,6 +211,7 @@ export function BroadcastForm() {
 							onClick={() => {
 								form.reset();
 							}}
+							disabled={isPending}
 						>
 							<XIcon />
 							Cancel

@@ -1,3 +1,6 @@
+import type { BroadcastFormSchema } from "@/features/communication/services/schemas";
+import type { Option } from "@/types/index.types";
+
 export const VARIABLE_SOURCES = {
 	firstName: {
 		table: "members",
@@ -29,4 +32,19 @@ export function replaceVariables(
 	});
 
 	return result;
+}
+
+export async function getMembers(
+	filterCriteria: BroadcastFormSchema["filterCriteria"],
+	criteria: BroadcastFormSchema["criteria"],
+): Promise<Array<Option>> {
+	const urlSearchParams = new URLSearchParams();
+	urlSearchParams.append("filterCriteria", filterCriteria);
+	urlSearchParams.append("criteria", criteria);
+	console.log(urlSearchParams.toString());
+	const res = await fetch(`/api/communications/get-members?${urlSearchParams}`);
+	if (!res.ok) {
+		throw new Error("Failed to get members");
+	}
+	return res.json();
 }
