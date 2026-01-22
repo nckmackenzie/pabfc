@@ -27,6 +27,7 @@ import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
 import { Route as AppExpensesRouteRouteImport } from './routes/app/expenses/route'
 import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-of-accounts/route'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
+import { Route as AppProfileIndexRouteImport } from './routes/app/profile/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
@@ -43,6 +44,7 @@ import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
 import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
 import { Route as ApiUploadsExpenseAttachmentRouteImport } from './routes/api/uploads/expense-attachment'
+import { Route as ApiCommunicationsGetMembersRouteImport } from './routes/api/communications/get-members'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
@@ -148,6 +150,11 @@ const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppUsersRouteRoute,
 } as any)
+const AppProfileIndexRoute = AppProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppPlansIndexRoute = AppPlansIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -227,6 +234,12 @@ const ApiUploadsExpenseAttachmentRoute =
   ApiUploadsExpenseAttachmentRouteImport.update({
     id: '/api/uploads/expense-attachment',
     path: '/api/uploads/expense-attachment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCommunicationsGetMembersRoute =
+  ApiCommunicationsGetMembersRouteImport.update({
+    id: '/api/communications/get-members',
+    path: '/api/communications/get-members',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -329,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/communications/get-members': typeof ApiCommunicationsGetMembersRoute
   '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
@@ -345,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
+  '/app/profile': typeof AppProfileIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
@@ -373,6 +388,7 @@ export interface FileRoutesByTo {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/communications/get-members': typeof ApiCommunicationsGetMembersRoute
   '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
@@ -389,6 +405,7 @@ export interface FileRoutesByTo {
   '/app/members': typeof AppMembersIndexRoute
   '/app/payments': typeof AppPaymentsIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
+  '/app/profile': typeof AppProfileIndexRoute
   '/app/users': typeof AppUsersIndexRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
@@ -425,6 +442,7 @@ export interface FileRoutesById {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/communications/get-members': typeof ApiCommunicationsGetMembersRoute
   '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
@@ -441,6 +459,7 @@ export interface FileRoutesById {
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
+  '/app/profile/': typeof AppProfileIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
@@ -477,6 +496,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/api/communications/get-members'
     | '/api/uploads/expense-attachment'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
@@ -493,6 +513,7 @@ export interface FileRouteTypes {
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
+    | '/app/profile'
     | '/app/users/'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/expenses/$expenseId/edit'
@@ -521,6 +542,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/api/communications/get-members'
     | '/api/uploads/expense-attachment'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
@@ -537,6 +559,7 @@ export interface FileRouteTypes {
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
+    | '/app/profile'
     | '/app/users'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/expenses/$expenseId/edit'
@@ -572,6 +595,7 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/api/auth/$'
+    | '/api/communications/get-members'
     | '/api/uploads/expense-attachment'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
@@ -588,6 +612,7 @@ export interface FileRouteTypes {
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
+    | '/app/profile/'
     | '/app/users/'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/expenses/$expenseId/edit'
@@ -611,6 +636,7 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   MemberRouteRoute: typeof MemberRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCommunicationsGetMembersRoute: typeof ApiCommunicationsGetMembersRoute
   ApiUploadsExpenseAttachmentRoute: typeof ApiUploadsExpenseAttachmentRoute
   ApiInngestIndexRoute: typeof ApiInngestIndexRoute
   ApiMockApiIndexRoute: typeof ApiMockApiIndexRoute
@@ -747,6 +773,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersIndexRouteImport
       parentRoute: typeof AppUsersRouteRoute
     }
+    '/app/profile/': {
+      id: '/app/profile/'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/plans/': {
       id: '/app/plans/'
       path: '/'
@@ -857,6 +890,13 @@ declare module '@tanstack/react-router' {
       path: '/api/uploads/expense-attachment'
       fullPath: '/api/uploads/expense-attachment'
       preLoaderRoute: typeof ApiUploadsExpenseAttachmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/communications/get-members': {
+      id: '/api/communications/get-members'
+      path: '/api/communications/get-members'
+      fullPath: '/api/communications/get-members'
+      preLoaderRoute: typeof ApiCommunicationsGetMembersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -1100,6 +1140,7 @@ interface AppRouteRouteChildren {
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
   AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
   AppCommunicationIndexRoute: typeof AppCommunicationIndexRoute
+  AppProfileIndexRoute: typeof AppProfileIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -1115,6 +1156,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppUnauthorizedRoute: AppUnauthorizedRoute,
   AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
   AppCommunicationIndexRoute: AppCommunicationIndexRoute,
+  AppProfileIndexRoute: AppProfileIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
@@ -1139,6 +1181,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   MemberRouteRoute: MemberRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCommunicationsGetMembersRoute: ApiCommunicationsGetMembersRoute,
   ApiUploadsExpenseAttachmentRoute: ApiUploadsExpenseAttachmentRoute,
   ApiInngestIndexRoute: ApiInngestIndexRoute,
   ApiMockApiIndexRoute: ApiMockApiIndexRoute,

@@ -8,7 +8,6 @@ import { DollarSignIcon, Users2Icon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/ui/page-header";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wip } from "@/components/ui/wip";
 import { Wrapper } from "@/components/ui/wrapper";
 import {
 	AverageAttendanceByDays,
@@ -18,6 +17,7 @@ import {
 	MembershipsExpiringSoon,
 	MembershipsExpiringSoonSkeleton,
 } from "@/features/dashboard/components/expiring-soon";
+import { FinanceDashboard } from "@/features/dashboard/components/finance-dashboard";
 import {
 	StatCards,
 	StatCardsSkeleton,
@@ -60,7 +60,7 @@ function RouteComponent() {
 				description="Welcome to your dashboard"
 				content={<DashboardTabs />}
 			/>
-			{tab === "finance" ? <Wip /> : <MemberShipDashboard />}
+			{tab === "finance" ? <FinanceDashboard /> : <MemberShipDashboard />}
 		</Wrapper>
 	);
 }
@@ -105,9 +105,7 @@ function DashboardTabs() {
 							)}
 						>
 							<Icon />
-							<span className="inline text-sm font-medium">
-								{tab.label}
-							</span>
+							<span className="inline text-sm font-medium">{tab.label}</span>
 						</Button>
 					</PermissionGate>
 				);

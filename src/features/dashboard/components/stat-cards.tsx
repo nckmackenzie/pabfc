@@ -134,7 +134,7 @@ export function KPICard({
 	return (
 		<div
 			className={cn(
-				"relative overflow-hidden rounded-xl border bg-gradient-to-br p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg",
+				"relative overflow-hidden rounded-xl border bg-linear-to-br p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg",
 				variantStyles[variant],
 				className,
 			)}
