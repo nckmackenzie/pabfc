@@ -12,6 +12,8 @@ import {
 } from "@/features/dashboard/components/stat-cards";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { percentageChangeCalculator } from "@/lib/helpers";
+import { FinanceAreaChart, FinancePieChart } from "./finance-charts";
+import { FinanceRecentTransactions } from "./finance-recent-transactions";
 
 export function FinanceDashboard() {
 	return (
@@ -22,6 +24,39 @@ export function FinanceDashboard() {
 			>
 				<FinanceStatCards />
 			</ErrorBoundaryWithSuspense>
+
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+				<div className="col-span-4">
+					<ErrorBoundaryWithSuspense
+						loader={
+							<div className="h-[300px] w-full animate-pulse rounded-xl bg-muted" />
+						}
+						errorMessage="Failed to load chart"
+					>
+						<FinanceAreaChart />
+					</ErrorBoundaryWithSuspense>
+				</div>
+				<div className="col-span-3">
+					<ErrorBoundaryWithSuspense
+						loader={
+							<div className="h-[300px] w-full animate-pulse rounded-xl bg-muted" />
+						}
+						errorMessage="Failed to load chart"
+					>
+						<FinancePieChart />
+					</ErrorBoundaryWithSuspense>
+				</div>
+			</div>
+			<div className="mt-4">
+				<ErrorBoundaryWithSuspense
+					loader={
+						<div className="h-[300px] w-full animate-pulse rounded-xl bg-muted" />
+					}
+					errorMessage="Failed to load transactions"
+				>
+					<FinanceRecentTransactions />
+				</ErrorBoundaryWithSuspense>
+			</div>
 		</div>
 	);
 }

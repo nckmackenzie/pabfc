@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
@@ -5,6 +6,7 @@ import { expenseHeaders, membershipPlans, payments } from "@/drizzle/schema";
 import { getStatDates } from "@/features/dashboard/lib/date-helpers";
 import { dateFormat } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
 const { startOfLast30Days, startOfPreviousPeriod, endOfPreviousPeriod } =
@@ -146,4 +148,81 @@ export const getFinanceStats = createServerFn()
 		}
 
 		return stats;
+	});
+
+export const getFinanceChartData = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:finance");
+
+		// TODO: GET ACTUAL DATA
+		const chartData: any[] = [];
+
+		const isProduction = process.env.APP_ENV === "production";
+		if (!isProduction && chartData.length === 0) {
+			const { getMockFinanceData } = await import(
+				"@/features/dashboard/lib/finance-mock-data"
+			);
+			return getMockFinanceData().revenueExpensesChartData;
+		}
+
+		return chartData;
+	});
+
+export const getRecentTransactions = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:finance");
+
+		// TODO: GET ACTUAL DATA Placeholder for real query
+		const recentActivities: any[] = [];
+
+		const isProduction = process.env.APP_ENV === "production";
+		if (!isProduction && recentActivities.length === 0) {
+			const { getMockFinanceData } = await import(
+				"@/features/dashboard/lib/finance-mock-data"
+			);
+			return getMockFinanceData().recentActivities.slice(0, 10);
+		}
+
+		return recentActivities;
+	});
+
+export const getPlanDistribution = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:finance");
+
+		const planDistribution = await db
+			.select({
+				planName: membershipPlans.name,
+				amount: sql<number>`coalesce(sum(${payments.amount}), 0)`.as(
+					"total_amount",
+				),
+			})
+			.from(payments)
+			.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
+			.where(
+				and(
+					gte(payments.paymentDate, startOfLast30Days),
+					lte(payments.paymentDate, new Date()),
+					eq(payments.status, "completed"),
+				),
+			)
+			.groupBy(membershipPlans.name, payments.planId)
+			.orderBy(desc(sql`total_amount`));
+
+		const isProduction = process.env.APP_ENV === "production";
+		if (!isProduction && planDistribution.length === 0) {
+			const { getMockFinanceData } = await import(
+				"@/features/dashboard/lib/finance-mock-data"
+			);
+			return getMockFinanceData().planDistribution;
+		}
+
+		return planDistribution.map(({ amount, planName }, index) => ({
+			name: toTitleCase(planName.toLowerCase()),
+			value: Number(amount),
+			fill: `var(--chart-${index + 1})`,
+		}));
 	});

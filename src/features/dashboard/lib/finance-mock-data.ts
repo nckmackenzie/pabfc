@@ -25,7 +25,7 @@ export interface FinanceStats {
 	planDistribution: {
 		name: string;
 		value: number;
-		color: string;
+		fill: string;
 	}[];
 	recentActivities: RecentActivity[];
 }
@@ -103,10 +103,10 @@ export const getMockFinanceData = (): FinanceStats => {
 	);
 
 	const planDistribution = [
-		{ name: "Basic", value: 45, color: "hsl(var(--chart-1))" },
-		{ name: "Pro", value: 30, color: "hsl(var(--chart-2))" },
-		{ name: "Elite", value: 15, color: "hsl(var(--chart-3))" },
-		{ name: "Student", value: 10, color: "hsl(var(--chart-4))" },
+		{ name: "Basic", value: 45, fill: "var(--chart-1)" },
+		{ name: "Pro", value: 30, fill: "var(--chart-2)" },
+		{ name: "Elite", value: 15, fill: "var(--chart-3)" },
+		{ name: "Student", value: 10, fill: "var(--chart-4)" },
 	];
 
 	// Find top plan based on distribution (mock logic)
