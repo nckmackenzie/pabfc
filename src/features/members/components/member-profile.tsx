@@ -205,7 +205,7 @@ function PersonalDetails({
 	);
 }
 
-function MemberInfo({
+export function MemberInfo({
 	label,
 	value,
 	className,
