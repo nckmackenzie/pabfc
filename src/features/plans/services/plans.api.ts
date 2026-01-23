@@ -1,7 +1,20 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { startOfMonth, startOfYear } from "date-fns";
-import { and, asc, eq, gte, ilike, lt, max, ne, or, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	ilike,
+	lt,
+	max,
+	ne,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -17,6 +30,7 @@ import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { dateFormat } from "@/lib/helpers";
 import { paymentFilters } from "@/lib/query-helpers";
 import {
+	type dateRangeWithSearchSchema,
 	type reportDateRangeSchema,
 	searchValidateSchema,
 } from "@/lib/schema-rules";
@@ -230,10 +244,69 @@ export const getPlanRevenueStats = createServerFn()
 
 		return {
 			totalPlanPayment: totalRevenue[0].totalRevenue,
-			averagePayment: averagePayment[0].averagePayment,
+			averagePayment: averagePayment[0].averagePayment ?? 0,
 			revenueThisMonth: revenueThisMonth[0].revenueThisMonth,
 			totalPayment: totalPayment[0].totalRevenue,
 		};
+	});
+
+export const getPlanPaymentsByDuration = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(
+		(data: {
+			planId: string;
+			filters: z.infer<typeof dateRangeWithSearchSchema>;
+		}) => data,
+	)
+	.handler(async ({ data }) => {
+		const {
+			planId,
+			filters: { from, to, q },
+		} = data;
+		const dateFrom = from ? new Date(from) : startOfYear(new Date());
+		const dateTo = to ? new Date(to) : new Date();
+		const extraFilters: Array<SQL> = [];
+		if (q) {
+			const searchFilters = or(
+				ilike(sql`CAST(${payments.paymentNo} AS TEXT)`, `%${q}%`),
+				ilike(payments.reference, `%${q}%`),
+				ilike(members.firstName, `%${q}%`),
+				ilike(members.lastName, `%${q}%`),
+				ilike(sql`CAST(${payments.totalAmount} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${payments.paymentDate} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${payments.method} AS TEXT)`, `%${q}%`),
+			);
+			if (searchFilters) {
+				extraFilters.push(searchFilters);
+			}
+		}
+
+		return db
+			.select({
+				id: payments.id,
+				paymentNo: payments.paymentNo,
+				reference: payments.reference,
+				paymentMethod: payments.method,
+				amount: payments.totalAmount,
+				paymentDate: payments.paymentDate,
+				member: {
+					firstName: members.firstName,
+					lastName: members.lastName,
+					image: members.image,
+				},
+			})
+			.from(payments)
+			.innerJoin(members, eq(payments.memberId, members.id))
+			.where(
+				paymentFilters({
+					dateFrom,
+					dateTo,
+					status: "completed",
+					planId,
+					conditions: extraFilters,
+				}),
+			)
+			.orderBy(desc(payments.paymentDate));
 	});
 
 export const createPlan = createServerFn({ method: "POST" })

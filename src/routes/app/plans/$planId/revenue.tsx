@@ -5,14 +5,15 @@ import { DatePicker } from "@/components/ui/date-range";
 import { AlertErrorComponent } from "@/components/ui/error-component";
 import { CheckCircleIcon, XCircleIcon } from "@/components/ui/icons";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
+import { PlanRevenue } from "@/features/plans/components/plan-revenue";
 import { planQueries } from "@/features/plans/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
-import { reportDateRangeSchema } from "@/lib/schema-rules";
+import { dateRangeWithSearchSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/plans/$planId/revenue")({
-	validateSearch: reportDateRangeSchema,
+	validateSearch: dateRangeWithSearchSchema,
 	head: () => ({
 		meta: [{ title: "Plan Revenue / Prime Age Beauty & Fitness Centre" }],
 	}),
@@ -85,6 +86,7 @@ function RouteComponent() {
 					}
 				/>
 			</header>
+			<PlanRevenue />
 		</ProtectedPageWithWrapper>
 	);
 }

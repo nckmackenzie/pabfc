@@ -3,10 +3,16 @@ import type { z } from "zod";
 import {
 	getPlan,
 	getPlanMembers,
+	getPlanPaymentsByDuration,
+	getPlanRevenueStats,
 	getPlans,
 	getPlanWithSummary,
 } from "@/features/plans/services/plans.api";
-import type { searchValidateSchema } from "@/lib/schema-rules";
+import type {
+	dateRangeWithSearchSchema,
+	reportDateRangeSchema,
+	searchValidateSchema,
+} from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 
 export const planQueries = {
@@ -46,5 +52,22 @@ export const planQueries = {
 		queryOptions({
 			queryKey: [...planQueries.all, "plan-with-members", planId, filters],
 			queryFn: () => getPlanMembers({ data: { planId, filters } }),
+		}),
+	planRevenueStats: (
+		planId: string,
+		filters: z.infer<typeof reportDateRangeSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-revenue-stats", planId, filters],
+			queryFn: () =>
+				getPlanRevenueStats({ data: { planId, dateRange: filters } }),
+		}),
+	planRevenuePayments: (
+		planId: string,
+		filters: z.infer<typeof dateRangeWithSearchSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-revenue-payments", planId, filters],
+			queryFn: () => getPlanPaymentsByDuration({ data: { planId, filters } }),
 		}),
 };
