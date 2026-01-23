@@ -61,7 +61,7 @@ export function useColumns() {
 				row: {
 					original: { paymentMethod },
 				},
-			}) => (paymentMethod ? paymentMethod : null),
+			}) => (paymentMethod ? paymentMethod.toUpperCase() : null),
 		},
 		{
 			accessorKey: "reference",
