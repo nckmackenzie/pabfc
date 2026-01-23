@@ -1,6 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
-import { getPlan, getPlans } from "@/features/plans/services/plans.api";
+import {
+	getPlan,
+	getPlanMembers,
+	getPlans,
+	getPlanWithSummary,
+} from "@/features/plans/services/plans.api";
 import type { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 
@@ -28,5 +33,18 @@ export const planQueries = {
 						label: toTitleCase(plan.name),
 					}));
 			},
+		}),
+	planWithSummary: (planId: string) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-with-summary", planId],
+			queryFn: () => getPlanWithSummary({ data: planId }),
+		}),
+	planWithMembers: (
+		planId: string,
+		filters: z.infer<typeof searchValidateSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-with-members", planId, filters],
+			queryFn: () => getPlanMembers({ data: { planId, filters } }),
 		}),
 };

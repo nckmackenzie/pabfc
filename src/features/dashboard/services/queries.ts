@@ -5,6 +5,7 @@ import {
 	getExpiringMemberships,
 	getTodaysAttendances,
 } from "@/features/dashboard/services/dashboard.api";
+import { getFinanceStats } from "@/features/dashboard/services/finance.api";
 
 export const dashboardQueries = {
 	all: ["dashboard"] as const,
@@ -28,5 +29,10 @@ export const dashboardQueries = {
 		queryOptions({
 			queryKey: [...dashboardQueries.all, "average-attendance-by-day"],
 			queryFn: () => getAverageAttendanceByDay(),
+		}),
+	financeStats: () =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "finance-stats"],
+			queryFn: () => getFinanceStats(),
 		}),
 };

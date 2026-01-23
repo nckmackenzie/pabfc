@@ -195,7 +195,7 @@ export function percentageChangeCalculator(current: number, previous: number) {
 	const change = ((current - previous) / previous) * 100;
 
 	return {
-		value: Math.abs(Number(change.toFixed(1))),
+		value: Number.isFinite(change) ? Math.abs(Number(change.toFixed(1))) : 0,
 		isPositive: change >= 0,
 	};
 }

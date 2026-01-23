@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const planSchema = z
 	.object({
@@ -26,4 +27,15 @@ export const planSchema = z
 		}
 	});
 
+export const planWithMembersValidateSearchSchema = searchValidateSchema.extend({
+	memberStatus: z
+		.enum(["active", "expired", "cancelled"])
+		.optional()
+		.catch("active"),
+});
+
 export type PlanSchema = z.infer<typeof planSchema>;
+
+export type PlanWithMembersValidateSearchSchema = z.infer<
+	typeof planWithMembersValidateSearchSchema
+>;

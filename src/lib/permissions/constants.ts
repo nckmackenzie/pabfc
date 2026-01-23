@@ -12,6 +12,8 @@ export const PERMISSIONS = [
 	"plans:create",
 	"plans:update",
 	"plans:delete",
+	"plans:view-members",
+	"plans:view-plan-revenue",
 	"dashboard:view",
 	"dashboard:finance",
 	"chart-of-accounts:view",

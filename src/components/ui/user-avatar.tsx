@@ -14,10 +14,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-	BellIcon,
 	ClipboardClockIcon,
 	CogIcon,
-	ConstructionIcon,
 	LogOutIcon,
 	UsersIcon,
 } from "@/components/ui/icons";
@@ -25,7 +23,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authClient, useSession } from "@/lib/auth/client";
 
 export function UserAvatar() {
-	// TODO: Add user profile, notifications, activity logs, and settings
 	const { data: session, isPending } = useSession();
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -71,12 +68,6 @@ export function UserAvatar() {
 							<UsersIcon />
 							Your Profile
 						</Link>
-					</DropdownMenuItem>
-
-					<DropdownMenuItem disabled>
-						<BellIcon />
-						Notifications
-						<ConstructionIcon className="ml-auto" />
 					</DropdownMenuItem>
 					<DropdownMenuItem asChild>
 						<Link to="/app/activity-logs">

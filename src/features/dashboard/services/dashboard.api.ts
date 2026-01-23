@@ -1,14 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	addDays,
-	endOfDay,
-	endOfMonth,
-	endOfYesterday,
-	startOfDay,
-	startOfMonth,
-	subDays,
-	subMonths,
-} from "date-fns";
+import { addDays, endOfDay, endOfYesterday, startOfDay } from "date-fns";
 import { and, avg, between, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
@@ -18,6 +9,7 @@ import {
 	members,
 	membershipPlans,
 } from "@/drizzle/schema";
+import { getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
@@ -25,13 +17,15 @@ import {
 import { dateFormat } from "@/lib/helpers";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
-const monthStartDate = startOfMonth(new Date());
-const startOfLast7Days = subDays(new Date(), 7);
-const previousMonthStartDate = subMonths(monthStartDate, 1);
-const previousMonthEndDate = endOfMonth(previousMonthStartDate);
-const startOfLast30Days = subDays(new Date(), 30);
-const startOfPreviousPeriod = subDays(new Date(), 60);
-const endOfPreviousPeriod = addDays(startOfPreviousPeriod, 30);
+const {
+	monthStartDate,
+	startOfLast7Days,
+	previousMonthStartDate,
+	previousMonthEndDate,
+	startOfLast30Days,
+	startOfPreviousPeriod,
+	endOfPreviousPeriod,
+} = getStatDates();
 
 export const dashboardStats = createServerFn()
 	.middleware([authMiddleware])

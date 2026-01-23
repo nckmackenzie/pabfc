@@ -10,7 +10,6 @@ import {
 import {
 	CalendarIcon,
 	ChevronDownIcon,
-	ConstructionIcon,
 	DollarSignIcon,
 	PencilIcon,
 } from "@/components/ui/icons";
@@ -31,7 +30,8 @@ export function MemberProfile() {
 		memberQueries.overview(route.useParams().memberId),
 	);
 	const memberData = memberOverview ?? memberLoaderData;
-	const { handleRevokePortalAccess, handleToggleActive } = useMemberActions();
+	const { handleRevokePortalAccess, handleToggleActive, handleSendMessage } =
+		useMemberActions();
 
 	return (
 		<div className="space-y-6">
@@ -118,9 +118,15 @@ export function MemberProfile() {
 									? "Restore Portal Access"
 									: "Revoke Portal Access"}
 							</DropdownMenuItem>
-							{/* TODO: Implement */}
-							<DropdownMenuItem disabled>
-								Send Message <ConstructionIcon />
+							<DropdownMenuItem
+								onSelect={() =>
+									handleSendMessage({
+										memberId: memberData.id,
+										memberName: memberData.fullName,
+									})
+								}
+							>
+								Send Message
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -199,7 +205,7 @@ function PersonalDetails({
 	);
 }
 
-function MemberInfo({
+export function MemberInfo({
 	label,
 	value,
 	className,

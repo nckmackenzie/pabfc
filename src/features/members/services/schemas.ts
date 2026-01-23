@@ -85,9 +85,16 @@ export const memberToggleActiveSchema = z.object({
 	active: z.boolean(),
 });
 
+export const sendMessageSchema = z.object({
+	memberId: z.string().min(1, "Member ID is required"),
+	smsTemplateId: z.string().nullish(),
+	content: z.string().min(1, "Message content is required"),
+});
+
 export type MemberValidateSearch = z.infer<typeof memberValidateSearch>;
 export type MemberFormSchema = z.infer<typeof memberFormSchema>;
 export type MemberRevokePortalAccessSchema = z.infer<
 	typeof memberRevokePortalAccessSchema
 >;
 export type MemberToggleActiveSchema = z.infer<typeof memberToggleActiveSchema>;
+export type SendMessageSchema = z.infer<typeof sendMessageSchema>;

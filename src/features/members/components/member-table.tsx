@@ -18,7 +18,6 @@ import { EmptyState } from "@/components/ui/empty";
 import {
 	ChatMessageIcon,
 	CheckCircleIcon,
-	ConstructionIcon,
 	MonitorPhoneIcon,
 	NoSymbolIcon,
 	PauseIcon,
@@ -37,7 +36,8 @@ import { useMemberActions } from "../hooks/use-member-actions";
 export function MemberTable() {
 	const { filters } = useFilters(getRouteApi("/app/members/").id);
 	const { data } = useSuspenseQuery(memberQueries.list(filters));
-	const { handleRevokePortalAccess, handleToggleActive } = useMemberActions();
+	const { handleRevokePortalAccess, handleToggleActive, handleSendMessage } =
+		useMemberActions();
 
 	const columns: Array<ColumnDef<MemberOverview>> = [
 		{
@@ -166,10 +166,13 @@ export function MemberTable() {
 							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
-					<DropdownMenuItem disabled>
+					<DropdownMenuItem
+						onSelect={() =>
+							handleSendMessage({ memberId: id, memberName: fullName })
+						}
+					>
 						<ChatMessageIcon className="size-4" />
 						<span className="-ml-1">Send Message</span>
-						<ConstructionIcon className="size-4" />
 					</DropdownMenuItem>
 					{memberStatus !== "terminated" && (
 						<DropdownMenuItem
