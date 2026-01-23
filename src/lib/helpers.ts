@@ -199,3 +199,9 @@ export function percentageChangeCalculator(current: number, previous: number) {
 		isPositive: change >= 0,
 	};
 }
+
+export function percentage(partialValue: number, totalValue: number) {
+	return Number.isNaN((100 * partialValue) / totalValue)
+		? 0
+		: (100 * partialValue) / totalValue;
+}
