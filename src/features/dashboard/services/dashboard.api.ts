@@ -9,7 +9,7 @@ import {
 	members,
 	membershipPlans,
 } from "@/drizzle/schema";
-import { getStatDates } from "@/features/dashboard/lib/date-helpers";
+import { getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
