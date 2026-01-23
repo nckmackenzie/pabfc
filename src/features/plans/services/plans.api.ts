@@ -1,5 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { startOfMonth, startOfYear } from "date-fns";
 import { and, asc, eq, gte, ilike, lt, max, ne, or, sql } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
@@ -8,14 +9,24 @@ import {
 	memberMemberships,
 	members,
 	membershipPlans,
+	payments,
 } from "@/drizzle/schema";
-import { getStatDates } from "@/features/dashboard/lib/date-helpers";
+import { getStatDates } from "@/features/dashboard/lib/helpers";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { dateFormat } from "@/lib/helpers";
-import { searchValidateSchema } from "@/lib/schema-rules";
+import { paymentFilters } from "@/lib/query-helpers";
+import {
+	type reportDateRangeSchema,
+	searchValidateSchema,
+} from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+
+type PlanWithDateRange = {
+	planId: string;
+	dateRange: z.infer<typeof reportDateRangeSchema>;
+};
 
 export const getPlans = createServerFn()
 	.middleware([authMiddleware])
@@ -153,6 +164,76 @@ export const getPlanMembers = createServerFn()
 				),
 			)
 			.orderBy(asc(sql`lower(${members.firstName})`));
+	});
+
+export const getPlanRevenueStats = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((data: PlanWithDateRange) => data)
+	.handler(async ({ data: { dateRange, planId } }) => {
+		const dateFrom = dateRange.from
+			? new Date(dateRange.from)
+			: startOfYear(new Date());
+		const dateTo = dateRange.to ? new Date(dateRange.to) : new Date();
+		const filters = paymentFilters({
+			planId,
+			dateFrom,
+			dateTo,
+			status: "completed",
+		});
+
+		const [totalRevenue, averagePayment, revenueThisMonth, totalPayment] =
+			await Promise.all([
+				db
+					.select({
+						totalRevenue:
+							sql<string>`coalesce(sum(${payments.amount}),0)`.mapWith(Number),
+					})
+					.from(payments)
+					.where(filters),
+				db
+					.select({
+						averagePayment:
+							sql<string>`AVG(CAST(COALESCE(${payments.amount}, 0) AS DECIMAL(10,2)))`.mapWith(
+								Number,
+							),
+					})
+					.from(payments)
+					.where(filters),
+				db
+					.select({
+						revenueThisMonth:
+							sql<string>`coalesce(sum(${payments.amount}),0)`.mapWith(Number),
+					})
+					.from(payments)
+					.where(
+						paymentFilters({
+							dateFrom: startOfMonth(new Date()),
+							dateTo: new Date(),
+							planId,
+							status: "completed",
+						}),
+					),
+				db
+					.select({
+						totalRevenue:
+							sql<string>`coalesce(sum(${payments.amount}),0)`.mapWith(Number),
+					})
+					.from(payments)
+					.where(
+						paymentFilters({
+							dateFrom,
+							dateTo,
+							status: "completed",
+						}),
+					),
+			]);
+
+		return {
+			totalPlanPayment: totalRevenue[0].totalRevenue,
+			averagePayment: averagePayment[0].averagePayment,
+			revenueThisMonth: revenueThisMonth[0].revenueThisMonth,
+			totalPayment: totalPayment[0].totalRevenue,
+		};
 	});
 
 export const createPlan = createServerFn({ method: "POST" })
