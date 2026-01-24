@@ -3,8 +3,12 @@ import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { ExpenseForm } from "@/features/expenses/components/expense-form";
 import { expenseQueries } from "@/features/expenses/services/queries";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/expenses/$expenseId/edit")({
+	beforeLoad: async () => {
+		await requirePermission("expenses:update")
+	},
 	head: () => ({
 		meta: [{ title: "Edit Expense / Prime Age Beauty & Fitness Center" }],
 	}),

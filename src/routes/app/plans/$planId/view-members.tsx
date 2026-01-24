@@ -6,8 +6,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PlanWithMembers } from "@/features/plans/components/plan-with-members";
 import { planQueries } from "@/features/plans/services/queries";
 import { searchValidateSchema } from "@/lib/schema-rules";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/plans/$planId/view-members")({
+	beforeLoad: async () => {
+		await requirePermission("plans:view-members")
+	},
 	validateSearch: searchValidateSchema,
 	head: () => ({
 		meta: [{ title: "Plan Members / Prime Age Beauty & Fitness Centre" }],

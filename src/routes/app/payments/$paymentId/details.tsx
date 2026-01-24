@@ -5,8 +5,12 @@ import {
 	PaymentDetailsSkeleton,
 } from "@/features/payments/components/payment-details";
 import { paymentsQueries } from "@/features/payments/services/queries";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payments/$paymentId/details")({
+	beforeLoad: async () => {
+		await requirePermission("payments:view")
+	},
 	head: () => ({
 		meta: [{ title: "Payment Details / Prime Age Beauty & Fitness Club" }],
 	}),

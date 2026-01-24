@@ -8,8 +8,12 @@ import { TemplateArea } from "@/features/communication/components/template-area"
 import { smsTemplateQueries } from "@/features/communication/services/queries";
 import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/communication/")({
+	beforeLoad: async () => {
+		await requirePermission("communication:view")
+	},
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "Communication / Prime Age Beauty & Fitness Center" }],

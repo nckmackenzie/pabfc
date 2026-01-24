@@ -14,8 +14,12 @@ import { journalQueries } from "@/features/journal-entries/services/queries";
 import { journalEntryValidateSearch } from "@/features/journal-entries/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
 import { toTitleCase } from "@/lib/utils";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/journal-entries")({
+	beforeLoad: async () => {
+		await requirePermission("journal-entries:create")
+	},
 	component: RouteComponent,
 	validateSearch: journalEntryValidateSearch,
 	head: () => ({

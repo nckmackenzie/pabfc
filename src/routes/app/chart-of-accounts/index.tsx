@@ -4,8 +4,12 @@ import { ProtectedPage } from "@/components/ui/protected-page";
 import { ChartOfAccountsTable } from "@/features/coa/components/coa-datatable";
 import { useFilters } from "@/hooks/use-filters";
 import { searchValidateSchema } from "@/lib/schema-rules";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/chart-of-accounts/")({
+	beforeLoad: async () => {
+		await requirePermission("chart-of-accounts:view")
+	},
 	component: RouteComponent,
 	validateSearch: searchValidateSchema,
 	head: () => ({
