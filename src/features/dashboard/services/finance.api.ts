@@ -3,9 +3,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { expenseHeaders, membershipPlans, payments } from "@/drizzle/schema";
-import { getStatDates } from "@/features/dashboard/lib/date-helpers";
-import { dateFormat } from "@/lib/helpers";
+import { getStatDates } from "@/features/dashboard/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { expenseFilters, paymentFilters } from "@/lib/query-helpers";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
@@ -32,11 +32,11 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(payments)
 				.where(
-					and(
-						gte(payments.paymentDate, startOfLast30Days),
-						lte(payments.paymentDate, new Date()),
-						eq(payments.status, "completed"),
-					),
+					paymentFilters({
+						dateFrom: startOfLast30Days,
+						dateTo: new Date(),
+						status: "completed",
+					}),
 				),
 			db
 				.select({
@@ -44,11 +44,11 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(payments)
 				.where(
-					and(
-						gte(payments.paymentDate, startOfPreviousPeriod),
-						lte(payments.paymentDate, endOfPreviousPeriod),
-						eq(payments.status, "completed"),
-					),
+					paymentFilters({
+						dateFrom: startOfPreviousPeriod,
+						dateTo: endOfPreviousPeriod,
+						status: "completed",
+					}),
 				),
 			db
 				.select({
@@ -56,10 +56,7 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(expenseHeaders)
 				.where(
-					and(
-						gte(expenseHeaders.expenseDate, dateFormat(startOfLast30Days)),
-						lte(expenseHeaders.expenseDate, dateFormat(new Date())),
-					),
+					expenseFilters({ dateFrom: startOfLast30Days, dateTo: new Date() }),
 				),
 			db
 				.select({
@@ -67,10 +64,10 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(expenseHeaders)
 				.where(
-					and(
-						gte(expenseHeaders.expenseDate, dateFormat(startOfPreviousPeriod)),
-						lte(expenseHeaders.expenseDate, dateFormat(endOfPreviousPeriod)),
-					),
+					expenseFilters({
+						dateFrom: startOfPreviousPeriod,
+						dateTo: endOfPreviousPeriod,
+					}),
 				),
 			db
 				.select({
@@ -82,11 +79,11 @@ export const getFinanceStats = createServerFn()
 				.from(payments)
 				.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
 				.where(
-					and(
-						gte(payments.paymentDate, startOfLast30Days),
-						lte(payments.paymentDate, new Date()),
-						eq(payments.status, "completed"),
-					),
+					paymentFilters({
+						dateFrom: startOfLast30Days,
+						dateTo: new Date(),
+						status: "completed",
+					}),
 				)
 				.groupBy(membershipPlans.name, payments.planId)
 				.orderBy(desc(sql`total_amount`))
@@ -97,11 +94,11 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(payments)
 				.where(
-					and(
-						gte(payments.paymentDate, startOfLast30Days),
-						lte(payments.paymentDate, new Date()),
-						eq(payments.status, "completed"),
-					),
+					paymentFilters({
+						dateFrom: startOfLast30Days,
+						dateTo: new Date(),
+						status: "completed",
+					}),
 				),
 			db
 				.select({
@@ -109,11 +106,11 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(payments)
 				.where(
-					and(
-						gte(payments.paymentDate, startOfPreviousPeriod),
-						lte(payments.paymentDate, endOfPreviousPeriod),
-						eq(payments.status, "completed"),
-					),
+					paymentFilters({
+						dateFrom: startOfPreviousPeriod,
+						dateTo: endOfPreviousPeriod,
+						status: "completed",
+					}),
 				),
 		]);
 

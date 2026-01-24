@@ -1,8 +1,11 @@
+import CustomModal from "@/components/ui/custom-modal";
 import {
 	RevokePortalAccessModal,
 	ToggleActivateDeactivate,
 } from "@/features/members/components/member-modals";
+import { SendMessageModal } from "@/features/members/components/send-message-modal";
 import { useModal } from "@/integrations/modal-provider";
+import { toTitleCase } from "@/lib/utils";
 
 export function useMemberActions() {
 	const { setOpen } = useModal();
@@ -43,8 +46,26 @@ export function useMemberActions() {
 		);
 	}
 
+	function handleSendMessage({
+		memberId,
+		memberName,
+	}: {
+		memberId: string;
+		memberName: string;
+	}) {
+		setOpen(
+			<CustomModal
+				title={`Send message`}
+				subtitle={`Send a message to ${toTitleCase(memberName.toLowerCase())}`}
+			>
+				<SendMessageModal memberId={memberId} />
+			</CustomModal>,
+		);
+	}
+
 	return {
 		handleRevokePortalAccess,
 		handleToggleActive,
+		handleSendMessage,
 	};
 }

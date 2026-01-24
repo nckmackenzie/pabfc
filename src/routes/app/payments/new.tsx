@@ -5,8 +5,12 @@ import { memberQueries } from "@/features/members/services/queries";
 import { PaymentForm } from "@/features/payments/components/payments-form";
 import { planQueries } from "@/features/plans/services/queries";
 import { toTitleCase } from "@/lib/utils";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payments/new")({
+	beforeLoad: async () => {
+		await requirePermission("payments:create")
+	},
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "New Payment / Prime Age Beauty & Fitness Club" }],

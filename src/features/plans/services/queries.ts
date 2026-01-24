@@ -1,7 +1,18 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
-import { getPlan, getPlans } from "@/features/plans/services/plans.api";
-import type { searchValidateSchema } from "@/lib/schema-rules";
+import {
+	getPlan,
+	getPlanMembers,
+	getPlanPaymentsByDuration,
+	getPlanRevenueStats,
+	getPlans,
+	getPlanWithSummary,
+} from "@/features/plans/services/plans.api";
+import type {
+	dateRangeWithSearchSchema,
+	reportDateRangeSchema,
+	searchValidateSchema,
+} from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 
 export const planQueries = {
@@ -28,5 +39,35 @@ export const planQueries = {
 						label: toTitleCase(plan.name),
 					}));
 			},
+		}),
+	planWithSummary: (planId: string) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-with-summary", planId],
+			queryFn: () => getPlanWithSummary({ data: planId }),
+		}),
+	planWithMembers: (
+		planId: string,
+		filters: z.infer<typeof searchValidateSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-with-members", planId, filters],
+			queryFn: () => getPlanMembers({ data: { planId, filters } }),
+		}),
+	planRevenueStats: (
+		planId: string,
+		filters: z.infer<typeof reportDateRangeSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-revenue-stats", planId, filters],
+			queryFn: () =>
+				getPlanRevenueStats({ data: { planId, dateRange: filters } }),
+		}),
+	planRevenuePayments: (
+		planId: string,
+		filters: z.infer<typeof dateRangeWithSearchSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-revenue-payments", planId, filters],
+			queryFn: () => getPlanPaymentsByDuration({ data: { planId, filters } }),
 		}),
 };

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dateFormat } from "./helpers";
 
 export const paymentMethodSchemaEntry = () =>
 	z.enum(["cash", "mpesa", "cheque", "bank"], {
@@ -44,6 +45,27 @@ export const reportDateRangeSchema = z
 	.object({
 		from: z.iso.date().optional(),
 		to: z.iso.date().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (
+			data.from &&
+			data.to &&
+			new Date(data.from).setHours(0, 0, 0, 0) >
+				new Date(data.to).setHours(0, 0, 0, 0)
+		) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Start date cannot be after end date",
+				path: ["from"],
+			});
+		}
+	});
+
+export const dateRangeWithSearchSchema = z
+	.object({
+		from: z.iso.date().optional().catch(dateFormat(new Date())),
+		to: z.iso.date().optional().catch(dateFormat(new Date())),
+		q: z.string().optional().catch(""),
 	})
 	.superRefine((data, ctx) => {
 		if (

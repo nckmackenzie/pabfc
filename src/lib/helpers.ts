@@ -7,6 +7,8 @@ import type {
 	SchemaValidationFailure,
 	SchemaValidationSuccess,
 } from "@/types/index.types";
+type DateRangeString = { from: string; to: string }
+type DateRangeDate = { from: Date; to: Date }
 
 export const validateSchema = <T>(
 	values: unknown,
@@ -157,7 +159,9 @@ export function generateFullPaymentInvoiceNo(
  * @param to - The end date (can be string, Date, or undefined)
  * @returns Object with normalized from and to dates as ISO strings
  */
-export function normalizeDateRange(from: string | Date, to: string | Date) {
+export function normalizeDateRange(from: string | Date, to: string | Date, returnAsDate: true): DateRangeDate;
+export function normalizeDateRange(from: string | Date, to: string | Date, returnAsDate?: false): DateRangeString;
+export function normalizeDateRange(from: string | Date, to: string | Date,returnAsDate=false): DateRangeString | DateRangeDate {
 	const processDate = (date: string | Date, type: "from" | "to") => {
 		const d = new Date(date);
 		if (Number.isNaN(d.getTime())) {
@@ -181,10 +185,17 @@ export function normalizeDateRange(from: string | Date, to: string | Date) {
 		throw new Error('"from" date cannot be greater than "to" date');
 	}
 
+	if(returnAsDate){
+		return {
+			from: fromDate,
+			to: toDate,
+		} 
+	}
+
 	return {
 		from: normalizedFrom,
 		to: normalizedTo,
-	};
+	} 
 }
 
 export function percentageChangeCalculator(current: number, previous: number) {
@@ -198,4 +209,10 @@ export function percentageChangeCalculator(current: number, previous: number) {
 		value: Number.isFinite(change) ? Math.abs(Number(change.toFixed(1))) : 0,
 		isPositive: change >= 0,
 	};
+}
+
+export function percentage(partialValue: number, totalValue: number) {
+	return Number.isNaN((100 * partialValue) / totalValue)
+		? 0
+		: (100 * partialValue) / totalValue;
 }

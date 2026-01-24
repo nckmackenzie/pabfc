@@ -94,18 +94,29 @@ export function PlansTable() {
 							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
-					{/* TODO: IMPLEMENT */}
 					<PermissionGate
-						permissions={["plans:view"]}
+						permissions={["plans:view-members"]}
 						loadingComponent={<Skeleton className="h-4 w-24" />}
 					>
-						<DropdownMenuItem disabled>
-							<Users2Icon />
-							<span className="-ml-1">View Members On Plan</span>
+						<DropdownMenuItem asChild>
+							<Link
+								to="/app/plans/$planId/view-members"
+								params={{ planId: id }}
+							>
+								<Users2Icon />
+								<span className="-ml-1">View Members On Plan</span>
+							</Link>
 						</DropdownMenuItem>
-						<DropdownMenuItem disabled>
-							<DollarSignIcon />
-							<span className="-ml-1">View Plan Revenue</span>
+					</PermissionGate>
+					<PermissionGate
+						permissions={["plans:view-plan-revenue"]}
+						loadingComponent={<Skeleton className="h-4 w-24" />}
+					>
+						<DropdownMenuItem asChild>
+							<Link to={`/app/plans/$planId/revenue`} params={{ planId: id }}>
+								<DollarSignIcon />
+								<span className="-ml-1">View Plan Revenue</span>
+							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
 					<PermissionGate
