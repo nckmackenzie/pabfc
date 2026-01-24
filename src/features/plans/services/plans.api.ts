@@ -27,7 +27,7 @@ import {
 import { getStatDates } from "@/features/dashboard/lib/helpers";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
-import { dateFormat } from "@/lib/helpers";
+import { dateFormat, normalizeDateRange } from "@/lib/helpers";
 import { paymentFilters } from "@/lib/query-helpers";
 import {
 	type dateRangeWithSearchSchema,
@@ -184,10 +184,8 @@ export const getPlanRevenueStats = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: PlanWithDateRange) => data)
 	.handler(async ({ data: { dateRange, planId } }) => {
-		const dateFrom = dateRange.from
-			? new Date(dateRange.from)
-			: startOfYear(new Date());
-		const dateTo = dateRange.to ? new Date(dateRange.to) : new Date();
+
+		const {from:dateFrom, to:dateTo} = normalizeDateRange(dateRange.from ?? startOfYear(new Date()), dateRange.to ?? new Date(), true)
 		const filters = paymentFilters({
 			planId,
 			dateFrom,
@@ -263,8 +261,7 @@ export const getPlanPaymentsByDuration = createServerFn()
 			planId,
 			filters: { from, to, q },
 		} = data;
-		const dateFrom = from ? new Date(from) : startOfYear(new Date());
-		const dateTo = to ? new Date(to) : new Date();
+		const {from:dateFrom, to:dateTo} = normalizeDateRange(from ?? startOfYear(new Date()), to ?? new Date(), true)
 		const extraFilters: Array<SQL> = [];
 		if (q) {
 			const searchFilters = or(
