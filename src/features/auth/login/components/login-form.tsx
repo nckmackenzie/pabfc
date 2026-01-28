@@ -25,12 +25,13 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 			onSubmit: loginSchema,
 		},
 		onSubmit: async ({ value }) => {
-			await authClient.signIn.username(
-				{
-					username: value.username,
-					password: value.password,
-				},
-				{
+			await authClient.signIn.username({
+				username: value.username,
+				password: value.password,
+				fetchOptions: {
+					headers: {
+						"x-login-type": "office",
+					},
 					onError: (error) => {
 						toast.error((t) => (
 							<ToastContent
@@ -46,7 +47,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 						navigate({ to: target, replace: true });
 					},
 				},
-			);
+			});
 		},
 	});
 	return (
