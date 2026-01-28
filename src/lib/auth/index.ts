@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { admin, twoFactor, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { UAParser } from "ua-parser-js";
@@ -86,32 +86,47 @@ export const auth = betterAuth({
 	},
 	plugins: [twoFactor(), admin(), username(), tanstackStartCookies()],
 	hooks: {
+		before: createAuthMiddleware(async (ctx) => {
+			if (!ctx.path.startsWith("/sign-in")) return;
+
+			const loginType = ctx?.request?.headers?.get("x-login-type") ?? "office";
+
+			const user = await db.query.users.findFirst({
+				columns: { id: true, username: true },
+				where: (users, { eq, or, and, ne }) =>
+					and(
+						loginType === "member"
+							? eq(users.role, "member")
+							: ne(users.role, "member"),
+						or(
+							eq(users.contact, ctx.body.username),
+							eq(users.email, ctx.body.username),
+							eq(users.username, ctx.body.username),
+						),
+					),
+			});
+
+			if (!user) {
+				throw new APIError("BAD_REQUEST", {
+					message: "Invalid username or password",
+				});
+			}
+
+			ctx.context.userId = user.id;
+		}),
 		after: createAuthMiddleware(async (ctx) => {
 			if (!ctx.path.startsWith("/sign-in")) return;
+
 			const userAgent = ctx.request?.headers?.get("user-agent") ?? "unknown";
 			const ipAddress =
 				ctx.request?.headers?.get("x-forwarded-for") ||
 				ctx.request?.headers?.get("x-real-ip") ||
 				"127.0.0.1";
 			const { browser } = UAParser(userAgent);
-			const user = await db.query.users.findFirst({
-				columns: { id: true, username: true },
-				where: (users, { eq, or }) =>
-					or(
-						eq(users.contact, ctx.body.username),
-						eq(users.email, ctx.body.username),
-						eq(users.username, ctx.body.username),
-					),
-			});
-
-			if (!user) {
-				throw new Error("Invalid username or password");
-			}
-
 			const success = Boolean(ctx.context.newSession);
 
 			await db.insert(schema.loginAttempts).values({
-				userId: user.id,
+				userId: ctx.context.newSession?.user.id as string,
 				success,
 				ipAddress,
 				failureReason: success ? undefined : "Invalid username or password",
