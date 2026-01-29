@@ -60,7 +60,6 @@ export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 					{(field) => {
 						return (
 							<field.Input
-								required
 								label="Phone No"
 								placeholder="Enter your phone number"
 							/>
@@ -71,7 +70,6 @@ export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 					{(field) => {
 						return (
 							<field.Input
-								required
 								label="Password"
 								type="password"
 								placeholder="Enter your password"
