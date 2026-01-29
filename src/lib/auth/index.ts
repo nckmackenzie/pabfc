@@ -126,7 +126,7 @@ export const auth = betterAuth({
 			const success = Boolean(ctx.context.newSession);
 
 			await db.insert(schema.loginAttempts).values({
-				userId: ctx.context.newSession?.user.id as string,
+				userId: ctx.context.userId,
 				success,
 				ipAddress,
 				failureReason: success ? undefined : "Invalid username or password",
