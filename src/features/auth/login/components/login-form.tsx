@@ -29,9 +29,6 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 				username: value.username,
 				password: value.password,
 				fetchOptions: {
-					headers: {
-						"x-login-type": "office",
-					},
 					onError: (error) => {
 						toast.error((t) => (
 							<ToastContent
