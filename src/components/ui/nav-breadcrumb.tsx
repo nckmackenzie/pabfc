@@ -26,14 +26,26 @@ export function RouterBreadcrumb() {
 		const staticData = match.staticData;
 		if (!staticData?.breadcrumb) return [];
 
-		const breadcrumbValue =
-			typeof staticData.breadcrumb === "function"
-				? staticData.breadcrumb(match)
-				: staticData.breadcrumb;
+		// If breadcrumb is a function, only resolve it if loader data is available
+		if (typeof staticData.breadcrumb === "function") {
+			// Skip if match hasn't successfully loaded yet
+			if (match.status !== "success" || !match.loaderData) {
+				return [];
+			}
+			const breadcrumbValue = staticData.breadcrumb(match);
+			const items = Array.isArray(breadcrumbValue)
+				? breadcrumbValue
+				: [breadcrumbValue];
+			return items.map((item) => ({
+				label: item,
+				path: match.pathname,
+			}));
+		}
 
-		const items = Array.isArray(breadcrumbValue)
-			? breadcrumbValue
-			: [breadcrumbValue];
+		// Static breadcrumbs are safe to use immediately
+		const items = Array.isArray(staticData.breadcrumb)
+			? staticData.breadcrumb
+			: [staticData.breadcrumb];
 
 		return items.map((item) => ({
 			label: item,
