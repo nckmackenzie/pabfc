@@ -27,6 +27,9 @@ export const Route = createFileRoute("/app/users/roles/$roleId/edit")({
 		if (!role) throw notFound();
 		return { role, permissions };
 	},
+	staticData: {
+		breadcrumb: (match) => `Edit ${toTitleCase(match.loaderData.role.name)}`,
+	},
 	head: ({ loaderData }) => ({
 		meta: [
 			{

@@ -11,6 +11,9 @@ export const Route = createFileRoute("/app/settings")({
 	head: () => ({
 		meta: [{ title: "Settings / Prime Age Beauty & Fitness Center" }],
 	}),
+	staticData: {
+		breadcrumb: "Settings",
+	},
 	beforeLoad: async ({ context: { userSession } }) => {
 		if (userSession?.user.role !== "admin") {
 			throw redirect({ to: "/app/unauthorized" });

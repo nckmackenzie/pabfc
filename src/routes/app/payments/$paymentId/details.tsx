@@ -21,6 +21,9 @@ export const Route = createFileRoute("/app/payments/$paymentId/details")({
 		}
 		return payment;
 	},
+	staticData: {
+		breadcrumb: "Payment Details",
+	},
 });
 
 function RouteComponent() {

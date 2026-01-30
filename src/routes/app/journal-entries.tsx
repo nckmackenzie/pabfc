@@ -26,6 +26,9 @@ export const Route = createFileRoute("/app/journal-entries")({
 	errorComponent: ({ error }) => (
 		<AlertErrorComponent message={error.message} />
 	),
+	staticData: {
+		breadcrumb: "Journal Entries",
+	},
 	loader: async ({
 		context: { queryClient },
 		deps: { journalNo: queryJournalNo },

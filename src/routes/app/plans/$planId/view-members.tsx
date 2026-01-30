@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PlanWithMembers } from "@/features/plans/components/plan-with-members";
 import { planQueries } from "@/features/plans/services/queries";
 import { searchValidateSchema } from "@/lib/schema-rules";
+import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/plans/$planId/view-members")({
 	validateSearch: searchValidateSchema,
@@ -16,6 +17,10 @@ export const Route = createFileRoute("/app/plans/$planId/view-members")({
 		await queryClient.ensureQueryData(planQueries.planWithSummary(planId)),
 	component: RouteComponent,
 	pendingComponent: PendingComponent,
+	staticData: {
+		breadcrumb: (match) =>
+			`Members for ${toTitleCase(match.loaderData.plan.name)}`,
+	},
 });
 
 function RouteComponent() {

@@ -6,6 +6,9 @@ export const Route = createFileRoute("/app/payments")({
 	errorComponent: ({ error }) => (
 		<AlertErrorComponent message={error.message} />
 	),
+	staticData: {
+		breadcrumb: "Payments",
+	},
 });
 
 function RouteComponent() {

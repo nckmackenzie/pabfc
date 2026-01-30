@@ -28,6 +28,10 @@ export const Route = createFileRoute("/app/plans/$planId/revenue")({
 	errorComponent: ({ error }) => (
 		<AlertErrorComponent message={error.message} />
 	),
+	staticData: {
+		breadcrumb: (match) =>
+			`Revenue for ${toTitleCase(match.loaderData.plan.name)}`,
+	},
 });
 
 function RouteComponent() {
