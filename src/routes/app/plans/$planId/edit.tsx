@@ -4,6 +4,7 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import { PlanForm } from "@/features/plans/components/plan-form";
 import { planQueries } from "@/features/plans/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/plans/$planId/edit")({
 	beforeLoad: async () => {
@@ -23,6 +24,9 @@ export const Route = createFileRoute("/app/plans/$planId/edit")({
 		return plan;
 	},
 	pendingComponent: FormLoader,
+	staticData: {
+		breadcrumb: (match) => `Edit ${toTitleCase(match.loaderData.plan.name)}`,
+	},
 });
 
 function RouteComponent() {

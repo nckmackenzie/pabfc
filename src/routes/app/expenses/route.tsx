@@ -6,6 +6,9 @@ import { payeeQueries } from "@/features/expenses/services/queries";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/expenses")({
+	staticData: {
+		breadcrumb: "Expenses List",
+	},
 	beforeLoad: async ({ context: { queryClient } }) => {
 		const [accounts, payees] = await Promise.all([
 			queryClient.ensureQueryData(accountQueries.list({})),

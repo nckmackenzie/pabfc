@@ -31,6 +31,9 @@ export const Route = createFileRoute("/app/payments/new")({
 				.map((plan) => ({ ...plan, name: toTitleCase(plan.name) })),
 		};
 	},
+	staticData: {
+		breadcrumb: "New Payment",
+	},
 });
 
 function RouteComponent() {

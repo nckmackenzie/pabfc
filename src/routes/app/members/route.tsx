@@ -6,6 +6,9 @@ export const Route = createFileRoute("/app/members")({
 	errorComponent: ({ error }) => (
 		<AlertErrorComponent message={error.message} />
 	),
+	staticData: {
+		breadcrumb: "Members List",
+	},
 });
 
 function RouteComponent() {

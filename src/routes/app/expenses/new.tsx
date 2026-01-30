@@ -8,9 +8,12 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/expenses/new")({
 	beforeLoad: async () => {
-		await requirePermission("expenses:create")
+		await requirePermission("expenses:create");
 	},
 	component: RouteComponent,
+	staticData: {
+		breadcrumb: "New Expense",
+	},
 	head: () => ({
 		meta: [{ title: "New Expense / Prime Age Beauty & Fitness Center" }],
 	}),

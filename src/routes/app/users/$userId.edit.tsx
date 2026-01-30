@@ -6,6 +6,10 @@ import { rolesQueries, usersQueries } from "@/features/users/services/queries";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/users/$userId/edit")({
+	staticData: {
+		breadcrumb: (match) =>
+			`Edit ${toTitleCase(match.loaderData.user.name.toLowerCase())}`,
+	},
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "Edit User / Prime Age Beauty & Fitness Center" }],

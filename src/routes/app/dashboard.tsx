@@ -40,6 +40,9 @@ export const Route = createFileRoute("/app/dashboard")({
 		tab: z.enum(["memberships", "finance"]).optional().catch("memberships"),
 	}),
 	component: RouteComponent,
+	staticData: {
+		breadcrumb: "Dashboard",
+	},
 });
 
 function RouteComponent() {

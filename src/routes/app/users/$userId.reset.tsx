@@ -20,6 +20,10 @@ export const Route = createFileRoute("/app/users/$userId/reset")({
 		}
 		return { user };
 	},
+	staticData: {
+		breadcrumb: (match) =>
+			`Reset Password for ${toTitleCase(match.loaderData.user.name)}`,
+	},
 	component: RouteComponent,
 	pendingComponent: () => (
 		<Wrapper size="xs">

@@ -13,6 +13,9 @@ export const Route = createFileRoute("/app/users/roles/")({
 	head: () => ({
 		meta: [{ title: "Roles / Prime Age Beauty & Fitness Center" }],
 	}),
+	staticData: {
+		breadcrumb: "Roles List",
+	},
 	validateSearch: searchValidateSchema,
 	pendingComponent: () => <BasePageLoadingSkeleton />,
 });

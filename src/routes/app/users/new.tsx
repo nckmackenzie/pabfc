@@ -5,6 +5,9 @@ import { UserForm } from "@/features/users/components/user-form";
 import { rolesQueries } from "@/features/users/services/queries";
 
 export const Route = createFileRoute("/app/users/new")({
+	staticData: {
+		breadcrumb: "New User",
+	},
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "New User / Prime Age Beauty & Fitness Center" }],
