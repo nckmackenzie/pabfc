@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/expenses/$expenseId/edit")({
 	beforeLoad: async () => {
-		await requirePermission("expenses:update")
+		await requirePermission("expenses:update");
 	},
 	head: () => ({
 		meta: [{ title: "Edit Expense / Prime Age Beauty & Fitness Center" }],
@@ -23,6 +23,9 @@ export const Route = createFileRoute("/app/expenses/$expenseId/edit")({
 		return expense;
 	},
 	pendingComponent: FormLoader,
+	staticData: {
+		breadcrumb: (match) => `Edit Expense ${match.loaderData.expense.expenseNo}`,
+	},
 });
 
 function RouteComponent() {

@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/chart-of-accounts/$accountId/edit")({
 	beforeLoad: async () => {
-		await requirePermission("chart-of-accounts:update")
+		await requirePermission("chart-of-accounts:update");
 	},
 	head: () => ({
 		meta: [{ title: "Edit Account / Prime Age Beauty & Fitness Center" }],
@@ -22,6 +22,9 @@ export const Route = createFileRoute("/app/chart-of-accounts/$accountId/edit")({
 			throw notFound();
 		}
 		return { account };
+	},
+	staticData: {
+		breadcrumb: (match) => `Edit ${match.loaderData.account.name}`,
 	},
 });
 

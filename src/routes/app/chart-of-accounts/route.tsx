@@ -13,6 +13,9 @@ export const Route = createFileRoute("/app/chart-of-accounts")({
 	errorComponent: ({ error }) => (
 		<AlertErrorComponent message={error.message} />
 	),
+	staticData: {
+		breadcrumb: "Chart of Accounts",
+	},
 });
 
 function RouteComponent() {
