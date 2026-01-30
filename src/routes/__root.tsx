@@ -8,15 +8,26 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "react-hot-toast";
 import { ErrorComponent } from "@/components/ui/error-component";
+import type { BreadcrumbValue } from "@/components/ui/nav-breadcrumb";
 import { NotFoundComponent } from "@/components/ui/not-found";
 import { Spinner } from "@/components/ui/spinner";
 import { ModalProvider } from "@/integrations/modal-provider";
 import { authQueries } from "@/lib/session/queries";
+import type { getRouter } from "@/router";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
+}
+
+declare module "@tanstack/react-router" {
+	interface Register {
+		router: ReturnType<typeof getRouter>;
+	}
+	interface StaticDataRouteOption {
+		breadcrumb?: BreadcrumbValue;
+	}
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
