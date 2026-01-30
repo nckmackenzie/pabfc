@@ -11,6 +11,9 @@ import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/plans/$planId/view-members")({
 	validateSearch: searchValidateSchema,
+	beforeLoad: async () => {
+		await requirePermission("plans:view-members");
+	},
 	head: () => ({
 		meta: [{ title: "Plan Members / Prime Age Beauty & Fitness Centre" }],
 	}),
