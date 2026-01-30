@@ -1,5 +1,6 @@
+import type { VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, type buttonVariants } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { CheckIcon } from "@/components/ui/icons";
 import { LoadingSwap } from "@/components/ui/loading-swap";
@@ -13,6 +14,8 @@ type SubmitButtonProps = {
 	orientation?: "horizontal" | "vertical" | "responsive";
 	withReset?: boolean;
 	onReset?: () => void;
+	buttonSize?: VariantProps<typeof buttonVariants>["size"];
+	icon?: React.ReactNode;
 };
 
 export function SubmitButton({
@@ -22,6 +25,8 @@ export function SubmitButton({
 	orientation,
 	withReset = true,
 	onReset,
+	buttonSize,
+	icon,
 }: SubmitButtonProps & ComponentProps<"button">) {
 	const form = useFormContext();
 	const isMobile = useIsMobile();
@@ -35,9 +40,10 @@ export function SubmitButton({
 						type="submit"
 						className="flex"
 						disabled={isSubmitting || disabled || isLoading}
+						size={buttonSize}
 					>
 						<LoadingSwap isLoading={isSubmitting || !!isLoading}>
-							<CheckIcon />
+							{icon || <CheckIcon />}
 							{buttonText}
 						</LoadingSwap>
 					</Button>

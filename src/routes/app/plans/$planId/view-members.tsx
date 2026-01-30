@@ -5,6 +5,7 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlanWithMembers } from "@/features/plans/components/plan-with-members";
 import { planQueries } from "@/features/plans/services/queries";
+import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 

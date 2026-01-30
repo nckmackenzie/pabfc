@@ -4,8 +4,12 @@ import { ProtectedPage } from "@/components/ui/protected-page";
 import { PaymentTable } from "@/features/payments/components/payment-table";
 import { paymentsSearchValidateSchema } from "@/features/payments/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payments/")({
+	beforeLoad: async () => {
+		await requirePermission("payments:view")
+	},
 	component: RouteComponent,
 	validateSearch: paymentsSearchValidateSchema,
 	head: () => ({

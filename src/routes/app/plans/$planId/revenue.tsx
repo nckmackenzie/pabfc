@@ -11,8 +11,12 @@ import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { dateRangeWithSearchSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/plans/$planId/revenue")({
+	beforeLoad: async () => {
+		await requirePermission("plans:view-plan-revenue")
+	},
 	validateSearch: dateRangeWithSearchSchema,
 	head: () => ({
 		meta: [{ title: "Plan Revenue / Prime Age Beauty & Fitness Centre" }],

@@ -1,6 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { startOfMonth, startOfYear } from "date-fns";
+import { differenceInMonths, startOfMonth, startOfYear } from "date-fns";
 import {
 	and,
 	asc,
@@ -27,7 +27,7 @@ import {
 import { getStatDates } from "@/features/dashboard/lib/helpers";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
-import { dateFormat } from "@/lib/helpers";
+import { dateFormat, normalizeDateRange } from "@/lib/helpers";
 import { paymentFilters } from "@/lib/query-helpers";
 import {
 	type dateRangeWithSearchSchema,
@@ -184,10 +184,11 @@ export const getPlanRevenueStats = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: PlanWithDateRange) => data)
 	.handler(async ({ data: { dateRange, planId } }) => {
-		const dateFrom = dateRange.from
-			? new Date(dateRange.from)
-			: startOfYear(new Date());
-		const dateTo = dateRange.to ? new Date(dateRange.to) : new Date();
+		const { from: dateFrom, to: dateTo } = normalizeDateRange(
+			dateRange.from ?? startOfYear(new Date()),
+			dateRange.to ?? new Date(),
+			true,
+		);
 		const filters = paymentFilters({
 			planId,
 			dateFrom,
@@ -263,8 +264,11 @@ export const getPlanPaymentsByDuration = createServerFn()
 			planId,
 			filters: { from, to, q },
 		} = data;
-		const dateFrom = from ? new Date(from) : startOfYear(new Date());
-		const dateTo = to ? new Date(to) : new Date();
+		const { from: dateFrom, to: dateTo } = normalizeDateRange(
+			from ?? startOfYear(new Date()),
+			to ?? new Date(),
+			true,
+		);
 		const extraFilters: Array<SQL> = [];
 		if (q) {
 			const searchFilters = or(
@@ -307,6 +311,69 @@ export const getPlanPaymentsByDuration = createServerFn()
 				}),
 			)
 			.orderBy(desc(payments.paymentDate));
+	});
+
+export const getPlanRevenueTrend = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((data: PlanWithDateRange) => data)
+	.handler(async ({ data: { dateRange, planId } }) => {
+		const { from: dateFrom, to: dateTo } = normalizeDateRange(
+			dateRange.from ?? startOfYear(new Date()),
+			dateRange.to ?? new Date(),
+			true,
+		);
+
+		const monthsDiff = differenceInMonths(dateTo, dateFrom);
+		const isMonthly = monthsDiff > 3;
+
+		const filters = paymentFilters({
+			planId,
+			dateFrom,
+			dateTo,
+			status: "completed",
+		});
+
+		if (isMonthly) {
+			const monthlyData = await db
+				.select({
+					month: sql<string>`TO_CHAR(${payments.paymentDate}, 'Mon')`,
+					year: sql<string>`TO_CHAR(${payments.paymentDate}, 'YYYY')`,
+					dateValue: sql<string>`TO_CHAR(${payments.paymentDate}, 'YYYY-MM')`,
+					revenue: sql<number>`SUM(${payments.totalAmount})`.mapWith(Number),
+				})
+				.from(payments)
+				.where(filters)
+				.groupBy(
+					sql`TO_CHAR(${payments.paymentDate}, 'Mon')`,
+					sql`TO_CHAR(${payments.paymentDate}, 'YYYY')`,
+					sql`TO_CHAR(${payments.paymentDate}, 'YYYY-MM')`,
+				)
+				.orderBy(asc(sql`TO_CHAR(${payments.paymentDate}, 'YYYY-MM')`));
+
+			return monthlyData.map((d) => ({
+				label: d.month,
+				value: d.revenue,
+			}));
+		}
+
+		const dailyData = await db
+			.select({
+				date: sql<string>`TO_CHAR(${payments.paymentDate}, 'DD Mon')`,
+				fullDate: sql<string>`TO_CHAR(${payments.paymentDate}, 'YYYY-MM-DD')`,
+				revenue: sql<number>`SUM(${payments.totalAmount})`.mapWith(Number),
+			})
+			.from(payments)
+			.where(filters)
+			.groupBy(
+				sql`TO_CHAR(${payments.paymentDate}, 'DD Mon')`,
+				sql`TO_CHAR(${payments.paymentDate}, 'YYYY-MM-DD')`,
+			)
+			.orderBy(asc(sql`TO_CHAR(${payments.paymentDate}, 'YYYY-MM-DD')`));
+
+		return dailyData.map((d) => ({
+			label: d.date,
+			value: d.revenue,
+		}));
 	});
 
 export const createPlan = createServerFn({ method: "POST" })

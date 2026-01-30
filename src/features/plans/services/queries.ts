@@ -5,6 +5,7 @@ import {
 	getPlanMembers,
 	getPlanPaymentsByDuration,
 	getPlanRevenueStats,
+	getPlanRevenueTrend,
 	getPlans,
 	getPlanWithSummary,
 } from "@/features/plans/services/plans.api";
@@ -69,5 +70,14 @@ export const planQueries = {
 		queryOptions({
 			queryKey: [...planQueries.all, "plan-revenue-payments", planId, filters],
 			queryFn: () => getPlanPaymentsByDuration({ data: { planId, filters } }),
+		}),
+	planRevenueTrend: (
+		planId: string,
+		filters: z.infer<typeof reportDateRangeSchema>,
+	) =>
+		queryOptions({
+			queryKey: [...planQueries.all, "plan-revenue-trend", planId, filters],
+			queryFn: () =>
+				getPlanRevenueTrend({ data: { planId, dateRange: filters } }),
 		}),
 };
