@@ -72,11 +72,11 @@ export const collapsibleMenuItems = [
 				url: "/app/receipts",
 				permission: "receipts:view",
 			},
-			// {
-			// 	title: "Invoices",
-			// 	url: "/app/invoices",
-			// 	permission: "invoices:view",
-			// },
+			{
+				title: "Bills",
+				url: "/app/bills",
+				permission: "bills:view",
+			},
 			{
 				title: "Expenses",
 				url: "/app/expenses",
@@ -88,6 +88,9 @@ export const collapsibleMenuItems = [
 				permission: "chart-of-accounts",
 			},
 		],
+		get permissions(): Permission[] {
+			return this.items.map((item) => item.permission as Permission);
+		},
 	},
 	{
 		title: "Reports",
@@ -96,16 +99,22 @@ export const collapsibleMenuItems = [
 			{
 				title: "Member Reports",
 				url: "/app/reports/members",
+				permission: "members:view",
 			},
 			{
 				title: "Attendance Reports",
 				url: "/app/reports/attendance",
+				permission: "attendance:view",
 			},
 			{
 				title: "Finance Reports",
 				url: "/app/reports/finance",
+				permission: "finance:view",
 			},
 		],
+		get permissions(): Permission[] {
+			return this.items.map((item) => item.permission as Permission);
+		},
 	},
 ];
 
