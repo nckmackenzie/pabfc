@@ -12,12 +12,12 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useReceiptNo } from "@/features/payments/hooks/use-receipt-no";
+import { useReceiptNo } from "@/features/receipts/hooks/use-receipt-no";
 import { GymReceiptPdf } from "./donwloadable-receipt";
 
 export function PaymentDetails() {
 	const payment = getRouteApi(
-		"/app/payments/$paymentId/details",
+		"/app/receipts/$receiptId/details",
 	).useLoaderData();
 	const { receiptNo, isLoading: isLoadingReceiptNo } = useReceiptNo(
 		+payment.paymentNo,
@@ -37,7 +37,7 @@ export function PaymentDetails() {
 		<div className="space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Payment details</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Receipt details</h1>
 					<p className="text-muted-foreground">
 						Review transaction information and linked membership plan.
 					</p>

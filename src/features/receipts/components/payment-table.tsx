@@ -13,13 +13,13 @@ import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { CheckIcon, LoaderIcon, ResetIcon, XIcon } from "@/components/ui/icons";
 import { MemberAvatar } from "@/features/members/components/member-table";
-import { paymentsQueries } from "@/features/payments/services/queries";
+import { paymentsQueries } from "@/features/receipts/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
-export function PaymentTable() {
-	const { filters, setFilters } = useFilters(getRouteApi("/app/payments/").id);
+export function ReceiptsTable() {
+	const { filters, setFilters } = useFilters(getRouteApi("/app/receipts/").id);
 	const queryClient = useQueryClient();
 	const { data: payments } = useSuspenseQuery(paymentsQueries.list(filters));
 	const { data: freshPayments } = useQuery({
@@ -121,8 +121,8 @@ export function PaymentTable() {
 				<DatatableActions>
 					<DropdownMenuItem asChild>
 						<Link
-							to="/app/payments/$paymentId/details"
-							params={{ paymentId: row.original.id }}
+							to="/app/receipts/$receiptId/details"
+							params={{ receiptId: row.original.id }}
 						>
 							<ViewDetailsAction />
 						</Link>

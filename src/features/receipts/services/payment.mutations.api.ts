@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { db } from "@/drizzle/db";
 import { mpesaStkRequests, payments } from "@/drizzle/schema";
-import { getPaymentNo } from "@/features/payments/services/payments.queries.api";
-import { paymentSchema } from "@/features/payments/services/schemas";
 import { getPlan } from "@/features/plans/services/plans.api";
+import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
+import { paymentSchema } from "@/features/receipts/services/schemas";
 import { AuthorizationError } from "@/lib/error-handling/app-error";
 import {
 	discountCalculator,
