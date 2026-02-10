@@ -8,6 +8,9 @@ export const Route = createFileRoute("/app/profile/")({
 	head: () => ({
 		meta: [{ title: "Profile / Prime Age Beauty & Fitness Center" }],
 	}),
+	staticData: {
+		breadcrumb: "My Profile",
+	},
 });
 
 function RouteComponent() {

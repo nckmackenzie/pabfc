@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/chart-of-accounts/new")({
 	beforeLoad: async () => {
-		await requirePermission("chart-of-accounts:create")
+		await requirePermission("chart-of-accounts:create");
 	},
 	component: RouteComponent,
 	head: () => ({
@@ -18,6 +18,9 @@ export const Route = createFileRoute("/app/chart-of-accounts/new")({
 	pendingComponent: FormLoader,
 	loader: async ({ context: { queryClient } }) =>
 		await queryClient.ensureQueryData(accountQueries.parentAccounts()),
+	staticData: {
+		breadcrumb: "New Account",
+	},
 });
 
 function RouteComponent() {

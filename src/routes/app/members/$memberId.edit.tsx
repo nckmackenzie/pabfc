@@ -5,6 +5,7 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import { MemberForm } from "@/features/members/components/member-form";
 import { memberQueries } from "@/features/members/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/members/$memberId/edit")({
 	beforeLoad: async () => {
@@ -23,6 +24,10 @@ export const Route = createFileRoute("/app/members/$memberId/edit")({
 			throw notFound();
 		}
 		return member;
+	},
+	staticData: {
+		breadcrumb: (match) =>
+			`Edit ${toTitleCase(match.loaderData.member.fullName)}`,
 	},
 });
 

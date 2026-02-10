@@ -7,6 +7,7 @@ import { MemberProfile } from "@/features/members/components/member-profile";
 import { MemberProfileSkeleton } from "@/features/members/components/member-profile-skeleton";
 import { memberQueries } from "@/features/members/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { toTitleCase } from "@/lib/utils";
 import { logActivity } from "@/services/activity-logger";
 
 export const Route = createFileRoute("/app/members/$memberId/profile")({
@@ -31,6 +32,10 @@ export const Route = createFileRoute("/app/members/$memberId/profile")({
 		return member;
 	},
 	pendingComponent: MemberProfileSkeleton,
+	staticData: {
+		breadcrumb: (match) =>
+			`Profile for ${toTitleCase(match.loaderData.member.fullName)}`,
+	},
 });
 
 function RouteComponent() {

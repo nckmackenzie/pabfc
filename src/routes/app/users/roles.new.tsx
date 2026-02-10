@@ -12,6 +12,9 @@ const RoleForm = lazy(() =>
 );
 
 export const Route = createFileRoute("/app/users/roles/new")({
+	staticData: {
+		breadcrumb: "Create Role",
+	},
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "Create Role / Prime Age Beauty & Fitness Center" }],

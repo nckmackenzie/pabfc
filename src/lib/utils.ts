@@ -7,7 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function toTitleCase(str: string) {
-	return str.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+	return str
+		.toLowerCase()
+		.replace(/-/g, " ")
+		.replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 export function generateRandomId(prefix: string = "id"): string {

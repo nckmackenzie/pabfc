@@ -12,7 +12,10 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/communication/")({
 	beforeLoad: async () => {
-		await requirePermission("communication:view")
+		await requirePermission("communication:view");
+	},
+	staticData: {
+		breadcrumb: "Communication",
 	},
 	component: RouteComponent,
 	head: () => ({

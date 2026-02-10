@@ -13,6 +13,9 @@ export const Route = createFileRoute("/app/plans/new")({
 		meta: [{ title: "New Plan / Prime Age Beauty & Fitness Center" }],
 	}),
 	pendingComponent: FormLoader,
+	staticData: {
+		breadcrumb: "New Plan",
+	},
 });
 
 function RouteComponent() {
