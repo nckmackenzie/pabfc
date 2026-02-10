@@ -68,9 +68,9 @@ export const collapsibleMenuItems = [
 				permission: "chart-of-accounts:view",
 			},
 			{
-				title: "Payments",
-				url: "/app/payments",
-				permission: "payments:view",
+				title: "Receipts",
+				url: "/app/receipts",
+				permission: "receipts:view",
 			},
 			// {
 			// 	title: "Invoices",
