@@ -260,6 +260,13 @@
       "when": 1768894059246,
       "tag": "0036_wild_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1770726038384,
+      "tag": "0037_high_ben_parker",
+      "breakpoints": true
     }
   ]
 }
