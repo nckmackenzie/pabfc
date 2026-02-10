@@ -12,12 +12,12 @@ import { SelectItem } from "@/components/ui/select";
 import { ToastContent } from "@/components/ui/toast-content";
 import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
 import { memberQueries } from "@/features/members/services/queries";
-import { usePaymentStatus } from "@/features/payments/hooks/use-payment-status";
-import { useStkPush } from "@/features/payments/hooks/use-stk-push";
+import { usePaymentStatus } from "@/features/receipts/hooks/use-payment-status";
+import { useStkPush } from "@/features/receipts/hooks/use-stk-push";
 import {
 	type PaymentSchema,
 	paymentSchema,
-} from "@/features/payments/services/schemas";
+} from "@/features/receipts/services/schemas";
 import { useAppForm } from "@/lib/form";
 import { discountCalculator, internationalizePhoneNumber } from "@/lib/helpers";
 import { generateRandomId } from "@/lib/utils";
@@ -29,8 +29,8 @@ const DISCOUNT_TYPES = [
 ];
 
 export function PaymentForm() {
-	const { members, plans } = getRouteApi("/app/payments/new").useLoaderData();
-	const navigate = useNavigate({ from: "/app/payments/new" });
+	const { members, plans } = getRouteApi("/app/receipts/new").useLoaderData();
+	const navigate = useNavigate({ from: "/app/receipts/new" });
 	const [newDates, setNewDates] = useState({
 		startDate: "",
 		endDate: "",

@@ -40,7 +40,7 @@ export function MemberProfile() {
 					<MemberAvatar
 						image={memberData.image}
 						memberName={`${memberData.firstName} ${memberData.lastName}`}
-						className="size-12"
+						className="size-24"
 					/>
 					<div className="space-y-0.5">
 						<div className="flex items-center gap-2">

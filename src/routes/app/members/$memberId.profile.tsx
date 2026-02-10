@@ -33,8 +33,9 @@ export const Route = createFileRoute("/app/members/$memberId/profile")({
 	},
 	pendingComponent: MemberProfileSkeleton,
 	staticData: {
-		breadcrumb: (match) =>
-			`Profile for ${toTitleCase(match.loaderData.member.fullName)}`,
+		breadcrumb: (match) => {
+			return `Profile for ${toTitleCase(match.loaderData.fullName)}`;
+		},
 	},
 });
 

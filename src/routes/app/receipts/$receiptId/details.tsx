@@ -7,7 +7,7 @@ import {
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 
-export const Route = createFileRoute("/app/payments/$paymentId/details")({
+export const Route = createFileRoute("/app/receipts/$receiptId/details")({
 	beforeLoad: async () => {
 		await requirePermission("payments:view");
 	},
@@ -16,9 +16,9 @@ export const Route = createFileRoute("/app/payments/$paymentId/details")({
 	}),
 	component: RouteComponent,
 	pendingComponent: PaymentDetailsSkeleton,
-	loader: async ({ context: { queryClient }, params: { paymentId } }) => {
+	loader: async ({ context: { queryClient }, params: { receiptId } }) => {
 		const payment = await queryClient.ensureQueryData(
-			paymentsQueries.detail(paymentId),
+			paymentsQueries.detail(receiptId),
 		);
 		if (!payment) {
 			throw notFound();
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/app/payments/$paymentId/details")({
 		return payment;
 	},
 	staticData: {
-		breadcrumb: "Payment Details",
+		breadcrumb: "Receipt Details",
 	},
 });
 
@@ -34,9 +34,9 @@ function RouteComponent() {
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
-			backPath="/app/payments"
-			buttonText="Payments List"
-			permissions={["payments:view"]}
+			backPath="/app/receipts"
+			buttonText="Receipts List"
+			permissions={["receipts:view"]}
 		>
 			<PaymentDetails />
 		</ProtectedPageWithWrapper>

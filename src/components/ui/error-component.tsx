@@ -47,7 +47,7 @@ export function ErrorComponent({
 			</p>
 			<div className="flex items-center gap-4">
 				<Button asChild variant="default">
-					<Link to="..">Go Back</Link>
+					<Link to="/app/dashboard">Go Back Home</Link>
 				</Button>
 				{action && (
 					<Button onClick={action.onClick} variant="default">

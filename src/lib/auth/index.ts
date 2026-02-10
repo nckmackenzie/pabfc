@@ -89,15 +89,11 @@ export const auth = betterAuth({
 		before: createAuthMiddleware(async (ctx) => {
 			if (!ctx.path.startsWith("/sign-in")) return;
 
-			const loginType = ctx?.request?.headers?.get("x-login-type") ?? "office";
-
 			const user = await db.query.users.findFirst({
 				columns: { id: true, username: true },
 				where: (users, { eq, or, and, ne }) =>
 					and(
-						loginType === "member"
-							? eq(users.role, "member")
-							: ne(users.role, "member"),
+						ne(users.role, "member"),
 						or(
 							eq(users.contact, ctx.body.username),
 							eq(users.email, ctx.body.username),

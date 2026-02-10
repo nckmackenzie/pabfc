@@ -111,7 +111,7 @@ function Template({
 	);
 }
 
-function TemplatesSkeleton() {
+export function TemplatesSkeleton() {
 	return (
 		<ul className="-mx-2 space-y-2">
 			{Array.from({ length: 5 }).map((_, i) => (

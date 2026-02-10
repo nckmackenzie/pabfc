@@ -7,13 +7,13 @@ import { PaymentForm } from "@/features/receipts/components/payments-form";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
-export const Route = createFileRoute("/app/payments/new")({
+export const Route = createFileRoute("/app/receipts/new")({
 	beforeLoad: async () => {
 		await requirePermission("payments:create");
 	},
 	component: RouteComponent,
 	head: () => ({
-		meta: [{ title: "New Payment / Prime Age Beauty & Fitness Club" }],
+		meta: [{ title: "New Receipt / Prime Age Beauty & Fitness Club" }],
 	}),
 	pendingComponent: FormLoader,
 	loader: async ({ context: { queryClient } }) => {
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/app/payments/new")({
 		};
 	},
 	staticData: {
-		breadcrumb: "New Payment",
+		breadcrumb: "New Receipt",
 	},
 });
 
@@ -40,9 +40,9 @@ function RouteComponent() {
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
-			backPath="/app/payments"
-			buttonText="Payments List"
-			permissions={["payments:create"]}
+			backPath="/app/receipts"
+			buttonText="Receipts List"
+			permissions={["receipts:create"]}
 		>
 			<PaymentForm />
 		</ProtectedPageWithWrapper>

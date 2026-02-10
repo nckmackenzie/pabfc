@@ -2,8 +2,8 @@ import { queryOptions } from "@tanstack/react-query";
 import {
 	getPayment,
 	getPayments,
-} from "@/features/payments/services/payments.queries.api";
-import type { PaymentsSearchValidateSchema } from "@/features/payments/services/schemas";
+} from "@/features/receipts/services/payments.queries.api";
+import type { PaymentsSearchValidateSchema } from "@/features/receipts/services/schemas";
 
 export const paymentsQueries = {
 	all: ["payments"] as const,

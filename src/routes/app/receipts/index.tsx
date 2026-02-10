@@ -6,30 +6,30 @@ import { paymentsSearchValidateSchema } from "@/features/receipts/services/schem
 import { useFilters } from "@/hooks/use-filters";
 import { requirePermission } from "@/lib/permissions/permissions";
 
-export const Route = createFileRoute("/app/payments/")({
+export const Route = createFileRoute("/app/receipts/")({
 	beforeLoad: async () => {
-		await requirePermission("payments:view");
+		await requirePermission("receipts:view");
 	},
 	component: RouteComponent,
 	validateSearch: paymentsSearchValidateSchema,
 	head: () => ({
-		meta: [{ title: "Payments / Prime Age Beauty & Fitness Club" }],
+		meta: [{ title: "Receipts / Prime Age Beauty & Fitness Club" }],
 	}),
 });
 
 function RouteComponent() {
 	const { filters, setFilters } = useFilters(Route.id);
 	return (
-		<ProtectedPage permissions={["payments:view"]}>
+		<ProtectedPage permissions={["receipts:view"]}>
 			<BasePageComponent
-				pageTitle="Membership Payments"
-				pageDescription="View and manage membership payments"
+				pageTitle="Membership Receipts"
+				pageDescription="View and manage membership receipts"
 				hasNewButtonLink
-				newButtonLinkPath="/app/payments/new"
-				createPermissions={["payments:create"]}
+				newButtonLinkPath="/app/receipts/new"
+				createPermissions={["receipts:create"]}
 				defaultSearchValue={filters.q}
 				onSearch={(val) => setFilters({ q: val })}
-				buttonText="Add Payment"
+				buttonText="Add Receipt"
 			>
 				<ReceiptsTable />
 			</BasePageComponent>

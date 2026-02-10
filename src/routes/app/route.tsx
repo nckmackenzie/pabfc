@@ -1,4 +1,9 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Outlet,
+	redirect,
+	useRouterState,
+} from "@tanstack/react-router";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { RouterBreadcrumb } from "@/components/ui/nav-breadcrumb";
 import {
@@ -8,6 +13,25 @@ import {
 } from "@/components/ui/sidebar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Wip } from "@/components/ui/wip";
+
+function Spinner({ show, wait }: { show?: boolean; wait?: `delay-${number}` }) {
+	return (
+		<div
+			className={`inline-block animate-spin px-3 transition ${
+				(show ?? true)
+					? `opacity-1 duration-500 ${wait ?? "delay-300"}`
+					: "duration-500 opacity-0 delay-0"
+			}`}
+		>
+			⍥
+		</div>
+	);
+}
+
+function RouterSpinner() {
+	const isLoading = useRouterState({ select: (s) => s.status === "pending" });
+	return <Spinner show={isLoading} />;
+}
 
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
@@ -31,6 +55,9 @@ function RouteComponent() {
 					</div>
 					<div className="ml-auto">
 						<UserAvatar />
+					</div>
+					<div className={`text-3xl`}>
+						<RouterSpinner />
 					</div>
 				</header>
 				<div className="flex flex-1 flex-col gap-4 bg-secondary ">
