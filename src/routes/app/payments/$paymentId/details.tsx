@@ -3,13 +3,13 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import {
 	PaymentDetails,
 	PaymentDetailsSkeleton,
-} from "@/features/payments/components/payment-details";
-import { paymentsQueries } from "@/features/payments/services/queries";
+} from "@/features/receipts/components/payment-details";
+import { paymentsQueries } from "@/features/receipts/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payments/$paymentId/details")({
 	beforeLoad: async () => {
-		await requirePermission("payments:view")
+		await requirePermission("payments:view");
 	},
 	head: () => ({
 		meta: [{ title: "Payment Details / Prime Age Beauty & Fitness Club" }],
