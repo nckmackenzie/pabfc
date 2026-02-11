@@ -67,13 +67,9 @@ export const bills = pgTable(
 		vendorId: varchar("vendor_id")
 			.notNull()
 			.references(() => vendors.id),
-		invoiceNo: varchar("invoice_no").notNull(),
+		invoiceNo: varchar("invoice_no").notNull().unique(),
 		invoiceDate: date("invoice_date").notNull(),
 		dueDate: date("due_date"),
-		vatType: vatTypeEnum("vat_type").notNull().default("exclusive"),
-		vatRate: decimal("vat_rate", { precision: 10, scale: 2 })
-			.notNull()
-			.default("16"),
 		subTotal: decimal("sub_total", { precision: 10, scale: 2 }).notNull(),
 		tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
 		total: decimal("total", { precision: 10, scale: 2 }).notNull(),
@@ -81,6 +77,7 @@ export const bills = pgTable(
 		isRecurring: boolean("is_recurring").notNull().default(false),
 		recurrencyPeriod: recurrencyPeriodEnum("recurrency_period"),
 		recurrencyEndDate: date("recurrency_end_date"),
+		terms: varchar("terms"),
 		memo: text("memo"),
 		createdBy: varchar("created_by")
 			.notNull()
@@ -109,9 +106,14 @@ export const billItems = pgTable(
 		billId: varchar("bill_id")
 			.notNull()
 			.references(() => bills.id),
-		description: text("description").notNull(),
-		quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
-		unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+		description: text("description"),
+		quantity: decimal("quantity", { precision: 10, scale: 2 }),
+		unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+		subTotal: decimal("sub_total", { precision: 10, scale: 2 }).notNull(),
+		vatType: vatTypeEnum("vat_type").notNull().default("exclusive"),
+		vatRate: decimal("vat_rate", { precision: 10, scale: 2 })
+			.notNull()
+			.default("16"),
 		taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).notNull(),
 		total: decimal("total", { precision: 10, scale: 2 }).notNull(),
 		expenseAccountId: integer("expense_account_id")
