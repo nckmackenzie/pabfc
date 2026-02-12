@@ -118,7 +118,7 @@ export function BillForm({
 		} else if (terms === "Net 90") {
 			form.setFieldValue("dueDate", dueDate(90));
 		} else if (terms === "Due on Receipt") {
-			form.setFieldValue("dueDate", new Date().toISOString());
+			form.setFieldValue("dueDate", dateFormat(new Date()));
 		}
 	}, [terms, form, invoiceDate, bill]);
 
