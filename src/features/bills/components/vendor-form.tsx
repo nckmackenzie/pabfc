@@ -1,3 +1,4 @@
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import type { vendors } from "@/drizzle/schema";
 import {
@@ -7,14 +8,19 @@ import {
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useModal } from "@/integrations/modal-provider";
 import { useAppForm } from "@/lib/form";
+import { toTitleCase } from "@/lib/utils";
 import { upsertSupplier } from "../services/suppliers.api";
 
 export function VendorForm({
 	vendor,
+	fromModal,
 }: {
 	vendor?: typeof vendors.$inferSelect;
+	fromModal?: boolean;
 }) {
 	const { setClose } = useModal();
+	const navigate = useNavigate();
+	const router = useRouter();
 	const { isPending, mutate } = useFormUpsert({
 		entityName: "Vendor",
 		upsertFn: (values: SupplierSchema) => upsertSupplier({ data: values }),
@@ -22,11 +28,11 @@ export function VendorForm({
 	});
 	const form = useAppForm({
 		defaultValues: {
-			name: vendor?.name || "",
+			name: vendor?.name ? toTitleCase(vendor.name.toLowerCase()) : "",
 			email: vendor?.email || null,
 			phone: vendor?.phone || null,
 			address: vendor?.address || null,
-			taxPin: vendor?.taxPin || null,
+			taxPin: vendor?.taxPin?.toUpperCase() || null,
 			active: vendor?.active || true,
 		} as SupplierSchema,
 		validators: {
@@ -36,8 +42,12 @@ export function VendorForm({
 			mutate(
 				{ ...value, id: vendor?.id },
 				{
-					onSuccess: () => {
+					onSuccess: async () => {
 						handleReset();
+						if (vendor?.id) {
+							await router.invalidate({ sync: true });
+						}
+						if (!fromModal) navigate({ to: "/app/suppliers" });
 					},
 				},
 			);
@@ -46,7 +56,7 @@ export function VendorForm({
 
 	function handleReset() {
 		form.reset();
-		setClose();
+		if (fromModal) setClose();
 	}
 
 	return (
@@ -84,7 +94,7 @@ export function VendorForm({
 				<form.AppForm>
 					<form.SubmitButton
 						onReset={handleReset}
-						buttonText="Save Vendor"
+						buttonText={vendor?.id ? "Update Supplier" : "Create Supplier"}
 						withReset
 						isLoading={isPending}
 					/>
