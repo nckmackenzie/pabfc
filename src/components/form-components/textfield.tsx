@@ -37,15 +37,11 @@ export function TextField({
 	const field = useFieldContext();
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 	const isNumber = type === "number";
-	const isDate = type === "date";
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const rawValue = e.target.value;
-		const value = isNumber
-			? +rawValue
-			: isDate && rawValue === ""
-				? null
-				: rawValue;
+		const value = isNumber ? +rawValue : rawValue === "" ? null : rawValue;
+		console.log("value", value);
 		field.handleChange(value);
 	};
 	return (
