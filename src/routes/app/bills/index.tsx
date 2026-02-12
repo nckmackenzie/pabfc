@@ -1,4 +1,8 @@
-import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	stripSearchParams,
+} from "@tanstack/react-router";
 import {
 	BasePageComponent,
 	BasePageLoadingSkeleton,
@@ -57,9 +61,11 @@ function RouteComponent() {
 			newButtonLinkPath="/app/bills/new"
 			customFilters={<Filters />}
 			extraActionButtons={
-				<Button size="lg" variant="outline">
-					<Users2Icon />
-					Manage Suppliers
+				<Button size="lg" variant="outline" asChild>
+					<Link to="/app/suppliers">
+						<Users2Icon />
+						Manage Suppliers
+					</Link>
 				</Button>
 			}
 		>
