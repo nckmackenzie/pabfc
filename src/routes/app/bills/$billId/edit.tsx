@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import z from "zod";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { BillForm } from "@/features/bills/components/bill-form";
@@ -9,30 +8,21 @@ import {
 	supplierQueries,
 } from "@/features/bills/services/queries";
 import { accountQueries } from "@/features/coa/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
-export const Route = createFileRoute("/app/bills/new")({
-	beforeLoad: async () => {
-		await requirePermission("bills:create");
-	},
-	head: () => ({
-		meta: [{ title: "New Bill / Prime Age Beauty & Fitness Centre" }],
-	}),
-	validateSearch: z.object({
-		cloneFrom: z.string().optional(),
-	}),
-	loaderDeps: ({ search }) => ({ cloneFrom: search.cloneFrom }),
+export const Route = createFileRoute("/app/bills/$billId/edit")({
 	component: RouteComponent,
-	loader: async ({ context: { queryClient }, deps: { cloneFrom } }) => {
+	head: () => ({
+		meta: [{ title: "Edit Bill / Prime Age Beauty & Fitness Centre" }],
+	}),
+	loader: async ({ context: { queryClient }, params: { billId } }) => {
 		const [vendors, accounts, bill] = await Promise.all([
 			queryClient.ensureQueryData(supplierQueries.active()),
 			queryClient.ensureQueryData(
 				accountQueries.activeChildAccountsByAccountType("expense"),
 			),
-			cloneFrom
-				? queryClient.ensureQueryData(billQueries.detail(cloneFrom))
-				: undefined,
+			queryClient.ensureQueryData(billQueries.detail(billId)),
 		]);
+
 		return {
 			vendors,
 			accounts,
@@ -40,7 +30,7 @@ export const Route = createFileRoute("/app/bills/new")({
 		};
 	},
 	staticData: {
-		breadcrumb: "New Bill",
+		breadcrumb: (match) => `Edit Bill ${match.loaderData.bill?.invoiceNo}`,
 	},
 	pendingComponent: FormLoader,
 });
@@ -55,9 +45,10 @@ function RouteComponent() {
 			permissions={["bills:create"]}
 		>
 			<BillForm
+				bill={getBillFormValues(bill)}
 				loaderAccounts={accounts}
 				loaderVendors={vendors}
-				bill={bill ? getBillFormValues(bill, true) : undefined}
+				isEdit
 			/>
 		</ProtectedPageWithWrapper>
 	);
