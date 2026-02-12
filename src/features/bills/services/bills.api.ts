@@ -82,7 +82,8 @@ export const upsertBill = createServerFn()
 				user: { id: userId },
 			},
 		}) => {
-			await requirePermission("bills:create");
+			await requirePermission(data.id ? "bills:update" : "bills:create");
+
 			const vatAccountId = await getVatAccountId();
 
 			const {
