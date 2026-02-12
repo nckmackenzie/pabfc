@@ -23,10 +23,10 @@ export function VendorForm({
 	const form = useAppForm({
 		defaultValues: {
 			name: vendor?.name || "",
-			email: vendor?.email || "",
-			phone: vendor?.phone || "",
-			address: vendor?.address || "",
-			taxPin: vendor?.taxPin || "",
+			email: vendor?.email || null,
+			phone: vendor?.phone || null,
+			address: vendor?.address || null,
+			taxPin: vendor?.taxPin || null,
 			active: vendor?.active || true,
 		} as SupplierSchema,
 		validators: {
