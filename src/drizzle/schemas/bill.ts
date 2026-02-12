@@ -5,7 +5,9 @@ import {
 	decimal,
 	index,
 	integer,
+	numeric,
 	pgEnum,
+	pgMaterializedView,
 	pgTable,
 	serial,
 	text,
@@ -96,7 +98,7 @@ export const bills = pgTable(
 
 export const billsRelations = relations(bills, ({ many }) => ({
 	items: many(billItems),
-	payments: many(billPayments),
+	payments: many(billPaymentLines),
 }));
 
 export const billItems = pgTable(
@@ -220,3 +222,14 @@ export const recurringBillsSchedules = pgTable("recurring_bills_schedules", {
 	nextBillDate: date("next_bill_date"),
 	lastGeneratedDate: date("last_generated_date"),
 });
+
+export const vwInvoices = pgMaterializedView("vw_invoices", {
+	id: varchar("id").notNull(),
+	invoiceDate: date("invoice_date").notNull(),
+	dueDate: date("due_date"),
+	invoiceNo: varchar("invoice_no").notNull(),
+	name: varchar("name").notNull(),
+	total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+	totalPayment: numeric("total_payment", { precision: 10, scale: 2 }).notNull(),
+	status: billStatusEnum("status").notNull(),
+}).existing();
