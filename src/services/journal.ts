@@ -118,18 +118,17 @@ export const getVatAccountId = async () => {
 export const areJournalValuesBalanced = (
 	lines: Omit<typeof journalLines.$inferInsert, "id" | "journalEntryId">[],
 ) => {
-	const debitTotal = lines.reduce(
-		(acc, line) => acc + parseFloat(line.amount ?? "0"),
-		0,
-	);
-	const creditTotal = lines.reduce(
-		(acc, line) => acc + parseFloat(line.amount ?? "0"),
-		0,
-	);
+	let debitTotal = 0;
+	let creditTotal = 0;
 
-	if (debitTotal !== creditTotal) {
-		return false;
+	for (const line of lines) {
+		const amount = parseFloat(line.amount ?? "0");
+		if (line.dc === "debit") {
+			debitTotal += amount;
+		} else if (line.dc === "credit") {
+			creditTotal += amount;
+		}
 	}
 
-	return true;
+	return debitTotal === creditTotal;
 };
