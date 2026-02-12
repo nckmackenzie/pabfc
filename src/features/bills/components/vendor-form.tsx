@@ -33,7 +33,7 @@ export function VendorForm({
 			phone: vendor?.phone || null,
 			address: vendor?.address || null,
 			taxPin: vendor?.taxPin?.toUpperCase() || null,
-			active: vendor?.active || true,
+			active: vendor?.active ?? true,
 		} as SupplierSchema,
 		validators: {
 			onSubmit: supplierSchema,
