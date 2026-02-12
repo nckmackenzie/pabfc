@@ -260,6 +260,34 @@
       "when": 1768894059246,
       "tag": "0036_wild_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1770726038384,
+      "tag": "0037_high_ben_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1770801229922,
+      "tag": "0038_shallow_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1770810861415,
+      "tag": "0039_worthless_hairball",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1770816452952,
+      "tag": "0040_exotic_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }

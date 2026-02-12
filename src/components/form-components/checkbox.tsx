@@ -6,6 +6,7 @@ import {
 	FieldError,
 	FieldLabel,
 } from "@/components/ui/field";
+import { Switch as ShadcnSwitch } from "@/components/ui/switch";
 import { useFieldContext } from "@/lib/form";
 
 type CheckboxProps = {
@@ -44,6 +45,29 @@ export function FormCheckbox(props: CheckboxProps) {
 				)}
 				{isInvalid && <FieldError errors={field.state.meta.errors} />}
 			</FieldContent>
+		</Field>
+	);
+}
+
+export function Switch({ label }: { label: string }) {
+	const field = useFieldContext<boolean>();
+	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+	return (
+		<Field data-invalid={isInvalid}>
+			<div className="flex items-center gap-2">
+				<ShadcnSwitch
+					id={label}
+					onBlur={field.handleBlur}
+					checked={field.state.value}
+					onCheckedChange={(checked) => field.handleChange(checked)}
+					aria-invalid={isInvalid}
+				/>
+				<FieldLabel htmlFor={label}>{label}</FieldLabel>
+			</div>
+			{field.state.meta.isTouched && (
+				<FieldError errors={field.state.meta.errors} />
+			)}
 		</Field>
 	);
 }

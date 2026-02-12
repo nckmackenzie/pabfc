@@ -61,7 +61,11 @@ export function AppSidebar() {
 								return data?.user.role === "admin" ? (
 									<MenuItem key={item.title} item={item} />
 								) : (
-									<PermissionGate key={item.title} permission={item.permission}>
+									<PermissionGate
+										key={item.title}
+										permission={item.permission}
+										loadingComponent={<Skeleton className="h-4 w-44" />}
+									>
 										<MenuItem item={item} />
 									</PermissionGate>
 								);
@@ -73,46 +77,48 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{collapsibleMenuItems.map((item) => (
-								<Collapsible
+								<PermissionGate
 									key={item.title}
-									asChild
-									className="group/collapsible"
+									permissions={item.permissions}
+									loadingComponent={<Skeleton className="h-4 w-44" />}
 								>
-									<SidebarMenuItem>
-										<CollapsibleTrigger asChild>
-											<SidebarMenuButton
-												className="capitalize"
-												tooltip={item.title}
-											>
-												{
-													<item.icon className="text-muted-foreground size-5!" />
-												}
-												<span>{item.title}</span>
-												<PlusIcon className="ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:hidden" />
-												<MinusIcon className="hidden ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:block" />
-											</SidebarMenuButton>
-										</CollapsibleTrigger>
-										<CollapsibleContent>
-											<SidebarMenuSub>
-												{item.items.map((subItem) => (
-													<SidebarMenuSubItem key={subItem.title}>
-														<SidebarMenuSubButton
-															asChild
-															className="text-xs font-medium text-muted-foreground"
-														>
-															<Link
-																to={`${subItem.url}` as Route}
-																className="capitalize"
+									<Collapsible asChild className="group/collapsible">
+										<SidebarMenuItem>
+											<CollapsibleTrigger asChild>
+												<SidebarMenuButton
+													className="capitalize"
+													tooltip={item.title}
+												>
+													{
+														<item.icon className="text-muted-foreground size-5!" />
+													}
+													<span>{item.title}</span>
+													<PlusIcon className="ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:hidden" />
+													<MinusIcon className="hidden ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:block" />
+												</SidebarMenuButton>
+											</CollapsibleTrigger>
+											<CollapsibleContent>
+												<SidebarMenuSub>
+													{item.items.map((subItem) => (
+														<SidebarMenuSubItem key={subItem.title}>
+															<SidebarMenuSubButton
+																asChild
+																className="text-xs font-medium text-muted-foreground"
 															>
-																{subItem.title}
-															</Link>
-														</SidebarMenuSubButton>
-													</SidebarMenuSubItem>
-												))}
-											</SidebarMenuSub>
-										</CollapsibleContent>
-									</SidebarMenuItem>
-								</Collapsible>
+																<Link
+																	to={`${subItem.url}` as Route}
+																	className="capitalize"
+																>
+																	{subItem.title}
+																</Link>
+															</SidebarMenuSubButton>
+														</SidebarMenuSubItem>
+													))}
+												</SidebarMenuSub>
+											</CollapsibleContent>
+										</SidebarMenuItem>
+									</Collapsible>
+								</PermissionGate>
 							))}
 						</SidebarMenu>
 					</SidebarGroupContent>

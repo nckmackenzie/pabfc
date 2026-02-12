@@ -13,7 +13,9 @@ import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
-function defaultNormalBalanceForType(type: AccountType): "debit" | "credit" {
+export function defaultNormalBalanceForType(
+	type: AccountType,
+): "debit" | "credit" {
 	switch (type) {
 		case "asset":
 		case "expense":
