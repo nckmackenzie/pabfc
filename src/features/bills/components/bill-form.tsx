@@ -101,7 +101,7 @@ export function BillForm({
 	const handleAddNewVendor = () => {
 		setOpen(
 			<CustomModal title="Add New Vendor" className="max-w-3xl! w-full!">
-				<VendorForm />
+				<VendorForm fromModal={true} />
 			</CustomModal>,
 		);
 	};
