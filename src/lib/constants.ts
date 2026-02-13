@@ -47,6 +47,7 @@ export const menuItems: MenuItem[] = [
 		title: "Attendance",
 		url: "/app/attendances",
 		icon: CalendarIcon,
+		permission: "attendance:view",
 	},
 	{
 		title: "Communication",
