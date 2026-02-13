@@ -181,6 +181,7 @@ export const updateAccount = createServerFn({ method: "POST" })
 
 			if (values.isBankAccount) {
 				const bankId = await db.query.bankAccounts.findFirst({
+					columns: { id: true },
 					where: eq(bankAccounts.accountId, accountId),
 				});
 				if (!bankId) {
@@ -233,7 +234,18 @@ export const deleteAccount = createServerFn({ method: "POST" })
 			throw new Error("Account has child accounts");
 		}
 
+		const isBankAccount = await db.query.bankAccounts.findFirst({
+			columns: { id: true },
+			where: eq(bankAccounts.accountId, account.id),
+		});
+
 		await db.transaction(async (tx) => {
+			if (isBankAccount) {
+				await tx
+					.delete(bankAccounts)
+					.where(eq(bankAccounts.id, isBankAccount.id));
+			}
+
 			await tx
 				.delete(ledgerAccounts)
 				.where(eq(ledgerAccounts.id, Number(accountId)));
