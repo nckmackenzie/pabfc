@@ -1,17 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { asc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { type AccountType, ledgerAccounts } from "@/drizzle/schema";
+import {
+	type AccountType,
+	bankAccounts,
+	ledgerAccounts,
+} from "@/drizzle/schema";
 import {
 	type AccountsFormSchema,
 	accountsFormSchema,
 } from "@/features/coa/services/schemas";
 import { NotFoundError } from "@/lib/error-handling/app-error";
+import { dateFormat } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { createJournalEntry, createOrGetAccountId } from "@/services/journal";
 
 export function defaultNormalBalanceForType(
 	type: AccountType,
@@ -44,7 +50,10 @@ export const getAccounts = createServerFn({ method: "GET" })
 						)
 					: undefined,
 			)
-			.orderBy(asc(ledgerAccounts.type), asc(ledgerAccounts.name));
+			.orderBy(asc(ledgerAccounts.type), asc(ledgerAccounts.name))
+			.then((data) =>
+				data.map((d) => ({ ...d, name: toTitleCase(d.name.toLowerCase()) })),
+			);
 	});
 
 export const getAccount = createServerFn({ method: "GET" })
@@ -54,6 +63,7 @@ export const getAccount = createServerFn({ method: "GET" })
 		await requirePermission("chart-of-accounts:view");
 		return db.query.ledgerAccounts.findFirst({
 			columns: { createdAt: false, updatedAt: false, normalBalance: false },
+			with: { bank: { columns: { accountNumber: true } } },
 			where: eq(ledgerAccounts.id, accountId),
 		});
 	});
@@ -77,6 +87,56 @@ export const createAccount = createServerFn({ method: "POST" })
 					isPosting: data.isSubcategory,
 				})
 				.returning({ id: ledgerAccounts.id });
+
+			if (data.isBankAccount) {
+				await tx.insert(bankAccounts).values({
+					bankName: data.name,
+					accountId: id,
+					accountNumber: data.accountNumber as string,
+					currencyCode: "KES",
+				});
+
+				if (data.openingBalance && data.openingBalance !== 0) {
+					const openingBalanceEquity = await createOrGetAccountId(
+						"opening balance equity",
+						"equity",
+						tx,
+					);
+
+					const description = data.description
+						? data.description
+						: `Opening balance for ${data.name}`;
+
+					await createJournalEntry({
+						entry: {
+							entryDate: data.openingBalanceDate
+								? dateFormat(data.openingBalanceDate)
+								: dateFormat(new Date()),
+							source: "opening balance",
+							sourceId: id.toString(),
+							reference: data.accountNumber,
+							description,
+						},
+						lines: [
+							{
+								lineNumber: 1,
+								accountId: id,
+								amount: data.openingBalance.toString(),
+								memo: description,
+								dc: +data.openingBalance > 0 ? "debit" : "credit",
+							},
+							{
+								lineNumber: 2,
+								accountId: openingBalanceEquity,
+								amount: data.openingBalance.toString(),
+								memo: description,
+								dc: +data.openingBalance > 0 ? "credit" : "debit",
+							},
+						],
+						tx,
+					});
+				}
+			}
 
 			await logActivity({
 				data: {
@@ -118,6 +178,28 @@ export const updateAccount = createServerFn({ method: "POST" })
 				})
 				.where(eq(ledgerAccounts.id, accountId))
 				.returning({ id: ledgerAccounts.id });
+
+			if (values.isBankAccount) {
+				const bankId = await db.query.bankAccounts.findFirst({
+					where: eq(bankAccounts.accountId, accountId),
+				});
+				if (!bankId) {
+					await tx.insert(bankAccounts).values({
+						bankName: values.name,
+						accountId: accountId,
+						accountNumber: values.accountNumber as string,
+						currencyCode: "KES",
+					});
+				} else {
+					await tx
+						.update(bankAccounts)
+						.set({
+							bankName: values.name,
+							accountNumber: values.accountNumber as string,
+						})
+						.where(eq(bankAccounts.accountId, accountId));
+				}
+			}
 
 			await logActivity({
 				data: {

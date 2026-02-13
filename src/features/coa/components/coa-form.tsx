@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { ACCOUNT_TYPES } from "@/features/coa/lib/constants";
 import { createAccount, updateAccount } from "@/features/coa/services/coa.api";
+import { accountQueries } from "@/features/coa/services/queries";
 import {
 	type AccountsFormSchema,
 	accountsFormSchema,
@@ -13,7 +14,6 @@ import {
 import { useFormMutation } from "@/hooks/use-form-mutation";
 import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
-import { accountQueries } from "../services/queries";
 
 const defaultValues = {
 	name: "",
@@ -22,6 +22,10 @@ const defaultValues = {
 	parentId: null,
 	description: null,
 	isActive: true,
+	isBankAccount: false,
+	accountNumber: null,
+	openingBalance: null,
+	openingBalanceDate: null,
 } as AccountsFormSchema;
 
 export function ChartOfAccountsForm({
@@ -57,9 +61,10 @@ export function ChartOfAccountsForm({
 		},
 	});
 
-	const [isSubcategory, type] = useStore(form.store, (state) => [
+	const [isSubcategory, type, isBankAccount] = useStore(form.store, (state) => [
 		state.values.isSubcategory,
 		state.values.type,
+		state.values.isBankAccount,
 	]);
 
 	return (
@@ -99,9 +104,47 @@ export function ChartOfAccountsForm({
 							</field.Select>
 						)}
 					</form.AppField>
-					<form.AppField name="isSubcategory">
-						{(field) => <field.Checkbox label="Sub Category Of" />}
-					</form.AppField>
+					<FieldGroup className="flex flex-col md:flex-row md:items-centre md:justify-between">
+						<form.AppField name="isSubcategory">
+							{(field) => <field.Switch label="Sub Category Of" />}
+						</form.AppField>
+						{type === "asset" && (
+							<form.AppField name="isBankAccount">
+								{(field) => <field.Switch label="Bank Account" />}
+							</form.AppField>
+						)}
+					</FieldGroup>
+					{type === "asset" && isBankAccount && (
+						<FieldGroup className="grid md:grid-cols-2 gap-4">
+							<form.AppField name="accountNumber">
+								{(field) => (
+									<field.Input
+										placeholder="Account Number"
+										label="Account Number"
+										fieldClassName="col-span-full"
+									/>
+								)}
+							</form.AppField>
+							{!account && (
+								<>
+									<form.AppField name="openingBalance">
+										{(field) => (
+											<field.Input
+												placeholder="Opening Balance"
+												label="Opening Balance"
+												type="number"
+											/>
+										)}
+									</form.AppField>
+									<form.AppField name="openingBalanceDate">
+										{(field) => (
+											<field.Input type="date" label="Opening Balance Date" />
+										)}
+									</form.AppField>
+								</>
+							)}
+						</FieldGroup>
+					)}
 					<form.AppField name="parentId">
 						{(field) => (
 							<field.Select

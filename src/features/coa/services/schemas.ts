@@ -9,6 +9,10 @@ export const accountsFormSchema = z
 		parentId: z.string().nullish(),
 		description: z.string().nullish(),
 		isActive: z.boolean(),
+		isBankAccount: z.boolean(),
+		accountNumber: z.string().nullish(),
+		openingBalance: z.number().nullish(),
+		openingBalanceDate: z.iso.date().nullish(),
 	})
 	.superRefine((data, ctx) => {
 		if (data.isSubcategory && !data.parentId) {
@@ -17,6 +21,37 @@ export const accountsFormSchema = z
 				message: "Parent Account is required for sub category",
 				path: ["parentId"],
 			});
+		}
+		if (data.isBankAccount) {
+			if (!data.accountNumber || data.accountNumber.trim().length === 0) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Account Number is required",
+					path: ["accountNumber"],
+				});
+			}
+			if (
+				data.openingBalance &&
+				data.openingBalance > 0 &&
+				!data.openingBalanceDate
+			) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Opening Balance Date is required",
+					path: ["openingBalanceDate"],
+				});
+			}
+			if (
+				data.openingBalanceDate &&
+				new Date(data.openingBalanceDate).setHours(0, 0, 0, 0) >
+					new Date().setHours(0, 0, 0, 0)
+			) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Opening Balance Date cannot be in the future",
+					path: ["openingBalanceDate"],
+				});
+			}
 		}
 	});
 
