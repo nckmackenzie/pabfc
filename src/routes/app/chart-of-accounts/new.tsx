@@ -30,7 +30,7 @@ function RouteComponent() {
 			buttonText="Accounts List"
 			backPath="/app/chart-of-accounts"
 			permissions={["chart-of-accounts:create"]}
-			size="xs"
+			size="sm"
 		>
 			<ChartOfAccountsForm />
 		</ProtectedPageWithWrapper>
