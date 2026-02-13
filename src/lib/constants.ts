@@ -45,9 +45,8 @@ export const menuItems: MenuItem[] = [
 	},
 	{
 		title: "Attendance",
-		url: "/app/attendance",
+		url: "/app/attendances",
 		icon: CalendarIcon,
-		wip: true,
 	},
 	{
 		title: "Communication",
@@ -81,6 +80,11 @@ export const collapsibleMenuItems = [
 				title: "Expenses",
 				url: "/app/expenses",
 				permission: "chart-of-accounts",
+			},
+			{
+				title: "Payments",
+				url: "/app/payments",
+				permission: "payments:view",
 			},
 			{
 				title: "Jounal Entries",

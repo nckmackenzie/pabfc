@@ -14,6 +14,7 @@ export function Wrapper({ children, size = "md", className }: Props) {
 				{
 					"max-w-xl": size === "xs",
 					"max-w-3xl": size === "sm",
+					"max-w-4xl": size === "md",
 					"max-w-5xl": size === "lg",
 					"max-w-7xl mx-0": size === "full",
 				},

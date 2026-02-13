@@ -32,7 +32,7 @@ function RouteComponent() {
 	const { account } = Route.useLoaderData();
 	return (
 		<ProtectedPageWithWrapper
-			size="xs"
+			size="sm"
 			permissions={["chart-of-accounts:update"]}
 			hasBackLink
 			backPath="/app/chart-of-accounts"
@@ -43,6 +43,10 @@ function RouteComponent() {
 					...account,
 					isSubcategory: account.isPosting,
 					parentId: account.parentId?.toString() || null,
+					isBankAccount: !!account.bank?.accountNumber,
+					accountNumber: account.bank?.accountNumber || null,
+					openingBalance: null,
+					openingBalanceDate: null,
 				}}
 			/>
 		</ProtectedPageWithWrapper>
