@@ -179,11 +179,11 @@ export const updateAccount = createServerFn({ method: "POST" })
 				.where(eq(ledgerAccounts.id, accountId))
 				.returning({ id: ledgerAccounts.id });
 
+			const bankId = await db.query.bankAccounts.findFirst({
+				columns: { id: true },
+				where: eq(bankAccounts.accountId, accountId),
+			});
 			if (values.isBankAccount) {
-				const bankId = await db.query.bankAccounts.findFirst({
-					columns: { id: true },
-					where: eq(bankAccounts.accountId, accountId),
-				});
 				if (!bankId) {
 					await tx.insert(bankAccounts).values({
 						bankName: values.name,
@@ -200,6 +200,11 @@ export const updateAccount = createServerFn({ method: "POST" })
 						})
 						.where(eq(bankAccounts.accountId, accountId));
 				}
+			}
+			if (!values.isBankAccount && bankId) {
+				await tx
+					.delete(bankAccounts)
+					.where(eq(bankAccounts.accountId, accountId));
 			}
 
 			await logActivity({
