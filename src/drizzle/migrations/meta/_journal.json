@@ -295,6 +295,20 @@
       "when": 1770983056209,
       "tag": "0041_rare_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1771003389076,
+      "tag": "0042_square_johnny_blaze",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1771084971823,
+      "tag": "0043_elite_groot",
+      "breakpoints": true
     }
   ]
 }

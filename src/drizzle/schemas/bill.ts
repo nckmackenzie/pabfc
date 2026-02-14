@@ -20,26 +20,8 @@ import {
 	lineDcEnum,
 } from "@/drizzle/schemas/chart-of-accounts";
 import { vatTypeEnum } from "@/drizzle/schemas/settings";
+import { bankAccounts } from "./bank";
 
-export const vendors = pgTable(
-	"vendors",
-	{
-		id,
-		name: varchar("name").notNull(),
-		email: varchar("email"),
-		phone: varchar("phone"),
-		address: varchar("address"),
-		taxPin: varchar("tax_pin").unique(),
-		active,
-		createdAt,
-	},
-	(table) => [
-		index("idx_vendors_name").on(table.name),
-		index("idx_vendors_tax_pin").on(table.taxPin),
-		index("idx_vendors_email").on(table.email),
-		index("idx_vendors_phone").on(table.phone),
-	],
-);
 export const BILL_STATUS = [
 	"draft",
 	"pending",
@@ -61,6 +43,31 @@ export const recurrencyPeriodEnum = pgEnum(
 	"recurrency_period",
 	RECURRENCY_PERIOD,
 );
+
+export const vendors = pgTable(
+	"vendors",
+	{
+		id,
+		name: varchar("name").notNull(),
+		email: varchar("email"),
+		phone: varchar("phone"),
+		address: varchar("address"),
+		taxPin: varchar("tax_pin").unique(),
+		active,
+		createdAt,
+	},
+	(table) => [
+		index("idx_vendors_name").on(table.name),
+		index("idx_vendors_tax_pin").on(table.taxPin),
+		index("idx_vendors_email").on(table.email),
+		index("idx_vendors_phone").on(table.phone),
+	],
+);
+
+export const vendorRelations = relations(vendors, ({ many }) => ({
+	bills: many(bills),
+	payments: many(billPayments),
+}));
 
 export const bills = pgTable(
 	"bills",
@@ -145,7 +152,11 @@ export const billPayments = pgTable(
 		paymentNo: integer("payment_no").notNull(),
 		paymentDate: date("payment_date").notNull(),
 		paymentMethod: varchar("payment_method").notNull(),
+		vendorId: varchar("vendor_id")
+			.notNull()
+			.references(() => vendors.id),
 		reference: varchar("reference"),
+		bankId: varchar("bank_id").references(() => bankAccounts.id),
 		memo: text("memo"),
 		createdBy: varchar("created_by")
 			.notNull()
@@ -165,6 +176,10 @@ export const billPaymentsRelations = relations(billPayments, ({ one }) => ({
 		fields: [billPayments.id],
 		references: [billPaymentLines.billPaymentId],
 	}),
+	vendor: one(vendors, {
+		fields: [billPayments.vendorId],
+		references: [vendors.id],
+	}),
 }));
 
 export const billPaymentLines = pgTable(
@@ -175,9 +190,7 @@ export const billPaymentLines = pgTable(
 		billPaymentId: varchar("bill_payment_id")
 			.notNull()
 			.references(() => billPayments.id),
-		vendorId: varchar("vendor_id")
-			.notNull()
-			.references(() => vendors.id),
+
 		billId: varchar("bill_id")
 			.notNull()
 			.references(() => bills.id),
@@ -186,7 +199,6 @@ export const billPaymentLines = pgTable(
 	},
 	(table) => [
 		index("idx_bill_payment_lines_bill_payment_id").on(table.billPaymentId),
-		index("idx_bill_payment_lines_vendor_id").on(table.vendorId),
 		index("idx_bill_payment_lines_bill_id").on(table.billId),
 	],
 );
@@ -197,10 +209,6 @@ export const billPaymentLinesRelations = relations(
 		billPayment: one(billPayments, {
 			fields: [billPaymentLines.billPaymentId],
 			references: [billPayments.id],
-		}),
-		vendor: one(vendors, {
-			fields: [billPaymentLines.vendorId],
-			references: [vendors.id],
 		}),
 		bill: one(bills, {
 			fields: [billPaymentLines.billId],
@@ -227,9 +235,11 @@ export const vwInvoices = pgMaterializedView("vw_invoices", {
 	id: varchar("id").notNull(),
 	invoiceDate: date("invoice_date").notNull(),
 	dueDate: date("due_date"),
+	vendorId: varchar("vendor_id").notNull(),
 	invoiceNo: varchar("invoice_no").notNull(),
 	name: varchar("name").notNull(),
 	total: numeric("total", { precision: 10, scale: 2 }).notNull(),
 	totalPayment: numeric("total_payment", { precision: 10, scale: 2 }).notNull(),
+	balance: numeric("balance", { precision: 10, scale: 2 }).notNull(),
 	status: billStatusEnum("status").notNull(),
 }).existing();
