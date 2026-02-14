@@ -45,9 +45,11 @@ export function TextField({
 	};
 	return (
 		<Field data-invalid={isInvalid} className={fieldClassName}>
-			<FieldLabel htmlFor={field.name}>
-				{label} {required && <span className="text-destructive">*</span>}
-			</FieldLabel>
+			{label.trim().length > 0 && (
+				<FieldLabel htmlFor={field.name}>
+					{label} {required && <span className="text-destructive">*</span>}
+				</FieldLabel>
+			)}
 			{!isPassword ? (
 				<Input
 					value={field.state.value as string}
