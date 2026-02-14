@@ -309,6 +309,20 @@
       "when": 1771084971823,
       "tag": "0043_elite_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1771089651731,
+      "tag": "0044_illegal_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1771091605602,
+      "tag": "0045_overjoyed_psynapse",
+      "breakpoints": true
     }
   ]
 }

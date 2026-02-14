@@ -29,6 +29,7 @@ export const BILL_STATUS = [
 	"paid",
 	"overdue",
 	"cancelled",
+	"partially-paid",
 ] as const;
 export const billStatusEnum = pgEnum("bill_status", BILL_STATUS);
 export const RECURRENCY_PERIOD = [
@@ -157,6 +158,9 @@ export const billPayments = pgTable(
 			.references(() => vendors.id),
 		reference: varchar("reference"),
 		bankId: varchar("bank_id").references(() => bankAccounts.id),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
 		memo: text("memo"),
 		createdBy: varchar("created_by")
 			.notNull()

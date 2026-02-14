@@ -1,0 +1,1 @@
+ALTER TYPE "public"."bill_status" ADD VALUE 'partially-paid';

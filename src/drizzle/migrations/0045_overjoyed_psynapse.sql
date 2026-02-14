@@ -1,0 +1,2 @@
+ALTER TABLE "bill_payments" ADD COLUMN "crediting_account_id" integer;--> statement-breakpoint
+ALTER TABLE "bill_payments" ADD CONSTRAINT "bill_payments_crediting_account_id_ledger_accounts_id_fk" FOREIGN KEY ("crediting_account_id") REFERENCES "public"."ledger_accounts"("id") ON DELETE no action ON UPDATE no action;
