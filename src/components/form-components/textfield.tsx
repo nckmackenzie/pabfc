@@ -41,7 +41,6 @@ export function TextField({
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const rawValue = e.target.value;
 		const value = isNumber ? +rawValue : rawValue === "" ? null : rawValue;
-		console.log("value", value);
 		field.handleChange(value);
 	};
 	return (
