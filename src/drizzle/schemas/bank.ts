@@ -4,6 +4,7 @@ import {
 	date,
 	index,
 	integer,
+	numeric,
 	pgTable,
 	timestamp,
 	varchar,
@@ -54,7 +55,7 @@ export const bankPostings = pgTable(
 			.notNull()
 			.references(() => bankAccounts.id),
 		dc: lineDcEnum("dc").notNull(),
-		amount: integer("amount").notNull(),
+		amount: numeric("amount").notNull(),
 		reference: varchar("reference", { length: 255 }).notNull(),
 		cleared: boolean("cleared").default(false),
 		clearedAt: date("cleared_at"),
