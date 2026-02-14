@@ -21,20 +21,18 @@ import {
 	ledgerAccounts,
 	payees,
 } from "@/drizzle/schema";
-import {
-	getCashEquivalentsAccountId,
-	getVatAccountId,
-} from "@/features/coa/services/coa.api";
+import { getCashEquivalentsAccountId } from "@/features/coa/services/coa.api";
 import {
 	expenseSchema,
 	expenseValidateSearch,
 } from "@/features/expenses/services/schemas";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
+import { NotFoundError } from "@/lib/error-handling/app-error";
 import { normalizeDateRange } from "@/lib/helpers";
+import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
-import { requirePermission } from "@/lib/permissions/permissions";
-import { NotFoundError } from "@/lib/error-handling/app-error";
+import { createOrGetAccountId } from "@/services/journal";
 
 export const getExpenseNo = createServerFn()
 	.middleware([authMiddleware])
@@ -152,7 +150,7 @@ export const createExpense = createServerFn({ method: "POST" })
 			const { subTotal, taxAmount, grandTotal, lines } =
 				calculateExpenseRequest(details);
 
-			const vatAccountId = await getVatAccountId();
+			const vatAccountId = await createOrGetAccountId("vat input", "asset");
 
 			if (taxAmount > 0 && vatAccountId === null) {
 				throw new Error("VAT Account not found. Define one in settings.");
@@ -326,26 +324,42 @@ export const getExpenseJournal = createServerFn()
 			.orderBy(desc(journalLines.lineNumber));
 	});
 
-	export const deleteExpense = createServerFn({ method: "POST" })
-		.middleware([authMiddleware])
-		.inputValidator((expenseId: string) => expenseId)
-		.handler(async ({ data: expenseId, context: { user: { id: userId } } }) => {
-
-			await requirePermission('expenses:delete')
+export const deleteExpense = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator((expenseId: string) => expenseId)
+	.handler(
+		async ({
+			data: expenseId,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("expenses:delete");
 
 			const expense = await db.query.expenseHeaders.findFirst({
-				columns: {expenseNo:true},
+				columns: { expenseNo: true },
 				where: eq(expenseHeaders.id, expenseId),
-			})
+			});
 
 			if (!expense) {
 				throw new NotFoundError("Expense");
 			}
 
 			await db.transaction(async (tx) => {
-				await tx.delete(expenseDetails).where(eq(expenseDetails.expenseHeaderId, expenseId));
-				await tx.delete(expenseAttachments).where(eq(expenseAttachments.expenseHeaderId, expenseId));
-				await tx.delete(journalEntries).where(and(eq(journalEntries.sourceId, expenseId), eq(journalEntries.source, "expenses")));
+				await tx
+					.delete(expenseDetails)
+					.where(eq(expenseDetails.expenseHeaderId, expenseId));
+				await tx
+					.delete(expenseAttachments)
+					.where(eq(expenseAttachments.expenseHeaderId, expenseId));
+				await tx
+					.delete(journalEntries)
+					.where(
+						and(
+							eq(journalEntries.sourceId, expenseId),
+							eq(journalEntries.source, "expenses"),
+						),
+					);
 				await tx.delete(expenseHeaders).where(eq(expenseHeaders.id, expenseId));
 
 				await logActivity({
@@ -355,6 +369,6 @@ export const getExpenseJournal = createServerFn()
 						description: `Deleted expense ${expense.expenseNo}`,
 					},
 				});
-			})
-			
-		});
+			});
+		},
+	);
