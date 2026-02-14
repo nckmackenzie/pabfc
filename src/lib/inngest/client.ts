@@ -31,6 +31,11 @@ type Events = {
 			contact: Array<string>;
 		};
 	};
+	"app/bills.update.invoice.status": {
+		data: {
+			paidInvoiceIds: Array<string>;
+		};
+	};
 };
 
 export const inngest = new Inngest({
