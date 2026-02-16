@@ -194,11 +194,13 @@ export const billPaymentLines = pgTable(
 		billPaymentId: varchar("bill_payment_id")
 			.notNull()
 			.references(() => billPayments.id),
-
 		billId: varchar("bill_id")
 			.notNull()
 			.references(() => bills.id),
 		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+		currentBalance: decimal("balance", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
 		dc: lineDcEnum("dc").notNull(),
 	},
 	(table) => [
