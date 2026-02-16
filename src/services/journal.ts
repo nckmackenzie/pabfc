@@ -157,10 +157,16 @@ export const getCashEquivalentAccountId = async ({
 		if (!bankId) {
 			throw new ApplicationError("Bank is required for this payment method");
 		}
-		const [{ accountId }] = await db
+		const result = await db
 			.select({ accountId: bankAccounts.accountId })
 			.from(bankAccounts)
 			.where(eq(bankAccounts.id, bankId));
+
+		if (result.length === 0) {
+			throw new ApplicationError(`Bank account with ID ${bankId} not found`);
+		}
+
+		const [{ accountId }] = result;
 		creditingAccountId = accountId;
 	} else {
 		if (!cashEquivalentAccountId) {
