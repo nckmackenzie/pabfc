@@ -2,7 +2,7 @@ import { useStore } from "@tanstack/react-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
 import { nanoid } from "nanoid";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -36,7 +36,12 @@ type ExpenseFormProps = {
 
 export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 	const queryClient = useQueryClient();
-	const { accounts, payees: loaderPayees } = useRouteContext({
+	const {
+		accounts,
+		payees: loaderPayees,
+		banks,
+		cashEquivalentAccounts,
+	} = useRouteContext({
 		from: "/app/expenses",
 	});
 	const { data: payees } = useQuery(payeeQueries.list());
@@ -65,6 +70,10 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 			payeeId: expense?.payeeId || "",
 			paymentMethod: expense?.paymentMethod || "cash",
 			reference: expense?.reference?.toUpperCase() || "",
+			bankId: expense?.bankId || null,
+			creditingAccountId: expense?.creditingAccountId
+				? expense.creditingAccountId.toString()
+				: null,
 			details: expenseDetails,
 			attachments:
 				expense?.attachments.map(({ fileName, fileType, fileUrl }) => ({
@@ -94,6 +103,24 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 	const summary = useMemo(() => {
 		return calculateExpenseRequest(formValues.details || []);
 	}, [formValues.details]);
+
+	const isBankAccount =
+		formValues.paymentMethod === "bank" ||
+		formValues.paymentMethod === "cheque";
+
+	useEffect(() => {
+		if (
+			formValues.paymentMethod === "cash" ||
+			formValues.paymentMethod === "mpesa"
+		) {
+			form.setFieldValue("bankId", null);
+		} else if (
+			formValues.paymentMethod === "bank" ||
+			formValues.paymentMethod === "cheque"
+		) {
+			form.setFieldValue("creditingAccountId", null);
+		}
+	}, [formValues.paymentMethod, form]);
 
 	return (
 		<div className="space-y-6">
@@ -142,6 +169,35 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 							</field.Select>
 						)}
 					</form.AppField>
+					{isBankAccount ? (
+						<form.AppField name="bankId">
+							{(field) => (
+								<field.Select label="Bank" required placeholder="Select Bank">
+									{banks.map((method) => (
+										<SelectItem key={method.value} value={method.value}>
+											{method.label}
+										</SelectItem>
+									))}
+								</field.Select>
+							)}
+						</form.AppField>
+					) : (
+						<form.AppField name="creditingAccountId">
+							{(field) => (
+								<field.Select
+									label="Crediting Account"
+									required
+									placeholder="Select Crediting Account"
+								>
+									{cashEquivalentAccounts.map((method) => (
+										<SelectItem key={method.value} value={method.value}>
+											{method.label}
+										</SelectItem>
+									))}
+								</field.Select>
+							)}
+						</form.AppField>
+					)}
 					<form.AppField name="reference">
 						{(field) => (
 							<field.Input
@@ -372,7 +428,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 					<form.AppForm>
 						<form.SubmitButton
 							isLoading={isPending}
-							buttonText="Submit"
+							buttonText={expense ? "Update Expense" : "Create Expense"}
 							withReset
 						/>
 					</form.AppForm>

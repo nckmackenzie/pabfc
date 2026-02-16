@@ -375,7 +375,7 @@ export function PaymentForm({
 			<form.AppForm>
 				<form.SubmitButton
 					isLoading={isPending}
-					buttonText={payment ? "Update Payment" : "Submit Payment"}
+					buttonText={payment && !billId ? "Update Payment" : "Submit Payment"}
 					withReset
 				/>
 			</form.AppForm>

@@ -23,6 +23,8 @@ export const expenseSchema = z
 				id: z.string(),
 			}),
 		),
+		creditingAccountId: z.string().nullish(),
+		bankId: z.string().nullish(),
 		attachments: z
 			.array(
 				z.object({
@@ -33,29 +35,43 @@ export const expenseSchema = z
 			)
 			.optional(),
 	})
-	.superRefine(({ expenseDate, paymentMethod, reference, details }, ctx) => {
-		if (new Date(expenseDate) > new Date()) {
-			ctx.addIssue({
-				code: "custom",
-				message: "Expense Date cannot be in the future",
-				path: ["expenseDate"],
-			});
-		}
-		if (paymentMethod !== "cash" && reference?.trim().length === 0) {
-			ctx.addIssue({
-				code: "custom",
-				message: "Reference is required",
-				path: ["reference"],
-			});
-		}
-		if (!details.length) {
-			ctx.addIssue({
-				code: "custom",
-				message: "At least one expense detail is required",
-				path: ["details"],
-			});
-		}
-	});
+	.superRefine(
+		(
+			{ expenseDate, paymentMethod, bankId, creditingAccountId, details },
+			ctx,
+		) => {
+			if (new Date(expenseDate) > new Date()) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Expense Date cannot be in the future",
+					path: ["expenseDate"],
+				});
+			}
+			if (paymentMethod === "cash" || paymentMethod === "mpesa") {
+				if (!creditingAccountId) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Account is required",
+						path: ["creditingAccountId"],
+					});
+				}
+			}
+			if ((paymentMethod === "bank" || paymentMethod === "cheque") && !bankId) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Bank is required",
+					path: ["bankId"],
+				});
+			}
+			if (!details.length) {
+				ctx.addIssue({
+					code: "custom",
+					message: "At least one expense detail is required",
+					path: ["details"],
+				});
+			}
+		},
+	);
 
 export const payeeSchema = z.object({
 	name: z.string().min(1, { error: "Enter Payee Name" }),
