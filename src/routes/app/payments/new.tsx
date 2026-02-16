@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FormLoader } from "@/components/ui/loaders";
+import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
-import { memberQueries } from "@/features/members/services/queries";
-import { planQueries } from "@/features/plans/services/queries";
-import { PaymentForm } from "@/features/receipts/components/payments-form";
+import { bankQueries } from "@/features/bankings/services/queries";
+import { supplierQueries } from "@/features/bills/services/queries";
+import { accountQueries } from "@/features/coa/services/queries";
+import {
+	PaymentForm,
+	PaymentFormPendingComponent,
+} from "@/features/payments/components/payment-form";
+import { paymentQueries } from "@/features/payments/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
-import { toTitleCase } from "@/lib/utils";
+import { transformOptions } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/payments/new")({
 	beforeLoad: async () => {
@@ -15,20 +20,24 @@ export const Route = createFileRoute("/app/payments/new")({
 	head: () => ({
 		meta: [{ title: "New Payment / Prime Age Beauty & Fitness Club" }],
 	}),
-	pendingComponent: FormLoader,
+	pendingComponent: PaymentFormPendingComponent,
 	loader: async ({ context: { queryClient } }) => {
-		const [members, plans] = await Promise.all([
-			queryClient.ensureQueryData(memberQueries.activeMembers()),
-			queryClient.ensureQueryData(planQueries.list()),
-		]);
+		const [vendors, paymentNo, banks, cashEquivalentAccounts] =
+			await Promise.all([
+				queryClient.ensureQueryData(supplierQueries.active()),
+				queryClient.ensureQueryData(paymentQueries.paymentNo()),
+				queryClient.ensureQueryData(bankQueries.list()),
+				queryClient.ensureQueryData(
+					accountQueries.childrenAccountsByParentName(
+						"Cash And Cash Equivalents",
+					),
+				),
+			]);
 		return {
-			members: members.map(({ id, fullName }) => ({
-				value: id,
-				label: toTitleCase(fullName),
-			})),
-			plans: plans
-				.filter(({ active }) => active)
-				.map((plan) => ({ ...plan, name: toTitleCase(plan.name) })),
+			vendors,
+			paymentNo,
+			banks: transformOptions(banks, "id", "bankName"),
+			cashEquivalentAccounts: transformOptions(cashEquivalentAccounts),
 		};
 	},
 	staticData: {
@@ -37,6 +46,8 @@ export const Route = createFileRoute("/app/payments/new")({
 });
 
 function RouteComponent() {
+	const { vendors, paymentNo, banks, cashEquivalentAccounts } =
+		Route.useLoaderData();
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
@@ -44,7 +55,17 @@ function RouteComponent() {
 			buttonText="Payments List"
 			permissions={["payments:create"]}
 		>
-			<PaymentForm />
+			<PageHeader
+				title="New Payment"
+				description="Create a new payment. All fields are required."
+			/>
+
+			<PaymentForm
+				vendors={vendors}
+				paymentNo={paymentNo.toString()}
+				banks={banks}
+				cashEquivalentAccounts={cashEquivalentAccounts}
+			/>
 		</ProtectedPageWithWrapper>
 	);
 }
