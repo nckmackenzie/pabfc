@@ -108,8 +108,8 @@ export function BillTable() {
 							</Link>
 						</DropdownMenuItem>
 						{+totalPayment < +total && (
-							<DropdownMenuItem asChild disabled>
-								<Link to="/app/bills/$billId/edit" params={{ billId: id }}>
+							<DropdownMenuItem asChild>
+								<Link to="/app/payments/new" search={{ billId: id }}>
 									<CoinsIcon />
 									<span className="-ml-1">Make Payment</span>
 								</Link>
