@@ -9,7 +9,7 @@ import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/receipts/new")({
 	beforeLoad: async () => {
-		await requirePermission("payments:create");
+		await requirePermission("receipts:create");
 	},
 	component: RouteComponent,
 	head: () => ({
