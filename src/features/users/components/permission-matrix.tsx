@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import type { Permission } from "@/features/users/services/roles.api";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
 
 export type PermissionMatrixProps = {
 	permissions: Array<Permission>;
@@ -151,7 +151,7 @@ export function PermissionMatrix({
 												aria-checked={s.partial ? "mixed" : s.all}
 											/>
 											<h3 className="text-base font-semibold capitalize">
-												{resource}
+												{toTitleCase(resource)}
 											</h3>
 											{s.partial && (
 												<Badge variant="outline" className="ml-1">

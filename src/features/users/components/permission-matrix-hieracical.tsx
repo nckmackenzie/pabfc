@@ -187,14 +187,16 @@ function PermissionItem({
 					<div className="flex items-center gap-2">
 						<span
 							className={cn(
-								"font-medium text-sm",
+								"font-medium text-sm capitalize",
 								node.key.includes("delete") && "text-destructive",
 							)}
 						>
 							{node.key}
 						</span>
 					</div>
-					<p className="text-sm text-muted-foreground">{node.description}</p>
+					<p className="text-sm text-muted-foreground capitalize">
+						{node.description}
+					</p>
 				</div>
 			</div>
 
