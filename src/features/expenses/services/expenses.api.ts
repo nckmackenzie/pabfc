@@ -407,6 +407,11 @@ export const deleteExpense = createServerFn({ method: "POST" })
 					tx,
 				});
 				await tx.delete(expenseHeaders).where(eq(expenseHeaders.id, expenseId));
+				await deleteBankingEntry({
+					source: "expenses",
+					sourceId: expenseId,
+					tx,
+				});
 
 				await logActivity({
 					data: {
