@@ -4,8 +4,15 @@ import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import { db } from "@/drizzle/db";
 import type * as schema from "@/drizzle/schema";
-import { journalEntries, journalLines, ledgerAccounts } from "@/drizzle/schema";
+import {
+	bankAccounts,
+	journalEntries,
+	journalLines,
+	ledgerAccounts,
+} from "@/drizzle/schema";
 import { defaultNormalBalanceForType } from "@/features/coa/services/coa.api";
+import type { ExpenseSchema } from "@/features/expenses/services/schemas";
+import { ApplicationError } from "@/lib/error-handling/app-error";
 
 type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -131,4 +138,38 @@ export const areJournalValuesBalanced = (
 	}
 
 	return debitTotal === creditTotal;
+};
+
+type CashEquivalentAccountIdParams = {
+	paymentMethod: ExpenseSchema["paymentMethod"];
+	bankId?: string | null;
+	creditingAccountId?: string | null;
+};
+
+export const getCashEquivalentAccountId = async ({
+	paymentMethod,
+	bankId,
+	creditingAccountId: cashEquivalentAccountId,
+}: CashEquivalentAccountIdParams) => {
+	let creditingAccountId: number;
+
+	if (paymentMethod === "bank" || paymentMethod === "cheque") {
+		if (!bankId) {
+			throw new ApplicationError("Bank is required for this payment method");
+		}
+		const [{ accountId }] = await db
+			.select({ accountId: bankAccounts.accountId })
+			.from(bankAccounts)
+			.where(eq(bankAccounts.id, bankId));
+		creditingAccountId = accountId;
+	} else {
+		if (!cashEquivalentAccountId) {
+			throw new ApplicationError(
+				"Cash equivalent account is required for this payment method",
+			);
+		}
+		creditingAccountId = Number(cashEquivalentAccountId);
+	}
+
+	return creditingAccountId;
 };
