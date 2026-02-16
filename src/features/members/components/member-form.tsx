@@ -149,7 +149,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 						<form.AppField name="firstName">
 							{(field) => (
 								<field.Input
-									label="First Name"
+									label="First Name (As appears on ID/Passport)"
 									placeholder="Enter first name"
 									required
 								/>
@@ -158,7 +158,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 						<form.AppField name="lastName">
 							{(field) => (
 								<field.Input
-									label="Last Name"
+									label="Last Name (As appears on ID/Passport)"
 									placeholder="Enter last name"
 									required
 								/>
