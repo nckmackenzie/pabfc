@@ -1,17 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
-import { ReceiptsTable } from "@/features/receipts/components/payment-table";
-import { paymentsSearchValidateSchema } from "@/features/receipts/services/schemas";
+import { PaymentsTable } from "@/features/payments/components/payment-table";
 import { useFilters } from "@/hooks/use-filters";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/payments/")({
 	beforeLoad: async () => {
 		await requirePermission("payments:view");
 	},
 	component: RouteComponent,
-	validateSearch: paymentsSearchValidateSchema,
+	validateSearch: searchValidateSchema,
 	head: () => ({
 		meta: [{ title: "Payments / Prime Age Beauty & Fitness Club" }],
 	}),
@@ -22,8 +22,8 @@ function RouteComponent() {
 	return (
 		<ProtectedPage permissions={["payments:view"]}>
 			<BasePageComponent
-				pageTitle="Membership Payments"
-				pageDescription="View and manage membership payments"
+				pageTitle="Payments"
+				pageDescription="View and manage payments"
 				hasNewButtonLink
 				newButtonLinkPath="/app/payments/new"
 				createPermissions={["payments:create"]}
@@ -31,7 +31,7 @@ function RouteComponent() {
 				onSearch={(val) => setFilters({ q: val })}
 				buttonText="Add Payment"
 			>
-				<ReceiptsTable />
+				<PaymentsTable />
 			</BasePageComponent>
 		</ProtectedPage>
 	);
