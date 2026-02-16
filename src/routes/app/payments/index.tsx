@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BasePageComponent } from "@/components/ui/base-page";
+import {
+	BasePageComponent,
+	BasePageLoadingSkeleton,
+} from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { PaymentsTable } from "@/features/payments/components/payment-table";
 import { useFilters } from "@/hooks/use-filters";
@@ -15,6 +18,7 @@ export const Route = createFileRoute("/app/payments/")({
 	head: () => ({
 		meta: [{ title: "Payments / Prime Age Beauty & Fitness Club" }],
 	}),
+	pendingComponent: BasePageLoadingSkeleton,
 });
 
 function RouteComponent() {
