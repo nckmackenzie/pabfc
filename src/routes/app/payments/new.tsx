@@ -1,34 +1,67 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FormLoader } from "@/components/ui/loaders";
+import { z } from "zod";
+import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
-import { memberQueries } from "@/features/members/services/queries";
-import { planQueries } from "@/features/plans/services/queries";
-import { PaymentForm } from "@/features/receipts/components/payments-form";
+import { bankQueries } from "@/features/bankings/services/queries";
+import {
+	billQueries,
+	supplierQueries,
+} from "@/features/bills/services/queries";
+import { accountQueries } from "@/features/coa/services/queries";
+import {
+	PaymentForm,
+	PaymentFormPendingComponent,
+} from "@/features/payments/components/payment-form";
+import { paymentQueries } from "@/features/payments/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
-import { toTitleCase } from "@/lib/utils";
+import { transformOptions } from "@/lib/utils";
+import type { Option } from "@/types/index.types";
 
 export const Route = createFileRoute("/app/payments/new")({
 	beforeLoad: async () => {
 		await requirePermission("payments:create");
 	},
+	validateSearch: z.object({
+		billId: z.string().optional(),
+	}),
+	loaderDeps: ({ search }) => ({ billId: search.billId }),
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "New Payment / Prime Age Beauty & Fitness Club" }],
 	}),
-	pendingComponent: FormLoader,
-	loader: async ({ context: { queryClient } }) => {
-		const [members, plans] = await Promise.all([
-			queryClient.ensureQueryData(memberQueries.activeMembers()),
-			queryClient.ensureQueryData(planQueries.list()),
-		]);
+	pendingComponent: PaymentFormPendingComponent,
+	loader: async ({ context: { queryClient }, deps: { billId } }) => {
+		const [vendors, paymentNo, banks, cashEquivalentAccounts] =
+			await Promise.all([
+				queryClient.ensureQueryData(supplierQueries.active()),
+				queryClient.ensureQueryData(paymentQueries.paymentNo()),
+				queryClient.ensureQueryData(bankQueries.list()),
+				queryClient.ensureQueryData(
+					accountQueries.childrenAccountsByParentName(
+						"Cash And Cash Equivalents",
+					),
+				),
+			]);
+
+		const singleVendor: Array<Option> = [];
+		if (billId) {
+			const bill = await queryClient.ensureQueryData(
+				billQueries.detail(billId),
+			);
+			const vendor = await queryClient.ensureQueryData(
+				supplierQueries.detail(bill.vendorId),
+			);
+			singleVendor.push({
+				value: vendor.id,
+				label: vendor.name,
+			});
+		}
+
 		return {
-			members: members.map(({ id, fullName }) => ({
-				value: id,
-				label: toTitleCase(fullName),
-			})),
-			plans: plans
-				.filter(({ active }) => active)
-				.map((plan) => ({ ...plan, name: toTitleCase(plan.name) })),
+			vendors: billId ? singleVendor : vendors,
+			paymentNo,
+			banks: transformOptions(banks, "id", "bankName"),
+			cashEquivalentAccounts: transformOptions(cashEquivalentAccounts),
 		};
 	},
 	staticData: {
@@ -37,6 +70,35 @@ export const Route = createFileRoute("/app/payments/new")({
 });
 
 function RouteComponent() {
+	const { vendors, paymentNo, banks, cashEquivalentAccounts } =
+		Route.useLoaderData();
+	const { billId } = Route.useSearch();
+
+	// useEffect(() => {
+	// 	if (!billId) return;
+	// 	queryClient.fetchQuery(billQueries.detail(billId)).then((bill) => {
+	// 		setBill({
+	// 			vendorId: bill.vendorId,
+	// 			paymentMethod: "cheque",
+	// 			paymentDate: dateFormat(new Date()),
+	// 			reference: "",
+	// 			paymentNo: paymentNo.toString(),
+	// 			bills: [
+	// 				{
+	// 					billId: bill.id,
+	// 					amount: parseFloat(bill.total),
+	// 					balance: parseFloat(bill.total),
+	// 					invoiceDate: dateFormat(bill.invoiceDate),
+	// 					selected: true,
+	// 					invoiceNo: bill.invoiceNo,
+	// 					total: parseFloat(bill.total),
+	// 					dueDate: bill.dueDate ? dateFormat(bill.dueDate) : null,
+	// 				},
+	// 			],
+	// 		});
+	// 	});
+	// }, [billId, queryClient, paymentNo]);
+
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
@@ -44,7 +106,18 @@ function RouteComponent() {
 			buttonText="Payments List"
 			permissions={["payments:create"]}
 		>
-			<PaymentForm />
+			<PageHeader
+				title="New Payment"
+				description="Create a new payment. All fields are required."
+			/>
+
+			<PaymentForm
+				vendors={vendors}
+				paymentNo={paymentNo.toString()}
+				banks={banks}
+				cashEquivalentAccounts={cashEquivalentAccounts}
+				billId={billId}
+			/>
 		</ProtectedPageWithWrapper>
 	);
 }

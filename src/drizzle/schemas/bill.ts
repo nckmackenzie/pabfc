@@ -20,6 +20,30 @@ import {
 	lineDcEnum,
 } from "@/drizzle/schemas/chart-of-accounts";
 import { vatTypeEnum } from "@/drizzle/schemas/settings";
+import { bankAccounts } from "./bank";
+
+export const BILL_STATUS = [
+	"draft",
+	"pending",
+	"approved",
+	"paid",
+	"overdue",
+	"cancelled",
+	"partially-paid",
+] as const;
+export const billStatusEnum = pgEnum("bill_status", BILL_STATUS);
+export const RECURRENCY_PERIOD = [
+	"daily",
+	"weekly",
+	"monthly",
+	"quarterly",
+	"biannually",
+	"yearly",
+] as const;
+export const recurrencyPeriodEnum = pgEnum(
+	"recurrency_period",
+	RECURRENCY_PERIOD,
+);
 
 export const vendors = pgTable(
 	"vendors",
@@ -40,27 +64,11 @@ export const vendors = pgTable(
 		index("idx_vendors_phone").on(table.phone),
 	],
 );
-export const BILL_STATUS = [
-	"draft",
-	"pending",
-	"approved",
-	"paid",
-	"overdue",
-	"cancelled",
-] as const;
-export const billStatusEnum = pgEnum("bill_status", BILL_STATUS);
-export const RECURRENCY_PERIOD = [
-	"daily",
-	"weekly",
-	"monthly",
-	"quarterly",
-	"biannually",
-	"yearly",
-] as const;
-export const recurrencyPeriodEnum = pgEnum(
-	"recurrency_period",
-	RECURRENCY_PERIOD,
-);
+
+export const vendorRelations = relations(vendors, ({ many }) => ({
+	bills: many(bills),
+	payments: many(billPayments),
+}));
 
 export const bills = pgTable(
 	"bills",
@@ -145,7 +153,14 @@ export const billPayments = pgTable(
 		paymentNo: integer("payment_no").notNull(),
 		paymentDate: date("payment_date").notNull(),
 		paymentMethod: varchar("payment_method").notNull(),
+		vendorId: varchar("vendor_id")
+			.notNull()
+			.references(() => vendors.id),
 		reference: varchar("reference"),
+		bankId: varchar("bank_id").references(() => bankAccounts.id),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
 		memo: text("memo"),
 		createdBy: varchar("created_by")
 			.notNull()
@@ -160,12 +175,20 @@ export const billPayments = pgTable(
 	],
 );
 
-export const billPaymentsRelations = relations(billPayments, ({ one }) => ({
-	lines: one(billPaymentLines, {
-		fields: [billPayments.id],
-		references: [billPaymentLines.billPaymentId],
+export const billPaymentsRelations = relations(
+	billPayments,
+	({ one, many }) => ({
+		lines: many(billPaymentLines),
+		vendor: one(vendors, {
+			fields: [billPayments.vendorId],
+			references: [vendors.id],
+		}),
+		bank: one(bankAccounts, {
+			fields: [billPayments.bankId],
+			references: [bankAccounts.id],
+		}),
 	}),
-}));
+);
 
 export const billPaymentLines = pgTable(
 	"bill_payment_lines",
@@ -174,19 +197,18 @@ export const billPaymentLines = pgTable(
 		lineNumber: integer("line_number").notNull(),
 		billPaymentId: varchar("bill_payment_id")
 			.notNull()
-			.references(() => billPayments.id),
-		vendorId: varchar("vendor_id")
-			.notNull()
-			.references(() => vendors.id),
+			.references(() => billPayments.id, { onDelete: "cascade" }),
 		billId: varchar("bill_id")
 			.notNull()
 			.references(() => bills.id),
 		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+		currentBalance: decimal("balance", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
 		dc: lineDcEnum("dc").notNull(),
 	},
 	(table) => [
 		index("idx_bill_payment_lines_bill_payment_id").on(table.billPaymentId),
-		index("idx_bill_payment_lines_vendor_id").on(table.vendorId),
 		index("idx_bill_payment_lines_bill_id").on(table.billId),
 	],
 );
@@ -197,10 +219,6 @@ export const billPaymentLinesRelations = relations(
 		billPayment: one(billPayments, {
 			fields: [billPaymentLines.billPaymentId],
 			references: [billPayments.id],
-		}),
-		vendor: one(vendors, {
-			fields: [billPaymentLines.vendorId],
-			references: [vendors.id],
 		}),
 		bill: one(bills, {
 			fields: [billPaymentLines.billId],
@@ -227,9 +245,11 @@ export const vwInvoices = pgMaterializedView("vw_invoices", {
 	id: varchar("id").notNull(),
 	invoiceDate: date("invoice_date").notNull(),
 	dueDate: date("due_date"),
+	vendorId: varchar("vendor_id").notNull(),
 	invoiceNo: varchar("invoice_no").notNull(),
 	name: varchar("name").notNull(),
 	total: numeric("total", { precision: 10, scale: 2 }).notNull(),
 	totalPayment: numeric("total_payment", { precision: 10, scale: 2 }).notNull(),
+	balance: numeric("balance", { precision: 10, scale: 2 }).notNull(),
 	status: billStatusEnum("status").notNull(),
 }).existing();

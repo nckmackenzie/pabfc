@@ -1,10 +1,11 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import {
 	PaymentDetails,
 	PaymentDetailsSkeleton,
-} from "@/features/receipts/components/payment-details";
-import { paymentsQueries } from "@/features/receipts/services/queries";
+} from "@/features/payments/components/payment-details";
+import { paymentQueries } from "@/features/payments/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payments/$paymentId/details")({
@@ -15,22 +16,23 @@ export const Route = createFileRoute("/app/payments/$paymentId/details")({
 		meta: [{ title: "Payment Details / Prime Age Beauty & Fitness Club" }],
 	}),
 	component: RouteComponent,
-	pendingComponent: PaymentDetailsSkeleton,
 	loader: async ({ context: { queryClient }, params: { paymentId } }) => {
 		const payment = await queryClient.ensureQueryData(
-			paymentsQueries.detail(paymentId),
+			paymentQueries.detail(paymentId),
 		);
-		if (!payment) {
-			throw notFound();
-		}
+
 		return payment;
 	},
 	staticData: {
-		breadcrumb: "Payment Details",
+		breadcrumb: (match) => `Payment #${match.loaderData.paymentNo} Details`,
 	},
+	pendingComponent: PaymentDetailsSkeleton,
 });
 
 function RouteComponent() {
+	const { paymentId } = Route.useParams();
+	const loaderPayment = Route.useLoaderData();
+	const { data: payment } = useQuery(paymentQueries.detail(paymentId));
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
@@ -38,7 +40,7 @@ function RouteComponent() {
 			buttonText="Payments List"
 			permissions={["payments:view"]}
 		>
-			<PaymentDetails />
+			<PaymentDetails payment={payment ?? loaderPayment} />
 		</ProtectedPageWithWrapper>
 	);
 }

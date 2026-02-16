@@ -295,6 +295,48 @@
       "when": 1770983056209,
       "tag": "0041_rare_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1771003389076,
+      "tag": "0042_square_johnny_blaze",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1771084971823,
+      "tag": "0043_elite_groot",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1771089651731,
+      "tag": "0044_illegal_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1771091605602,
+      "tag": "0045_overjoyed_psynapse",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1771220690736,
+      "tag": "0046_hesitant_mikhail_rasputin",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1771225699743,
+      "tag": "0047_classy_ogun",
+      "breakpoints": true
     }
   ]
 }

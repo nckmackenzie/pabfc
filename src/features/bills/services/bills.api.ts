@@ -1,6 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, eq, gt, ilike, or, type SQL, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
 import { billItems, bills, vwInvoices } from "@/drizzle/schema";
@@ -18,7 +18,6 @@ import {
 	createJournalEntry,
 	createOrGetAccountId,
 	deleteJournalEntry,
-	getVatAccountId,
 } from "@/services/journal";
 
 export const getBills = createServerFn()
@@ -84,7 +83,7 @@ export const upsertBill = createServerFn()
 		}) => {
 			await requirePermission(data.id ? "bills:update" : "bills:create");
 
-			const vatAccountId = await getVatAccountId();
+			const vatAccountId = await createOrGetAccountId("vat input", "asset");
 
 			const {
 				id,
@@ -279,4 +278,16 @@ export const deleteBill = createServerFn()
 				},
 			});
 		},
+	);
+
+export const getUnpaidBillsBySupplier = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((vendorId: string) => vendorId)
+	.handler(async ({ data: vendorId }) =>
+		db
+			.select()
+			.from(vwInvoices)
+			.where(
+				and(eq(vwInvoices.vendorId, vendorId), gt(vwInvoices.balance, "0")),
+			),
 	);

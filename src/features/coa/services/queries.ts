@@ -1,9 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
 import type { AccountType } from "@/drizzle/schema";
+import {
+	getAccount,
+	getAccounts,
+	getChildrenAccountByParentName,
+} from "@/features/coa/services/coa.api";
 import type { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
-import { getAccount, getAccounts } from "./coa.api";
 
 export const accountQueries = {
 	all: ["accounts"] as const,
@@ -61,5 +65,10 @@ export const accountQueries = {
 						label: toTitleCase(name),
 					}));
 			},
+		}),
+	childrenAccountsByParentName: (parentName: string) =>
+		queryOptions({
+			queryKey: [...accountQueries.all, "children-accounts", parentName],
+			queryFn: () => getChildrenAccountByParentName({ data: parentName }),
 		}),
 };

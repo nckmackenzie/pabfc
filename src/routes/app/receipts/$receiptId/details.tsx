@@ -9,7 +9,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/receipts/$receiptId/details")({
 	beforeLoad: async () => {
-		await requirePermission("payments:view");
+		await requirePermission("receipts:view");
 	},
 	head: () => ({
 		meta: [{ title: "Payment Details / Prime Age Beauty & Fitness Club" }],

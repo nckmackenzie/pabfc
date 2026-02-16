@@ -68,6 +68,28 @@ export const getAccount = createServerFn({ method: "GET" })
 		});
 	});
 
+export const getChildrenAccountByParentName = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.inputValidator((parentName: string) => parentName)
+	.handler(async ({ data: parentName }) => {
+		const parentAccount = await db.query.ledgerAccounts.findFirst({
+			columns: { id: true },
+			where: eq(
+				sql`lower(${ledgerAccounts.name})`,
+				parentName.trim().toLowerCase(),
+			),
+		});
+
+		if (!parentAccount?.id) {
+			throw new Error("Parent account not found");
+		}
+
+		return db.query.ledgerAccounts.findMany({
+			columns: { id: true, name: true },
+			where: eq(ledgerAccounts.parentId, parentAccount.id),
+		});
+	});
+
 export const createAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator(accountsFormSchema)

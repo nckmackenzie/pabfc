@@ -1,6 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
-import { getBillById, getBills } from "@/features/bills/services/bills.api";
+import {
+	getBillById,
+	getBills,
+	getUnpaidBillsBySupplier,
+} from "@/features/bills/services/bills.api";
 import type { billValidateSearch } from "@/features/bills/services/schemas";
 import {
 	getVendorById,
@@ -44,5 +48,11 @@ export const billQueries = {
 		queryOptions({
 			queryKey: [...billQueries.all, "detail", billId],
 			queryFn: () => getBillById({ data: billId }),
+		}),
+	pendingBillsBySupplier: (supplierId: string) =>
+		queryOptions({
+			queryKey: [...billQueries.all, "pending-bills", supplierId],
+			queryFn: () => getUnpaidBillsBySupplier({ data: supplierId }),
+			enabled: supplierId.trim().length > 0,
 		}),
 };

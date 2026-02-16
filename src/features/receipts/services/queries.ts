@@ -6,7 +6,7 @@ import {
 import type { PaymentsSearchValidateSchema } from "@/features/receipts/services/schemas";
 
 export const paymentsQueries = {
-	all: ["payments"] as const,
+	all: ["receipts"] as const,
 	list: (filters: PaymentsSearchValidateSchema) =>
 		queryOptions({
 			queryKey: [...paymentsQueries.all, "list", filters],

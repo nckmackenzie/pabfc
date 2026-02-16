@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ConstructionIcon, MinusIcon, PlusIcon } from "@/components/ui/icons";
 
 import {
@@ -108,6 +108,8 @@ export function AppSidebar() {
 																<Link
 																	to={`${subItem.url}` as Route}
 																	className="capitalize"
+																	activeProps={{ "data-active": true }}
+																	activeOptions={{ exact: false }}
 																>
 																	{subItem.title}
 																</Link>
@@ -149,18 +151,19 @@ export function AppSidebar() {
 }
 
 function MenuItem({ item }: { item: MenuItemType }) {
-	const { pathname } = useLocation();
 	const { setOpenMobile, openMobile } = useSidebar();
-	const isActive = pathname.startsWith(item.url);
 	return (
 		<SidebarMenuItem>
 			<SidebarMenuButton
 				asChild
-				isActive={isActive}
 				onClick={() => setOpenMobile(!openMobile)}
 				data-testid={`link-${item.title.toLowerCase().replace(/\s/g, "-")}`}
 			>
-				<Link to={item.url}>
+				<Link
+					to={item.url}
+					activeProps={{ "data-active": true }}
+					activeOptions={{ exact: false }}
+				>
 					<item.icon className="size-5! text-muted-foreground" />
 					<span>{item.title}</span>
 					{item.wip && (

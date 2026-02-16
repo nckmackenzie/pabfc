@@ -32,9 +32,11 @@ export function ComboboxField({
 
 	return (
 		<Field data-invalid={isInvalid} className={className}>
-			<FieldLabel htmlFor={field.name}>
-				{label} {required && <span className="text-destructive">*</span>}
-			</FieldLabel>
+			{label.trim().length > 0 && (
+				<FieldLabel htmlFor={field.name}>
+					{label} {required && <span className="text-destructive">*</span>}
+				</FieldLabel>
+			)}
 			<ComboBox
 				value={field.state.value}
 				onChange={(value) => field.handleChange(value)}
