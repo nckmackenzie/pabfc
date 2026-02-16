@@ -123,7 +123,11 @@ export const createPayment = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
-			await requirePermission("payments:create");
+			if (!data.id) {
+				await requirePermission("payments:create");
+			} else {
+				await requirePermission("payments:update");
+			}
 
 			const paymentNo = await getPaymentNo();
 			const {
@@ -361,6 +365,13 @@ export const deletePayment = createServerFn({ method: "POST" })
 					action: "delete payment",
 					userId,
 					description: `Deleted payment no ${payment.paymentNo}`,
+				},
+			});
+
+			await inngest.send({
+				name: "app/bills.update.invoice.status",
+				data: {
+					paidInvoiceIds: [payment.id],
 				},
 			});
 		},
