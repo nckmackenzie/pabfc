@@ -39,6 +39,7 @@ type PaymentFormProps = {
 	paymentNo?: string;
 	cashEquivalentAccounts: Array<Option>;
 	payment?: PaymentFormValues;
+	billId?: string;
 };
 
 export function PaymentForm({
@@ -47,6 +48,7 @@ export function PaymentForm({
 	banks,
 	cashEquivalentAccounts,
 	payment,
+	billId,
 }: PaymentFormProps) {
 	const queryClient = useQueryClient();
 	const router = useRouter();
@@ -122,6 +124,24 @@ export function PaymentForm({
 			);
 		}
 	}, [vendorId, refetch, form, data, payment]);
+
+	useEffect(() => {
+		if (!billId) return;
+		queryClient.fetchQuery(billQueries.detail(billId)).then((bill) => {
+			form.setFieldValue("vendorId", bill.vendorId);
+			form.setFieldValue("bills", [
+				{
+					selected: true,
+					invoiceNo: bill.invoiceNo,
+					invoiceDate: bill.invoiceDate,
+					dueDate: bill.dueDate,
+					total: parseFloat(bill.total),
+					balance: parseFloat(bill.total),
+					billId: bill.id,
+				},
+			]);
+		});
+	}, [billId, form, queryClient]);
 
 	useEffect(() => {
 		if (paymentMethod === "cash" || paymentMethod === "mpesa") {
@@ -237,7 +257,7 @@ export function PaymentForm({
 			)}
 			{error && <AlertErrorComponent message={error.message} />}
 			{isLoading && <LoadingComponent />}
-			{bills && (
+			{bills && bills.length > 0 && (
 				<div className="border rounded-md p-4">
 					<div className="flex items-center justify-between border-b pb-4">
 						<div>
