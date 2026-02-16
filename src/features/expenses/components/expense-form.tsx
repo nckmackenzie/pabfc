@@ -71,7 +71,9 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 			paymentMethod: expense?.paymentMethod || "cash",
 			reference: expense?.reference?.toUpperCase() || "",
 			bankId: expense?.bankId || null,
-			creditingAccountId: expense?.creditingAccountId || null,
+			creditingAccountId: expense?.creditingAccountId
+				? expense.creditingAccountId.toString()
+				: null,
 			details: expenseDetails,
 			attachments:
 				expense?.attachments.map(({ fileName, fileType, fileUrl }) => ({
