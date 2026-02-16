@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "../schema-helpers";
 import { users } from "./auth";
+import { bankAccounts } from "./bank";
 import { ledgerAccounts } from "./chart-of-accounts";
 import { vatTypeEnum } from "./settings";
 
@@ -49,6 +50,10 @@ export const expenseHeaders = pgTable(
 		taxAmount: numeric("tax_amount", { precision: 18, scale: 2 }).notNull(),
 		totalAmount: numeric("total_amount", { precision: 18, scale: 2 }).notNull(),
 		currency: varchar("currency", { length: 10 }).notNull().default("KES"),
+		bankId: varchar("bank_id").references(() => bankAccounts.id),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
 		createdByUserId: varchar("created_by_user_id")
 			.notNull()
 			.references(() => users.id),

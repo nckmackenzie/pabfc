@@ -1,0 +1,4 @@
+ALTER TABLE "expense_headers" ADD COLUMN "bank_id" varchar;--> statement-breakpoint
+ALTER TABLE "expense_headers" ADD COLUMN "crediting_account_id" integer;--> statement-breakpoint
+ALTER TABLE "expense_headers" ADD CONSTRAINT "expense_headers_bank_id_bank_accounts_id_fk" FOREIGN KEY ("bank_id") REFERENCES "public"."bank_accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "expense_headers" ADD CONSTRAINT "expense_headers_crediting_account_id_ledger_accounts_id_fk" FOREIGN KEY ("crediting_account_id") REFERENCES "public"."ledger_accounts"("id") ON DELETE no action ON UPDATE no action;
