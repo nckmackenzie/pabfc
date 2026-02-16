@@ -21,18 +21,27 @@ import {
 	ledgerAccounts,
 	payees,
 } from "@/drizzle/schema";
-import { getCashEquivalentsAccountId } from "@/features/coa/services/coa.api";
 import {
 	expenseSchema,
 	expenseValidateSearch,
 } from "@/features/expenses/services/schemas";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
-import { NotFoundError } from "@/lib/error-handling/app-error";
+import {
+	ApplicationError,
+	NotFoundError,
+} from "@/lib/error-handling/app-error";
 import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
-import { createOrGetAccountId } from "@/services/journal";
+import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
+import {
+	areJournalValuesBalanced,
+	createJournalEntry,
+	createOrGetAccountId,
+	deleteJournalEntry,
+	getCashEquivalentAccountId,
+} from "@/services/journal";
 
 export const getExpenseNo = createServerFn()
 	.middleware([authMiddleware])
@@ -136,6 +145,8 @@ export const createExpense = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission(data.id ? "expenses:update" : "expenses:create");
+
 			const {
 				details,
 				expenseDate,
@@ -144,6 +155,8 @@ export const createExpense = createServerFn({ method: "POST" })
 				reference,
 				expenseNo: expenseNoFormData,
 				attachments,
+				bankId,
+				creditingAccountId,
 			} = data;
 			const expenseNo = await getExpenseNo();
 
@@ -154,6 +167,42 @@ export const createExpense = createServerFn({ method: "POST" })
 
 			if (taxAmount > 0 && vatAccountId === null) {
 				throw new Error("VAT Account not found. Define one in settings.");
+			}
+
+			const cashEquivalentAccountId = await getCashEquivalentAccountId({
+				paymentMethod,
+				bankId,
+				creditingAccountId,
+			});
+
+			const jLines = lines.map((line, index) => ({
+				lineNumber: index + 1,
+				accountId: parseInt(line.accountId, 10),
+				amount: line.amountExlusiveTax.toString(),
+				memo: line.description,
+				dc: "debit" as "debit" | "credit",
+			}));
+
+			if (taxAmount > 0) {
+				jLines.push({
+					lineNumber: lines.length + 1,
+					accountId: vatAccountId,
+					amount: taxAmount.toString(),
+					memo: `VAT Input for expense no ${data.id ? data.expenseNo : expenseNo}`,
+					dc: "debit" as "debit" | "credit",
+				});
+			}
+
+			jLines.push({
+				lineNumber: lines.length + 1,
+				accountId: cashEquivalentAccountId,
+				amount: grandTotal.toString(),
+				memo: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
+				dc: "credit" as "debit" | "credit",
+			});
+
+			if (!areJournalValuesBalanced(jLines)) {
+				throw new ApplicationError("Journal values are not balanced");
 			}
 
 			const returnedId = await db.transaction(async (tx) => {
@@ -167,6 +216,13 @@ export const createExpense = createServerFn({ method: "POST" })
 							payeeId,
 							paymentMethod,
 							reference,
+							bankId,
+							creditingAccountId:
+								paymentMethod === "cash" || paymentMethod === "mpesa"
+									? creditingAccountId
+										? parseInt(creditingAccountId, 10)
+										: null
+									: null,
 							subTotal: subTotal.toString(),
 							taxAmount: taxAmount.toString(),
 							totalAmount: grandTotal.toString(),
@@ -182,6 +238,13 @@ export const createExpense = createServerFn({ method: "POST" })
 							payeeId,
 							paymentMethod,
 							reference,
+							bankId,
+							creditingAccountId:
+								paymentMethod === "cash" || paymentMethod === "mpesa"
+									? creditingAccountId
+										? parseInt(creditingAccountId, 10)
+										: null
+									: null,
 							subTotal: subTotal.toString(),
 							taxAmount: taxAmount.toString(),
 							totalAmount: grandTotal.toString(),
@@ -191,20 +254,25 @@ export const createExpense = createServerFn({ method: "POST" })
 					expenseId = id;
 				}
 
-				await tx
-					.delete(expenseDetails)
-					.where(eq(expenseDetails.expenseHeaderId, expenseId));
-				await tx
-					.delete(expenseAttachments)
-					.where(eq(expenseAttachments.expenseHeaderId, expenseId));
-				await tx
-					.delete(journalEntries)
-					.where(
-						and(
-							eq(journalEntries.sourceId, expenseId),
-							eq(journalEntries.source, "expenses"),
-						),
-					);
+				if (data.id) {
+					await deleteBankingEntry({
+						source: "expenses",
+						sourceId: expenseId,
+						tx,
+					});
+
+					await tx
+						.delete(expenseDetails)
+						.where(eq(expenseDetails.expenseHeaderId, expenseId));
+					await tx
+						.delete(expenseAttachments)
+						.where(eq(expenseAttachments.expenseHeaderId, expenseId));
+					await deleteJournalEntry({
+						source: "expenses",
+						sourceId: expenseId,
+						tx,
+					});
+				}
 
 				if (attachments && attachments.length > 0) {
 					const formattedAttachments = attachments.map((attachment) => ({
@@ -233,50 +301,31 @@ export const createExpense = createServerFn({ method: "POST" })
 					);
 				}
 
-				const [{ id: journalId }] = await tx
-					.insert(journalEntries)
-					.values({
+				await createJournalEntry({
+					entry: {
 						entryDate: expenseDate,
 						source: "expenses",
 						sourceId: expenseId,
-						reference: data.id
-							? expenseNoFormData.toString()
-							: expenseNo.toString(),
-					})
-					.returning({ id: journalEntries.id });
-
-				lines.forEach(async (line, index) => {
-					await tx.insert(journalLines).values({
-						journalEntryId: journalId,
-						lineNumber: index + 1,
-						accountId: parseInt(line.accountId, 10),
-						amount: line.amountExlusiveTax.toString(),
-						memo: line.description,
-						dc: "debit",
-					});
+						reference: data.reference,
+					},
+					lines: jLines,
+					tx,
 				});
 
-				if (taxAmount > 0) {
-					await tx.insert(journalLines).values({
-						journalEntryId: journalId,
-						lineNumber: lines.length + 1,
-						accountId: vatAccountId as number,
-						amount: taxAmount.toString(),
-						dc: "debit",
+				if (bankId) {
+					await createBankingEntry({
+						entry: {
+							source: "expenses",
+							sourceId: expenseId,
+							transactionDate: expenseDate,
+							dc: "credit" as const,
+							amount: grandTotal.toString(),
+							reference: reference ?? `Expense No ${expenseNo}`,
+							bankId,
+						},
+						tx,
 					});
 				}
-
-				const cashAccountId = await getCashEquivalentsAccountId({
-					data: paymentMethod,
-				});
-
-				await tx.insert(journalLines).values({
-					journalEntryId: journalId,
-					lineNumber: lines.length + 1 + (taxAmount > 0 ? 1 : 0),
-					accountId: cashAccountId as number,
-					amount: grandTotal.toString(),
-					dc: "credit",
-				});
 
 				await logActivity({
 					data: {
@@ -352,14 +401,11 @@ export const deleteExpense = createServerFn({ method: "POST" })
 				await tx
 					.delete(expenseAttachments)
 					.where(eq(expenseAttachments.expenseHeaderId, expenseId));
-				await tx
-					.delete(journalEntries)
-					.where(
-						and(
-							eq(journalEntries.sourceId, expenseId),
-							eq(journalEntries.source, "expenses"),
-						),
-					);
+				await deleteJournalEntry({
+					source: "expenses",
+					sourceId: expenseId,
+					tx,
+				});
 				await tx.delete(expenseHeaders).where(eq(expenseHeaders.id, expenseId));
 
 				await logActivity({
