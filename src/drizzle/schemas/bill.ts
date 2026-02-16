@@ -175,16 +175,20 @@ export const billPayments = pgTable(
 	],
 );
 
-export const billPaymentsRelations = relations(billPayments, ({ one }) => ({
-	lines: one(billPaymentLines, {
-		fields: [billPayments.id],
-		references: [billPaymentLines.billPaymentId],
+export const billPaymentsRelations = relations(
+	billPayments,
+	({ one, many }) => ({
+		lines: many(billPaymentLines),
+		vendor: one(vendors, {
+			fields: [billPayments.vendorId],
+			references: [vendors.id],
+		}),
+		bank: one(bankAccounts, {
+			fields: [billPayments.bankId],
+			references: [bankAccounts.id],
+		}),
 	}),
-	vendor: one(vendors, {
-		fields: [billPayments.vendorId],
-		references: [vendors.id],
-	}),
-}));
+);
 
 export const billPaymentLines = pgTable(
 	"bill_payment_lines",
@@ -193,7 +197,7 @@ export const billPaymentLines = pgTable(
 		lineNumber: integer("line_number").notNull(),
 		billPaymentId: varchar("bill_payment_id")
 			.notNull()
-			.references(() => billPayments.id),
+			.references(() => billPayments.id, { onDelete: "cascade" }),
 		billId: varchar("bill_id")
 			.notNull()
 			.references(() => bills.id),
