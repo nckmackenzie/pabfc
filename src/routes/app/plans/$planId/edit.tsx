@@ -25,7 +25,7 @@ export const Route = createFileRoute("/app/plans/$planId/edit")({
 	},
 	pendingComponent: FormLoader,
 	staticData: {
-		breadcrumb: (match) => `Edit ${toTitleCase(match.loaderData.plan.name)}`,
+		breadcrumb: (match) => `Edit ${toTitleCase(match.loaderData.name)}`,
 	},
 });
 
