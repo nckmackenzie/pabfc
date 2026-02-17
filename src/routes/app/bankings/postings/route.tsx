@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { AlertErrorComponent } from "@/components/ui/error-component";
 import { accountQueries } from "@/features/coa/services/queries";
 import { toTitleCase } from "@/lib/utils";
 
@@ -18,6 +19,9 @@ export const Route = createFileRoute("/app/bankings/postings")({
 	staticData: {
 		breadcrumb: "Bank Postings",
 	},
+	errorComponent: ({ error }) => (
+		<AlertErrorComponent message={error.message} />
+	),
 });
 
 function RouteComponent() {
