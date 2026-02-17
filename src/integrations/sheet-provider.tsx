@@ -5,12 +5,20 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet";
 
 interface SheetOptions {
 	side?: "top" | "right" | "bottom" | "left";
 	className?: string;
 	onOpenChange?: (open: boolean) => void;
+	title?: string;
+	description?: string;
 }
 
 interface SheetProviderProps {
@@ -70,6 +78,14 @@ export const SheetProvider = ({ children }: SheetProviderProps) => {
 			{children}
 			<Sheet open={isOpen} onOpenChange={onOpenChange}>
 				<SheetContent side={options.side} className={options.className}>
+					{options.title && (
+						<SheetHeader>
+							<SheetTitle>{options.title}</SheetTitle>
+							{options.description && (
+								<SheetDescription>{options.description}</SheetDescription>
+							)}
+						</SheetHeader>
+					)}
 					{showingSheet}
 				</SheetContent>
 			</Sheet>
