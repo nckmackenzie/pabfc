@@ -34,9 +34,6 @@ const bankingSubMenu = linkOptions([
 
 export const Route = createFileRoute("/app/bankings")({
 	component: RouteComponent,
-	staticData: {
-		breadcrumb: "Bankings",
-	},
 	beforeLoad: async () => {
 		const banks = await getBanks();
 		return { banks };
