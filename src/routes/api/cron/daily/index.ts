@@ -36,7 +36,9 @@ export const Route = createFileRoute("/api/cron/daily/")({
 		handlers: {
 			GET: async ({ request }) => {
 				const authHeader = request.headers.get("authorization");
-				if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+				const expected = process.env.CRON_SECRET;
+
+				if (!expected || authHeader !== `Bearer ${expected}`) {
 					return new Response("Unauthorized", {
 						status: 401,
 					});
