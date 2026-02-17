@@ -26,8 +26,11 @@ export const BankPostingForm = ({
 }: {
 	posting?: BankPostingSchema;
 }) => {
-	const { banks, accounts } = useRouteContext({
+	const { accounts } = useRouteContext({
 		from: "/app/bankings/postings",
+	});
+	const { banks } = useRouteContext({
+		from: "/app/bankings",
 	});
 
 	const { isPending, mutate: upsert } = useFormUpsert({
