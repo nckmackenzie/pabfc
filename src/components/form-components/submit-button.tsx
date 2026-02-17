@@ -16,6 +16,8 @@ type SubmitButtonProps = {
 	onReset?: () => void;
 	buttonSize?: VariantProps<typeof buttonVariants>["size"];
 	icon?: React.ReactNode;
+	fieldClassName?: string;
+	cancelButtonText?: string;
 };
 
 export function SubmitButton({
@@ -27,6 +29,8 @@ export function SubmitButton({
 	onReset,
 	buttonSize,
 	icon,
+	fieldClassName,
+	cancelButtonText,
 }: SubmitButtonProps & ComponentProps<"button">) {
 	const form = useFormContext();
 	const isMobile = useIsMobile();
@@ -35,6 +39,7 @@ export function SubmitButton({
 			{([isSubmitting]) => (
 				<Field
 					orientation={isMobile ? "vertical" : orientation || "horizontal"}
+					className={fieldClassName}
 				>
 					<Button
 						type="submit"
@@ -54,7 +59,7 @@ export function SubmitButton({
 							variant="outline"
 							onClick={onReset ? () => onReset() : () => form.reset()}
 						>
-							Cancel
+							{cancelButtonText || "Cancel"}
 						</Button>
 					)}
 				</Field>
