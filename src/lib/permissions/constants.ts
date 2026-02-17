@@ -50,7 +50,7 @@ export const PERMISSIONS = [
 	"banking:create",
 	"banking:update",
 	"banking:delete",
-	"banking:clearing",
+	"banking:clear",
 	"banking:reconciliation",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
