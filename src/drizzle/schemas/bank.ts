@@ -57,6 +57,9 @@ export const bankPostings = pgTable(
 		dc: lineDcEnum("dc").notNull(),
 		amount: numeric("amount").notNull(),
 		reference: varchar("reference", { length: 255 }).notNull(),
+		counterAccountId: integer("counter_account_id").references(
+			() => ledgerAccounts.id,
+		),
 		cleared: boolean("cleared").default(false),
 		clearedAt: date("cleared_at"),
 		narration: varchar("narration", { length: 255 }),

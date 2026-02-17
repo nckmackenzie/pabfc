@@ -46,5 +46,11 @@ export const PERMISSIONS = [
 	"communication:create",
 	"communication:update",
 	"communication:delete",
+	"banking:view",
+	"banking:create",
+	"banking:update",
+	"banking:delete",
+	"banking:clear",
+	"banking:reconciliation",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];

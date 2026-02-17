@@ -20,7 +20,7 @@ export function CheckButton({ text }: { text: string }) {
 	return (
 		<>
 			<CheckIcon className="size-4! text-muted-foreground" />
-			<span className="text-xs">{text}</span>
+			<span className="text-xs -ml-1">{text}</span>
 		</>
 	);
 }

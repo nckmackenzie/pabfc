@@ -1,0 +1,2 @@
+ALTER TABLE "bank_postings" ADD COLUMN "counter_account_id" integer;--> statement-breakpoint
+ALTER TABLE "bank_postings" ADD CONSTRAINT "bank_postings_counter_account_id_ledger_accounts_id_fk" FOREIGN KEY ("counter_account_id") REFERENCES "public"."ledger_accounts"("id") ON DELETE no action ON UPDATE no action;

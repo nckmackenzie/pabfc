@@ -88,9 +88,14 @@ export const collapsibleMenuItems = [
 				permission: "payments:view",
 			},
 			{
-				title: "Jounal Entries",
+				title: "Journal Entries",
 				url: "/app/journal-entries",
 				permission: "chart-of-accounts",
+			},
+			{
+				title: "Bankings",
+				url: "/app/bankings/postings",
+				permission: "banking:view",
 			},
 		],
 		get permissions(): Permission[] {
