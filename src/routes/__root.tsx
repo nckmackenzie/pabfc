@@ -12,6 +12,7 @@ import type { BreadcrumbValue } from "@/components/ui/nav-breadcrumb";
 import { NotFoundComponent } from "@/components/ui/not-found";
 import { Spinner } from "@/components/ui/spinner";
 import { ModalProvider } from "@/integrations/modal-provider";
+import { SheetProvider } from "@/integrations/sheet-provider";
 import { authQueries } from "@/lib/session/queries";
 import type { getRouter } from "@/router";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -97,7 +98,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<ModalProvider>{children}</ModalProvider>
+				<ModalProvider>
+					<SheetProvider>{children}</SheetProvider>
+				</ModalProvider>
 				<Toaster
 					position="top-center"
 					toastOptions={{
