@@ -94,7 +94,7 @@ export const collapsibleMenuItems = [
 			},
 			{
 				title: "Bankings",
-				url: "/app/bankings",
+				url: "/app/bankings/postings",
 				permission: "banking:view",
 			},
 		],
