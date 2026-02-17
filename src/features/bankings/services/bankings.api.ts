@@ -7,6 +7,7 @@ import {
 	eq,
 	gte,
 	ilike,
+	inArray,
 	lte,
 	or,
 	type SQL,
@@ -365,11 +366,63 @@ export const clearBankings = createServerFn({ method: "POST" })
 			},
 		}) => {
 			await requirePermission("banking:clear");
-			const { bankings } = data;
+			const { bankings, bankId } = data;
 			const clearedOnlyBankings = bankings.filter((b) => b.selected);
 
 			if (clearedOnlyBankings.length === 0) {
 				throw new ApplicationError("No bankings selected to clear");
+			}
+
+			const bankingIds = clearedOnlyBankings.map((b) => b.bankingId);
+
+			const existingBankings = await db.query.bankPostings.findMany({
+				columns: {
+					id: true,
+					bankId: true,
+					transactionDate: true,
+					cleared: true,
+				},
+				where: inArray(bankPostings.id, bankingIds),
+			});
+
+			// Validate all bankings exist and belong to the correct bank
+			for (const banking of clearedOnlyBankings) {
+				const existing = existingBankings.find(
+					(b) => b.id === banking.bankingId,
+				);
+
+				if (!existing) {
+					throw new ApplicationError(
+						`Banking record not found: ${banking.bankingId}`,
+					);
+				}
+
+				if (existing.bankId !== bankId) {
+					throw new ApplicationError(
+						`Banking record ${banking.bankingId} does not belong to the specified bank`,
+					);
+				}
+
+				if (existing.cleared) {
+					throw new ApplicationError(
+						`Banking record ${banking.bankingId} is already cleared`,
+					);
+				}
+
+				if (!banking.clearedAt) {
+					throw new ApplicationError(
+						`Cleared date is required for banking ${banking.bankingId}`,
+					);
+				}
+
+				if (
+					new Date(banking.clearedAt).setHours(23, 59, 59, 999) <
+					new Date(existing.transactionDate).setHours(23, 59, 59, 999)
+				) {
+					throw new ApplicationError(
+						`Cleared date cannot be before transaction date for banking ${banking.bankingId}`,
+					);
+				}
 			}
 
 			await db.transaction(async (tx) => {
