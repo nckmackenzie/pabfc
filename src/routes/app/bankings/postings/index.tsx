@@ -1,11 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BasePageComponent } from "@/components/ui/base-page";
+import {
+	BasePageComponent,
+	BasePageLoadingSkeleton,
+} from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
+import { BankingsDataTable } from "@/features/bankings/components/bankings-datatable";
 import { useFilters } from "@/hooks/use-filters";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
-export const Route = createFileRoute("/app/bankings/")({
+export const Route = createFileRoute("/app/bankings/postings/")({
 	beforeLoad: async () => {
 		await requirePermission("banking:view");
 	},
@@ -18,6 +22,12 @@ export const Route = createFileRoute("/app/bankings/")({
 			},
 		],
 	}),
+	pendingComponent: () => (
+		<BasePageLoadingSkeleton
+			pageDescription="View and manage bankings"
+			pageTitle="Bankings"
+		/>
+	),
 });
 
 function BankingsIndexComponent() {
@@ -28,13 +38,13 @@ function BankingsIndexComponent() {
 				pageTitle="Bankings"
 				pageDescription="View and manage bankings"
 				hasNewButtonLink
-				newButtonLinkPath="/app/bankings/new"
+				newButtonLinkPath="/app/bankings/postings/new"
 				createPermissions={["banking:create"]}
 				defaultSearchValue={filters.q}
 				onSearch={(val) => setFilters({ q: val })}
-				buttonText="Add Payment"
+				buttonText="Add Bank Posting"
 			>
-				<p>Table here</p>
+				<BankingsDataTable />
 			</BasePageComponent>
 		</ProtectedPage>
 	);
