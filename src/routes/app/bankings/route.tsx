@@ -6,25 +6,26 @@ import {
 } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { getBanks } from "@/features/bankings/services/bankings.api";
 
 const bankingSubMenu = linkOptions([
 	{
-		to: "/app/bankings",
+		to: "/app/bankings/postings",
 		label: "Bank Postings",
 		activeOptions: {
-			exact: true,
+			exact: false,
 		},
 	},
 	{
-		to: "/app/bankings",
-		label: "Reconciliation",
+		to: "/app/bankings/clear",
+		label: "Clearing",
 		activeOptions: {
 			exact: true,
 		},
 	},
 	{
-		to: "/app/expenses",
-		label: "Clearing",
+		to: "/app/bankings/reconcilliation",
+		label: "Reconciliation",
 		activeOptions: {
 			exact: true,
 		},
@@ -35,6 +36,10 @@ export const Route = createFileRoute("/app/bankings")({
 	component: RouteComponent,
 	staticData: {
 		breadcrumb: "Bankings",
+	},
+	beforeLoad: async () => {
+		const banks = await getBanks();
+		return { banks };
 	},
 });
 
