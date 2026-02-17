@@ -20,14 +20,14 @@ const bankingSubMenu = linkOptions([
 		to: "/app/bankings/clear",
 		label: "Clearing",
 		activeOptions: {
-			exact: true,
+			exact: false,
 		},
 	},
 	{
 		to: "/app/bankings/reconcilliation",
 		label: "Reconciliation",
 		activeOptions: {
-			exact: true,
+			exact: false,
 		},
 	},
 ]);
