@@ -2,12 +2,14 @@ import { useRouteContext } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
+import { upsertBankPosting } from "@/features/bankings/services/bankings.api";
+import {
+	type BankPostingSchema,
+	bankPostingSchema,
+} from "@/features/bankings/services/schema";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { dateFormat } from "@/lib/helpers";
-import type { Option } from "@/types/index.types";
-import { upsertBankPosting } from "../services/bankings.api";
-import { type BankPostingSchema, bankPostingSchema } from "../services/schema";
 
 const defaultValues = {
 	transactionDate: dateFormat(new Date()),
@@ -21,14 +23,11 @@ const defaultValues = {
 
 export const BankPostingForm = ({
 	posting,
-	accounts,
 }: {
-	accounts: Array<Option>;
 	posting?: BankPostingSchema;
 }) => {
-	const banks = useRouteContext({
-		from: "/app/bankings",
-		select: (data) => data.banks,
+	const { banks, accounts } = useRouteContext({
+		from: "/app/bankings/postings",
 	});
 
 	const { isPending, mutate: upsert } = useFormUpsert({
