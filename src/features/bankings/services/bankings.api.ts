@@ -1,6 +1,17 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, or, type SQL, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	ilike,
+	lte,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
@@ -8,8 +19,10 @@ import { bankAccounts, bankPostings } from "@/drizzle/schema";
 import {
 	bankPostingClearenceFormSchema,
 	bankPostingSchema,
+	clearBankingsFilterFormSchema,
 } from "@/features/bankings/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
+import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -312,3 +325,31 @@ export const clearBankPosting = createServerFn({ method: "POST" })
 			}
 		},
 	);
+
+export const getUnclearedBankings = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(clearBankingsFilterFormSchema)
+	.handler(async ({ data }) => {
+		await requirePermission("banking:clear");
+
+		const { bankId, ...rest } = data;
+		const { from, to } = normalizeDateRange(rest.from, rest.to);
+
+		const bankings = await db.query.bankPostings.findMany({
+			columns: {
+				id: true,
+				amount: true,
+				transactionDate: true,
+				reference: true,
+				dc: true,
+				narration: true,
+			},
+			where: and(
+				eq(bankPostings.bankId, bankId),
+				eq(bankPostings.cleared, false),
+				gte(bankPostings.transactionDate, from),
+				lte(bankPostings.transactionDate, to),
+			),
+		});
+		return bankings;
+	});
