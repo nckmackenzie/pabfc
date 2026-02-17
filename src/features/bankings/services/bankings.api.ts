@@ -60,7 +60,7 @@ export const getBankPostings = createServerFn()
 				id: bankPostings.id,
 				transactionDate: bankPostings.transactionDate,
 				bankName: bankAccounts.bankName,
-				direction: sql<string>`CASE WHEN bank_postings.dc = 'credit' THEN 'Money Out' ELSE 'Money In' END as direction`,
+				direction: sql<string>`CASE WHEN bank_postings.dc = 'credit' THEN 'Money Out' ELSE 'Money In' END`,
 				amount: bankPostings.amount,
 				reference: bankPostings.reference,
 				cleared: bankPostings.cleared,
