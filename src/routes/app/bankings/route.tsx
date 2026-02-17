@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { AlertErrorComponent } from "@/components/ui/error-component";
 import { getBanks } from "@/features/bankings/services/bankings.api";
 
 const bankingSubMenu = linkOptions([
@@ -20,14 +21,14 @@ const bankingSubMenu = linkOptions([
 		to: "/app/bankings/clear",
 		label: "Clearing",
 		activeOptions: {
-			exact: true,
+			exact: false,
 		},
 	},
 	{
 		to: "/app/bankings/reconcilliation",
 		label: "Reconciliation",
 		activeOptions: {
-			exact: true,
+			exact: false,
 		},
 	},
 ]);
@@ -38,6 +39,9 @@ export const Route = createFileRoute("/app/bankings")({
 		const banks = await getBanks();
 		return { banks };
 	},
+	errorComponent: ({ error }) => (
+		<AlertErrorComponent message={error.message} />
+	),
 });
 
 function RouteComponent() {

@@ -1,6 +1,18 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, or, type SQL, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	ilike,
+	inArray,
+	lte,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
@@ -8,8 +20,11 @@ import { bankAccounts, bankPostings } from "@/drizzle/schema";
 import {
 	bankPostingClearenceFormSchema,
 	bankPostingSchema,
+	bulkBankClearingsFormSchema,
+	clearBankingsFilterFormSchema,
 } from "@/features/bankings/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
+import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -310,5 +325,125 @@ export const clearBankPosting = createServerFn({ method: "POST" })
 				console.error(error);
 				throw new ApplicationError("Failed to clear bank posting");
 			}
+		},
+	);
+
+export const getUnclearedBankings = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(clearBankingsFilterFormSchema)
+	.handler(async ({ data }) => {
+		await requirePermission("banking:clear");
+
+		const { bankId, ...rest } = data;
+		const { from, to } = normalizeDateRange(rest.from, rest.to);
+
+		const bankings = await db.query.bankPostings.findMany({
+			columns: {
+				bankId: false,
+				sourceId: false,
+				cleared: false,
+				clearedAt: false,
+				counterAccountId: false,
+			},
+			where: and(
+				eq(bankPostings.bankId, bankId),
+				eq(bankPostings.cleared, false),
+				gte(bankPostings.transactionDate, from),
+				lte(bankPostings.transactionDate, to),
+			),
+		});
+		return bankings;
+	});
+
+export const clearBankings = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(bulkBankClearingsFormSchema)
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("banking:clear");
+			const { bankings, bankId } = data;
+			const clearedOnlyBankings = bankings.filter((b) => b.selected);
+
+			if (clearedOnlyBankings.length === 0) {
+				throw new ApplicationError("No bankings selected to clear");
+			}
+
+			const bankingIds = clearedOnlyBankings.map((b) => b.bankingId);
+
+			const existingBankings = await db.query.bankPostings.findMany({
+				columns: {
+					id: true,
+					bankId: true,
+					transactionDate: true,
+					cleared: true,
+				},
+				where: inArray(bankPostings.id, bankingIds),
+			});
+
+			// Validate all bankings exist and belong to the correct bank
+			for (const banking of clearedOnlyBankings) {
+				const existing = existingBankings.find(
+					(b) => b.id === banking.bankingId,
+				);
+
+				if (!existing) {
+					throw new ApplicationError(
+						`Banking record not found: ${banking.bankingId}`,
+					);
+				}
+
+				if (existing.bankId !== bankId) {
+					throw new ApplicationError(
+						`Banking record ${banking.bankingId} does not belong to the specified bank`,
+					);
+				}
+
+				if (existing.cleared) {
+					throw new ApplicationError(
+						`Banking record ${banking.bankingId} is already cleared`,
+					);
+				}
+
+				if (!banking.clearedAt) {
+					throw new ApplicationError(
+						`Cleared date is required for banking ${banking.bankingId}`,
+					);
+				}
+
+				if (
+					new Date(banking.clearedAt).setHours(23, 59, 59, 999) <
+					new Date(existing.transactionDate).setHours(23, 59, 59, 999)
+				) {
+					throw new ApplicationError(
+						`Cleared date cannot be before transaction date for banking ${banking.bankingId}`,
+					);
+				}
+			}
+
+			await db.transaction(async (tx) => {
+				for (const banking of clearedOnlyBankings) {
+					await tx
+						.update(bankPostings)
+						.set({ cleared: true, clearedAt: banking.clearedAt })
+						.where(eq(bankPostings.id, banking.bankingId));
+				}
+
+				await logActivity({
+					data: {
+						action: "clear bank postings",
+						description: `Cleared ${clearedOnlyBankings.length} bank postings`,
+						userId,
+					},
+				});
+			});
+
+			return {
+				message: "Bankings cleared successfully",
+			};
 		},
 	);
