@@ -19,6 +19,7 @@ import { bankAccounts, bankPostings } from "@/drizzle/schema";
 import {
 	bankPostingClearenceFormSchema,
 	bankPostingSchema,
+	bulkBankClearingsFormSchema,
 	clearBankingsFilterFormSchema,
 } from "@/features/bankings/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
@@ -337,12 +338,11 @@ export const getUnclearedBankings = createServerFn()
 
 		const bankings = await db.query.bankPostings.findMany({
 			columns: {
-				id: true,
-				amount: true,
-				transactionDate: true,
-				reference: true,
-				dc: true,
-				narration: true,
+				bankId: false,
+				sourceId: false,
+				cleared: false,
+				clearedAt: false,
+				counterAccountId: false,
 			},
 			where: and(
 				eq(bankPostings.bankId, bankId),
@@ -353,3 +353,44 @@ export const getUnclearedBankings = createServerFn()
 		});
 		return bankings;
 	});
+
+export const clearBankings = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(bulkBankClearingsFormSchema)
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("banking:clear");
+			const { bankings } = data;
+			const clearedOnlyBankings = bankings.filter((b) => b.selected);
+
+			if (clearedOnlyBankings.length === 0) {
+				throw new ApplicationError("No bankings selected to clear");
+			}
+
+			await db.transaction(async (tx) => {
+				for (const banking of clearedOnlyBankings) {
+					await tx
+						.update(bankPostings)
+						.set({ cleared: true, clearedAt: banking.clearedAt })
+						.where(eq(bankPostings.id, banking.bankingId));
+				}
+
+				await logActivity({
+					data: {
+						action: "clear bank postings",
+						description: `Cleared ${clearedOnlyBankings.length} bank postings`,
+						userId,
+					},
+				});
+			});
+
+			return {
+				message: "Bankings cleared successfully",
+			};
+		},
+	);
