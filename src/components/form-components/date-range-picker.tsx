@@ -37,6 +37,12 @@ export function DateRangePickerField({
 			<DatePicker
 				initialDateRange={field.state.value}
 				onDateChange={(range) => field.handleChange(range)}
+				onReset={() =>
+					field.handleChange({
+						from: undefined,
+						to: undefined,
+					})
+				}
 				{...props}
 			/>
 			{helperText && <FieldDescription>{helperText}</FieldDescription>}

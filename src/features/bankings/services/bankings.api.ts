@@ -461,7 +461,7 @@ export const getBankReconcilliation = createServerFn()
 				bankBalance: actualBankBalance,
 			},
 		}) => {
-			await requirePermission("banking:view");
+			await requirePermission("banking:reconciliation");
 
 			if (!bankId || !from || !to) {
 				throw new ApplicationError("Invalid report parameters");
