@@ -7,8 +7,9 @@ import type {
 	SchemaValidationFailure,
 	SchemaValidationSuccess,
 } from "@/types/index.types";
-type DateRangeString = { from: string; to: string }
-type DateRangeDate = { from: Date; to: Date }
+
+type DateRangeString = { from: string; to: string };
+type DateRangeDate = { from: Date; to: Date };
 
 export const validateSchema = <T>(
 	values: unknown,
@@ -50,15 +51,26 @@ export const currencyFormatter = (
 	value: string | number,
 	isCurrency = true,
 	compact?: boolean,
+	replaceZeroNumbers = false,
 ) => {
 	const numberValue = typeof value === "string" ? parseFloat(value) : value;
-	return new Intl.NumberFormat("en-KE", {
+	const formatted = new Intl.NumberFormat("en-KE", {
 		style: isCurrency ? "currency" : "decimal",
 		currency: "KES",
 		notation: compact ? "compact" : "standard",
 		compactDisplay: "short",
 		maximumFractionDigits: 2,
 	}).format(numberValue);
+
+	if (!replaceZeroNumbers) {
+		return formatted;
+	}
+
+	if (replaceZeroNumbers && numberValue === 0) {
+		return "-";
+	}
+
+	return formatted;
 };
 
 export const dateFormat = (
@@ -159,9 +171,21 @@ export function generateFullPaymentInvoiceNo(
  * @param to - The end date (can be string, Date, or undefined)
  * @returns Object with normalized from and to dates as ISO strings
  */
-export function normalizeDateRange(from: string | Date, to: string | Date, returnAsDate: true): DateRangeDate;
-export function normalizeDateRange(from: string | Date, to: string | Date, returnAsDate?: false): DateRangeString;
-export function normalizeDateRange(from: string | Date, to: string | Date,returnAsDate=false): DateRangeString | DateRangeDate {
+export function normalizeDateRange(
+	from: string | Date,
+	to: string | Date,
+	returnAsDate: true,
+): DateRangeDate;
+export function normalizeDateRange(
+	from: string | Date,
+	to: string | Date,
+	returnAsDate?: false,
+): DateRangeString;
+export function normalizeDateRange(
+	from: string | Date,
+	to: string | Date,
+	returnAsDate = false,
+): DateRangeString | DateRangeDate {
 	const processDate = (date: string | Date, type: "from" | "to") => {
 		const d = new Date(date);
 		if (Number.isNaN(d.getTime())) {
@@ -185,17 +209,17 @@ export function normalizeDateRange(from: string | Date, to: string | Date,return
 		throw new Error('"from" date cannot be greater than "to" date');
 	}
 
-	if(returnAsDate){
+	if (returnAsDate) {
 		return {
 			from: fromDate,
 			to: toDate,
-		} 
+		};
 	}
 
 	return {
 		from: normalizedFrom,
 		to: normalizedTo,
-	} 
+	};
 }
 
 export function percentageChangeCalculator(current: number, previous: number) {
