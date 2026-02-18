@@ -116,13 +116,20 @@ export const bulkBankClearingsFormSchema = z.object({
 	),
 });
 
+export const bankReconciliationValidateSearch = z.object({
+	bankId: z.string().optional().catch(""),
+	from: z.iso.date().optional().catch(""),
+	to: z.iso.date().optional().catch(""),
+	bankBalance: z.number().optional().catch(0),
+});
+
 export const bankReconciliationFormSchema = z.object({
 	bankId: z.string().min(1, "Bank is required"),
 	bankBalance: z.number().positive("Bank balance is required"),
 	dateRange: z
 		.object({
-			from: z.date().optional(),
-			to: z.date().optional(),
+			from: z.date(),
+			to: z.date(),
 		})
 		.refine((data) => !!data.from, "From date is required")
 		.refine((data) => !!data.to, "To date is required"),

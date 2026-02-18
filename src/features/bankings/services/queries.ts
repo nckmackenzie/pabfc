@@ -4,6 +4,7 @@ import {
 	getBankPostings,
 	getBankReconcilliation,
 	getBanks,
+	getUnclearedBankingsByTransaction,
 } from "@/features/bankings/services/bankings.api";
 import type { bankReconciliationFormSchema } from "@/features/bankings/services/schema";
 import type { searchValidateSchema } from "@/lib/schema-rules";
@@ -29,6 +30,24 @@ export const bankPostingQueries = {
 			queryKey: [...bankPostingQueries.all, "bank-reconcilliation", filters],
 			queryFn: () =>
 				getBankReconcilliation({
+					data: filters,
+				}),
+		}),
+	unclearedByTransaction: (
+		filters: z.infer<typeof bankReconciliationFormSchema> & {
+			type: "debit" | "credit";
+			q?: string;
+		},
+	) =>
+		queryOptions({
+			queryKey: [
+				...bankPostingQueries.all,
+				"bank-reconcilliation",
+				"detailed",
+				filters,
+			],
+			queryFn: () =>
+				getUnclearedBankingsByTransaction({
 					data: filters,
 				}),
 		}),

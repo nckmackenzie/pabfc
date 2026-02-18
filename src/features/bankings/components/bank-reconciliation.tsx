@@ -1,6 +1,7 @@
+/** biome-ignore-all lint/style/noNonNullAssertion: <> */
 import { useStore } from "@tanstack/react-form";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { getRouteApi, Link, useRouteContext } from "@tanstack/react-router";
+import { getRouteApi, useRouteContext } from "@tanstack/react-router";
 import type { z } from "zod";
 import { EmptyState } from "@/components/ui/empty";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
@@ -14,12 +15,14 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { UnclearedTransactionByType } from "@/features/bankings/components/uncleared-transaction-by-type";
+import { bankPostingQueries } from "@/features/bankings/services/queries";
 import { bankReconciliationFormSchema } from "@/features/bankings/services/schema";
 import { useFilters } from "@/hooks/use-filters";
+import { useSheet } from "@/integrations/sheet-provider";
 import { useAppForm } from "@/lib/form";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { cn, toTitleCase } from "@/lib/utils";
-import { bankPostingQueries } from "../services/queries";
 
 export function BankReconcilliation() {
 	const { filters, resetFilters, setFilters } = useFilters(
@@ -38,10 +41,10 @@ export function BankReconcilliation() {
 		defaultValues: {
 			bankId: filters.bankId || "",
 			dateRange: {
-				from: filters.from ? new Date(filters.from) : undefined,
-				to: filters.to ? new Date(filters.to) : undefined,
+				from: filters.from ? new Date(filters.from) : new Date(),
+				to: filters.to ? new Date(filters.to) : new Date(),
 			},
-			bankBalance: 0,
+			bankBalance: filters.bankBalance || 0,
 		} as z.infer<typeof bankReconciliationFormSchema>,
 		validators: {
 			onSubmit: bankReconciliationFormSchema,
@@ -132,6 +135,22 @@ function ReconciliationReport({
 	} = useSuspenseQuery(bankPostingQueries.recon(filters));
 	const nilDeposits = Number(unclearedDeposits) === 0;
 	const nilWithdrawals = Number(unclearedWithdrawals) === 0;
+	const { setOpen } = useSheet();
+
+	function handleDrillDown({
+		type,
+		isNill,
+	}: {
+		type: "deposit" | "withdrawal";
+		isNill: boolean;
+	}) {
+		if (isNill) return;
+		setOpen(<UnclearedTransactionByType filters={filters} type={type} />, {
+			className: "max-w-4xl!",
+			title: `Uncleared ${type}s`,
+			description: `Showing all uncleared ${type}s from ${dateFormat(filters.dateRange.from, "reporting")} to ${dateFormat(filters.dateRange.to, "reporting")}`,
+		});
+	}
 
 	return (
 		<div className="overflow-x-auto rounded-md border p-4">
@@ -156,14 +175,11 @@ function ReconciliationReport({
 								"text-blue-600 transition-all hover:underline cursor-pointer hover:text-blue-800":
 									!nilDeposits,
 							})}
+							onClick={() =>
+								handleDrillDown({ type: "deposit", isNill: nilDeposits })
+							}
 						>
-							{!nilDeposits ? (
-								<Link to="/">
-									{currencyFormatter(unclearedDeposits, false, false, true)}
-								</Link>
-							) : (
-								"-"
-							)}
+							{currencyFormatter(unclearedDeposits, false, false, true)}
 						</TableCell>
 					</TableRow>
 					<TableRow>
@@ -173,14 +189,11 @@ function ReconciliationReport({
 								"text-blue-600 transition-all hover:underline cursor-pointer hover:text-blue-800":
 									!nilWithdrawals,
 							})}
+							onClick={() =>
+								handleDrillDown({ type: "withdrawal", isNill: nilWithdrawals })
+							}
 						>
-							{!nilWithdrawals ? (
-								<Link to="/">
-									{currencyFormatter(unclearedWithdrawals, false)}
-								</Link>
-							) : (
-								"-"
-							)}
+							{currencyFormatter(unclearedWithdrawals, false, false, true)}
 						</TableCell>
 					</TableRow>
 					<TableRow>
@@ -197,7 +210,7 @@ function ReconciliationReport({
 					</TableRow>
 					<TableRow>
 						<TableCell>Variance</TableCell>
-						<TableCell className="text-right font-semibold">
+						<TableCell className={cn("text-right font-semibold")}>
 							{currencyFormatter(rest.variance, false, false, true)}
 						</TableCell>
 					</TableRow>

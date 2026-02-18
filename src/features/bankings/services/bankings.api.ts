@@ -497,3 +497,55 @@ export const getBankReconcilliation = createServerFn()
 			};
 		},
 	);
+
+export const getUnclearedBankingsByTransaction = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(
+		z.object({
+			bankId: z.string(),
+			dateRange: z.object({
+				from: z.date(),
+				to: z.date(),
+			}),
+			type: z.enum(["debit", "credit"]),
+			q: z.string().optional(),
+		}),
+	)
+	.handler(async ({ data }) => {
+		await requirePermission("banking:reconciliation");
+
+		const {
+			bankId,
+			dateRange: { from, to },
+			type,
+			q,
+		} = data;
+
+		const { from: startDate, to: endDate } = normalizeDateRange(from, to);
+
+		return db.query.bankPostings.findMany({
+			where: and(
+				eq(bankPostings.bankId, bankId),
+				eq(bankPostings.dc, type),
+				eq(bankPostings.cleared, false),
+				gte(bankPostings.transactionDate, startDate),
+				lte(bankPostings.transactionDate, endDate),
+				q && q.trim().length > 0
+					? or(
+							ilike(bankPostings.narration, `%${q}%`),
+							ilike(bankPostings.reference, `%${q}%`),
+							ilike(
+								sql`to_char(${bankPostings.transactionDate}, 'DD-MM-YYYY')`,
+								`%${q}%`,
+							),
+							ilike(
+								sql`to_char(${bankPostings.amount}, '999999999.99')`,
+								`%${q}%`,
+							),
+							ilike(bankPostings.source, `%${q}%`),
+						)
+					: undefined,
+			),
+			orderBy: [desc(bankPostings.transactionDate)],
+		});
+	});
