@@ -351,6 +351,13 @@
       "when": 1771316826718,
       "tag": "0049_perpetual_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1771444662306,
+      "tag": "0050_clever_epoch",
+      "breakpoints": true
     }
   ]
 }

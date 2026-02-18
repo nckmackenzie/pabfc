@@ -22,45 +22,71 @@ import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
+import { Route as AppSuppliersRouteRouteImport } from './routes/app/suppliers/route'
+import { Route as AppReceiptsRouteRouteImport } from './routes/app/receipts/route'
 import { Route as AppPlansRouteRouteImport } from './routes/app/plans/route'
 import { Route as AppPaymentsRouteRouteImport } from './routes/app/payments/route'
 import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
+import { Route as AppFinancialYearsRouteRouteImport } from './routes/app/financial-years/route'
 import { Route as AppExpensesRouteRouteImport } from './routes/app/expenses/route'
 import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-of-accounts/route'
+import { Route as AppBillsRouteRouteImport } from './routes/app/bills/route'
+import { Route as AppBankingsRouteRouteImport } from './routes/app/bankings/route'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
+import { Route as AppSuppliersIndexRouteImport } from './routes/app/suppliers/index'
+import { Route as AppReceiptsIndexRouteImport } from './routes/app/receipts/index'
 import { Route as AppProfileIndexRouteImport } from './routes/app/profile/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
+import { Route as AppFinancialYearsIndexRouteImport } from './routes/app/financial-years/index'
 import { Route as AppExpensesIndexRouteImport } from './routes/app/expenses/index'
 import { Route as AppCommunicationIndexRouteImport } from './routes/app/communication/index'
 import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
+import { Route as AppBillsIndexRouteImport } from './routes/app/bills/index'
+import { Route as AppAttendancesIndexRouteImport } from './routes/app/attendances/index'
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as ApiMockApiIndexRouteImport } from './routes/api/mock-api/index'
 import { Route as ApiInngestIndexRouteImport } from './routes/api/inngest/index'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
+import { Route as AppSuppliersNewRouteImport } from './routes/app/suppliers/new'
+import { Route as AppReceiptsNewRouteImport } from './routes/app/receipts/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
+import { Route as AppFinancialYearsNewRouteImport } from './routes/app/financial-years/new'
 import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
+import { Route as AppBillsNewRouteImport } from './routes/app/bills/new'
+import { Route as AppBankingsReconcilliationRouteImport } from './routes/app/bankings/reconcilliation'
+import { Route as AppBankingsClearRouteImport } from './routes/app/bankings/clear'
 import { Route as ApiUploadsExpenseAttachmentRouteImport } from './routes/api/uploads/expense-attachment'
 import { Route as ApiCommunicationsGetMembersRouteImport } from './routes/api/communications/get-members'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesRouteRouteImport } from './routes/app/users/roles.route'
+import { Route as AppBankingsPostingsRouteRouteImport } from './routes/app/bankings/postings/route'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
+import { Route as AppBankingsPostingsIndexRouteImport } from './routes/app/bankings/postings/index'
+import { Route as ApiCronDailyIndexRouteImport } from './routes/api/cron/daily/index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
+import { Route as AppSuppliersSupplierIdEditRouteImport } from './routes/app/suppliers/$supplierId/edit'
+import { Route as AppReceiptsReceiptIdDetailsRouteImport } from './routes/app/receipts/$receiptId/details'
 import { Route as AppPlansPlanIdViewMembersRouteImport } from './routes/app/plans/$planId/view-members'
 import { Route as AppPlansPlanIdRevenueRouteImport } from './routes/app/plans/$planId/revenue'
 import { Route as AppPlansPlanIdEditRouteImport } from './routes/app/plans/$planId/edit'
+import { Route as AppPaymentsPaymentIdEditRouteImport } from './routes/app/payments/$paymentId/edit'
 import { Route as AppPaymentsPaymentIdDetailsRouteImport } from './routes/app/payments/$paymentId/details'
 import { Route as AppMembersMemberIdProfileRouteImport } from './routes/app/members/$memberId.profile'
 import { Route as AppMembersMemberIdEditRouteImport } from './routes/app/members/$memberId.edit'
+import { Route as AppFinancialYearsFinancialYearIdEditRouteImport } from './routes/app/financial-years/$financialYearId/edit'
 import { Route as AppExpensesExpenseIdEditRouteImport } from './routes/app/expenses/$expenseId/edit'
 import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
+import { Route as AppBillsBillIdEditRouteImport } from './routes/app/bills/$billId/edit'
+import { Route as AppBankingsPostingsNewRouteImport } from './routes/app/bankings/postings/new'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
+import { Route as AppBankingsPostingsPostingIdEditRouteImport } from './routes/app/bankings/postings/$postingId/edit'
 import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/payments/pabfc/stk/callback'
 import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc/c2b/validate'
 import { Route as ApiPaymentsPabfcC2bConfRouteImport } from './routes/api/payments/pabfc/c2b/conf'
@@ -129,6 +155,16 @@ const AppUsersRouteRoute = AppUsersRouteRouteImport.update({
   path: '/users',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppSuppliersRouteRoute = AppSuppliersRouteRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppReceiptsRouteRoute = AppReceiptsRouteRouteImport.update({
+  id: '/receipts',
+  path: '/receipts',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppPlansRouteRoute = AppPlansRouteRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -144,6 +180,11 @@ const AppMembersRouteRoute = AppMembersRouteRouteImport.update({
   path: '/members',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppFinancialYearsRouteRoute = AppFinancialYearsRouteRouteImport.update({
+  id: '/financial-years',
+  path: '/financial-years',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppExpensesRouteRoute = AppExpensesRouteRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -154,10 +195,30 @@ const AppChartOfAccountsRouteRoute = AppChartOfAccountsRouteRouteImport.update({
   path: '/chart-of-accounts',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppBillsRouteRoute = AppBillsRouteRouteImport.update({
+  id: '/bills',
+  path: '/bills',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppBankingsRouteRoute = AppBankingsRouteRouteImport.update({
+  id: '/bankings',
+  path: '/bankings',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppUsersRouteRoute,
+} as any)
+const AppSuppliersIndexRoute = AppSuppliersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSuppliersRouteRoute,
+} as any)
+const AppReceiptsIndexRoute = AppReceiptsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppReceiptsRouteRoute,
 } as any)
 const AppProfileIndexRoute = AppProfileIndexRouteImport.update({
   id: '/profile/',
@@ -179,6 +240,11 @@ const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppMembersRouteRoute,
 } as any)
+const AppFinancialYearsIndexRoute = AppFinancialYearsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppFinancialYearsRouteRoute,
+} as any)
 const AppExpensesIndexRoute = AppExpensesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -193,6 +259,16 @@ const AppChartOfAccountsIndexRoute = AppChartOfAccountsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppChartOfAccountsRouteRoute,
+} as any)
+const AppBillsIndexRoute = AppBillsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppBillsRouteRoute,
+} as any)
+const AppAttendancesIndexRoute = AppAttendancesIndexRouteImport.update({
+  id: '/attendances/',
+  path: '/attendances/',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppActivityLogsIndexRoute = AppActivityLogsIndexRouteImport.update({
   id: '/activity-logs/',
@@ -214,6 +290,16 @@ const AppUsersNewRoute = AppUsersNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppUsersRouteRoute,
 } as any)
+const AppSuppliersNewRoute = AppSuppliersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppSuppliersRouteRoute,
+} as any)
+const AppReceiptsNewRoute = AppReceiptsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppReceiptsRouteRoute,
+} as any)
 const AppPlansNewRoute = AppPlansNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -229,6 +315,11 @@ const AppMembersNewRoute = AppMembersNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppMembersRouteRoute,
 } as any)
+const AppFinancialYearsNewRoute = AppFinancialYearsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppFinancialYearsRouteRoute,
+} as any)
 const AppExpensesNewRoute = AppExpensesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -238,6 +329,22 @@ const AppChartOfAccountsNewRoute = AppChartOfAccountsNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppChartOfAccountsRouteRoute,
+} as any)
+const AppBillsNewRoute = AppBillsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppBillsRouteRoute,
+} as any)
+const AppBankingsReconcilliationRoute =
+  AppBankingsReconcilliationRouteImport.update({
+    id: '/reconcilliation',
+    path: '/reconcilliation',
+    getParentRoute: () => AppBankingsRouteRoute,
+  } as any)
+const AppBankingsClearRoute = AppBankingsClearRouteImport.update({
+  id: '/clear',
+  path: '/clear',
+  getParentRoute: () => AppBankingsRouteRoute,
 } as any)
 const ApiUploadsExpenseAttachmentRoute =
   ApiUploadsExpenseAttachmentRouteImport.update({
@@ -261,10 +368,27 @@ const AppUsersRolesRouteRoute = AppUsersRolesRouteRouteImport.update({
   path: '/roles',
   getParentRoute: () => AppUsersRouteRoute,
 } as any)
+const AppBankingsPostingsRouteRoute =
+  AppBankingsPostingsRouteRouteImport.update({
+    id: '/postings',
+    path: '/postings',
+    getParentRoute: () => AppBankingsRouteRoute,
+  } as any)
 const AppUsersRolesIndexRoute = AppUsersRolesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppUsersRolesRouteRoute,
+} as any)
+const AppBankingsPostingsIndexRoute =
+  AppBankingsPostingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppBankingsPostingsRouteRoute,
+  } as any)
+const ApiCronDailyIndexRoute = ApiCronDailyIndexRouteImport.update({
+  id: '/api/cron/daily/',
+  path: '/api/cron/daily/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppUsersRolesNewRoute = AppUsersRolesNewRouteImport.update({
   id: '/new',
@@ -281,6 +405,18 @@ const AppUsersUserIdEditRoute = AppUsersUserIdEditRouteImport.update({
   path: '/$userId/edit',
   getParentRoute: () => AppUsersRouteRoute,
 } as any)
+const AppSuppliersSupplierIdEditRoute =
+  AppSuppliersSupplierIdEditRouteImport.update({
+    id: '/$supplierId/edit',
+    path: '/$supplierId/edit',
+    getParentRoute: () => AppSuppliersRouteRoute,
+  } as any)
+const AppReceiptsReceiptIdDetailsRoute =
+  AppReceiptsReceiptIdDetailsRouteImport.update({
+    id: '/$receiptId/details',
+    path: '/$receiptId/details',
+    getParentRoute: () => AppReceiptsRouteRoute,
+  } as any)
 const AppPlansPlanIdViewMembersRoute =
   AppPlansPlanIdViewMembersRouteImport.update({
     id: '/$planId/view-members',
@@ -297,6 +433,12 @@ const AppPlansPlanIdEditRoute = AppPlansPlanIdEditRouteImport.update({
   path: '/$planId/edit',
   getParentRoute: () => AppPlansRouteRoute,
 } as any)
+const AppPaymentsPaymentIdEditRoute =
+  AppPaymentsPaymentIdEditRouteImport.update({
+    id: '/$paymentId/edit',
+    path: '/$paymentId/edit',
+    getParentRoute: () => AppPaymentsRouteRoute,
+  } as any)
 const AppPaymentsPaymentIdDetailsRoute =
   AppPaymentsPaymentIdDetailsRouteImport.update({
     id: '/$paymentId/details',
@@ -314,6 +456,12 @@ const AppMembersMemberIdEditRoute = AppMembersMemberIdEditRouteImport.update({
   path: '/$memberId/edit',
   getParentRoute: () => AppMembersRouteRoute,
 } as any)
+const AppFinancialYearsFinancialYearIdEditRoute =
+  AppFinancialYearsFinancialYearIdEditRouteImport.update({
+    id: '/$financialYearId/edit',
+    path: '/$financialYearId/edit',
+    getParentRoute: () => AppFinancialYearsRouteRoute,
+  } as any)
 const AppExpensesExpenseIdEditRoute =
   AppExpensesExpenseIdEditRouteImport.update({
     id: '/$expenseId/edit',
@@ -326,11 +474,27 @@ const AppChartOfAccountsAccountIdEditRoute =
     path: '/$accountId/edit',
     getParentRoute: () => AppChartOfAccountsRouteRoute,
   } as any)
+const AppBillsBillIdEditRoute = AppBillsBillIdEditRouteImport.update({
+  id: '/$billId/edit',
+  path: '/$billId/edit',
+  getParentRoute: () => AppBillsRouteRoute,
+} as any)
+const AppBankingsPostingsNewRoute = AppBankingsPostingsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppBankingsPostingsRouteRoute,
+} as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/$roleId/edit',
   path: '/$roleId/edit',
   getParentRoute: () => AppUsersRolesRouteRoute,
 } as any)
+const AppBankingsPostingsPostingIdEditRoute =
+  AppBankingsPostingsPostingIdEditRouteImport.update({
+    id: '/$postingId/edit',
+    path: '/$postingId/edit',
+    getParentRoute: () => AppBankingsPostingsRouteRoute,
+  } as any)
 const ApiPaymentsPabfcStkCallbackRoute =
   ApiPaymentsPabfcStkCallbackRouteImport.update({
     id: '/api/payments/pabfc/stk/callback',
@@ -353,11 +517,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/bankings': typeof AppBankingsRouteRouteWithChildren
+  '/app/bills': typeof AppBillsRouteRouteWithChildren
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
+  '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/payments': typeof AppPaymentsRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
+  '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
+  '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
@@ -367,48 +536,70 @@ export interface FileRoutesByFullPath {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/member/login': typeof MemberLoginRoute
+  '/app/bankings/postings': typeof AppBankingsPostingsRouteRouteWithChildren
   '/app/users/roles': typeof AppUsersRolesRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/communications/get-members': typeof ApiCommunicationsGetMembersRoute
   '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
+  '/app/bankings/clear': typeof AppBankingsClearRoute
+  '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
+  '/app/bills/new': typeof AppBillsNewRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
+  '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
+  '/app/receipts/new': typeof AppReceiptsNewRoute
+  '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/api/inngest': typeof ApiInngestIndexRoute
   '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
+  '/app/attendances': typeof AppAttendancesIndexRoute
+  '/app/bills/': typeof AppBillsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/communication': typeof AppCommunicationIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
+  '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/profile': typeof AppProfileIndexRoute
+  '/app/receipts/': typeof AppReceiptsIndexRoute
+  '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
+  '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
+  '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
+  '/app/payments/$paymentId/edit': typeof AppPaymentsPaymentIdEditRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
+  '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
+  '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/api/cron/daily': typeof ApiCronDailyIndexRoute
+  '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
+  '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/bankings': typeof AppBankingsRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -420,38 +611,58 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/communications/get-members': typeof ApiCommunicationsGetMembersRoute
   '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
+  '/app/bankings/clear': typeof AppBankingsClearRoute
+  '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
+  '/app/bills/new': typeof AppBillsNewRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
+  '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
+  '/app/receipts/new': typeof AppReceiptsNewRoute
+  '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/api/inngest': typeof ApiInngestIndexRoute
   '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
+  '/app/attendances': typeof AppAttendancesIndexRoute
+  '/app/bills': typeof AppBillsIndexRoute
   '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
   '/app/communication': typeof AppCommunicationIndexRoute
   '/app/expenses': typeof AppExpensesIndexRoute
+  '/app/financial-years': typeof AppFinancialYearsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/payments': typeof AppPaymentsIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
   '/app/profile': typeof AppProfileIndexRoute
+  '/app/receipts': typeof AppReceiptsIndexRoute
+  '/app/suppliers': typeof AppSuppliersIndexRoute
   '/app/users': typeof AppUsersIndexRoute
+  '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
+  '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
+  '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
+  '/app/payments/$paymentId/edit': typeof AppPaymentsPaymentIdEditRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
+  '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
+  '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/api/cron/daily': typeof ApiCronDailyIndexRoute
+  '/app/bankings/postings': typeof AppBankingsPostingsIndexRoute
   '/app/users/roles': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
+  '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRoutesById {
@@ -460,11 +671,16 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
+  '/app/bankings': typeof AppBankingsRouteRouteWithChildren
+  '/app/bills': typeof AppBillsRouteRouteWithChildren
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
+  '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/payments': typeof AppPaymentsRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
+  '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
+  '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
@@ -474,42 +690,63 @@ export interface FileRoutesById {
   '/app/unauthorized': typeof AppUnauthorizedRoute
   '/member/dashboard': typeof MemberDashboardRoute
   '/member/login': typeof MemberLoginRoute
+  '/app/bankings/postings': typeof AppBankingsPostingsRouteRouteWithChildren
   '/app/users/roles': typeof AppUsersRolesRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/communications/get-members': typeof ApiCommunicationsGetMembersRoute
   '/api/uploads/expense-attachment': typeof ApiUploadsExpenseAttachmentRoute
+  '/app/bankings/clear': typeof AppBankingsClearRoute
+  '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
+  '/app/bills/new': typeof AppBillsNewRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
+  '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
+  '/app/receipts/new': typeof AppReceiptsNewRoute
+  '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
   '/api/inngest/': typeof ApiInngestIndexRoute
   '/api/mock-api/': typeof ApiMockApiIndexRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
+  '/app/attendances/': typeof AppAttendancesIndexRoute
+  '/app/bills/': typeof AppBillsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/communication/': typeof AppCommunicationIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
+  '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
   '/app/profile/': typeof AppProfileIndexRoute
+  '/app/receipts/': typeof AppReceiptsIndexRoute
+  '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
+  '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
+  '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
   '/app/members/$memberId/edit': typeof AppMembersMemberIdEditRoute
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
+  '/app/payments/$paymentId/edit': typeof AppPaymentsPaymentIdEditRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
+  '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
+  '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/api/cron/daily/': typeof ApiCronDailyIndexRoute
+  '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
+  '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
 }
 export interface FileRouteTypes {
@@ -518,11 +755,16 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/member'
+    | '/app/bankings'
+    | '/app/bills'
     | '/app/chart-of-accounts'
     | '/app/expenses'
+    | '/app/financial-years'
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
+    | '/app/receipts'
+    | '/app/suppliers'
     | '/app/users'
     | '/forgot-password'
     | '/sign-in'
@@ -532,48 +774,70 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/member/login'
+    | '/app/bankings/postings'
     | '/app/users/roles'
     | '/api/auth/$'
     | '/api/communications/get-members'
     | '/api/uploads/expense-attachment'
+    | '/app/bankings/clear'
+    | '/app/bankings/reconcilliation'
+    | '/app/bills/new'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
+    | '/app/financial-years/new'
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/plans/new'
+    | '/app/receipts/new'
+    | '/app/suppliers/new'
     | '/app/users/new'
     | '/api/inngest'
     | '/api/mock-api'
     | '/app/activity-logs'
+    | '/app/attendances'
+    | '/app/bills/'
     | '/app/chart-of-accounts/'
     | '/app/communication'
     | '/app/expenses/'
+    | '/app/financial-years/'
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
     | '/app/profile'
+    | '/app/receipts/'
+    | '/app/suppliers/'
     | '/app/users/'
+    | '/app/bankings/postings/new'
+    | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/expenses/$expenseId/edit'
+    | '/app/financial-years/$financialYearId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
     | '/app/payments/$paymentId/details'
+    | '/app/payments/$paymentId/edit'
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
+    | '/app/receipts/$receiptId/details'
+    | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/api/cron/daily'
+    | '/app/bankings/postings/'
     | '/app/users/roles/'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
+    | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/app'
     | '/member'
+    | '/app/bankings'
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
@@ -585,38 +849,58 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/communications/get-members'
     | '/api/uploads/expense-attachment'
+    | '/app/bankings/clear'
+    | '/app/bankings/reconcilliation'
+    | '/app/bills/new'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
+    | '/app/financial-years/new'
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/plans/new'
+    | '/app/receipts/new'
+    | '/app/suppliers/new'
     | '/app/users/new'
     | '/api/inngest'
     | '/api/mock-api'
     | '/app/activity-logs'
+    | '/app/attendances'
+    | '/app/bills'
     | '/app/chart-of-accounts'
     | '/app/communication'
     | '/app/expenses'
+    | '/app/financial-years'
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
     | '/app/profile'
+    | '/app/receipts'
+    | '/app/suppliers'
     | '/app/users'
+    | '/app/bankings/postings/new'
+    | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/expenses/$expenseId/edit'
+    | '/app/financial-years/$financialYearId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
     | '/app/payments/$paymentId/details'
+    | '/app/payments/$paymentId/edit'
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
+    | '/app/receipts/$receiptId/details'
+    | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/api/cron/daily'
+    | '/app/bankings/postings'
     | '/app/users/roles'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
+    | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
   id:
     | '__root__'
@@ -624,11 +908,16 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/app'
     | '/member'
+    | '/app/bankings'
+    | '/app/bills'
     | '/app/chart-of-accounts'
     | '/app/expenses'
+    | '/app/financial-years'
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
+    | '/app/receipts'
+    | '/app/suppliers'
     | '/app/users'
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
@@ -638,42 +927,63 @@ export interface FileRouteTypes {
     | '/app/unauthorized'
     | '/member/dashboard'
     | '/member/login'
+    | '/app/bankings/postings'
     | '/app/users/roles'
     | '/api/auth/$'
     | '/api/communications/get-members'
     | '/api/uploads/expense-attachment'
+    | '/app/bankings/clear'
+    | '/app/bankings/reconcilliation'
+    | '/app/bills/new'
     | '/app/chart-of-accounts/new'
     | '/app/expenses/new'
+    | '/app/financial-years/new'
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/plans/new'
+    | '/app/receipts/new'
+    | '/app/suppliers/new'
     | '/app/users/new'
     | '/api/inngest/'
     | '/api/mock-api/'
     | '/app/activity-logs/'
+    | '/app/attendances/'
+    | '/app/bills/'
     | '/app/chart-of-accounts/'
     | '/app/communication/'
     | '/app/expenses/'
+    | '/app/financial-years/'
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
     | '/app/profile/'
+    | '/app/receipts/'
+    | '/app/suppliers/'
     | '/app/users/'
+    | '/app/bankings/postings/new'
+    | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/expenses/$expenseId/edit'
+    | '/app/financial-years/$financialYearId/edit'
     | '/app/members/$memberId/edit'
     | '/app/members/$memberId/profile'
     | '/app/payments/$paymentId/details'
+    | '/app/payments/$paymentId/edit'
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
+    | '/app/receipts/$receiptId/details'
+    | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/api/cron/daily/'
+    | '/app/bankings/postings/'
     | '/app/users/roles/'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
+    | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -687,6 +997,7 @@ export interface RootRouteChildren {
   ApiUploadsExpenseAttachmentRoute: typeof ApiUploadsExpenseAttachmentRoute
   ApiInngestIndexRoute: typeof ApiInngestIndexRoute
   ApiMockApiIndexRoute: typeof ApiMockApiIndexRoute
+  ApiCronDailyIndexRoute: typeof ApiCronDailyIndexRoute
   ApiPaymentsPabfcC2bConfRoute: typeof ApiPaymentsPabfcC2bConfRoute
   ApiPaymentsPabfcC2bValidateRoute: typeof ApiPaymentsPabfcC2bValidateRoute
   ApiPaymentsPabfcStkCallbackRoute: typeof ApiPaymentsPabfcStkCallbackRoute
@@ -785,6 +1096,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/suppliers': {
+      id: '/app/suppliers'
+      path: '/suppliers'
+      fullPath: '/app/suppliers'
+      preLoaderRoute: typeof AppSuppliersRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/receipts': {
+      id: '/app/receipts'
+      path: '/receipts'
+      fullPath: '/app/receipts'
+      preLoaderRoute: typeof AppReceiptsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/plans': {
       id: '/app/plans'
       path: '/plans'
@@ -806,6 +1131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/financial-years': {
+      id: '/app/financial-years'
+      path: '/financial-years'
+      fullPath: '/app/financial-years'
+      preLoaderRoute: typeof AppFinancialYearsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/expenses': {
       id: '/app/expenses'
       path: '/expenses'
@@ -820,12 +1152,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChartOfAccountsRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/bills': {
+      id: '/app/bills'
+      path: '/bills'
+      fullPath: '/app/bills'
+      preLoaderRoute: typeof AppBillsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/bankings': {
+      id: '/app/bankings'
+      path: '/bankings'
+      fullPath: '/app/bankings'
+      preLoaderRoute: typeof AppBankingsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/users/': {
       id: '/app/users/'
       path: '/'
       fullPath: '/app/users/'
       preLoaderRoute: typeof AppUsersIndexRouteImport
       parentRoute: typeof AppUsersRouteRoute
+    }
+    '/app/suppliers/': {
+      id: '/app/suppliers/'
+      path: '/'
+      fullPath: '/app/suppliers/'
+      preLoaderRoute: typeof AppSuppliersIndexRouteImport
+      parentRoute: typeof AppSuppliersRouteRoute
+    }
+    '/app/receipts/': {
+      id: '/app/receipts/'
+      path: '/'
+      fullPath: '/app/receipts/'
+      preLoaderRoute: typeof AppReceiptsIndexRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
     }
     '/app/profile/': {
       id: '/app/profile/'
@@ -855,6 +1215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersIndexRouteImport
       parentRoute: typeof AppMembersRouteRoute
     }
+    '/app/financial-years/': {
+      id: '/app/financial-years/'
+      path: '/'
+      fullPath: '/app/financial-years/'
+      preLoaderRoute: typeof AppFinancialYearsIndexRouteImport
+      parentRoute: typeof AppFinancialYearsRouteRoute
+    }
     '/app/expenses/': {
       id: '/app/expenses/'
       path: '/'
@@ -875,6 +1242,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/chart-of-accounts/'
       preLoaderRoute: typeof AppChartOfAccountsIndexRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
+    }
+    '/app/bills/': {
+      id: '/app/bills/'
+      path: '/'
+      fullPath: '/app/bills/'
+      preLoaderRoute: typeof AppBillsIndexRouteImport
+      parentRoute: typeof AppBillsRouteRoute
+    }
+    '/app/attendances/': {
+      id: '/app/attendances/'
+      path: '/attendances'
+      fullPath: '/app/attendances'
+      preLoaderRoute: typeof AppAttendancesIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/app/activity-logs/': {
       id: '/app/activity-logs/'
@@ -904,6 +1285,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersNewRouteImport
       parentRoute: typeof AppUsersRouteRoute
     }
+    '/app/suppliers/new': {
+      id: '/app/suppliers/new'
+      path: '/new'
+      fullPath: '/app/suppliers/new'
+      preLoaderRoute: typeof AppSuppliersNewRouteImport
+      parentRoute: typeof AppSuppliersRouteRoute
+    }
+    '/app/receipts/new': {
+      id: '/app/receipts/new'
+      path: '/new'
+      fullPath: '/app/receipts/new'
+      preLoaderRoute: typeof AppReceiptsNewRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
+    }
     '/app/plans/new': {
       id: '/app/plans/new'
       path: '/new'
@@ -925,6 +1320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersNewRouteImport
       parentRoute: typeof AppMembersRouteRoute
     }
+    '/app/financial-years/new': {
+      id: '/app/financial-years/new'
+      path: '/new'
+      fullPath: '/app/financial-years/new'
+      preLoaderRoute: typeof AppFinancialYearsNewRouteImport
+      parentRoute: typeof AppFinancialYearsRouteRoute
+    }
     '/app/expenses/new': {
       id: '/app/expenses/new'
       path: '/new'
@@ -938,6 +1340,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/chart-of-accounts/new'
       preLoaderRoute: typeof AppChartOfAccountsNewRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
+    }
+    '/app/bills/new': {
+      id: '/app/bills/new'
+      path: '/new'
+      fullPath: '/app/bills/new'
+      preLoaderRoute: typeof AppBillsNewRouteImport
+      parentRoute: typeof AppBillsRouteRoute
+    }
+    '/app/bankings/reconcilliation': {
+      id: '/app/bankings/reconcilliation'
+      path: '/reconcilliation'
+      fullPath: '/app/bankings/reconcilliation'
+      preLoaderRoute: typeof AppBankingsReconcilliationRouteImport
+      parentRoute: typeof AppBankingsRouteRoute
+    }
+    '/app/bankings/clear': {
+      id: '/app/bankings/clear'
+      path: '/clear'
+      fullPath: '/app/bankings/clear'
+      preLoaderRoute: typeof AppBankingsClearRouteImport
+      parentRoute: typeof AppBankingsRouteRoute
     }
     '/api/uploads/expense-attachment': {
       id: '/api/uploads/expense-attachment'
@@ -967,12 +1390,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersRolesRouteRouteImport
       parentRoute: typeof AppUsersRouteRoute
     }
+    '/app/bankings/postings': {
+      id: '/app/bankings/postings'
+      path: '/postings'
+      fullPath: '/app/bankings/postings'
+      preLoaderRoute: typeof AppBankingsPostingsRouteRouteImport
+      parentRoute: typeof AppBankingsRouteRoute
+    }
     '/app/users/roles/': {
       id: '/app/users/roles/'
       path: '/'
       fullPath: '/app/users/roles/'
       preLoaderRoute: typeof AppUsersRolesIndexRouteImport
       parentRoute: typeof AppUsersRolesRouteRoute
+    }
+    '/app/bankings/postings/': {
+      id: '/app/bankings/postings/'
+      path: '/'
+      fullPath: '/app/bankings/postings/'
+      preLoaderRoute: typeof AppBankingsPostingsIndexRouteImport
+      parentRoute: typeof AppBankingsPostingsRouteRoute
+    }
+    '/api/cron/daily/': {
+      id: '/api/cron/daily/'
+      path: '/api/cron/daily'
+      fullPath: '/api/cron/daily'
+      preLoaderRoute: typeof ApiCronDailyIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/users/roles/new': {
       id: '/app/users/roles/new'
@@ -995,6 +1439,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersUserIdEditRouteImport
       parentRoute: typeof AppUsersRouteRoute
     }
+    '/app/suppliers/$supplierId/edit': {
+      id: '/app/suppliers/$supplierId/edit'
+      path: '/$supplierId/edit'
+      fullPath: '/app/suppliers/$supplierId/edit'
+      preLoaderRoute: typeof AppSuppliersSupplierIdEditRouteImport
+      parentRoute: typeof AppSuppliersRouteRoute
+    }
+    '/app/receipts/$receiptId/details': {
+      id: '/app/receipts/$receiptId/details'
+      path: '/$receiptId/details'
+      fullPath: '/app/receipts/$receiptId/details'
+      preLoaderRoute: typeof AppReceiptsReceiptIdDetailsRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
+    }
     '/app/plans/$planId/view-members': {
       id: '/app/plans/$planId/view-members'
       path: '/$planId/view-members'
@@ -1015,6 +1473,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/plans/$planId/edit'
       preLoaderRoute: typeof AppPlansPlanIdEditRouteImport
       parentRoute: typeof AppPlansRouteRoute
+    }
+    '/app/payments/$paymentId/edit': {
+      id: '/app/payments/$paymentId/edit'
+      path: '/$paymentId/edit'
+      fullPath: '/app/payments/$paymentId/edit'
+      preLoaderRoute: typeof AppPaymentsPaymentIdEditRouteImport
+      parentRoute: typeof AppPaymentsRouteRoute
     }
     '/app/payments/$paymentId/details': {
       id: '/app/payments/$paymentId/details'
@@ -1037,6 +1502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersMemberIdEditRouteImport
       parentRoute: typeof AppMembersRouteRoute
     }
+    '/app/financial-years/$financialYearId/edit': {
+      id: '/app/financial-years/$financialYearId/edit'
+      path: '/$financialYearId/edit'
+      fullPath: '/app/financial-years/$financialYearId/edit'
+      preLoaderRoute: typeof AppFinancialYearsFinancialYearIdEditRouteImport
+      parentRoute: typeof AppFinancialYearsRouteRoute
+    }
     '/app/expenses/$expenseId/edit': {
       id: '/app/expenses/$expenseId/edit'
       path: '/$expenseId/edit'
@@ -1051,12 +1523,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChartOfAccountsAccountIdEditRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
     }
+    '/app/bills/$billId/edit': {
+      id: '/app/bills/$billId/edit'
+      path: '/$billId/edit'
+      fullPath: '/app/bills/$billId/edit'
+      preLoaderRoute: typeof AppBillsBillIdEditRouteImport
+      parentRoute: typeof AppBillsRouteRoute
+    }
+    '/app/bankings/postings/new': {
+      id: '/app/bankings/postings/new'
+      path: '/new'
+      fullPath: '/app/bankings/postings/new'
+      preLoaderRoute: typeof AppBankingsPostingsNewRouteImport
+      parentRoute: typeof AppBankingsPostingsRouteRoute
+    }
     '/app/users/roles/$roleId/edit': {
       id: '/app/users/roles/$roleId/edit'
       path: '/$roleId/edit'
       fullPath: '/app/users/roles/$roleId/edit'
       preLoaderRoute: typeof AppUsersRolesRoleIdEditRouteImport
       parentRoute: typeof AppUsersRolesRouteRoute
+    }
+    '/app/bankings/postings/$postingId/edit': {
+      id: '/app/bankings/postings/$postingId/edit'
+      path: '/$postingId/edit'
+      fullPath: '/app/bankings/postings/$postingId/edit'
+      preLoaderRoute: typeof AppBankingsPostingsPostingIdEditRouteImport
+      parentRoute: typeof AppBankingsPostingsRouteRoute
     }
     '/api/payments/pabfc/stk/callback': {
       id: '/api/payments/pabfc/stk/callback'
@@ -1096,6 +1589,56 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface AppBankingsPostingsRouteRouteChildren {
+  AppBankingsPostingsNewRoute: typeof AppBankingsPostingsNewRoute
+  AppBankingsPostingsIndexRoute: typeof AppBankingsPostingsIndexRoute
+  AppBankingsPostingsPostingIdEditRoute: typeof AppBankingsPostingsPostingIdEditRoute
+}
+
+const AppBankingsPostingsRouteRouteChildren: AppBankingsPostingsRouteRouteChildren =
+  {
+    AppBankingsPostingsNewRoute: AppBankingsPostingsNewRoute,
+    AppBankingsPostingsIndexRoute: AppBankingsPostingsIndexRoute,
+    AppBankingsPostingsPostingIdEditRoute:
+      AppBankingsPostingsPostingIdEditRoute,
+  }
+
+const AppBankingsPostingsRouteRouteWithChildren =
+  AppBankingsPostingsRouteRoute._addFileChildren(
+    AppBankingsPostingsRouteRouteChildren,
+  )
+
+interface AppBankingsRouteRouteChildren {
+  AppBankingsPostingsRouteRoute: typeof AppBankingsPostingsRouteRouteWithChildren
+  AppBankingsClearRoute: typeof AppBankingsClearRoute
+  AppBankingsReconcilliationRoute: typeof AppBankingsReconcilliationRoute
+}
+
+const AppBankingsRouteRouteChildren: AppBankingsRouteRouteChildren = {
+  AppBankingsPostingsRouteRoute: AppBankingsPostingsRouteRouteWithChildren,
+  AppBankingsClearRoute: AppBankingsClearRoute,
+  AppBankingsReconcilliationRoute: AppBankingsReconcilliationRoute,
+}
+
+const AppBankingsRouteRouteWithChildren =
+  AppBankingsRouteRoute._addFileChildren(AppBankingsRouteRouteChildren)
+
+interface AppBillsRouteRouteChildren {
+  AppBillsNewRoute: typeof AppBillsNewRoute
+  AppBillsIndexRoute: typeof AppBillsIndexRoute
+  AppBillsBillIdEditRoute: typeof AppBillsBillIdEditRoute
+}
+
+const AppBillsRouteRouteChildren: AppBillsRouteRouteChildren = {
+  AppBillsNewRoute: AppBillsNewRoute,
+  AppBillsIndexRoute: AppBillsIndexRoute,
+  AppBillsBillIdEditRoute: AppBillsBillIdEditRoute,
+}
+
+const AppBillsRouteRouteWithChildren = AppBillsRouteRoute._addFileChildren(
+  AppBillsRouteRouteChildren,
+)
+
 interface AppChartOfAccountsRouteRouteChildren {
   AppChartOfAccountsNewRoute: typeof AppChartOfAccountsNewRoute
   AppChartOfAccountsIndexRoute: typeof AppChartOfAccountsIndexRoute
@@ -1129,6 +1672,25 @@ const AppExpensesRouteRouteChildren: AppExpensesRouteRouteChildren = {
 const AppExpensesRouteRouteWithChildren =
   AppExpensesRouteRoute._addFileChildren(AppExpensesRouteRouteChildren)
 
+interface AppFinancialYearsRouteRouteChildren {
+  AppFinancialYearsNewRoute: typeof AppFinancialYearsNewRoute
+  AppFinancialYearsIndexRoute: typeof AppFinancialYearsIndexRoute
+  AppFinancialYearsFinancialYearIdEditRoute: typeof AppFinancialYearsFinancialYearIdEditRoute
+}
+
+const AppFinancialYearsRouteRouteChildren: AppFinancialYearsRouteRouteChildren =
+  {
+    AppFinancialYearsNewRoute: AppFinancialYearsNewRoute,
+    AppFinancialYearsIndexRoute: AppFinancialYearsIndexRoute,
+    AppFinancialYearsFinancialYearIdEditRoute:
+      AppFinancialYearsFinancialYearIdEditRoute,
+  }
+
+const AppFinancialYearsRouteRouteWithChildren =
+  AppFinancialYearsRouteRoute._addFileChildren(
+    AppFinancialYearsRouteRouteChildren,
+  )
+
 interface AppMembersRouteRouteChildren {
   AppMembersNewRoute: typeof AppMembersNewRoute
   AppMembersIndexRoute: typeof AppMembersIndexRoute
@@ -1151,12 +1713,14 @@ interface AppPaymentsRouteRouteChildren {
   AppPaymentsNewRoute: typeof AppPaymentsNewRoute
   AppPaymentsIndexRoute: typeof AppPaymentsIndexRoute
   AppPaymentsPaymentIdDetailsRoute: typeof AppPaymentsPaymentIdDetailsRoute
+  AppPaymentsPaymentIdEditRoute: typeof AppPaymentsPaymentIdEditRoute
 }
 
 const AppPaymentsRouteRouteChildren: AppPaymentsRouteRouteChildren = {
   AppPaymentsNewRoute: AppPaymentsNewRoute,
   AppPaymentsIndexRoute: AppPaymentsIndexRoute,
   AppPaymentsPaymentIdDetailsRoute: AppPaymentsPaymentIdDetailsRoute,
+  AppPaymentsPaymentIdEditRoute: AppPaymentsPaymentIdEditRoute,
 }
 
 const AppPaymentsRouteRouteWithChildren =
@@ -1181,6 +1745,36 @@ const AppPlansRouteRouteChildren: AppPlansRouteRouteChildren = {
 const AppPlansRouteRouteWithChildren = AppPlansRouteRoute._addFileChildren(
   AppPlansRouteRouteChildren,
 )
+
+interface AppReceiptsRouteRouteChildren {
+  AppReceiptsNewRoute: typeof AppReceiptsNewRoute
+  AppReceiptsIndexRoute: typeof AppReceiptsIndexRoute
+  AppReceiptsReceiptIdDetailsRoute: typeof AppReceiptsReceiptIdDetailsRoute
+}
+
+const AppReceiptsRouteRouteChildren: AppReceiptsRouteRouteChildren = {
+  AppReceiptsNewRoute: AppReceiptsNewRoute,
+  AppReceiptsIndexRoute: AppReceiptsIndexRoute,
+  AppReceiptsReceiptIdDetailsRoute: AppReceiptsReceiptIdDetailsRoute,
+}
+
+const AppReceiptsRouteRouteWithChildren =
+  AppReceiptsRouteRoute._addFileChildren(AppReceiptsRouteRouteChildren)
+
+interface AppSuppliersRouteRouteChildren {
+  AppSuppliersNewRoute: typeof AppSuppliersNewRoute
+  AppSuppliersIndexRoute: typeof AppSuppliersIndexRoute
+  AppSuppliersSupplierIdEditRoute: typeof AppSuppliersSupplierIdEditRoute
+}
+
+const AppSuppliersRouteRouteChildren: AppSuppliersRouteRouteChildren = {
+  AppSuppliersNewRoute: AppSuppliersNewRoute,
+  AppSuppliersIndexRoute: AppSuppliersIndexRoute,
+  AppSuppliersSupplierIdEditRoute: AppSuppliersSupplierIdEditRoute,
+}
+
+const AppSuppliersRouteRouteWithChildren =
+  AppSuppliersRouteRoute._addFileChildren(AppSuppliersRouteRouteChildren)
 
 interface AppUsersRolesRouteRouteChildren {
   AppUsersRolesNewRoute: typeof AppUsersRolesNewRoute
@@ -1218,33 +1812,45 @@ const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
 )
 
 interface AppRouteRouteChildren {
+  AppBankingsRouteRoute: typeof AppBankingsRouteRouteWithChildren
+  AppBillsRouteRoute: typeof AppBillsRouteRouteWithChildren
   AppChartOfAccountsRouteRoute: typeof AppChartOfAccountsRouteRouteWithChildren
   AppExpensesRouteRoute: typeof AppExpensesRouteRouteWithChildren
+  AppFinancialYearsRouteRoute: typeof AppFinancialYearsRouteRouteWithChildren
   AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
   AppPaymentsRouteRoute: typeof AppPaymentsRouteRouteWithChildren
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
+  AppReceiptsRouteRoute: typeof AppReceiptsRouteRouteWithChildren
+  AppSuppliersRouteRoute: typeof AppSuppliersRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppJournalEntriesRoute: typeof AppJournalEntriesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
   AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
+  AppAttendancesIndexRoute: typeof AppAttendancesIndexRoute
   AppCommunicationIndexRoute: typeof AppCommunicationIndexRoute
   AppProfileIndexRoute: typeof AppProfileIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppBankingsRouteRoute: AppBankingsRouteRouteWithChildren,
+  AppBillsRouteRoute: AppBillsRouteRouteWithChildren,
   AppChartOfAccountsRouteRoute: AppChartOfAccountsRouteRouteWithChildren,
   AppExpensesRouteRoute: AppExpensesRouteRouteWithChildren,
+  AppFinancialYearsRouteRoute: AppFinancialYearsRouteRouteWithChildren,
   AppMembersRouteRoute: AppMembersRouteRouteWithChildren,
   AppPaymentsRouteRoute: AppPaymentsRouteRouteWithChildren,
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
+  AppReceiptsRouteRoute: AppReceiptsRouteRouteWithChildren,
+  AppSuppliersRouteRoute: AppSuppliersRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppJournalEntriesRoute: AppJournalEntriesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
   AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
+  AppAttendancesIndexRoute: AppAttendancesIndexRoute,
   AppCommunicationIndexRoute: AppCommunicationIndexRoute,
   AppProfileIndexRoute: AppProfileIndexRoute,
 }
@@ -1277,6 +1883,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiUploadsExpenseAttachmentRoute: ApiUploadsExpenseAttachmentRoute,
   ApiInngestIndexRoute: ApiInngestIndexRoute,
   ApiMockApiIndexRoute: ApiMockApiIndexRoute,
+  ApiCronDailyIndexRoute: ApiCronDailyIndexRoute,
   ApiPaymentsPabfcC2bConfRoute: ApiPaymentsPabfcC2bConfRoute,
   ApiPaymentsPabfcC2bValidateRoute: ApiPaymentsPabfcC2bValidateRoute,
   ApiPaymentsPabfcStkCallbackRoute: ApiPaymentsPabfcStkCallbackRoute,
