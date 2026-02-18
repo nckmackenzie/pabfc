@@ -34,6 +34,7 @@ import { Skeleton } from "./skeleton";
 
 export function AppSidebar() {
 	const { data, isPending, error } = useSession();
+	const { setOpenMobile, openMobile } = useSidebar();
 
 	return (
 		<Sidebar>
@@ -104,6 +105,7 @@ export function AppSidebar() {
 															<SidebarMenuSubButton
 																asChild
 																className="text-xs font-medium text-muted-foreground"
+																onClick={() => setOpenMobile(!openMobile)}
 															>
 																<Link
 																	to={`${subItem.url}` as Route}

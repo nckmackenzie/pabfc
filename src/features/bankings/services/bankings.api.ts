@@ -20,6 +20,7 @@ import { bankAccounts, bankPostings } from "@/drizzle/schema";
 import {
 	bankPostingClearenceFormSchema,
 	bankPostingSchema,
+	bankReconciliationFormSchema,
 	bulkBankClearingsFormSchema,
 	clearBankingsFilterFormSchema,
 } from "@/features/bankings/services/schema";
@@ -35,6 +36,7 @@ import {
 	deleteJournalEntry,
 	getCashEquivalentAccountId,
 } from "@/services/journal";
+import { getCashbookBalance, getUnclearedAmounts } from "./helpers";
 
 export const getBanks = createServerFn()
 	.middleware([authMiddleware])
@@ -447,3 +449,103 @@ export const clearBankings = createServerFn({ method: "POST" })
 			};
 		},
 	);
+
+export const getBankReconcilliation = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(bankReconciliationFormSchema)
+	.handler(
+		async ({
+			data: {
+				bankId,
+				dateRange: { from, to },
+				bankBalance: actualBankBalance,
+			},
+		}) => {
+			await requirePermission("banking:reconciliation");
+
+			if (!bankId || !from || !to) {
+				throw new ApplicationError("Invalid report parameters");
+			}
+
+			const { from: startDate, to: endDate } = normalizeDateRange(from, to);
+
+			const cashBookBalance = await getCashbookBalance(bankId, endDate);
+			const unclearedDeposits = await getUnclearedAmounts(
+				bankId,
+				startDate,
+				endDate,
+				"debit",
+			);
+			const unclearedWithdrawals = await getUnclearedAmounts(
+				bankId,
+				startDate,
+				endDate,
+				"credit",
+			);
+
+			const expectedBalance =
+				cashBookBalance - unclearedDeposits + unclearedWithdrawals;
+			const variance = actualBankBalance - expectedBalance;
+
+			return {
+				cashBookBalance,
+				unclearedDeposits,
+				unclearedWithdrawals,
+				expectedBalance,
+				actualBankBalance,
+				variance,
+			};
+		},
+	);
+
+export const getUnclearedBankingsByTransaction = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(
+		z.object({
+			bankId: z.string(),
+			dateRange: z.object({
+				from: z.date(),
+				to: z.date(),
+			}),
+			type: z.enum(["debit", "credit"]),
+			q: z.string().optional(),
+		}),
+	)
+	.handler(async ({ data }) => {
+		await requirePermission("banking:reconciliation");
+
+		const {
+			bankId,
+			dateRange: { from, to },
+			type,
+			q,
+		} = data;
+
+		const { from: startDate, to: endDate } = normalizeDateRange(from, to);
+
+		return db.query.bankPostings.findMany({
+			where: and(
+				eq(bankPostings.bankId, bankId),
+				eq(bankPostings.dc, type),
+				eq(bankPostings.cleared, false),
+				gte(bankPostings.transactionDate, startDate),
+				lte(bankPostings.transactionDate, endDate),
+				q && q.trim().length > 0
+					? or(
+							ilike(bankPostings.narration, `%${q}%`),
+							ilike(bankPostings.reference, `%${q}%`),
+							ilike(
+								sql`to_char(${bankPostings.transactionDate}, 'DD-MM-YYYY')`,
+								`%${q}%`,
+							),
+							ilike(
+								sql`to_char(${bankPostings.amount}, '999999999.99')`,
+								`%${q}%`,
+							),
+							ilike(bankPostings.source, `%${q}%`),
+						)
+					: undefined,
+			),
+			orderBy: [desc(bankPostings.transactionDate)],
+		});
+	});

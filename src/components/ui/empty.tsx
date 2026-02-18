@@ -98,7 +98,7 @@ function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 interface EmptyStateProps {
-	title: string;
+	title?: string;
 	description: string;
 	icon?: React.ReactNode;
 	path?: Route;
@@ -127,8 +127,8 @@ export function EmptyState({
 		<Empty>
 			<EmptyHeader>
 				<EmptyMedia variant="icon">{icon ?? <FolderXIcon />}</EmptyMedia>
-				{title.trim().length > 0 && <EmptyTitle>{title}</EmptyTitle>}
-				{description.trim().length > 0 && (
+				{title && title.trim().length > 0 && <EmptyTitle>{title}</EmptyTitle>}
+				{description?.trim().length > 0 && (
 					<EmptyDescription>{description}</EmptyDescription>
 				)}
 			</EmptyHeader>

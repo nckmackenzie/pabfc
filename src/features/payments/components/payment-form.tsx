@@ -280,96 +280,97 @@ export function PaymentForm({
 							</p>
 						</div>
 					</div>
-
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead></TableHead>
-								<TableHead className="w-[300px]">Invoice #</TableHead>
-								<TableHead className="w-[300px]">Invoice Date</TableHead>
-								<TableHead className="w-[300px]">Due Date</TableHead>
-								<TableHead className="w-[180px]">Invoice Amount</TableHead>
-								<TableHead className="w-[180px]">Balance</TableHead>
-								<TableHead className="w-[180px]">Amount to Pay</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<form.AppField name="bills" mode="array">
-								{(field) =>
-									field.state.value.map((bill, index) => (
-										<TableRow key={bill.billId}>
-											<TableCell>
-												<form.AppField name={`bills[${index}].selected`}>
-													{(field) => <field.Checkbox label="" />}
-												</form.AppField>
-											</TableCell>
-											<TableCell>{bill.invoiceNo}</TableCell>
-											<TableCell>
-												{dateFormat(bill.invoiceDate, "reporting")}
-											</TableCell>
-											<TableCell>
-												{bill.dueDate
-													? dateFormat(bill.dueDate, "reporting")
-													: ""}
-											</TableCell>
-											<TableCell>
-												{currencyFormatter(bill.total, false)}
-											</TableCell>
-											<TableCell>
-												{currencyFormatter(bill.balance, false)}
-											</TableCell>
-											<TableCell>
-												{bill.selected ? (
-													<form.AppField name={`bills[${index}].amount`}>
-														{(field) => (
-															<field.Input
-																label=""
-																type="number"
-																min={0}
-																max={bill.balance}
-																className="h-8"
-															/>
-														)}
+					<div className="overflow-x-auto border rounded-md p-4">
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead></TableHead>
+									<TableHead className="w-[300px]">Invoice #</TableHead>
+									<TableHead className="w-[300px]">Invoice Date</TableHead>
+									<TableHead className="w-[300px]">Due Date</TableHead>
+									<TableHead className="w-[180px]">Invoice Amount</TableHead>
+									<TableHead className="w-[180px]">Balance</TableHead>
+									<TableHead className="w-[180px]">Amount to Pay</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								<form.AppField name="bills" mode="array">
+									{(field) =>
+										field.state.value.map((bill, index) => (
+											<TableRow key={bill.billId}>
+												<TableCell>
+													<form.AppField name={`bills[${index}].selected`}>
+														{(field) => <field.Checkbox label="" />}
 													</form.AppField>
-												) : (
-													<Input className="h-8 border-none" disabled />
-												)}
-											</TableCell>
-										</TableRow>
-									))
-								}
-							</form.AppField>
-						</TableBody>
-						<TableFooter>
-							<TableRow className="bg-background hover:bg-background">
-								<TableCell colSpan={6}>
-									<div className="flex items-centre gap-2">
-										<Checkbox
-											onCheckedChange={(checked) =>
-												checked ? handleAllocateFullAmount() : null
-											}
-										/>
-										<label
-											htmlFor="select-all"
-											className="text-muted-foreground font-normal"
-										>
-											Allocate full outstanding amount to all selected bills
-										</label>
-									</div>
-								</TableCell>
+												</TableCell>
+												<TableCell>{bill.invoiceNo}</TableCell>
+												<TableCell>
+													{dateFormat(bill.invoiceDate, "reporting")}
+												</TableCell>
+												<TableCell>
+													{bill.dueDate
+														? dateFormat(bill.dueDate, "reporting")
+														: ""}
+												</TableCell>
+												<TableCell>
+													{currencyFormatter(bill.total, false)}
+												</TableCell>
+												<TableCell>
+													{currencyFormatter(bill.balance, false)}
+												</TableCell>
+												<TableCell>
+													{bill.selected ? (
+														<form.AppField name={`bills[${index}].amount`}>
+															{(field) => (
+																<field.Input
+																	label=""
+																	type="number"
+																	min={0}
+																	max={bill.balance}
+																	className="h-8"
+																/>
+															)}
+														</form.AppField>
+													) : (
+														<Input className="h-8 border-none" disabled />
+													)}
+												</TableCell>
+											</TableRow>
+										))
+									}
+								</form.AppField>
+							</TableBody>
+							<TableFooter>
+								<TableRow className="bg-background hover:bg-background">
+									<TableCell colSpan={6}>
+										<div className="flex items-centre gap-2">
+											<Checkbox
+												onCheckedChange={(checked) =>
+													checked ? handleAllocateFullAmount() : null
+												}
+											/>
+											<label
+												htmlFor="select-all"
+												className="text-muted-foreground font-normal"
+											>
+												Allocate full outstanding amount to all selected bills
+											</label>
+										</div>
+									</TableCell>
 
-								<TableCell>
-									{currencyFormatter(
-										bills.reduce(
-											(acc, bill) =>
-												acc + parseFloat(bill.amount?.toString() ?? "0"),
-											0,
-										),
-									)}
-								</TableCell>
-							</TableRow>
-						</TableFooter>
-					</Table>
+									<TableCell>
+										{currencyFormatter(
+											bills.reduce(
+												(acc, bill) =>
+													acc + parseFloat(bill.amount?.toString() ?? "0"),
+												0,
+											),
+										)}
+									</TableCell>
+								</TableRow>
+							</TableFooter>
+						</Table>
+					</div>
 				</div>
 			)}
 			<form.AppForm>

@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { AlertErrorComponent } from "@/components/ui/error-component";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getBanks } from "@/features/bankings/services/bankings.api";
 
 const bankingSubMenu = linkOptions([
@@ -41,6 +42,19 @@ export const Route = createFileRoute("/app/bankings")({
 	},
 	errorComponent: ({ error }) => (
 		<AlertErrorComponent message={error.message} />
+	),
+	pendingComponent: () => (
+		<div className="space-y-6">
+			<div className="space-y-2">
+				<Skeleton className="h-10 w-40" />
+				<Skeleton className="h-4 w-md" />
+			</div>
+			<div className="grid md:grid-cols-3 gap-4">
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-10 w-full" />
+			</div>
+		</div>
 	),
 });
 
