@@ -1,12 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PageHeader } from "@/components/ui/page-header";
+import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
+import { BankReconcilliation } from "@/features/bankings/components/bank-reconciliation";
+import { clearBankingsValidateSearch } from "@/features/bankings/services/schema";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/bankings/reconcilliation")({
-	component: RouteComponent,
+	component: ReconcilliationComponent,
+	beforeLoad: async () => {
+		await requirePermission("banking:reconciliation");
+	},
+	validateSearch: clearBankingsValidateSearch,
+	head: () => ({
+		meta: [
+			{ title: "Bank Reconciliation / Prime Age Beauty & Fitness Center" },
+		],
+	}),
 	staticData: {
-		breadcrumb: "Bank Reconcilliation",
+		breadcrumb: "Bank Reconciliation",
 	},
 });
 
-function RouteComponent() {
-	return <div>Bank Reconcilliation</div>;
+function ReconcilliationComponent() {
+	return (
+		<ProtectedPageWithWrapper permissions={["banking:reconciliation"]}>
+			<PageHeader
+				title="Bank Reconciliation"
+				description="Reconcile your bank accounts with the system."
+			/>
+			<BankReconcilliation />
+		</ProtectedPageWithWrapper>
+	);
 }

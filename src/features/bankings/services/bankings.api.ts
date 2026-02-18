@@ -20,6 +20,7 @@ import { bankAccounts, bankPostings } from "@/drizzle/schema";
 import {
 	bankPostingClearenceFormSchema,
 	bankPostingSchema,
+	bankReconciliationFormSchema,
 	bulkBankClearingsFormSchema,
 	clearBankingsFilterFormSchema,
 } from "@/features/bankings/services/schema";
@@ -35,6 +36,7 @@ import {
 	deleteJournalEntry,
 	getCashEquivalentAccountId,
 } from "@/services/journal";
+import { getCashbookBalance, getUnclearedAmounts } from "./helpers";
 
 export const getBanks = createServerFn()
 	.middleware([authMiddleware])
@@ -444,6 +446,54 @@ export const clearBankings = createServerFn({ method: "POST" })
 
 			return {
 				message: "Bankings cleared successfully",
+			};
+		},
+	);
+
+export const getBankReconcilliation = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(bankReconciliationFormSchema)
+	.handler(
+		async ({
+			data: {
+				bankId,
+				dateRange: { from, to },
+				bankBalance: actualBankBalance,
+			},
+		}) => {
+			await requirePermission("banking:view");
+
+			if (!bankId || !from || !to) {
+				throw new ApplicationError("Invalid report parameters");
+			}
+
+			const { from: startDate, to: endDate } = normalizeDateRange(from, to);
+
+			const cashBookBalance = await getCashbookBalance(bankId, endDate);
+			const unclearedDeposits = await getUnclearedAmounts(
+				bankId,
+				startDate,
+				endDate,
+				"debit",
+			);
+			const unclearedWithdrawals = await getUnclearedAmounts(
+				bankId,
+				startDate,
+				endDate,
+				"credit",
+			);
+
+			const expectedBalance =
+				cashBookBalance - unclearedDeposits + unclearedWithdrawals;
+			const variance = actualBankBalance - expectedBalance;
+
+			return {
+				cashBookBalance,
+				unclearedDeposits,
+				unclearedWithdrawals,
+				expectedBalance,
+				actualBankBalance,
+				variance,
 			};
 		},
 	);
