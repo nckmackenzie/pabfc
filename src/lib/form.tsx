@@ -1,6 +1,7 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form";
 import { FormCheckbox, Switch } from "@/components/form-components/checkbox";
 import { ComboboxField } from "@/components/form-components/combobox";
+import { DateRangePickerField } from "@/components/form-components/date-range-picker";
 import { MultiSelectField } from "@/components/form-components/multi-select";
 import { FormSelect } from "@/components/form-components/select";
 import { SubmitButton } from "@/components/form-components/submit-button";
@@ -21,6 +22,7 @@ export const { useAppForm, withForm } = createFormHook({
 		MultiSelect: MultiSelectField,
 		TemplateEditor,
 		Switch,
+		DateRangePicker: DateRangePickerField,
 	},
 	formComponents: {
 		SubmitButton,
