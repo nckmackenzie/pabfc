@@ -36,6 +36,7 @@ export const settings = pgTable("settings", {
 		applyTaxToMembership?: boolean;
 		vatType?: VatType;
 		vatAccountId?: number;
+		autoCreateFinancialYear?: boolean;
 	}>(),
 	createdAt,
 	updatedAt,

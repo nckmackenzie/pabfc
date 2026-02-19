@@ -31,6 +31,7 @@ export function BillingForm({
 				applyTaxToMembership: false,
 				vatType: null,
 				vatAccountId: null,
+				autoCreateFinancialYear: false,
 			} as BillingSchema),
 		validators: {
 			onSubmit: billingSchema,
@@ -111,6 +112,14 @@ export function BillingForm({
 						)}
 					</form.AppField>
 				</div>
+				<form.AppField name="autoCreateFinancialYear">
+					{(field) => (
+						<field.Switch
+							label="Auto Create Financial Year"
+							helperText="Automatically create a new financial year at the end of the current financial year."
+						/>
+					)}
+				</form.AppField>
 
 				<div className="col-span-full">
 					<form.AppForm>
