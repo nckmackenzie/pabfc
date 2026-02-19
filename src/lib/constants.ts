@@ -97,6 +97,11 @@ export const collapsibleMenuItems = [
 				url: "/app/bankings/postings",
 				permission: "banking:view",
 			},
+			{
+				title: "Financial Years",
+				url: "/app/financial-years",
+				permission: "financial-years:view",
+			},
 		],
 		get permissions(): Permission[] {
 			return this.items.map((item) => item.permission as Permission);
