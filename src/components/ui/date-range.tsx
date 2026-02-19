@@ -29,32 +29,32 @@ type DateRangePickerProps = {
 	className?: string;
 };
 
-const today = new Date();
-const presets = [
-	{ label: "Today", range: { from: today, to: today } },
-	{
-		label: "Yesterday",
-		range: { from: subDays(today, 1), to: subDays(today, 1) },
-	},
-	{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
-	{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
-	{ label: "Month to date", range: { from: startOfMonth(today), to: today } },
-	{
-		label: "Last month",
-		range: {
-			from: startOfMonth(subMonths(today, 1)),
-			to: endOfMonth(subMonths(today, 1)),
-		},
-	},
-	{ label: "Year to date", range: { from: startOfYear(today), to: today } },
-];
-
 export function DatePicker({
 	onDateChange,
 	initialDateRange,
 	onReset,
 	className,
 }: DateRangePickerProps) {
+	const today = new Date();
+	const presets = [
+		{ label: "Today", range: { from: today, to: today } },
+		{
+			label: "Yesterday",
+			range: { from: subDays(today, 1), to: subDays(today, 1) },
+		},
+		{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
+		{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
+		{ label: "Month to date", range: { from: startOfMonth(today), to: today } },
+		{
+			label: "Last month",
+			range: {
+				from: startOfMonth(subMonths(today, 1)),
+				to: endOfMonth(subMonths(today, 1)),
+			},
+		},
+		{ label: "Year to date", range: { from: startOfYear(today), to: today } },
+	];
+
 	const [month, setMonth] = useState(today);
 	const defaultPreset = presets[2];
 	const [date, setDate] = useState<DateRange | undefined>(
