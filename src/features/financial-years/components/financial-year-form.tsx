@@ -8,6 +8,7 @@ import {
 } from "@/features/financial-years/services/schemas";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
+import { toTitleCase } from "@/lib/utils";
 import type { WithId } from "@/types/index.types";
 
 const defaultValues = {
@@ -24,7 +25,9 @@ export function FinancialYearForm({
 	financialYear?: FinancialYearSchema & WithId;
 }) {
 	const form = useAppForm({
-		defaultValues: financialYear || defaultValues,
+		defaultValues: financialYear
+			? { ...financialYear, name: toTitleCase(financialYear.name) }
+			: defaultValues,
 		validators: {
 			onSubmit: financialYearSchema,
 		},
@@ -39,10 +42,13 @@ export function FinancialYearForm({
 		entityName: "Financial year",
 		queryKey: ["financial-years"],
 		navigateTo: "/app/financial-years",
-		onReset: () => form.reset(),
 	});
 
 	const [isClosed] = useStore(form.store, (state) => [state.values.closed]);
+	const yearClosable =
+		!!financialYear &&
+		new Date(financialYear.endDate).setHours(23, 59, 59, 999) <
+			new Date().setHours(23, 59, 59, 999);
 
 	return (
 		<div className="space-y-6">
@@ -63,7 +69,12 @@ export function FinancialYearForm({
 				<FieldGroup className="grid md:grid-cols-2 gap-4">
 					<form.AppField name="name">
 						{(field) => (
-							<field.Input label="Name" placeholder="2025/2026" required />
+							<field.Input
+								label="Name"
+								fieldClassName="col-span-2"
+								placeholder="2025/2026"
+								required
+							/>
 						)}
 					</form.AppField>
 					<form.AppField name="startDate">
@@ -72,21 +83,23 @@ export function FinancialYearForm({
 					<form.AppField name="endDate">
 						{(field) => <field.Input label="End Date" type="date" required />}
 					</form.AppField>
-					<form.AppField name="closedDate">
-						{(field) => (
-							<field.Input
-								label="Closed Date"
-								type="date"
-								disabled={!isClosed}
-								required={isClosed}
-							/>
-						)}
-					</form.AppField>
-					<div className="md:col-span-2">
-						<form.AppField name="closed">
-							{(field) => <field.Checkbox label="Closed" />}
-						</form.AppField>
-					</div>
+					{yearClosable && (
+						<div className="md:col-span-2 grid md:grid-cols-2 gap-4 md:items-center">
+							<form.AppField name="closed">
+								{(field) => <field.Checkbox label="Closed" />}
+							</form.AppField>
+							<form.AppField name="closedDate">
+								{(field) => (
+									<field.Input
+										label="Closed Date"
+										type="date"
+										disabled={!isClosed}
+										required={isClosed}
+									/>
+								)}
+							</form.AppField>
+						</div>
+					)}
 					<form.AppForm>
 						<form.SubmitButton
 							buttonText={

@@ -212,6 +212,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 					vatAccountId: data.vatAccountId
 						? Number(data.vatAccountId)
 						: undefined,
+					autoCreateFinancialYear: data.autoCreateFinancialYear ?? false,
 				},
 				createdBy: user.id,
 			})
@@ -226,6 +227,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 						vatAccountId: data.vatAccountId
 							? Number(data.vatAccountId)
 							: undefined,
+						autoCreateFinancialYear: data.autoCreateFinancialYear ?? false,
 					},
 					updatedBy: user.id,
 				},

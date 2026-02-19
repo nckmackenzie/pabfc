@@ -1,9 +1,11 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { FinancialYearForm } from "@/features/financial-years/components/financial-year-form";
 import { financialYearQueries } from "@/features/financial-years/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute(
 	"/app/financial-years/$financialYearId/edit",
@@ -22,18 +24,21 @@ export const Route = createFileRoute(
 		const financialYear = await queryClient.ensureQueryData(
 			financialYearQueries.detail(params.financialYearId),
 		);
-		if (!financialYear) {
-			throw notFound();
-		}
 		return { financialYear };
 	},
 	staticData: {
-		breadcrumb: (match) => `Edit ${match.loaderData.financialYear.name}`,
+		breadcrumb: (match) =>
+			`Edit ${toTitleCase(match.loaderData.financialYear.name)}`,
 	},
 });
 
 function RouteComponent() {
-	const { financialYear } = Route.useLoaderData();
+	const { financialYear: loaderData } = Route.useLoaderData();
+	const { financialYearId } = Route.useParams();
+	const { data: financialYear } = useQuery(
+		financialYearQueries.detail(financialYearId),
+	);
+
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
@@ -42,7 +47,7 @@ function RouteComponent() {
 			permissions={["financial-years:update"]}
 			size="sm"
 		>
-			<FinancialYearForm financialYear={financialYear} />
+			<FinancialYearForm financialYear={financialYear || loaderData} />
 		</ProtectedPageWithWrapper>
 	);
 }

@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { z } from "zod";
 import {
+	getCurrentFinancialYear,
 	getFinancialYear,
 	getFinancialYears,
 } from "@/features/financial-years/services/financial-years.api";
@@ -17,5 +18,10 @@ export const financialYearQueries = {
 		queryOptions({
 			queryKey: [...financialYearQueries.all, "detail", financialYearId],
 			queryFn: () => getFinancialYear({ data: financialYearId }),
+		}),
+	current: () =>
+		queryOptions({
+			queryKey: [...financialYearQueries.all, "current"],
+			queryFn: () => getCurrentFinancialYear(),
 		}),
 };
