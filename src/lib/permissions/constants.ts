@@ -56,5 +56,6 @@ export const PERMISSIONS = [
 	"financial-years:create",
 	"financial-years:update",
 	"financial-years:delete",
+	"financial-years:close",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];

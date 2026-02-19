@@ -13,6 +13,7 @@ import { deleteFinancialYear } from "@/features/financial-years/services/financi
 import { financialYearQueries } from "@/features/financial-years/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { dateFormat } from "@/lib/helpers";
+import { toTitleCase } from "@/lib/utils";
 
 export function FinancialYearsTable() {
 	const { filters } = useFilters(getRouteApi("/app/financial-years/").id);
@@ -24,6 +25,7 @@ export function FinancialYearsTable() {
 		{
 			accessorKey: "name",
 			header: "Name",
+			cell: ({ row: { original } }) => toTitleCase(original.name),
 		},
 		{
 			accessorKey: "startDate",

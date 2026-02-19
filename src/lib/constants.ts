@@ -63,6 +63,11 @@ export const collapsibleMenuItems = [
 		icon: DollarSignIcon,
 		items: [
 			{
+				title: "Financial Years",
+				url: "/app/financial-years",
+				permission: "financial-years:view",
+			},
+			{
 				title: "Chart of Accounts",
 				url: "/app/chart-of-accounts",
 				permission: "chart-of-accounts:view",
@@ -96,11 +101,6 @@ export const collapsibleMenuItems = [
 				title: "Bankings",
 				url: "/app/bankings/postings",
 				permission: "banking:view",
-			},
-			{
-				title: "Financial Years",
-				url: "/app/financial-years",
-				permission: "financial-years:view",
 			},
 		],
 		get permissions(): Permission[] {

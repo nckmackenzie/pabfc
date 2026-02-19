@@ -10,7 +10,10 @@ export const financialYearSchema = z
 		closedDate: z.iso.date().nullish(),
 	})
 	.superRefine((data, ctx) => {
-		if (new Date(data.endDate) < new Date(data.startDate)) {
+		if (
+			new Date(data.endDate).setHours(23, 59, 59, 999) <
+			new Date(data.startDate).setHours(23, 59, 59, 999)
+		) {
 			ctx.addIssue({
 				code: "custom",
 				message: "End date must be after start date",
