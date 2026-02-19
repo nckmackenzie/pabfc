@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/useExhaustiveDependencies: <none> */
+
 import {
 	endOfMonth,
-	endOfYear,
 	format,
 	isEqual,
 	startOfDay,
@@ -9,7 +9,6 @@ import {
 	startOfYear,
 	subDays,
 	subMonths,
-	subYears,
 } from "date-fns";
 import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -30,40 +29,32 @@ type DateRangePickerProps = {
 	className?: string;
 };
 
+const today = new Date();
+const presets = [
+	{ label: "Today", range: { from: today, to: today } },
+	{
+		label: "Yesterday",
+		range: { from: subDays(today, 1), to: subDays(today, 1) },
+	},
+	{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
+	{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
+	{ label: "Month to date", range: { from: startOfMonth(today), to: today } },
+	{
+		label: "Last month",
+		range: {
+			from: startOfMonth(subMonths(today, 1)),
+			to: endOfMonth(subMonths(today, 1)),
+		},
+	},
+	{ label: "Year to date", range: { from: startOfYear(today), to: today } },
+];
+
 export function DatePicker({
 	onDateChange,
 	initialDateRange,
 	onReset,
 	className,
 }: DateRangePickerProps) {
-	const today = new Date();
-
-	const presets = [
-		{ label: "Today", range: { from: today, to: today } },
-		{
-			label: "Yesterday",
-			range: { from: subDays(today, 1), to: subDays(today, 1) },
-		},
-		{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
-		{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
-		{ label: "Month to date", range: { from: startOfMonth(today), to: today } },
-		{
-			label: "Last month",
-			range: {
-				from: startOfMonth(subMonths(today, 1)),
-				to: endOfMonth(subMonths(today, 1)),
-			},
-		},
-		{ label: "Year to date", range: { from: startOfYear(today), to: today } },
-		{
-			label: "Last year",
-			range: {
-				from: startOfYear(subYears(today, 1)),
-				to: endOfYear(subYears(today, 1)),
-			},
-		},
-	];
-
 	const [month, setMonth] = useState(today);
 	const defaultPreset = presets[2];
 	const [date, setDate] = useState<DateRange | undefined>(
