@@ -1,9 +1,11 @@
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Outlet,
 	redirect,
 	// useRouterState,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { RouterBreadcrumb } from "@/components/ui/nav-breadcrumb";
 import {
@@ -13,20 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Wip } from "@/components/ui/wip";
-
-// function Spinner({ show, wait }: { show?: boolean; wait?: `delay-${number}` }) {
-// 	return (
-// 		<div
-// 			className={`inline-block animate-spin px-3 transition ${
-// 				(show ?? true)
-// 					? `opacity-1 duration-500 ${wait ?? "delay-300"}`
-// 					: "duration-500 opacity-0 delay-0"
-// 			}`}
-// 		>
-// 			⍥
-// 		</div>
-// 	);
-// }
+import { financialYearQueries } from "@/features/financial-years/services/queries";
 
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
@@ -39,7 +28,10 @@ export const Route = createFileRoute("/app")({
 });
 
 function RouteComponent() {
-	// const isLoading = useRouterState({ select: (s) => s.status === "pending" });
+	const queryClient = useQueryClient();
+	useEffect(() => {
+		queryClient.prefetchQuery(financialYearQueries.current());
+	}, [queryClient]);
 	return (
 		<SidebarProvider>
 			<AppSidebar />

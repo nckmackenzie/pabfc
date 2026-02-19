@@ -1,6 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, lte, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { financialYears } from "@/drizzle/schema";
 import { checkFinancialYearConflict } from "@/features/financial-years/services/helpers";
@@ -145,3 +145,13 @@ export const deleteFinancialYear = createServerFn({ method: "POST" })
 			});
 		},
 	);
+
+export const getCurrentFinancialYear = createServerFn().handler(async () => {
+	const currentFinancialYear = await db.query.financialYears.findFirst({
+		where: and(
+			lte(financialYears.startDate, sql`CURRENT_DATE`),
+			gte(financialYears.endDate, sql`CURRENT_DATE`),
+		),
+	});
+	return currentFinancialYear;
+});
