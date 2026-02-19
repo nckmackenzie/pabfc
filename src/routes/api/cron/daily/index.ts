@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday } from "date-fns";
 import { and, inArray, lt, notInArray, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { bills, vwInvoices } from "@/drizzle/schema";
+import { bills, forms, vwInvoices } from "@/drizzle/schema";
 import {
 	getCurrentFinancialYear,
 	upsertFinancialYear,
@@ -37,6 +37,17 @@ async function autoCreateFinancialYear() {
 }
 
 async function runDailyMaintenance() {
+	// TODO: REMOVE
+	await db.insert(forms).values({
+		menuOrder: 1,
+		moduleId: 1,
+		module: "test",
+		name: "test form",
+		path: "/",
+		resource: "test",
+		active: true,
+	});
+
 	// 1) delete older audit logs
 	await deleteOlderLogs();
 
