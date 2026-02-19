@@ -2,11 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday } from "date-fns";
 import { and, inArray, lt, notInArray, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { bills, forms, vwInvoices } from "@/drizzle/schema";
-import {
-	getCurrentFinancialYear,
-	upsertFinancialYear,
-} from "@/features/financial-years/services/financial-years.api";
+import { bills, financialYears, forms, vwInvoices } from "@/drizzle/schema";
+import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
 import { normalizeDateRange } from "@/lib/helpers";
 import { deleteOlderLogs } from "@/services/activity-logger";
 
@@ -25,13 +22,11 @@ async function autoCreateFinancialYear() {
 
 		const { from, to } = normalizeDateRange(newStartDate, newEndDate);
 
-		await upsertFinancialYear({
-			data: {
-				name: `FY ${format(newStartDate, "yyyy")}`,
-				startDate: from,
-				endDate: to,
-				closed: false,
-			},
+		await db.insert(financialYears).values({
+			name: `FY ${format(newStartDate, "yyyy")}`,
+			startDate: from,
+			endDate: to,
+			closed: false,
 		});
 	}
 }
