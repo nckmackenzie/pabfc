@@ -7,7 +7,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 import { loadEnv } from 'vite'
 
-// Load environment variables
 const env = loadEnv('development', process.cwd(), '')
 
 
