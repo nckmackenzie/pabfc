@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday } from "date-fns";
-import { and, inArray, lt, notInArray, sql } from "drizzle-orm";
+import { and, inArray, lte, notInArray, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { bills, financialYears, forms, vwInvoices } from "@/drizzle/schema";
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
@@ -32,7 +32,6 @@ async function autoCreateFinancialYear() {
 }
 
 async function runDailyMaintenance() {
-	// TODO: REMOVE
 	await db.insert(forms).values({
 		menuOrder: 1,
 		moduleId: 1,
@@ -53,7 +52,7 @@ async function runDailyMaintenance() {
 		.where(
 			and(
 				sql`${vwInvoices.balance} > 0`,
-				lt(vwInvoices.dueDate, sql`CURRENT_DATE`),
+				lte(vwInvoices.dueDate, sql`CURRENT_DATE`),
 				notInArray(vwInvoices.status, ["cancelled", "overdue", "draft"]),
 			),
 		);
