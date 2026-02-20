@@ -86,15 +86,11 @@ export function BillForm({
 		},
 	});
 
-	const [isRecurring, lines, terms, invoiceDate] = useStore(
-		form.store,
-		(state) => [
-			state.values.isRecurring,
-			state.values.lines,
-			state.values.terms,
-			state.values.invoiceDate,
-		],
-	);
+	const [lines, terms, invoiceDate] = useStore(form.store, (state) => [
+		state.values.lines,
+		state.values.terms,
+		state.values.invoiceDate,
+	]);
 	const totalAmount = lines.reduce((acc, line) => acc + Number(line.amount), 0);
 	const { setOpen } = useModal();
 
@@ -174,32 +170,7 @@ export function BillForm({
 					{(field) => <field.Input label="Invoice#" required />}
 				</form.AppField>
 			</FieldGroup>
-			<FieldGroup className="grid gap-4">
-				<form.AppField name="isRecurring">
-					{(field) => <field.Switch label="Recurring Bill" />}
-				</form.AppField>
-				<div className="grid md:grid-cols-2 gap-4">
-					{isRecurring && (
-						<div className="flex flex-col md:flex-row gap-4">
-							<form.AppField name="recurrencePattern">
-								{(field) => (
-									<field.Select label="Recurrence Pattern">
-										<SelectItem value="daily">Daily</SelectItem>
-										<SelectItem value="weekly">Weekly</SelectItem>
-										<SelectItem value="monthly">Monthly</SelectItem>
-										<SelectItem value="yearly">Yearly</SelectItem>
-									</field.Select>
-								)}
-							</form.AppField>
-							<form.AppField name="recurrenceEndDate">
-								{(field) => (
-									<field.Input type="date" label="Recurrence End Date" />
-								)}
-							</form.AppField>
-						</div>
-					)}
-				</div>
-			</FieldGroup>
+
 			<form.Field name="lines" mode="array">
 				{(field) => (
 					<div className="space-y-4">

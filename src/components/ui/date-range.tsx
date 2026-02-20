@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/useExhaustiveDependencies: <none> */
+
 import {
 	endOfMonth,
-	endOfYear,
 	format,
 	isEqual,
 	startOfDay,
@@ -9,7 +9,6 @@ import {
 	startOfYear,
 	subDays,
 	subMonths,
-	subYears,
 } from "date-fns";
 import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -37,7 +36,6 @@ export function DatePicker({
 	className,
 }: DateRangePickerProps) {
 	const today = new Date();
-
 	const presets = [
 		{ label: "Today", range: { from: today, to: today } },
 		{
@@ -55,13 +53,6 @@ export function DatePicker({
 			},
 		},
 		{ label: "Year to date", range: { from: startOfYear(today), to: today } },
-		{
-			label: "Last year",
-			range: {
-				from: startOfYear(subYears(today, 1)),
-				to: endOfYear(subYears(today, 1)),
-			},
-		},
 	];
 
 	const [month, setMonth] = useState(today);

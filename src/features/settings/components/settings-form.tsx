@@ -19,7 +19,7 @@ const tabs = [
 	{ id: "data", label: "Data Retention & Privacy", icon: ShieldAlertIcon },
 	{ id: "notification", label: "Notification Settings", icon: BellIcon },
 	{ id: "security", label: "Security Settings", icon: LockOpenIcon },
-	{ id: "billing", label: "Billing Settings", icon: DollarSignIcon },
+	{ id: "billing", label: "Financial Settings", icon: DollarSignIcon },
 ];
 
 export function SettingsForm() {

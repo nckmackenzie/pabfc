@@ -5,6 +5,7 @@ export * from "@/drizzle/schemas/bank";
 export * from "@/drizzle/schemas/bill";
 export * from "@/drizzle/schemas/chart-of-accounts";
 export * from "@/drizzle/schemas/expenses";
+export * from "@/drizzle/schemas/financial-years";
 export * from "@/drizzle/schemas/member";
 export * from "@/drizzle/schemas/payments";
 export * from "@/drizzle/schemas/settings";

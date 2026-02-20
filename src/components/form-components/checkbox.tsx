@@ -49,25 +49,34 @@ export function FormCheckbox(props: CheckboxProps) {
 	);
 }
 
-export function Switch({ label }: { label: string }) {
+export function Switch({
+	label,
+	helperText,
+}: {
+	label: string;
+	helperText?: string;
+}) {
 	const field = useFieldContext<boolean>();
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
 	return (
 		<Field data-invalid={isInvalid}>
-			<div className="flex items-center gap-2">
-				<ShadcnSwitch
-					id={label}
-					onBlur={field.handleBlur}
-					checked={field.state.value}
-					onCheckedChange={(checked) => field.handleChange(checked)}
-					aria-invalid={isInvalid}
-				/>
-				<FieldLabel htmlFor={label}>{label}</FieldLabel>
-			</div>
-			{field.state.meta.isTouched && (
-				<FieldError errors={field.state.meta.errors} />
-			)}
+			<FieldContent>
+				<div className="flex items-center gap-2">
+					<ShadcnSwitch
+						id={label}
+						onBlur={field.handleBlur}
+						checked={field.state.value}
+						onCheckedChange={(checked) => field.handleChange(checked)}
+						aria-invalid={isInvalid}
+					/>
+					<FieldLabel htmlFor={label}>{label}</FieldLabel>
+				</div>
+				{helperText && <FieldDescription>{helperText}</FieldDescription>}
+				{field.state.meta.isTouched && (
+					<FieldError errors={field.state.meta.errors} />
+				)}
+			</FieldContent>
 		</Field>
 	);
 }

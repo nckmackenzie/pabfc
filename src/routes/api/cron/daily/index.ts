@@ -1,10 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { and, inArray, lt, notInArray, sql } from "drizzle-orm";
+import { addYears, format, isToday } from "date-fns";
+import { and, inArray, lte, notInArray, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { bills, vwInvoices } from "@/drizzle/schema";
+import { bills, financialYears, forms, vwInvoices } from "@/drizzle/schema";
+import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
+import { normalizeDateRange } from "@/lib/helpers";
 import { deleteOlderLogs } from "@/services/activity-logger";
 
+async function autoCreateFinancialYear() {
+	const settings = await db.query.settings.findFirst({
+		columns: { billing: true },
+	});
+
+	if (!settings?.billing?.autoCreateFinancialYear) return;
+	const currentFinancialYear = await getCurrentFinancialYear();
+	if (!currentFinancialYear) return;
+
+	if (isToday(new Date(currentFinancialYear.endDate))) {
+		const newStartDate = addYears(new Date(currentFinancialYear.startDate), 1);
+		const newEndDate = addYears(new Date(currentFinancialYear.endDate), 1);
+
+		const { from, to } = normalizeDateRange(newStartDate, newEndDate);
+
+		await db.insert(financialYears).values({
+			name: `FY ${format(newStartDate, "yyyy")}`,
+			startDate: from,
+			endDate: to,
+			closed: false,
+		});
+	}
+}
+
 async function runDailyMaintenance() {
+	await db.insert(forms).values({
+		menuOrder: 1,
+		moduleId: 1,
+		module: "test",
+		name: "test form",
+		path: "/",
+		resource: "test",
+		active: true,
+	});
+
 	// 1) delete older audit logs
 	await deleteOlderLogs();
 
@@ -15,7 +52,7 @@ async function runDailyMaintenance() {
 		.where(
 			and(
 				sql`${vwInvoices.balance} > 0`,
-				lt(vwInvoices.dueDate, sql`CURRENT_DATE`),
+				lte(vwInvoices.dueDate, sql`CURRENT_DATE`),
 				notInArray(vwInvoices.status, ["cancelled", "overdue", "draft"]),
 			),
 		);
@@ -29,6 +66,9 @@ async function runDailyMaintenance() {
 				overDueInvoices.map((i) => i.id),
 			),
 		);
+
+	// 3) auto create financial year
+	await autoCreateFinancialYear();
 }
 
 export const Route = createFileRoute("/api/cron/daily/")({
