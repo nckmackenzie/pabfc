@@ -14,7 +14,8 @@ export interface FinanceStats {
 	totalRevenuePreviousPeriod: number;
 	totalExpensesLast30Days: number;
 	totalExpensesPreviousPeriod: number;
-	topPlan: { planName: string; amount: number } | null;
+	// topPlan: { planName: string; amount: number } | null;
+	totalOverdueBills: number;
 	totalDiscountedRevenue: number;
 	totalDiscountedRevenuePreviousPeriod: number;
 	revenueExpensesChartData: {
@@ -111,10 +112,10 @@ export const getMockFinanceData = (): FinanceStats => {
 
 	// Find top plan based on distribution (mock logic)
 	// Just picking "Basic" as top plan for mock
-	const topPlan = {
-		planName: "Basic",
-		amount: Math.floor(totalRevenueLast30Days * 0.45),
-	};
+	// const topPlan = {
+	// 	planName: "Basic",
+	// 	amount: Math.floor(totalRevenueLast30Days * 0.45),
+	// };
 
 	// Sort recent activities by date desc
 	recentActivities.sort(
@@ -126,7 +127,7 @@ export const getMockFinanceData = (): FinanceStats => {
 		totalRevenuePreviousPeriod,
 		totalExpensesLast30Days,
 		totalExpensesPreviousPeriod,
-		topPlan,
+		totalOverdueBills: 0,
 		totalDiscountedRevenue,
 		totalDiscountedRevenuePreviousPeriod,
 		revenueExpensesChartData,
