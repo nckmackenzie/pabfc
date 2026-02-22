@@ -1,9 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	type AccountType,
 	bankAccounts,
+	journalEntries,
+	journalLines,
 	ledgerAccounts,
 } from "@/drizzle/schema";
 import {
@@ -18,6 +20,9 @@ import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { createJournalEntry, createOrGetAccountId } from "@/services/journal";
+import { buildTreeWithRollup, calcNormalBalance } from "./helpers";
+
+type Totals = { debits: string; credits: string };
 
 export function defaultNormalBalanceForType(
 	type: AccountType,
@@ -54,6 +59,88 @@ export const getAccounts = createServerFn({ method: "GET" })
 			.then((data) =>
 				data.map((d) => ({ ...d, name: toTitleCase(d.name.toLowerCase()) })),
 			);
+	});
+
+export const getAccountsWithBalances = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.inputValidator(searchValidateSchema)
+	.handler(async ({ data: { q } }) => {
+		// await requirePermission("chart-of-accounts:view");
+
+		// 1) Fetch accounts
+		const accounts = await db
+			.select()
+			.from(ledgerAccounts)
+			.where(
+				q
+					? or(
+							ilike(ledgerAccounts.name, `%${q}%`),
+							ilike(ledgerAccounts.description, `%${q}%`),
+							ilike(sql`cast(${ledgerAccounts.type} as text)`, `%${q}%`),
+						)
+					: undefined,
+			)
+			.orderBy(asc(ledgerAccounts.type), asc(ledgerAccounts.name));
+
+		// 2) We’ll compute balances only for Balance Sheet types for now
+		const bs = accounts.filter(
+			(a) =>
+				a.type === "asset" || a.type === "liability" || a.type === "equity",
+		);
+		const bsIds = bs.map((a) => a.id);
+
+		const effectiveAsOf = new Date().toISOString().slice(0, 10);
+
+		// 3) Aggregate journal totals by accountId
+		const totalsRows =
+			bsIds.length === 0
+				? []
+				: await db
+						.select({
+							accountId: journalLines.accountId,
+							debits:
+								sql<string>`coalesce(sum(case when ${journalLines.dc}='debit' then ${journalLines.amount} else 0 end),0)::numeric`.as(
+									"debits",
+								),
+							credits:
+								sql<string>`coalesce(sum(case when ${journalLines.dc}='credit' then ${journalLines.amount} else 0 end),0)::numeric`.as(
+									"credits",
+								),
+						})
+						.from(journalLines)
+						.innerJoin(
+							journalEntries,
+							eq(journalEntries.id, journalLines.journalEntryId),
+						)
+						.where(
+							and(
+								inArray(journalLines.accountId, bsIds),
+								lte(journalEntries.entryDate, effectiveAsOf),
+							),
+						)
+						.groupBy(journalLines.accountId);
+
+		const totals = new Map<number, Totals>();
+		for (const r of totalsRows)
+			totals.set(r.accountId, { debits: r.debits, credits: r.credits });
+
+		// 4) Attach balances to accounts
+		const enriched = accounts.map((a) => {
+			const prettyName = toTitleCase(a.name.toLowerCase());
+
+			// Revenue/Expense → 0 for now (period-based later)
+			if (a.type === "revenue" || a.type === "expense") {
+				return { ...a, name: prettyName, balance: "0", rolledBalance: "0" };
+			}
+
+			const t = totals.get(a.id) ?? { debits: "0", credits: "0" };
+			const bal = calcNormalBalance(a.normalBalance, t.debits, t.credits);
+
+			return { ...a, name: prettyName, balance: bal, rolledBalance: bal };
+		});
+
+		// 5) Build tree + roll up
+		return buildTreeWithRollup(enriched);
 	});
 
 export const getAccount = createServerFn({ method: "GET" })

@@ -4,6 +4,7 @@ import type { AccountType } from "@/drizzle/schema";
 import {
 	getAccount,
 	getAccounts,
+	getAccountsWithBalances,
 	getChildrenAccountByParentName,
 } from "@/features/coa/services/coa.api";
 import type { searchValidateSchema } from "@/lib/schema-rules";
@@ -16,6 +17,10 @@ export const accountQueries = {
 			queryKey: [...accountQueries.all, "list", filters],
 			queryFn: () => getAccounts({ data: filters }),
 		}),
+	listWithBalances: (filters: z.infer<typeof searchValidateSchema>) => ({
+		queryKey: [...accountQueries.all, "withBalances", filters],
+		queryFn: () => getAccountsWithBalances({ data: filters }),
+	}),
 	parentAccounts: () =>
 		queryOptions({
 			queryKey: [...accountQueries.all, "parent-accounts"],

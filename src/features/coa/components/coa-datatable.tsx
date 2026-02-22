@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import type { AccountType } from "@/drizzle/schema";
 import { useFilters } from "@/hooks/use-filters";
+import { currencyFormatter } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 import { deleteAccount } from "../services/coa.api";
 import { accountQueries } from "../services/queries";
@@ -35,6 +36,10 @@ export type LedgerAccount = {
 	name: string;
 	parentId: number | null;
 	type: AccountType;
+	normalBalance: "debit" | "credit";
+	isPosting: boolean;
+	balance: string;
+	rolledBalance: string;
 	children?: LedgerAccount[];
 };
 
@@ -68,8 +73,9 @@ export function buildAccountTree(accounts: LedgerAccount[]): LedgerAccount[] {
 
 export const ChartOfAccountsTable = () => {
 	const { filters } = useFilters(getRouteApi("/app/chart-of-accounts/").id);
-	const { data: rawData } = useSuspenseQuery(accountQueries.list(filters));
-	const data = useMemo(() => buildAccountTree(rawData), [rawData]);
+	// const { data: rawData } = useSuspenseQuery(accountQueries.list(filters));
+	const { data } = useSuspenseQuery(accountQueries.listWithBalances(filters));
+	// const data = useMemo(() => buildAccountTree(rawData), [rawData]);
 
 	const [expanded, setExpanded] = useState<ExpandedState>({});
 	const columns = useMemo<ColumnDef<LedgerAccount>[]>(
@@ -106,6 +112,27 @@ export const ChartOfAccountsTable = () => {
 				accessorKey: "type",
 				header: "Type",
 				cell: ({ row }) => toTitleCase(row.original.type),
+			},
+			{
+				accessorKey: "rolledBalance",
+				header: () => <div className="text-right">Balance</div>,
+				cell: ({ row }) => {
+					// show rolledBalance so parents show sum of children
+					const value = row.original.rolledBalance ?? "0";
+
+					// Optional: hide for revenue/expense
+					if (
+						row.original.type === "revenue" ||
+						row.original.type === "expense"
+					)
+						return null;
+
+					return (
+						<div className="text-right tabular-nums font-medium">
+							{currencyFormatter(value)}
+						</div>
+					);
+				},
 			},
 			{
 				id: "actions",
