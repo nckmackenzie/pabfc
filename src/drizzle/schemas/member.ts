@@ -8,6 +8,7 @@ import {
 	pgEnum,
 	pgMaterializedView,
 	pgTable,
+	serial,
 	text,
 	timestamp,
 	varchar,
@@ -74,6 +75,9 @@ export const members = pgTable(
 			length: 100,
 		}),
 		deviceId: varchar("device_id", { length: 255 }),
+		completedRegistration: boolean("completed_registration")
+			.notNull()
+			.default(false),
 		notes: text("notes"),
 		image: varchar("image", { length: 255 }),
 		deletedAt: timestamp("deleted_at"),
@@ -174,6 +178,18 @@ export const memberMembershipsRelations = relations(
 		}),
 	}),
 );
+
+export const memberRegistrationLinks = pgTable("member_registration_links", {
+	id: serial("id").notNull().primaryKey(),
+	memberId: varchar("member_id")
+		.notNull()
+		.references(() => members.id, { onDelete: "cascade" }),
+	shortCode: varchar("short_code", { length: 10 }).notNull().unique(),
+	expiresAt: timestamp("expires_at"),
+	usedAt: timestamp("used_at"),
+	createdAt,
+	updatedAt,
+});
 
 export const membersOverview = pgMaterializedView("vw_member_overview", {
 	id: varchar("id").notNull(),
