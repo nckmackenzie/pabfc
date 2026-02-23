@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	memberRegistrationLinks,
@@ -107,6 +107,18 @@ export const sendRegistrationLink = inngest.createFunction(
 		const registrationLink = await step.run(
 			"generate-registration-link",
 			async () => {
+				const existingLink = await db.query.memberRegistrationLinks.findFirst({
+					columns: { shortCode: true },
+					where: and(
+						eq(memberRegistrationLinks.memberId, memberId),
+						isNull(memberRegistrationLinks.usedAt),
+					),
+				});
+
+				if (existingLink) {
+					return `${process.env.MEMBER_PORTAL_URL as string}/register/${existingLink.shortCode}`;
+				}
+
 				const shortCode = crypto.randomBytes(4).toString("hex").substring(0, 6);
 
 				await db.insert(memberRegistrationLinks).values({
