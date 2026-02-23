@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
+	memberRegistrationLinks,
 	members,
 	type SMSBroadcastResponse,
 	smsBroadcasts,
@@ -85,5 +87,43 @@ export const sendTestSmsToUser = inngest.createFunction(
 		const { content, contact } = event.data;
 		const res = await sendSms({ message: content, to: contact });
 		return res;
+	},
+);
+
+export const sendRegistrationLink = inngest.createFunction(
+	{ id: "send-member-registration-link" },
+	{ event: "app/members.send.registration.link" },
+	async ({ event, step }) => {
+		const { memberId } = event.data;
+		const member = await db.query.members.findFirst({
+			columns: { contact: true, firstName: true },
+			where: eq(members.id, memberId),
+		});
+
+		if (!member) {
+			throw new Error("Member not found");
+		}
+
+		const registrationLink = await step.run(
+			"generate-registration-link",
+			async () => {
+				const shortCode = crypto.randomBytes(4).toString("hex").substring(0, 6);
+
+				await db.insert(memberRegistrationLinks).values({
+					memberId,
+					shortCode,
+				});
+
+				return `${process.env.MEMBER_PORTAL_URL as string}/register/${shortCode}`;
+			},
+		);
+
+		await step.run("send-registration-link", async () => {
+			const res = await sendSms({
+				message: `Dear ${toTitleCase(member.firstName)}, welcome to PABFC💪🏿! Click the link provided to complete your registration and create your account: ${registrationLink}`,
+				to: [internationalizePhoneNumber(member.contact as string, true)],
+			});
+			return res;
+		});
 	},
 );

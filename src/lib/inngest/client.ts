@@ -36,6 +36,11 @@ type Events = {
 			paidInvoiceIds: Array<string>;
 		};
 	};
+	"app/members.send.registration.link": {
+		data: {
+			memberId: string;
+		};
+	};
 };
 
 export const inngest = new Inngest({
