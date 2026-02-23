@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
 	CalendarIcon,
+	ChatMessageIcon,
 	ChevronDownIcon,
 	DollarSignIcon,
 	PencilIcon,
@@ -30,8 +31,12 @@ export function MemberProfile() {
 		memberQueries.overview(route.useParams().memberId),
 	);
 	const memberData = memberOverview ?? memberLoaderData;
-	const { handleRevokePortalAccess, handleToggleActive, handleSendMessage } =
-		useMemberActions();
+	const {
+		handleRevokePortalAccess,
+		handleToggleActive,
+		handleSendMessage,
+		handleSendRegistrationLink,
+	} = useMemberActions();
 
 	return (
 		<div className="space-y-6">
@@ -48,7 +53,10 @@ export function MemberProfile() {
 								{toTitleCase(`${memberData.firstName} ${memberData.lastName}`)}
 							</h1>
 							<div className="flex items-center gap-2">
-								<MemberBadge status={memberData.memberStatus} />
+								<MemberBadge
+									status={memberData.memberStatus}
+									fullyRegistered={memberData.completedRegistration}
+								/>
 								{memberData.banned && (
 									<MemberBadge
 										status={memberData.banned ? "terminated" : "active"}
@@ -57,6 +65,7 @@ export function MemberProfile() {
 												? "Portal Access Revoked"
 												: "Portal Access Active"
 										}
+										fullyRegistered={memberData.completedRegistration}
 									/>
 								)}
 							</div>
@@ -81,55 +90,67 @@ export function MemberProfile() {
 							Edit Profile
 						</Link>
 					</Button>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline">
-								More
-								<ChevronDownIcon />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent>
-							{(memberData.memberStatus === "active" ||
-								memberData.memberStatus === "inactive") && (
+					{memberData.completedRegistration ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline">
+									More
+									<ChevronDownIcon />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								{(memberData.memberStatus === "active" ||
+									memberData.memberStatus === "inactive") && (
+									<DropdownMenuItem
+										onSelect={() =>
+											handleToggleActive({
+												memberId: memberData.id,
+												memberName: memberData.fullName,
+												active: memberData.memberStatus === "active",
+											})
+										}
+									>
+										{memberData.memberStatus === "active"
+											? "Deactivate"
+											: "Activate"}
+									</DropdownMenuItem>
+								)}
 								<DropdownMenuItem
 									onSelect={() =>
-										handleToggleActive({
+										handleRevokePortalAccess({
 											memberId: memberData.id,
 											memberName: memberData.fullName,
-											active: memberData.memberStatus === "active",
+											banned: memberData.banned,
 										})
 									}
 								>
-									{memberData.memberStatus === "active"
-										? "Deactivate"
-										: "Activate"}
+									{memberData.banned
+										? "Restore Portal Access"
+										: "Revoke Portal Access"}
 								</DropdownMenuItem>
-							)}
-							<DropdownMenuItem
-								onSelect={() =>
-									handleRevokePortalAccess({
-										memberId: memberData.id,
-										memberName: memberData.fullName,
-										banned: memberData.banned,
-									})
-								}
-							>
-								{memberData.banned
-									? "Restore Portal Access"
-									: "Revoke Portal Access"}
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onSelect={() =>
-									handleSendMessage({
-										memberId: memberData.id,
-										memberName: memberData.fullName,
-									})
-								}
-							>
-								Send Message
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+								<DropdownMenuItem
+									onSelect={() =>
+										handleSendMessage({
+											memberId: memberData.id,
+											memberName: memberData.fullName,
+										})
+									}
+								>
+									Send Message
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						<Button
+							variant="outline"
+							onClick={() =>
+								handleSendRegistrationLink({ memberId: memberData.id })
+							}
+						>
+							<ChatMessageIcon />
+							Send Registration Link
+						</Button>
+					)}
 				</div>
 			</div>
 			<div className="grid md:grid-cols-2 gap-4">

@@ -44,6 +44,7 @@ export const getMembers = createServerFn()
 				nextRenewalDate: membersOverview.nextRenewalDate,
 				lastVisit: membersOverview.lastVisit,
 				portalAccess: membersOverview.banned,
+				fullyRegistered: membersOverview.completedRegistration,
 			})
 			.from(membersOverview)
 			.where(and(...filters))

@@ -4,10 +4,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
+import { HourglassIcon } from "lucide-react";
 import { nanoid } from "nanoid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+// import { Checkbox } from "@/components/ui/checkbox";
 import { EditAction } from "@/components/ui/custom-button";
 import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
@@ -36,8 +37,12 @@ import { useMemberActions } from "../hooks/use-member-actions";
 export function MemberTable() {
 	const { filters } = useFilters(getRouteApi("/app/members/").id);
 	const { data } = useSuspenseQuery(memberQueries.list(filters));
-	const { handleRevokePortalAccess, handleToggleActive, handleSendMessage } =
-		useMemberActions();
+	const {
+		handleRevokePortalAccess,
+		handleToggleActive,
+		handleSendMessage,
+		handleSendRegistrationLink,
+	} = useMemberActions();
 
 	const columns: Array<ColumnDef<MemberOverview>> = [
 		{
@@ -68,10 +73,15 @@ export function MemberTable() {
 			),
 			cell: ({
 				row: {
-					original: { memberStatus },
+					original: { memberStatus, fullyRegistered },
 				},
 			}) => {
-				return <MemberBadge status={memberStatus} />;
+				return (
+					<MemberBadge
+						status={memberStatus}
+						fullyRegistered={fullyRegistered}
+					/>
+				);
 			},
 		},
 		{
@@ -121,26 +131,32 @@ export function MemberTable() {
 				</Badge>
 			),
 		},
-		{
-			accessorKey: "portalAccess",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Portal Access" />
-			),
-			cell: ({
-				row: {
-					original: { portalAccess },
-				},
-			}) => (
-				<div className="flex items-center justify-center">
-					<Checkbox checked={!portalAccess} />
-				</div>
-			),
-		},
+		// {
+		// 	accessorKey: "portalAccess",
+		// 	header: ({ column }) => (
+		// 		<DataTableColumnHeader column={column} title="Portal Access" />
+		// 	),
+		// 	cell: ({
+		// 		row: {
+		// 			original: { portalAccess },
+		// 		},
+		// 	}) => (
+		// 		<div className="flex items-center justify-center">
+		// 			<Checkbox checked={!portalAccess} />
+		// 		</div>
+		// 	),
+		// },
 		{
 			id: "actions",
 			cell: ({
 				row: {
-					original: { id, memberStatus, portalAccess, fullName },
+					original: {
+						id,
+						memberStatus,
+						portalAccess,
+						fullName,
+						fullyRegistered,
+					},
 				},
 			}) => (
 				<DatatableActions>
@@ -166,15 +182,25 @@ export function MemberTable() {
 							</Link>
 						</DropdownMenuItem>
 					</PermissionGate>
-					<DropdownMenuItem
-						onSelect={() =>
-							handleSendMessage({ memberId: id, memberName: fullName })
-						}
-					>
-						<ChatMessageIcon className="size-4" />
-						<span className="-ml-1">Send Message</span>
-					</DropdownMenuItem>
-					{memberStatus !== "terminated" && (
+					{!fullyRegistered && (
+						<DropdownMenuItem
+							onSelect={() => handleSendRegistrationLink({ memberId: id })}
+						>
+							<ChatMessageIcon className="size-4" />
+							<span className="-ml-1">Send Registration Link</span>
+						</DropdownMenuItem>
+					)}
+					{fullyRegistered && (
+						<DropdownMenuItem
+							onSelect={() =>
+								handleSendMessage({ memberId: id, memberName: fullName })
+							}
+						>
+							<ChatMessageIcon className="size-4" />
+							<span className="-ml-1">Send Message</span>
+						</DropdownMenuItem>
+					)}
+					{!!fullyRegistered && memberStatus !== "terminated" && (
 						<DropdownMenuItem
 							onSelect={() =>
 								handleToggleActive({
@@ -190,20 +216,22 @@ export function MemberTable() {
 							</span>
 						</DropdownMenuItem>
 					)}
-					<DropdownMenuItem
-						onSelect={() =>
-							handleRevokePortalAccess({
-								memberId: id,
-								memberName: fullName,
-								banned: portalAccess,
-							})
-						}
-					>
-						<MonitorPhoneIcon className="size-4" />
-						<span className="-ml-1">
-							{!portalAccess ? "Revoke" : "Grant"} Portal Access
-						</span>
-					</DropdownMenuItem>
+					{!!fullyRegistered && (
+						<DropdownMenuItem
+							onSelect={() =>
+								handleRevokePortalAccess({
+									memberId: id,
+									memberName: fullName,
+									banned: portalAccess,
+								})
+							}
+						>
+							<MonitorPhoneIcon className="size-4" />
+							<span className="-ml-1">
+								{!portalAccess ? "Revoke" : "Grant"} Portal Access
+							</span>
+						</DropdownMenuItem>
+					)}
 					<DeleteActionButton
 						queryKey={["members"]}
 						resourceId={id}
@@ -253,10 +281,21 @@ export function MemberAvatar({
 export function MemberBadge({
 	status,
 	textContent,
+	fullyRegistered,
 }: {
 	status: MemberOverview["memberStatus"];
 	textContent?: string;
+	fullyRegistered: boolean;
 }) {
+	if (!fullyRegistered) {
+		return (
+			<Badge variant="info">
+				<HourglassIcon className="size-4!" />
+				Incomplete Registration
+			</Badge>
+		);
+	}
+
 	return (
 		<Badge
 			variant={

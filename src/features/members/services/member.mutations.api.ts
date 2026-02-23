@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { members, users } from "@/drizzle/schema";
 import {
@@ -148,6 +149,38 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 			});
 
 			return memberId;
+		},
+	);
+
+export const sendRegistrationLink = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(z.string().min(1, "member id is required"))
+	.handler(
+		async ({
+			data: memberId,
+			context: {
+				user: { id: loggedUserId },
+			},
+		}) => {
+			const member = await getMember({ data: memberId });
+			if (!member) {
+				throw new NotFoundError("Member not found");
+			}
+
+			await inngest.send({
+				name: "app/members.send.registration.link",
+				data: {
+					memberId,
+				},
+			});
+
+			await logActivity({
+				data: {
+					action: "send registration link",
+					description: `Sent registration link to member ${member.firstName} ${member.lastName}`,
+					userId: loggedUserId,
+				},
+			});
 		},
 	);
 
