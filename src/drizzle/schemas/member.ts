@@ -211,5 +211,8 @@ export const membersOverview = pgMaterializedView("vw_member_overview", {
 		length: 15,
 	}),
 	banned: boolean("banned").notNull().default(false),
+	completedRegistration: boolean("completed_registration")
+		.notNull()
+		.default(false),
 	createdAt,
 }).existing();
