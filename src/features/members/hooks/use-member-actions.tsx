@@ -1,4 +1,7 @@
+import { startTransition } from "react";
+import toast from "react-hot-toast";
 import CustomModal from "@/components/ui/custom-modal";
+import { ToastContent } from "@/components/ui/toast-content";
 import {
 	RevokePortalAccessModal,
 	ToggleActivateDeactivate,
@@ -6,6 +9,7 @@ import {
 import { SendMessageModal } from "@/features/members/components/send-message-modal";
 import { useModal } from "@/integrations/modal-provider";
 import { toTitleCase } from "@/lib/utils";
+import { sendRegistrationLink } from "../services/member.mutations.api";
 
 export function useMemberActions() {
 	const { setOpen } = useModal();
@@ -63,9 +67,34 @@ export function useMemberActions() {
 		);
 	}
 
+	function handleSendRegistrationLink({ memberId }: { memberId: string }) {
+		startTransition(() => {
+			sendRegistrationLink({ data: memberId })
+				.then(() =>
+					toast.success((t) => (
+						<ToastContent
+							title="Success"
+							message="Registration link sent successfully"
+							t={t}
+						/>
+					)),
+				)
+				.catch(() =>
+					toast.error((t) => (
+						<ToastContent
+							title="Error"
+							message="Failed to send registration link"
+							t={t}
+						/>
+					)),
+				);
+		});
+	}
+
 	return {
 		handleRevokePortalAccess,
 		handleToggleActive,
 		handleSendMessage,
+		handleSendRegistrationLink,
 	};
 }
