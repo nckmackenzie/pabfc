@@ -1,0 +1,1 @@
+ALTER TABLE "members" ALTER COLUMN "contact" SET NOT NULL;

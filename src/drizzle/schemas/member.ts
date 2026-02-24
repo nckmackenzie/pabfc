@@ -58,7 +58,7 @@ export const members = pgTable(
 		dateOfBirth: date("date_of_birth"),
 		gender: genderEnum("gender").notNull().default("unspecified"),
 		email: varchar("email").unique(),
-		contact: varchar("contact", { length: 15 }).unique(),
+		contact: varchar("contact", { length: 15 }).notNull().unique(),
 		idType: varchar("id_type", { length: 20 }),
 		idNumber: varchar("id_number", { length: 20 }).unique(),
 		memberStatus: memberStatusEnum("member_status").notNull().default("active"),
