@@ -128,7 +128,7 @@ export const createPayment = inngest.createFunction(
 							lineNumber: 2,
 							accountId: ledgerDetails.vatAccountId as number,
 							journalEntryId,
-							amount: fetchedPayment.amount,
+							amount: fetchedPayment.taxAmount,
 							dc: "credit",
 						});
 					}
