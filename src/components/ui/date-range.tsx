@@ -20,6 +20,15 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/re-ui-btn";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn, generateRandomId } from "@/lib/utils";
 
 type DateRangePickerProps = {
@@ -65,6 +74,7 @@ export function DatePicker({
 	);
 
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+	const isMobile = useIsMobile();
 
 	useEffect(() => {
 		setDate(initialDateRange || undefined);
@@ -140,31 +150,68 @@ export function DatePicker({
 			<PopoverContent className="w-auto p-0" align="center">
 				<div className="flex max-sm:flex-col">
 					<div className="relative border-border max-sm:order-1 max-sm:border-t sm:w-32">
-						<div className="h-full border-border sm:border-e py-2">
-							<div className="flex flex-col px-2 gap-0.5">
-								{presets.map((preset, index) => (
-									<Button
-										key={generateRandomId(`preset-${index}`)}
-										type="button"
-										variant="ghost"
-										className={cn(
-											"h-8 w-full justify-start",
-											selectedPreset === preset.label && "bg-accent",
-										)}
-										onClick={() => {
+						{isMobile ? (
+							<div className="p-2">
+								<Select
+									value={selectedPreset || undefined}
+									onValueChange={(val) => {
+										const label = val || "";
+										const preset =
+											presets.find((p) => p.label === label) || null;
+										if (preset) {
 											setDate(preset.range);
-
-											// Update the calendar to show the starting month of the selected range
 											setMonth(preset.range.from || today);
-
-											setSelectedPreset(preset.label); // Explicitly set the active preset
-										}}
-									>
-										{preset.label}
-									</Button>
-								))}
+											setSelectedPreset(preset.label);
+										} else {
+											setSelectedPreset(null);
+										}
+									}}
+								>
+									<SelectTrigger size="sm" className="w-full">
+										<SelectValue placeholder="Presets" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectGroup>
+											{presets.map((preset, index) => (
+												<SelectItem
+													key={generateRandomId(`preset-opt-${index}`)}
+													value={preset.label}
+												>
+													{preset.label}
+												</SelectItem>
+											))}
+										</SelectGroup>
+									</SelectContent>
+								</Select>
 							</div>
-						</div>
+						) : (
+							// Desktop: button list
+							<div className="h-full border-border sm:border-e py-2">
+								<div className="flex flex-col px-2 gap-0.5">
+									{presets.map((preset, index) => (
+										<Button
+											key={generateRandomId(`preset-${index}`)}
+											type="button"
+											variant="ghost"
+											className={cn(
+												"h-8 w-full justify-start",
+												selectedPreset === preset.label && "bg-accent",
+											)}
+											onClick={() => {
+												setDate(preset.range);
+
+												// Update the calendar to show the starting month of the selected range
+												setMonth(preset.range.from || today);
+
+												setSelectedPreset(preset.label); // Explicitly set the active preset
+											}}
+										>
+											{preset.label}
+										</Button>
+									))}
+								</div>
+							</div>
+						)}
 					</div>
 					<Calendar
 						autoFocus
