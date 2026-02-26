@@ -8,6 +8,7 @@ import {
 	pgEnum,
 	pgMaterializedView,
 	pgTable,
+	serial,
 	text,
 	timestamp,
 	varchar,
@@ -57,7 +58,7 @@ export const members = pgTable(
 		dateOfBirth: date("date_of_birth"),
 		gender: genderEnum("gender").notNull().default("unspecified"),
 		email: varchar("email").unique(),
-		contact: varchar("contact", { length: 15 }).unique(),
+		contact: varchar("contact", { length: 15 }).notNull().unique(),
 		idType: varchar("id_type", { length: 20 }),
 		idNumber: varchar("id_number", { length: 20 }).unique(),
 		memberStatus: memberStatusEnum("member_status").notNull().default("active"),
@@ -74,6 +75,9 @@ export const members = pgTable(
 			length: 100,
 		}),
 		deviceId: varchar("device_id", { length: 255 }),
+		completedRegistration: boolean("completed_registration")
+			.notNull()
+			.default(false),
 		notes: text("notes"),
 		image: varchar("image", { length: 255 }),
 		deletedAt: timestamp("deleted_at"),
@@ -175,6 +179,18 @@ export const memberMembershipsRelations = relations(
 	}),
 );
 
+export const memberRegistrationLinks = pgTable("member_registration_links", {
+	id: serial("id").notNull().primaryKey(),
+	memberId: varchar("member_id")
+		.notNull()
+		.references(() => members.id, { onDelete: "cascade" }),
+	shortCode: varchar("short_code", { length: 10 }).notNull().unique(),
+	expiresAt: timestamp("expires_at"),
+	usedAt: timestamp("used_at"),
+	createdAt,
+	updatedAt,
+});
+
 export const membersOverview = pgMaterializedView("vw_member_overview", {
 	id: varchar("id").notNull(),
 	memberNo: integer("member_no").notNull(),
@@ -195,5 +211,8 @@ export const membersOverview = pgMaterializedView("vw_member_overview", {
 		length: 15,
 	}),
 	banned: boolean("banned").notNull().default(false),
+	completedRegistration: boolean("completed_registration")
+		.notNull()
+		.default(false),
 	createdAt,
 }).existing();

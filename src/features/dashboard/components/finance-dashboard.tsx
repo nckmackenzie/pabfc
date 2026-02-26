@@ -11,7 +11,12 @@ import {
 	StatCardsSkeleton,
 } from "@/features/dashboard/components/stat-cards";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
-import { percentageChangeCalculator } from "@/lib/helpers";
+import {
+	currencyFormatter,
+	dateFormat,
+	percentageChangeCalculator,
+} from "@/lib/helpers";
+import { getStatDates } from "../lib/helpers";
 import { FinanceAreaChart, FinancePieChart } from "./finance-charts";
 import { FinanceRecentTransactions } from "./finance-recent-transactions";
 
@@ -68,16 +73,17 @@ function FinanceStatCards() {
 			totalExpensesPreviousPeriod,
 			totalRevenueLast30Days,
 			totalRevenuePreviousPeriod,
-			topPlan,
+			totalOverdueBills,
 			totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod,
 		},
 	} = useSuspenseQuery(dashboardQueries.financeStats());
+	const { startOfLast30Days } = getStatDates();
 	return (
 		<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 			<KPICard
 				title="Membership Revenue"
-				value={totalRevenueLast30Days.toLocaleString()}
+				value={currencyFormatter(totalRevenueLast30Days, false)}
 				subtitle="Membership revenue in last 30 days"
 				icon={HandCoinsIcon}
 				trend={percentageChangeCalculator(
@@ -88,7 +94,7 @@ function FinanceStatCards() {
 			/>
 			<KPICard
 				title="Expenses"
-				value={totalExpensesLast30Days.toLocaleString()}
+				value={currencyFormatter(totalExpensesLast30Days, false)}
 				subtitle="Expenses in last 30 days"
 				icon={BanknoteArrowDownIcon}
 				trend={percentageChangeCalculator(
@@ -96,17 +102,25 @@ function FinanceStatCards() {
 					totalExpensesPreviousPeriod,
 				)}
 				variant="destructive"
+				link={{
+					to: "/app/expenses",
+					search: {
+						from: dateFormat(startOfLast30Days),
+						to: dateFormat(new Date()),
+					},
+				}}
 			/>
 			<KPICard
-				title="Top Plan"
-				value={topPlan?.planName || "N/A"}
-				subtitle={`${topPlan?.amount || 0} revenue`}
+				title="Overdue Bills"
+				value={currencyFormatter(totalOverdueBills, false)}
+				subtitle="Overdue bills"
 				icon={ArrowUpWideNarrowIcon}
-				variant="default"
+				variant="destructive"
+				link={{ to: "/app/bills", search: { status: "overdue" } }}
 			/>
 			<KPICard
 				title="Discounted Revenue"
-				value={totalDiscountedRevenue.toLocaleString()}
+				value={currencyFormatter(totalDiscountedRevenue, false)}
 				subtitle="Discounted revenue in last 30 days"
 				icon={BadgePercentIcon}
 				trend={percentageChangeCalculator(

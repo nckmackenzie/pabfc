@@ -136,7 +136,7 @@ export function PaymentForm() {
 				/>
 			));
 			navigate({
-				to: "/app/payments",
+				to: "/app/receipts",
 				search: { payment: stkMutation.data?.paymentId },
 			});
 		}

@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Link, type LinkProps } from "@tanstack/react-router";
 import {
 	CalendarClockIcon,
 	Clock11Icon,
@@ -6,10 +7,12 @@ import {
 	type LucideIcon,
 	Users2Icon,
 } from "lucide-react";
+import { ArrowRightIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { percentageChangeCalculator } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
+
 export function StatCards() {
 	const {
 		data: {
@@ -106,6 +109,7 @@ interface KPICardProps {
 	};
 	variant?: "default" | "success" | "warning" | "destructive";
 	className?: string;
+	link?: Pick<LinkProps, "to" | "search">;
 }
 
 export function KPICard({
@@ -116,6 +120,7 @@ export function KPICard({
 	trend,
 	variant = "default",
 	className,
+	link,
 }: KPICardProps) {
 	const variantStyles = {
 		default: "from-primary/10 to-primary/5 border-primary/20",
@@ -134,7 +139,7 @@ export function KPICard({
 	return (
 		<div
 			className={cn(
-				"relative overflow-hidden rounded-xl border bg-linear-to-br p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg",
+				"relative flex flex-col justify-between overflow-hidden rounded-xl border bg-linear-to-br p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg",
 				variantStyles[variant],
 				className,
 			)}
@@ -167,6 +172,16 @@ export function KPICard({
 					<Icon className="h-5 w-5" />
 				</div>
 			</div>
+			{link && (
+				<Link
+					to={link.to}
+					search={link.search}
+					className="group self-end flex items-center gap-1 text-sm text-primary transition-all hover:underline"
+				>
+					View Details
+					<ArrowRightIcon className="h-4 w-4 transition-all group-hover:translate-x-1" />
+				</Link>
+			)}
 		</div>
 	);
 }

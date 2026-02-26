@@ -2,7 +2,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { expenseHeaders, membershipPlans, payments } from "@/drizzle/schema";
+import {
+	bills,
+	expenseHeaders,
+	membershipPlans,
+	payments,
+} from "@/drizzle/schema";
 import { getStatDates } from "@/features/dashboard/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { expenseFilters, paymentFilters } from "@/lib/query-helpers";
@@ -22,7 +27,7 @@ export const getFinanceStats = createServerFn()
 			totalRevenuePreviousPeriod,
 			totalExpenses,
 			totalExpensesPreviousPeriod,
-			topPlan,
+			totalOverdueBills,
 			totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod,
 		] = await Promise.all([
@@ -52,7 +57,7 @@ export const getFinanceStats = createServerFn()
 				),
 			db
 				.select({
-					totalExpenses: sql<number>`coalesce(sum(${expenseHeaders.subTotal}), 0)`,
+					totalExpenses: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
 				})
 				.from(expenseHeaders)
 				.where(
@@ -60,7 +65,7 @@ export const getFinanceStats = createServerFn()
 				),
 			db
 				.select({
-					totalExpensesPreviousPeriod: sql<number>`coalesce(sum(${expenseHeaders.subTotal}), 0)`,
+					totalExpensesPreviousPeriod: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
 				})
 				.from(expenseHeaders)
 				.where(
@@ -71,23 +76,29 @@ export const getFinanceStats = createServerFn()
 				),
 			db
 				.select({
-					planName: membershipPlans.name,
-					amount: sql<number>`coalesce(sum(${payments.amount}), 0)`.as(
-						"total_amount",
-					),
+					totalOverdueBills: sql<number>`coalesce(sum(${bills.total}), 0)`,
 				})
-				.from(payments)
-				.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
-				.where(
-					paymentFilters({
-						dateFrom: startOfLast30Days,
-						dateTo: new Date(),
-						status: "completed",
-					}),
-				)
-				.groupBy(membershipPlans.name, payments.planId)
-				.orderBy(desc(sql`total_amount`))
-				.limit(1),
+				.from(bills)
+				.where(eq(bills.status, "overdue")),
+			// db
+			// 	.select({
+			// 		planName: membershipPlans.name,
+			// 		amount: sql<number>`coalesce(sum(${payments.amount}), 0)`.as(
+			// 			"total_amount",
+			// 		),
+			// 	})
+			// 	.from(payments)
+			// 	.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
+			// 	.where(
+			// 		paymentFilters({
+			// 			dateFrom: startOfLast30Days,
+			// 			dateTo: new Date(),
+			// 			status: "completed",
+			// 		}),
+			// 	)
+			// 	.groupBy(membershipPlans.name, payments.planId)
+			// 	.orderBy(desc(sql`total_amount`))
+			// 	.limit(1),
 			db
 				.select({
 					totalDiscountedRevenue: sql<number>`coalesce(sum(${payments.discountedAmount}), 0)`,
@@ -121,7 +132,8 @@ export const getFinanceStats = createServerFn()
 			totalExpensesLast30Days: totalExpenses[0].totalExpenses,
 			totalExpensesPreviousPeriod:
 				totalExpensesPreviousPeriod[0].totalExpensesPreviousPeriod,
-			topPlan: topPlan.length > 0 ? topPlan[0] : null,
+			// topPlan: topPlan.length > 0 ? topPlan[0] : null,
+			totalOverdueBills: totalOverdueBills[0].totalOverdueBills,
 			totalDiscountedRevenue: totalDiscountedRevenue[0].totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod:
 				totalDiscountedRevenuePreviousPeriod[0]

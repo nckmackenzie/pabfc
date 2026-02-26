@@ -1,15 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/drizzle/db";
-import { accounts, members, users } from "@/drizzle/schema";
+import { members, users } from "@/drizzle/schema";
 import {
 	type MemberFormSchema,
 	memberFormSchema,
 	memberRevokePortalAccessSchema,
 	memberToggleActiveSchema,
 } from "@/features/members/services/schemas";
-import { hashPassword } from "@/features/users/services/users.api";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { inngest } from "@/lib/inngest/client";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import {
@@ -45,27 +46,6 @@ export const createMember = createServerFn({ method: "POST" })
 					})
 					.returning({ id: members.id });
 
-				const [{ id: userId }] = await tx
-					.insert(users)
-					.values({
-						name: `${data.firstName} ${data.lastName}`,
-						contact: data.contact,
-						memberId: id,
-						role: "member",
-						username: data.contact,
-						email: data.email,
-					})
-					.returning({ id: users.id });
-
-				const hashedPassword = await hashPassword("password");
-				// TODO: send password to member
-				await tx.insert(accounts).values({
-					userId,
-					providerId: "credential",
-					accountId: userId,
-					password: hashedPassword,
-				});
-
 				await logActivity({
 					data: {
 						action: "create member",
@@ -75,6 +55,13 @@ export const createMember = createServerFn({ method: "POST" })
 				});
 
 				return id;
+			});
+
+			await inngest.send({
+				name: "app/members.send.registration.link",
+				data: {
+					memberId,
+				},
 			});
 
 			return memberId;
@@ -162,6 +149,38 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 			});
 
 			return memberId;
+		},
+	);
+
+export const sendRegistrationLink = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(z.string().min(1, "member id is required"))
+	.handler(
+		async ({
+			data: memberId,
+			context: {
+				user: { id: loggedUserId },
+			},
+		}) => {
+			const member = await getMember({ data: memberId });
+			if (!member) {
+				throw new NotFoundError("Member not found");
+			}
+
+			await inngest.send({
+				name: "app/members.send.registration.link",
+				data: {
+					memberId,
+				},
+			});
+
+			await logActivity({
+				data: {
+					action: "send registration link",
+					description: `Sent registration link to member ${member.firstName} ${member.lastName}`,
+					userId: loggedUserId,
+				},
+			});
 		},
 	);
 
