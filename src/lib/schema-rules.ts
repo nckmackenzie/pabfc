@@ -82,53 +82,70 @@ export const dateRangeWithSearchSchema = z
 		}
 	});
 
-export const reportDateRangeSchemaWithRequired = z
+export const dateRangeSchema = z
 	.object({
-		from: z.iso.date("Start date must be a valid date"),
-		to: z.iso.date("End date must be a valid date"),
+		dateRange: z
+			.object({
+				from: z.iso.date().optional(),
+				to: z.iso.date().optional(),
+			})
+			.optional(),
 	})
 	.superRefine((data, ctx) => {
-		if (data.from && data.to && new Date(data.from) > new Date(data.to)) {
+		const { from, to } = data.dateRange || {};
+
+		if ((from && !to) || (!from && to)) {
 			ctx.addIssue({
 				code: "custom",
-				message: "Start date cannot be after end date",
-				path: ["from"],
+				message: "Both 'from' and 'to' must be provided together",
+				path: [from ? "dateRange.to" : "dateRange.from"],
+			});
+		}
+
+		if (from && to && to < from) {
+			ctx.addIssue({
+				code: "custom",
+				message: "'to' date cannot be earlier than 'from' date",
+				path: ["dateRange.to"],
 			});
 		}
 	});
 
-export const reportWithClientAndDateRangeSchema = z.object({
-	...reportDateRangeSchema.shape,
-	clientId: z.string().optional(),
-});
-
-export const reportWithClientAndDateRangeSchemaWithRequired = z
+export const dateRangeRequiredSchema = z
 	.object({
-		from: z.iso.datetime("Start date must be a valid date"),
-		to: z.iso.datetime("End date must be a valid date"),
-		clientId: requiredStringSchemaEntry("Client is required"),
+		dateRange: z.object({
+			from: z.iso
+				.date({
+					error: (iss) =>
+						!iss.input ? "Select start date" : "Invalid start date",
+				})
+				.optional(),
+			to: z.iso
+				.date({
+					error: (iss) => (!iss.input ? "Select end date" : "Invalid end date"),
+				})
+				.optional(),
+		}),
 	})
-	.superRefine((data, ctx) => {
-		if (data.from && data.to && new Date(data.from) > new Date(data.to)) {
+	.superRefine(({ dateRange: { from, to } }, ctx) => {
+		if (!from || !to) {
 			ctx.addIssue({
 				code: "custom",
-				message: "Start date cannot be after end date",
-				path: ["from"],
+				message: "Both 'from' and 'to' must be provided together",
+				path: ["dateRange"],
+			});
+			return;
+		}
+		if (
+			new Date(to).setHours(0, 0, 0, 0) < new Date(from).setHours(0, 0, 0, 0)
+		) {
+			ctx.addIssue({
+				code: "custom",
+				message: "End date cannot be before start date",
+				path: ["dateRange.to"],
 			});
 		}
 	});
-
-export const validateReportWithClientAndDateRange = (
-	clientId: string | undefined,
-	from: string | undefined,
-	to: string | undefined,
-) => {
-	return reportWithClientAndDateRangeSchemaWithRequired.safeParse({
-		clientId,
-		from,
-		to,
-	}).success;
-};
 
 export const searchParamsInputSchema = z.object({
 	q: optionalStringSchemaEntry(),
