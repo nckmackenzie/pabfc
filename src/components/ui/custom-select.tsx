@@ -27,6 +27,7 @@ interface ComboBoxProps {
 	commandPlaceholder?: string;
 	isInvalid?: boolean;
 	addNew?: React.ReactNode;
+	disabled?: boolean;
 }
 
 export function ComboBox({
@@ -37,6 +38,7 @@ export function ComboBox({
 	commandPlaceholder,
 	isInvalid,
 	addNew,
+	disabled,
 }: ComboBoxProps) {
 	const [open, setOpen] = React.useState(false);
 
@@ -51,6 +53,7 @@ export function ComboBox({
 						"w-full justify-between h-10 shadow-none!",
 						isInvalid && "border-destructive",
 					)}
+					disabled={disabled}
 				>
 					{value
 						? items.find((item) => item.value === value)?.label
