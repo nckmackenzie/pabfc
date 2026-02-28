@@ -37,7 +37,7 @@ function RouteComponent() {
 				description="View detailed reports of all payments received."
 			/>
 			<ReportFilters />
-			{filters.dateRange && filters.reportType && (
+			{filters.dateRange?.from && filters.dateRange?.to && filters.reportType && (
 				<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
 					<ReceiptReportDataTable />
 				</ErrorBoundaryWithSuspense>
