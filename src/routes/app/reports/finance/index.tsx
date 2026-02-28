@@ -66,13 +66,15 @@ function ReportCard({
 				</div>
 				<Link
 					to={to}
+					aria-label={`Open ${title} report`}
 					className={cn(
 						buttonVariants({ variant: "default", size: "icon-sm" }),
-						"ml-auto opacity-0 group-hover:opacity-100 transition-opacity rounded-full",
+						"ml-auto opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity rounded-full",
 					)}
 				>
-					<span className="absolute inset-0"></span>
-					<ArrowRightIcon className="size-4" />
+					<span className="absolute inset-0" aria-hidden="true" />
+					<span className="sr-only">Open {title} report</span>
+					<ArrowRightIcon className="size-4" aria-hidden="true" />
 				</Link>
 			</div>
 		</PermissionGate>
