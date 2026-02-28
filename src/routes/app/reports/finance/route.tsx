@@ -26,8 +26,7 @@ function FinanceReportLayout() {
 		select: (location) => location.pathname,
 	});
 
-	const isIndexRoute = pathname === "/app/reports/finance";
-
+	const isIndexRoute = pathname.replace(/\/+$/, "") === "/app/reports/finance";
 	return (
 		<div className="space-y-4">
 			{!isIndexRoute && (
