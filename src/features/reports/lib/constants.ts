@@ -1,6 +1,5 @@
 import { linkOptions } from "@tanstack/react-router";
 import { BanknoteArrowDownIcon, BanknoteArrowUpIcon } from "lucide-react";
-import type { Permission } from "@/lib/permissions/constants";
 
 export const RECEIPTS_REPORT_TYPE = [
 	{ label: "All Receipts", value: "all" },
@@ -13,13 +12,13 @@ export const REPORT_CARDS = linkOptions([
 		title: "Receipts Report",
 		description: "Report for all payments received.",
 		icon: BanknoteArrowUpIcon,
-		permission: "reports:receipts-report" as Permission,
+		permission: "reports:receipts-report",
 	},
 	{
 		to: "/app/reports/finance/expenses",
 		title: "Expenses Report",
 		description: "Report for all expenses.",
 		icon: BanknoteArrowDownIcon,
-		permission: "reports:expenses-report" as Permission,
+		permission: "reports:expenses-report",
 	},
 ]);
