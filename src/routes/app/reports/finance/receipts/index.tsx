@@ -59,7 +59,7 @@ function ReportFilters() {
 				to: filters.dateRange?.to,
 			},
 			reportType: filters.reportType,
-			memberId: undefined,
+			memberId: filters.memberId,
 		} as ReceiptValidateSchema,
 		validators: {
 			onSubmit: receiptReportFormSchema,
