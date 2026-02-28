@@ -36,6 +36,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useExportToCsv } from "@/hooks/use-export-to-csv";
 import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData, TValue> {
@@ -44,6 +45,8 @@ interface DataTableProps<TData, TValue> {
 	denseCell?: boolean;
 	withPaginationButtons?: boolean;
 	customFooter?: React.ReactNode;
+	exportToExcel?: boolean;
+	exportFileName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -52,8 +55,11 @@ export function DataTable<TData, TValue>({
 	withPaginationButtons = true,
 	denseCell = false,
 	customFooter,
+	exportToExcel = false,
+	exportFileName = "datatable-export.csv",
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = React.useState<SortingState>([]);
+	const { exportToCsv } = useExportToCsv();
 
 	const table = useReactTable({
 		data,
@@ -67,8 +73,103 @@ export function DataTable<TData, TValue>({
 		},
 	});
 
+	const getHeaderLabel = React.useCallback(
+		(header: ReturnType<typeof flexRender>, fallback: string) => {
+			if (typeof header === "string" || typeof header === "number") {
+				return String(header);
+			}
+			if (React.isValidElement(header)) {
+				const title = header.props?.title;
+				if (typeof title === "string" || typeof title === "number") {
+					return String(title);
+				}
+			}
+			return fallback;
+		},
+		[],
+	);
+
+	const getValueFromAccessorKey = React.useCallback(
+		(row: TData, accessorKey: string) =>
+			accessorKey.split(".").reduce((value, key) => {
+				if (value && typeof value === "object" && key in value) {
+					return (value as Record<string, unknown>)[key];
+				}
+				return undefined;
+			}, row as unknown),
+		[],
+	);
+
+	const exportableColumns = React.useMemo(() => {
+		return table
+			.getAllLeafColumns()
+			.filter(
+				(column) =>
+					column.getIsVisible() &&
+					(column.columnDef.accessorKey || column.columnDef.accessorFn),
+			);
+	}, [table]);
+
+	const exportHeaders = React.useMemo(() => {
+		const headerMap = new Map<string, string>();
+		table.getHeaderGroups().forEach((group) => {
+			group.headers.forEach((header) => {
+				if (header.isPlaceholder) {
+					return;
+				}
+				const rendered = flexRender(
+					header.column.columnDef.header,
+					header.getContext(),
+				);
+				const label = getHeaderLabel(rendered, header.column.id);
+				headerMap.set(header.column.id, label);
+			});
+		});
+		return headerMap;
+	}, [getHeaderLabel, table]);
+
+	const handleExport = React.useCallback(() => {
+		const exportData = data.map((row, index) => {
+			const record: Record<string, unknown> = {};
+			exportableColumns.forEach((column) => {
+				const headerLabel = exportHeaders.get(column.id) ?? column.id;
+				if (column.columnDef.accessorFn) {
+					record[headerLabel] = column.columnDef.accessorFn(row, index);
+					return;
+				}
+				const accessorKey = column.columnDef.accessorKey;
+				if (typeof accessorKey === "string") {
+					record[headerLabel] = getValueFromAccessorKey(row, accessorKey);
+					return;
+				}
+				if (accessorKey) {
+					record[headerLabel] = (row as Record<string, unknown>)[
+						accessorKey as keyof TData
+					];
+				}
+			});
+			return record;
+		});
+
+		exportToCsv(exportData, exportFileName);
+	}, [
+		data,
+		exportFileName,
+		exportHeaders,
+		exportToCsv,
+		exportableColumns,
+		getValueFromAccessorKey,
+	]);
+
 	return (
 		<>
+			{exportToExcel && (
+				<div className="flex justify-end mb-2">
+					<Button variant="outline" size="sm" onClick={handleExport}>
+						Export to Excel
+					</Button>
+				</div>
+			)}
 			<div className="rounded-md border overflow-x-auto bg-card">
 				<Table>
 					<TableHeader className="bg-secondary">

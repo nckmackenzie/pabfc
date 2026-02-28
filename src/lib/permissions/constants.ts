@@ -57,5 +57,13 @@ export const PERMISSIONS = [
 	"financial-years:update",
 	"financial-years:delete",
 	"financial-years:close",
+	"reports:receipts-report",
+	"reports:expenses-report",
+	"reports:invoices-report",
+	"reports:payments-report",
+	"reports:bankings-report",
+	"reports:income-statement",
+	"reports:trial-balance",
+	"reports:balance-sheet",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];

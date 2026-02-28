@@ -372,7 +372,7 @@ export const getExpenseJournal = createServerFn()
 					eq(journalEntries.source, "expenses"),
 				),
 			)
-			.orderBy(desc(journalLines.lineNumber));
+			.orderBy(asc(journalLines.dc));
 	});
 
 export const deleteExpense = createServerFn({ method: "POST" })

@@ -16,6 +16,7 @@ export type ComboboxProps = {
 	className?: string;
 	items: Array<Option>;
 	addNew?: React.ReactNode;
+	disabled?: boolean;
 };
 
 export function ComboboxField({
@@ -26,6 +27,7 @@ export function ComboboxField({
 	className,
 	items,
 	addNew,
+	disabled,
 }: ComboboxProps) {
 	const field = useFieldContext<string>();
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
@@ -45,6 +47,7 @@ export function ComboboxField({
 				items={items}
 				isInvalid={isInvalid}
 				addNew={addNew}
+				disabled={disabled}
 			/>
 			{helperText && <FieldDescription>{helperText}</FieldDescription>}
 			{isInvalid && <FieldError errors={field.state.meta.errors} />}
