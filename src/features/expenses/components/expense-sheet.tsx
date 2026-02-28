@@ -75,7 +75,9 @@ export function ExpenseJournal({ expenseId }: { expenseId: string }) {
 												<TableCell className="font-medium">
 													{dateFormat(journal.date, "reporting")}
 												</TableCell>
-												<TableCell>{journal.memo}</TableCell>
+												<TableCell className="capitalize">
+													{journal.memo?.toLowerCase()}
+												</TableCell>
 												<TableCell className="capitalize">
 													{journal.account}
 												</TableCell>
