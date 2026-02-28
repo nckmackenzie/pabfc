@@ -5,7 +5,6 @@ export const Route = createFileRoute("/app/reports/finance/expenses/")({
 	head: () => ({
 		meta: [{ title: "Expenses Reports / Prime Age Beauty & Fitness Center" }],
 	}),
-	}),
 	staticData: {
 		breadcrumb: "Expenses reports",
 	},
