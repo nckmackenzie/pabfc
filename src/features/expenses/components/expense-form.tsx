@@ -27,7 +27,7 @@ import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { useAppForm } from "@/lib/form";
 import { currencyFormatter } from "@/lib/helpers";
-import { cn, transformOptions } from "@/lib/utils";
+import { transformOptions } from "@/lib/utils";
 
 type ExpenseFormProps = {
 	expenseNo: number;
@@ -383,52 +383,49 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 					)}
 				</form.Field>
 				<Separator className="my-4" />
-				<div
-					className={cn("my-4 gap-4", {
-						"grid md:grid-cols-3": !isView,
-						"flex ": isView,
-					})}
-				>
-					{!isView && (
-						<form.Field name="attachments">
-							{(field) => (
-								<div className="mt-4 space-y-2 lg:col-span-2 max-w-lg">
+				<div className="my-4 gap-4 grid md:grid-cols-3">
+					<form.Field name="attachments">
+						{(field) => (
+							<div className="mt-4 space-y-2 lg:col-span-2 max-w-lg">
+								{!isView && (
 									<FormUploader
 										value={field.state.value}
 										onChange={(newAttachments) =>
 											field.handleChange(newAttachments)
 										}
 									/>
-									{field.state.value?.map((attachment, index) => (
-										<div
-											// biome-ignore lint/suspicious/noArrayIndexKey: <>
-											key={index}
-											className="flex items-center justify-between p-3 border rounded-lg bg-card shadow-sm"
-										>
-											<div className="flex items-center gap-3">
-												<div className="p-2 bg-primary/10 rounded-full">
-													<span className="text-primary text-xs">📄</span>
-												</div>
-												<div className="flex flex-col">
-													<span className="text-sm font-medium truncate max-w-[200px]">
-														{attachment.filename}
-													</span>
-													<Button
-														asChild
-														variant="link"
-														size="sm"
-														className="justify-start"
-													>
-														<a
-															href={attachment.url}
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															View
-														</a>
-													</Button>
-												</div>
+								)}
+								{field.state.value?.map((attachment, index) => (
+									<div
+										// biome-ignore lint/suspicious/noArrayIndexKey: <>
+										key={index}
+										className="flex items-center justify-between p-3 border rounded-lg bg-card shadow-sm"
+									>
+										<div className="flex items-center gap-3">
+											<div className="p-2 bg-primary/10 rounded-full">
+												<span className="text-primary text-xs">📄</span>
 											</div>
+											<div className="flex flex-col">
+												<span className="text-sm font-medium truncate max-w-[200px]">
+													{attachment.filename}
+												</span>
+												<Button
+													asChild
+													variant="link"
+													size="sm"
+													className="justify-start"
+												>
+													<a
+														href={attachment.url}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														View
+													</a>
+												</Button>
+											</div>
+										</div>
+										{!isView && (
 											<Button
 												type="button"
 												variant="ghost"
@@ -438,17 +435,14 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 											>
 												<TrashIcon className="size-4" />
 											</Button>
-										</div>
-									))}
-								</div>
-							)}
-						</form.Field>
-					)}
-					<div
-						className={cn("bg-secondary p-4 rounded-md space-y-4", {
-							"w-full md:w-sm md:ml-auto": isView,
-						})}
-					>
+										)}
+									</div>
+								))}
+							</div>
+						)}
+					</form.Field>
+
+					<div className="bg-secondary p-4 rounded-md space-y-4">
 						<h2 className="text-sm font-semibold">Expense Summary</h2>
 						<div className="flex items-center justify-between">
 							<div className="text-xs font-medium text-muted-foreground">
