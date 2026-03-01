@@ -14,7 +14,7 @@ export const Route = createFileRoute("/app/expenses/$expenseId/view")({
 	}),
 	pendingComponent: FormLoader,
 	staticData: {
-		breadcrumb: (match) => `View Expense ${match.loaderData.expenseNo}`,
+		breadcrumb: `View Expense`,
 	},
 });
 
