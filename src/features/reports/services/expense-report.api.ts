@@ -44,7 +44,9 @@ export const getExpenseReport = createServerFn()
 				expenseDate: expenseHeaders.expenseDate,
 				expenseNo: expenseHeaders.expenseNo,
 				payee: payees.name,
-				amount: expenseDetails.lineTotal,
+				amount: sql<string>`coalesce(sum(${expenseDetails.lineTotal}), 0)`.as(
+					"amount",
+				),
 				paymentMethod: expenseHeaders.paymentMethod,
 			})
 			.from(expenseHeaders)
@@ -65,7 +67,6 @@ export const getExpenseReport = createServerFn()
 				expenseHeaders.expenseDate,
 				expenseHeaders.expenseNo,
 				payees.name,
-				expenseHeaders.totalAmount,
 				expenseHeaders.paymentMethod,
 			)
 			.orderBy(asc(expenseHeaders.expenseDate), asc(expenseHeaders.expenseNo));
