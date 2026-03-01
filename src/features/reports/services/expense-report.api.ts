@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, gte, inArray, lte, type SQL } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	expenseDetails,
@@ -30,7 +30,11 @@ export const getExpenseReport = createServerFn()
 
 		if (reportType === "by-expense-account") {
 			if (!accountId) throw new ApplicationError("Expense account is required");
-			filters.push(eq(expenseDetails.accountId, Number(accountId)));
+			const parsedAccountId = Number.parseInt(accountId, 10);
+			if (!Number.isInteger(parsedAccountId) || parsedAccountId <= 0) {
+				throw new ApplicationError("Invalid expense account");
+			}
+			filters.push(eq(expenseDetails.accountId, parsedAccountId));
 		}
 
 		if (reportType === "by-payee") {
