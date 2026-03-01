@@ -6,6 +6,12 @@ export const RECEIPTS_REPORT_TYPE = [
 	{ label: "By Member", value: "by-member" },
 ] as const;
 
+export const EXPENSES_REPORT_TYPE = [
+	{ label: "All", value: "all" },
+	{ label: "By Expense Account", value: "by-expense-account" },
+	{ label: "By Payee", value: "by-payee" },
+] as const;
+
 export const REPORT_CARDS = linkOptions([
 	{
 		to: "/app/reports/finance/receipts",
