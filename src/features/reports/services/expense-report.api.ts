@@ -44,7 +44,7 @@ export const getExpenseReport = createServerFn()
 				expenseDate: expenseHeaders.expenseDate,
 				expenseNo: expenseHeaders.expenseNo,
 				payee: payees.name,
-				amount: expenseHeaders.totalAmount,
+				amount: expenseDetails.lineTotal,
 				paymentMethod: expenseHeaders.paymentMethod,
 			})
 			.from(expenseHeaders)
