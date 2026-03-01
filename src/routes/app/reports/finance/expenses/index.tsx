@@ -100,9 +100,7 @@ function ReportFilters() {
 		},
 	});
 
-	const [reportType] = useStore(form.store, (state) => [
-		state.values.reportType,
-	]);
+	const reportType = useStore(form.store, (state) => state.values.reportType);
 
 	useEffect(() => {
 		if (reportType === "all") {
