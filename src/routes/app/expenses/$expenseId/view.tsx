@@ -4,17 +4,17 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import { ExpenseForm } from "@/features/expenses/components/expense-form";
 import { requirePermission } from "@/lib/permissions/permissions";
 
-export const Route = createFileRoute("/app/expenses/$expenseId/edit")({
+export const Route = createFileRoute("/app/expenses/$expenseId/view")({
+	component: RouteComponent,
 	beforeLoad: async () => {
-		await requirePermission("expenses:update");
+		await requirePermission("expenses:view");
 	},
 	head: () => ({
-		meta: [{ title: "Edit Expense / Prime Age Beauty & Fitness Center" }],
+		meta: [{ title: "Expense View / Prime Age Beauty & Fitness Center" }],
 	}),
-	component: RouteComponent,
 	pendingComponent: FormLoader,
 	staticData: {
-		breadcrumb: "Edit Expense",
+		breadcrumb: `View Expense`,
 	},
 });
 
@@ -28,9 +28,9 @@ function RouteComponent() {
 			hasBackLink
 			backPath="/app/expenses"
 			buttonText="Expenses List"
-			permissions={["expenses:update"]}
+			permissions={["expenses:view"]}
 		>
-			<ExpenseForm expenseNo={expense.expenseNo} expense={expense} />
+			<ExpenseForm expenseNo={expense.expenseNo} expense={expense} isView />
 		</ProtectedPageWithWrapper>
 	);
 }

@@ -1,5 +1,5 @@
 import { useStore } from "@tanstack/react-form";
-import { createFileRoute, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
 import { FieldGroup } from "@/components/ui/field";
@@ -7,6 +7,7 @@ import { DatatableSkeleton } from "@/components/ui/loaders";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { Wrapper } from "@/components/ui/wrapper";
+import { getMembers } from "@/features/members/services/members.queries.api";
 import { ReceiptReportDataTable } from "@/features/reports/components/receipt-report-datatable";
 import { RECEIPTS_REPORT_TYPE } from "@/features/reports/lib/constants";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
+import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/reports/finance/receipts/")({
 	component: RouteComponent,
@@ -25,6 +27,15 @@ export const Route = createFileRoute("/app/reports/finance/receipts/")({
 	}),
 	staticData: {
 		breadcrumb: "Receipt reports",
+	},
+	loader: async () => {
+		const members = await getMembers({ data: {} });
+		return {
+			members: members.map(({ id, fullName }) => ({
+				value: id,
+				label: toTitleCase(fullName),
+			})),
+		};
 	},
 });
 
@@ -37,21 +48,20 @@ function RouteComponent() {
 				description="View detailed reports of all payments received."
 			/>
 			<ReportFilters />
-			{filters.dateRange?.from && filters.dateRange?.to && filters.reportType && (
-				<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
-					<ReceiptReportDataTable />
-				</ErrorBoundaryWithSuspense>
-			)}
+			{filters.dateRange?.from &&
+				filters.dateRange?.to &&
+				filters.reportType && (
+					<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
+						<ReceiptReportDataTable />
+					</ErrorBoundaryWithSuspense>
+				)}
 		</Wrapper>
 	);
 }
 
 function ReportFilters() {
 	const { filters, setFilters } = useFilters(Route.id);
-	const members = useRouteContext({
-		from: "/app/reports/finance",
-		select: (state) => state.members,
-	});
+	const { members } = Route.useLoaderData();
 	const form = useAppForm({
 		defaultValues: {
 			dateRange: {

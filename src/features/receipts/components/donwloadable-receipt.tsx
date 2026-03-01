@@ -1,11 +1,4 @@
-import {
-	Document,
-	Image,
-	Page,
-	StyleSheet,
-	Text,
-	View,
-} from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { generateRandomId } from "@/lib/utils";
 
 const styles = StyleSheet.create({

@@ -32,9 +32,10 @@ import { transformOptions } from "@/lib/utils";
 type ExpenseFormProps = {
 	expenseNo: number;
 	expense?: Awaited<ReturnType<typeof getExpense>>;
+	isView?: boolean;
 };
 
-export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
+export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 	const queryClient = useQueryClient();
 	const {
 		accounts,
@@ -86,6 +87,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 			onSubmit: expenseSchema,
 		},
 		onSubmit: ({ value }) => {
+			if (isView) return;
 			mutate(
 				{ ...value, id: expense?.id },
 				{
@@ -124,21 +126,40 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 
 	return (
 		<div className="space-y-6">
-			<PageHeader title="New Expense" description="Add a new expense" />
+			<PageHeader
+				title={
+					!expense ? "New Expense" : isView ? "View Expense" : "Edit Expense"
+				}
+				description={
+					!expense
+						? "Add a new expense"
+						: isView
+							? "View expense details"
+							: "Edit details of expense"
+				}
+			/>
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
+					if (isView) return;
 					form.handleSubmit();
 				}}
 			>
 				<FieldGroup className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
 					<form.AppField name="expenseNo">
-						{(field) => <field.Input readOnly label="Expense No" />}
+						{(field) => (
+							<field.Input readOnly label="Expense No" disabled={isView} />
+						)}
 					</form.AppField>
 					<form.AppField name="expenseDate">
 						{(field) => (
-							<field.Input type="date" label="Expense Date" required />
+							<field.Input
+								type="date"
+								label="Expense Date"
+								required
+								disabled={isView}
+							/>
 						)}
 					</form.AppField>
 					<div className="col-span-full lg:col-span-2">
@@ -150,6 +171,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 									placeholder="Select Payee"
 									items={transformOptions(payees || loaderPayees)}
 									addNew={<AddPayee />}
+									disabled={isView}
 								/>
 							)}
 						</form.AppField>
@@ -160,6 +182,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 								label="Payment Method"
 								required
 								placeholder="Select Payment Method"
+								disabled={isView}
 							>
 								{PAYMENT_METHODS.map((method) => (
 									<SelectItem key={method.value} value={method.value}>
@@ -172,7 +195,12 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 					{isBankAccount ? (
 						<form.AppField name="bankId">
 							{(field) => (
-								<field.Select label="Bank" required placeholder="Select Bank">
+								<field.Select
+									label="Bank"
+									required
+									placeholder="Select Bank"
+									disabled={isView}
+								>
 									{banks.map((method) => (
 										<SelectItem key={method.value} value={method.value}>
 											{method.label}
@@ -188,6 +216,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 									label="Crediting Account"
 									required
 									placeholder="Select Crediting Account"
+									disabled={isView}
 								>
 									{cashEquivalentAccounts.map((method) => (
 										<SelectItem key={method.value} value={method.value}>
@@ -204,6 +233,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 								label="Reference"
 								placeholder="Enter Reference"
 								required
+								disabled={isView}
 							/>
 						)}
 					</form.AppField>
@@ -214,33 +244,35 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 						<div className="space-y-4">
 							<div className="flex md:items-center md:justify-between md:flex-row flex-col gap-4">
 								<h2 className="text-lg font-semibold">Expense Details</h2>
-								<ButtonGroup>
-									<Button
-										type="button"
-										variant="secondary"
-										onClick={() =>
-											field.pushValue({
-												accountId: "",
-												quantity: 1,
-												unitPrice: 0,
-												vatType: "none",
-												id: nanoid(),
-											})
-										}
-									>
-										<PlusIcon className="size-4" aria-hidden="true" />
-										Add Line
-									</Button>
-									<Button
-										type="button"
-										variant="ghost"
-										onClick={() => field.clearValues()}
-										className="bg-destructive/10 text-destructive hover:bg-destructive/40"
-									>
-										<MinusIcon className="size-4" aria-hidden="true" />
-										Clear Lines
-									</Button>
-								</ButtonGroup>
+								{!isView && (
+									<ButtonGroup>
+										<Button
+											type="button"
+											variant="secondary"
+											onClick={() =>
+												field.pushValue({
+													accountId: "",
+													quantity: 1,
+													unitPrice: 0,
+													vatType: "none",
+													id: nanoid(),
+												})
+											}
+										>
+											<PlusIcon className="size-4" aria-hidden="true" />
+											Add Line
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											onClick={() => field.clearValues()}
+											className="bg-destructive/10 text-destructive hover:bg-destructive/40"
+										>
+											<MinusIcon className="size-4" aria-hidden="true" />
+											Clear Lines
+										</Button>
+									</ButtonGroup>
+								)}
 							</div>
 							{field.state.value.map((item, index) => {
 								const lineSubTotal =
@@ -259,6 +291,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 															label="Account"
 															required
 															placeholder="Select Account"
+															disabled={isView}
 														>
 															{accounts.map((account) => (
 																<SelectItem
@@ -278,6 +311,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 														label="Quantity"
 														type="number"
 														required
+														disabled={isView}
 													/>
 												)}
 											</form.AppField>
@@ -288,6 +322,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 															type="number"
 															label="Unit Price"
 															required
+															disabled={isView}
 														/>
 													)}
 												</form.AppField>
@@ -299,6 +334,7 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 															label="VAT Type"
 															required
 															placeholder="Select VAT Type"
+															disabled={isView}
 														>
 															<SelectItem value="none">None</SelectItem>
 															<SelectItem value="inclusive">
@@ -322,18 +358,25 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 										<FieldGroup className="flex flex-row! items-center justify-between">
 											<div className="flex-1">
 												<form.AppField name={`details[${index}].description`}>
-													{(field) => <field.Input label="Description" />}
+													{(field) => (
+														<field.Input
+															label="Description"
+															disabled={isView}
+														/>
+													)}
 												</form.AppField>
 											</div>
-											<Button
-												type="button"
-												variant="destructive"
-												onClick={() => field.removeValue(index)}
-												className="self-end"
-												size="icon-lg"
-											>
-												<TrashIcon className="size-4" aria-hidden="true" />
-											</Button>
+											{!isView && (
+												<Button
+													type="button"
+													variant="destructive"
+													onClick={() => field.removeValue(index)}
+													className="self-end"
+													size="icon-lg"
+												>
+													<TrashIcon className="size-4" aria-hidden="true" />
+												</Button>
+											)}
 										</FieldGroup>
 									</div>
 								);
@@ -342,16 +385,18 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 					)}
 				</form.Field>
 				<Separator className="my-4" />
-				<div className="my-4 grid md:grid-cols-3 gap-4">
+				<div className="my-4 gap-4 grid md:grid-cols-3">
 					<form.Field name="attachments">
 						{(field) => (
 							<div className="mt-4 space-y-2 lg:col-span-2 max-w-lg">
-								<FormUploader
-									value={field.state.value}
-									onChange={(newAttachments) =>
-										field.handleChange(newAttachments)
-									}
-								/>
+								{!isView && (
+									<FormUploader
+										value={field.state.value}
+										onChange={(newAttachments) =>
+											field.handleChange(newAttachments)
+										}
+									/>
+								)}
 								{field.state.value?.map((attachment, index) => (
 									<div
 										// biome-ignore lint/suspicious/noArrayIndexKey: <>
@@ -382,20 +427,23 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 												</Button>
 											</div>
 										</div>
-										<Button
-											type="button"
-											variant="ghost"
-											size="icon"
-											onClick={() => field.removeValue(index)}
-											className="text-destructive hover:text-destructive/80"
-										>
-											<TrashIcon className="size-4" />
-										</Button>
+										{!isView && (
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												onClick={() => field.removeValue(index)}
+												className="text-destructive hover:text-destructive/80"
+											>
+												<TrashIcon className="size-4" />
+											</Button>
+										)}
 									</div>
 								))}
 							</div>
 						)}
 					</form.Field>
+
 					<div className="bg-secondary p-4 rounded-md space-y-4">
 						<h2 className="text-sm font-semibold">Expense Summary</h2>
 						<div className="flex items-center justify-between">
@@ -424,15 +472,17 @@ export function ExpenseForm({ expenseNo, expense }: ExpenseFormProps) {
 						</div>
 					</div>
 				</div>
-				<FieldGroup className="mt-4">
-					<form.AppForm>
-						<form.SubmitButton
-							isLoading={isPending}
-							buttonText={expense ? "Update Expense" : "Create Expense"}
-							withReset
-						/>
-					</form.AppForm>
-				</FieldGroup>
+				{!isView && (
+					<FieldGroup className="mt-4">
+						<form.AppForm>
+							<form.SubmitButton
+								isLoading={isPending}
+								buttonText={expense ? "Update Expense" : "Create Expense"}
+								withReset
+							/>
+						</form.AppForm>
+					</FieldGroup>
+				)}
 			</form>
 		</div>
 	);
