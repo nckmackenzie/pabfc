@@ -87,6 +87,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 			onSubmit: expenseSchema,
 		},
 		onSubmit: ({ value }) => {
+			if (isView) return;
 			mutate(
 				{ ...value, id: expense?.id },
 				{
@@ -141,6 +142,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
+					if (isView) return;
 					form.handleSubmit();
 				}}
 			>
