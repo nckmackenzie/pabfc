@@ -56,6 +56,12 @@ export const Route = createFileRoute("/app/reports/finance/expenses/")({
 
 function RouteComponent() {
 	const { filters } = useFilters(Route.id);
+	const hasRequiredFilters =
+		Boolean(filters.dateRange?.from && filters.dateRange?.to) &&
+		(filters.reportType === "all" ||
+			(filters.reportType === "by-expense-account" &&
+				Boolean(filters.accountId)) ||
+			(filters.reportType === "by-payee" && Boolean(filters.payeeId)));
 
 	return (
 		<Wrapper size="full">
@@ -64,13 +70,11 @@ function RouteComponent() {
 				description="View detailed reports of expenses by date, account, or payee."
 			/>
 			<ReportFilters />
-			{filters.dateRange?.from &&
-				filters.dateRange?.to &&
-				filters.reportType && (
-					<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
-						<ExpenseReportDataTable />
-					</ErrorBoundaryWithSuspense>
-				)}
+			{hasRequiredFilters && (
+				<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
+					<ExpenseReportDataTable />
+				</ErrorBoundaryWithSuspense>
+			)}
 		</Wrapper>
 	);
 }
