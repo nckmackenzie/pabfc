@@ -240,3 +240,8 @@ export function percentage(partialValue: number, totalValue: number) {
 		? 0
 		: (100 * partialValue) / totalValue;
 }
+
+export const toNumber = (value: unknown) => {
+	const n = Number.parseFloat(String(value ?? "0"));
+	return Number.isFinite(n) ? n : 0;
+};
