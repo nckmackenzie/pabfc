@@ -47,7 +47,11 @@ function RouteComponent() {
 	const hasRequiredFilters =
 		filters.reportType === "overdue" || filters.reportType === "ageing-summary"
 			? true
-			: Boolean(filters.dateRange?.from && filters.dateRange?.to) &&
+			: Boolean(
+					filters.reportType === "all" ||
+						filters.reportType === "vendor-spend-summary",
+				) &&
+				Boolean(filters.dateRange?.from && filters.dateRange?.to) &&
 				Boolean(filters.vendorId);
 
 	return (
@@ -91,7 +95,7 @@ function Filters() {
 	useEffect(() => {
 		if (reportType === "overdue" || reportType === "ageing-summary") {
 			form.setFieldValue("vendorId", undefined);
-			form.setFieldValue("dateRange", { from: undefined, to: undefined });
+			form.setFieldValue("dateRange", undefined);
 		}
 	}, [reportType, form]);
 
