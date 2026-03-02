@@ -6,7 +6,7 @@ import { TableCell } from "@/components/ui/table";
 import { getInvoicesReport } from "@/features/reports/services/invoices.api";
 import type { InvoiceReportFormSchema } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
-import { currencyFormatter, dateFormat } from "@/lib/helpers";
+import { currencyFormatter, dateFormat, toNumber } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 type ReportType = InvoiceReportFormSchema["reportType"];
@@ -254,9 +254,9 @@ export function InvoicesReportDataTable() {
 			const rows = data as Array<AllInvoicesRow>;
 			const totals = rows.reduce(
 				(acc, row) => {
-					acc.amount += Number.parseFloat(row.amount);
-					acc.amountPaid += Number.parseFloat(row.amountPaid);
-					acc.balance += Number.parseFloat(row.balance);
+					acc.amount += toNumber(row.amount);
+					acc.amountPaid += toNumber(row.amountPaid);
+					acc.balance += toNumber(row.balance);
 					return acc;
 				},
 				{ amount: 0, amountPaid: 0, balance: 0 },
