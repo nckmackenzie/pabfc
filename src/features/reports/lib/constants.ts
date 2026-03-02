@@ -1,5 +1,9 @@
 import { linkOptions } from "@tanstack/react-router";
-import { BanknoteArrowDownIcon, BanknoteArrowUpIcon } from "lucide-react";
+import {
+	BanknoteArrowDownIcon,
+	BanknoteArrowUpIcon,
+	FileTextIcon,
+} from "lucide-react";
 
 export const RECEIPTS_REPORT_TYPE = [
 	{ label: "All Receipts", value: "all" },
@@ -10,6 +14,13 @@ export const EXPENSES_REPORT_TYPE = [
 	{ label: "All", value: "all" },
 	{ label: "By Expense Account", value: "by-expense-account" },
 	{ label: "By Payee", value: "by-payee" },
+] as const;
+
+export const INVOICES_REPORT_TYPE = [
+	{ label: "All", value: "all" },
+	{ label: "Overdue", value: "overdue" },
+	{ label: "Vendor Spend Summary", value: "vendor-spend-summary" },
+	{ label: "Ageing Summary", value: "ageing-summary" },
 ] as const;
 
 export const REPORT_CARDS = linkOptions([
@@ -26,5 +37,12 @@ export const REPORT_CARDS = linkOptions([
 		description: "Report for all expenses.",
 		icon: BanknoteArrowDownIcon,
 		permission: "reports:expenses-report",
+	},
+	{
+		to: "/app/reports/finance/invoices",
+		title: "Invoices Report",
+		description: "Report for all invoices.",
+		icon: FileTextIcon,
+		permission: "reports:invoices-report",
 	},
 ]);
