@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
 	EXPENSES_REPORT_TYPE,
+	INVOICES_REPORT_TYPE,
 	RECEIPTS_REPORT_TYPE,
 } from "@/features/reports/lib/constants";
 import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
@@ -69,4 +70,44 @@ export const expenseReportFormSchema = dateRangeRequiredSchema
 		}
 	});
 
+export const invoiceValidateSchema = dateRangeSchema.safeExtend({
+	reportType: z.enum(INVOICES_REPORT_TYPE.map((type) => type.value)).optional(),
+	vendorId: z.string().optional(),
+});
+
+export const invoiceReportFormSchema = dateRangeSchema
+	.safeExtend({
+		reportType: z.enum(
+			INVOICES_REPORT_TYPE.map((type) => type.value),
+			{
+				error: (iss) =>
+					!iss.input ? "Select report type" : "Invalid report type",
+			},
+		),
+		vendorId: z.string().optional(),
+	})
+	.superRefine((data, ctx) => {
+		const requiresDateRange =
+			data.reportType === "vendor-spend-summary" || data.reportType === "all";
+
+		if (requiresDateRange) {
+			if (!data.dateRange?.from || !data.dateRange?.to) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Select date range",
+					path: ["dateRange"],
+				});
+			}
+
+			if (!data.vendorId) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Select vendor",
+					path: ["vendorId"],
+				});
+			}
+		}
+	});
+
 export type ExpenseValidateSchema = z.infer<typeof expenseReportFormSchema>;
+export type InvoiceReportFormSchema = z.infer<typeof invoiceReportFormSchema>;

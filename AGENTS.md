@@ -5,6 +5,7 @@
 - Route files are in `src/routes/` with TanStack Router; the generated tree is `src/routeTree.gen.ts`.
 - Shared UI and utilities live in `src/components/`, `src/lib/`, `src/hooks/`, and `src/services/`.
 - Database schema and seed logic are in `src/drizzle/` with Drizzle Kit config at `drizzle.config.ts`.
+- `src/drizzle/schema.ts` is the authoritative source for database structure and must be referenced whenever database schema details are needed.
 - Static assets and logos are in `public/`.
 
 ## Build, Test, and Development Commands

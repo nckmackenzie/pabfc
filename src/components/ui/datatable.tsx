@@ -166,7 +166,7 @@ export function DataTable<TData, TValue>({
 
 	return (
 		<>
-			{exportToExcel && (
+			{exportToExcel && data.length > 0 && (
 				<div className="flex justify-end mb-2">
 					<Button variant="outline" size="sm" onClick={handleExport}>
 						Export to Excel
