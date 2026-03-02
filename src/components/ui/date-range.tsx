@@ -36,6 +36,7 @@ type DateRangePickerProps = {
 	onDateChange?: (dateRange: DateRange) => void;
 	onReset?: () => void;
 	className?: string;
+	disabled?: boolean;
 };
 
 export function DatePicker({
@@ -43,6 +44,7 @@ export function DatePicker({
 	initialDateRange,
 	onReset,
 	className,
+	disabled,
 }: DateRangePickerProps) {
 	const today = new Date();
 	const presets = [
@@ -131,6 +133,7 @@ export function DatePicker({
 					placeholder={!date?.from && !date?.to}
 					className={cn("w-full md:max-w-lg", className)}
 					size="lg"
+					disabled={disabled}
 				>
 					<CalendarIcon />
 					{date?.from ? (
