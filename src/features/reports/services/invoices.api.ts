@@ -27,14 +27,10 @@ export const getInvoicesReport = createServerFn()
 
 		if (isDateVendorReport) {
 			if (!dateRange?.from || !dateRange?.to) {
-				throw new ApplicationError(
-					"Date range is required for all invoices report",
-				);
+				throw new ApplicationError("Date range is required for this report");
 			}
 			if (!vendorId) {
-				throw new ApplicationError(
-					"Vendor is required for all invoices report",
-				);
+				throw new ApplicationError("Vendor is required for this report");
 			}
 		}
 
