@@ -291,9 +291,9 @@ export function InvoicesReportDataTable() {
 			const totals = rows.reduce(
 				(acc, row) => {
 					acc.totalInvoices += Number(row.totalInvoices);
-					acc.totalAmount += Number.parseFloat(row.totalAmount);
-					acc.totalAmountPaid += Number.parseFloat(row.totalAmountPaid);
-					acc.totalBalance += Number.parseFloat(row.totalBalance);
+					acc.totalAmount += toNumber(row.totalAmount);
+					acc.totalAmountPaid += toNumber(row.totalAmountPaid);
+					acc.totalBalance += toNumber(row.totalBalance);
 					return acc;
 				},
 				{
