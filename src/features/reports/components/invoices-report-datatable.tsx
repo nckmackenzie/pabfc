@@ -272,13 +272,13 @@ export function InvoicesReportDataTable() {
 							<TableCell colSpan={3} className="font-semibold text-center">
 								Totals:
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.amount, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.amountPaid, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.balance, false)}
 							</TableCell>
 						</>
@@ -317,13 +317,13 @@ export function InvoicesReportDataTable() {
 							<TableCell className="font-semibold text-right">
 								{totals.totalInvoices}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.totalAmount, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.totalAmountPaid, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.totalBalance, false)}
 							</TableCell>
 						</>
@@ -352,10 +352,10 @@ export function InvoicesReportDataTable() {
 							<TableCell colSpan={4} className="font-semibold text-center">
 								Totals:
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.amount, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.balance, false)}
 							</TableCell>
 						</>
@@ -395,22 +395,22 @@ export function InvoicesReportDataTable() {
 							<TableCell className="font-semibold text-center">
 								Totals:
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.current, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.days1To30, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.days31To60, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.days61To90, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.days90Plus, false)}
 							</TableCell>
-							<TableCell className="font-semibold text-right">
+							<TableCell className="font-semibold text-right px-4">
 								{currencyFormatter(totals.total, false)}
 							</TableCell>
 						</>
