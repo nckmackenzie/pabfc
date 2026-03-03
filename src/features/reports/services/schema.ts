@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+	BANKING_REPORT_STATUS,
+	BANKING_REPORT_TYPE,
 	EXPENSES_REPORT_TYPE,
 	INVOICES_REPORT_TYPE,
 	RECEIPTS_REPORT_TYPE,
@@ -111,3 +113,44 @@ export const invoiceReportFormSchema = dateRangeSchema
 
 export type ExpenseValidateSchema = z.infer<typeof expenseReportFormSchema>;
 export type InvoiceReportFormSchema = z.infer<typeof invoiceReportFormSchema>;
+
+export const bankingValidateSchema = dateRangeSchema.safeExtend({
+	reportType: z.enum(BANKING_REPORT_TYPE.map((type) => type.value)).optional(),
+	bankId: z.string().optional(),
+	status: z.enum(BANKING_REPORT_STATUS.map((type) => type.value)).optional(),
+});
+
+export const bankingReportFormSchema = dateRangeRequiredSchema
+	.safeExtend({
+		reportType: z.enum(
+			BANKING_REPORT_TYPE.map((type) => type.value),
+			{
+				error: (iss) =>
+					!iss.input ? "Select report type" : "Invalid report type",
+			},
+		),
+		bankId: z
+			.string({ error: (iss) => (!iss.input ? "Select bank" : "Invalid bank") })
+			.min(1, "Select bank"),
+		status: z.enum(BANKING_REPORT_STATUS.map((type) => type.value)).optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.reportType === "by-status" && !data.status) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Select status",
+				path: ["status"],
+			});
+		}
+	});
+
+export const paymentsValidateSchema = dateRangeSchema.safeExtend({
+	vendorId: z.string().optional(),
+});
+
+export const paymentsReportFormSchema = dateRangeRequiredSchema.safeExtend({
+	vendorId: z.string().min(1, "Select vendor"),
+});
+
+export type BankingValidateSchema = z.infer<typeof bankingReportFormSchema>;
+export type PaymentsReportFormSchema = z.infer<typeof paymentsReportFormSchema>;
