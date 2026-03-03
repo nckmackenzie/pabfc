@@ -1,12 +1,7 @@
 import { addDays } from "date-fns";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import {
-	journalEntries,
-	journalLines,
-	memberMemberships,
-	payments,
-} from "@/drizzle/schema";
+import { memberMemberships, payments } from "@/drizzle/schema";
 import {
 	currencyFormatter,
 	dateFormat,
@@ -16,6 +11,10 @@ import { inngest } from "@/lib/inngest/client";
 import { sendSms } from "@/lib/sms";
 import { toTitleCase } from "@/lib/utils";
 import { logActivity } from "@/services/activity-logger";
+import {
+	areJournalValuesBalanced,
+	createJournalEntry,
+} from "@/services/journal";
 
 export const createPayment = inngest.createFunction(
 	{ id: "create-payment" },
@@ -73,7 +72,7 @@ export const createPayment = inngest.createFunction(
 			const bankId = await db.query.ledgerAccounts.findFirst({
 				columns: { id: true },
 				where: (accounts, { eq }) =>
-					eq(sql`lower(${accounts.name})`, "cash at bank"),
+					eq(sql`lower(${accounts.name})`, "mpesa wallet"),
 			});
 
 			return {
@@ -105,50 +104,69 @@ export const createPayment = inngest.createFunction(
 						priceCharged: fetchedPayment.totalAmount,
 					});
 
-					const [{ id: journalEntryId }] = await tx
-						.insert(journalEntries)
-						.values({
-							entryDate: fetchedPayment.paymentDate,
-							reference: fetchedPayment.paymentNo,
-							source: "plan payment",
-							sourceId: fetchedPayment.id,
-						})
-						.returning({ id: journalEntries.id });
-
-					await tx.insert(journalLines).values({
-						lineNumber: 1,
-						accountId: ledgerDetails.revenueAccountId,
-						journalEntryId,
-						amount: fetchedPayment.lineTotal,
-						dc: "credit",
-					});
-
-					if (parseFloat(fetchedPayment.taxAmount) > 0) {
-						await tx.insert(journalLines).values({
-							lineNumber: 2,
-							accountId: ledgerDetails.vatAccountId as number,
-							journalEntryId,
-							amount: fetchedPayment.taxAmount,
-							dc: "credit",
-						});
-					}
-
-					await tx.insert(journalLines).values({
-						lineNumber: 3,
-						accountId: ledgerDetails.bankAccountId as number,
-						journalEntryId,
-						amount: fetchedPayment.totalAmount,
-						dc: "debit",
-					});
-
 					const [{ id: paymentId }] = await tx
 						.update(payments)
 						.set({
 							status: "completed",
 							reference: mpesaReceiptNumber?.toString(),
 						})
-						.where(eq(payments.id, fetchedPayment.id))
+						.where(
+							and(
+								eq(payments.id, fetchedPayment.id),
+								eq(payments.status, "pending"),
+							),
+						)
 						.returning({ id: payments.id });
+
+					if (!paymentId) {
+						throw new Error("Payment is already processed or not pending");
+					}
+
+					const description = `Payment for ${fetchedPayment.paymentNo} - ${mpesaReceiptNumber}`;
+
+					const lines = [
+						{
+							lineNumber: 1,
+							accountId: ledgerDetails.revenueAccountId,
+							amount: fetchedPayment.lineTotal,
+							dc: "credit" as "credit" | "debit",
+							memo: description,
+						},
+					];
+
+					if (parseFloat(fetchedPayment.taxAmount) > 0) {
+						lines.push({
+							lineNumber: 2,
+							accountId: ledgerDetails.vatAccountId as number,
+							amount: fetchedPayment.taxAmount,
+							dc: "credit" as "credit" | "debit",
+							memo: description,
+						});
+					}
+
+					lines.push({
+						lineNumber: 3,
+						accountId: ledgerDetails.bankAccountId as number,
+						amount: fetchedPayment.totalAmount,
+						dc: "debit" as "credit" | "debit",
+						memo: description,
+					});
+
+					if (!areJournalValuesBalanced(lines)) {
+						throw new Error("Journal values are not balanced");
+					}
+
+					await createJournalEntry({
+						entry: {
+							entryDate: fetchedPayment.paymentDate,
+							reference: fetchedPayment.paymentNo,
+							source: "plan payment",
+							sourceId: fetchedPayment.id,
+							description,
+						},
+						lines,
+						tx,
+					});
 
 					await logActivity({
 						data: {
