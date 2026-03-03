@@ -3,6 +3,8 @@ import {
 	BanknoteArrowDownIcon,
 	BanknoteArrowUpIcon,
 	FileTextIcon,
+	HandshakeIcon,
+	LandmarkIcon,
 } from "lucide-react";
 
 export const RECEIPTS_REPORT_TYPE = [
@@ -21,6 +23,17 @@ export const INVOICES_REPORT_TYPE = [
 	{ label: "Overdue", value: "overdue" },
 	{ label: "Vendor Spend Summary", value: "vendor-spend-summary" },
 	{ label: "Ageing Summary", value: "ageing-summary" },
+] as const;
+
+export const BANKING_REPORT_TYPE = [
+	{ label: "All", value: "all" },
+	{ label: "By Status", value: "by-status" },
+] as const;
+
+export const BANKING_REPORT_STATUS = [
+	{ label: "Cleared", value: "cleared" },
+	{ label: "Uncleared", value: "uncleared" },
+	{ label: "Both", value: "both" },
 ] as const;
 
 export const REPORT_CARDS = linkOptions([
@@ -44,5 +57,19 @@ export const REPORT_CARDS = linkOptions([
 		description: "Report for all invoices.",
 		icon: FileTextIcon,
 		permission: "reports:invoices-report",
+	},
+	{
+		to: "/app/reports/finance/banking",
+		title: "Banking Report",
+		description: "Report for all bank transactions.",
+		icon: LandmarkIcon,
+		permission: "reports:bankings-report",
+	},
+	{
+		to: "/app/reports/finance/payments",
+		title: "Payments Report",
+		description: "Report for supplier payments.",
+		icon: HandshakeIcon,
+		permission: "reports:payments-report",
 	},
 ]);
