@@ -1,5 +1,5 @@
 import { addDays } from "date-fns";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { memberMemberships, payments } from "@/drizzle/schema";
 import {
@@ -110,8 +110,17 @@ export const createPayment = inngest.createFunction(
 							status: "completed",
 							reference: mpesaReceiptNumber?.toString(),
 						})
-						.where(eq(payments.id, fetchedPayment.id))
+						.where(
+							and(
+								eq(payments.id, fetchedPayment.id),
+								eq(payments.status, "pending"),
+							),
+						)
 						.returning({ id: payments.id });
+
+					if (!paymentId) {
+						throw new Error("Payment is already processed or not pending");
+					}
 
 					const description = `Payment for ${fetchedPayment.paymentNo} - ${mpesaReceiptNumber}`;
 
@@ -156,6 +165,7 @@ export const createPayment = inngest.createFunction(
 							description,
 						},
 						lines,
+						tx,
 					});
 
 					await logActivity({
