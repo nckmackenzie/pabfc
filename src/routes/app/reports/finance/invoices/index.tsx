@@ -39,6 +39,9 @@ export const Route = createFileRoute("/app/reports/finance/invoices/")({
 		};
 	},
 	validateSearch: invoiceValidateSchema,
+	staticData: {
+		breadcrumb: "Invoices report",
+	},
 });
 
 function RouteComponent() {
