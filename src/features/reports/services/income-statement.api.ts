@@ -36,7 +36,6 @@ export const getIncomeStatement = createServerFn()
             a.id AS node_id
           FROM ledger_accounts a
           WHERE a.type IN ('revenue', 'expense')
-            AND a.is_active = true
             AND a.is_posting = false
 
         UNION ALL
@@ -98,7 +97,6 @@ export const getIncomeStatement = createServerFn()
     LEFT JOIN rolled_up ru
       ON ru.reporting_id = r.id
     WHERE r.type IN ('revenue', 'expense')
-      AND r.is_active = true
       AND r.is_posting = false
       AND COALESCE(ru.total, 0) <> 0
     ORDER BY r.type, r.code NULLS LAST, r.name;
@@ -123,7 +121,10 @@ export const getIncomeStatementDrillDown = createServerFn()
 
 		const parentAccountId = await db.query.ledgerAccounts.findFirst({
 			columns: { id: true },
-			where: eq(ledgerAccounts.id, id),
+			where: and(
+				eq(ledgerAccounts.id, id),
+				inArray(ledgerAccounts.type, ["revenue", "expense"]),
+			),
 		});
 
 		if (!parentAccountId) throw new ApplicationError("Account not found");
@@ -135,7 +136,6 @@ export const getIncomeStatementDrillDown = createServerFn()
 				SELECT a.id
 				FROM ledger_accounts a
 				WHERE a.id = ${id}
-					AND a.is_active = true
 
 				UNION ALL
 
@@ -143,7 +143,6 @@ export const getIncomeStatementDrillDown = createServerFn()
 				FROM ledger_accounts c
 				JOIN account_tree t
 					ON c.parent_id = t.id
-				WHERE c.is_active = true
 			)
 			SELECT id
 			FROM account_tree;
