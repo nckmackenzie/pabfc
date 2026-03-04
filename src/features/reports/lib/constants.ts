@@ -5,6 +5,7 @@ import {
 	FileTextIcon,
 	HandshakeIcon,
 	LandmarkIcon,
+	TrendingUpIcon,
 } from "lucide-react";
 
 export const RECEIPTS_REPORT_TYPE = [
@@ -71,5 +72,12 @@ export const REPORT_CARDS = linkOptions([
 		description: "Report for supplier payments.",
 		icon: HandshakeIcon,
 		permission: "reports:payments-report",
+	},
+	{
+		to: "/app/reports/finance/income-statement",
+		title: "Income Statement",
+		description: "Report for all income and expenses.",
+		icon: TrendingUpIcon,
+		permission: "reports:income-statement",
 	},
 ]);
