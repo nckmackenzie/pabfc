@@ -143,6 +143,7 @@ export const getIncomeStatementDrillDown = createServerFn()
 				FROM ledger_accounts c
 				JOIN account_tree t
 					ON c.parent_id = t.id
+        WHERE c.type IN ('revenue', 'expense')
 			)
 			SELECT id
 			FROM account_tree;
