@@ -132,7 +132,7 @@ export const getTrialBalanceDrillDown = createServerFn()
 	.inputValidator(
 		z.object({
 			id: z.number(),
-			asOfDate: z.string(),
+			asOfDate: z.iso.date(),
 			q: z.string().optional(),
 		}),
 	)
@@ -167,7 +167,6 @@ export const getTrialBalanceDrillDown = createServerFn()
 				SELECT a.id
 				FROM ledger_accounts a
 				WHERE a.id = ${id}
-					AND a.is_active = true
 
 				UNION ALL
 
@@ -175,13 +174,16 @@ export const getTrialBalanceDrillDown = createServerFn()
 				FROM ledger_accounts c
 				JOIN account_tree t
 					ON c.parent_id = t.id
-				WHERE c.is_active = true
 			)
 			SELECT id
 			FROM account_tree;
 		`);
 
 		const accountIds = accountTree.rows.map((account) => account.id);
+
+		if (accountIds.length === 0) {
+			return [];
+		}
 
 		return db
 			.select({
