@@ -12,11 +12,11 @@ import { getIncomeStatementDrillDown } from "@/features/reports/services/income-
 import { currencyFormatter, dateFormat, toNumber } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
-type DrillDowmItem = Awaited<
+type DrillDownItem = Awaited<
 	ReturnType<typeof getIncomeStatementDrillDown>
 >[number];
 
-const columns: Array<ColumnDef<DrillDowmItem>> = [
+const columns: Array<ColumnDef<DrillDownItem>> = [
 	{
 		accessorKey: "date",
 		header: "Date",
