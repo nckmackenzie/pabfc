@@ -5,6 +5,7 @@ import {
 	FileTextIcon,
 	HandshakeIcon,
 	LandmarkIcon,
+	ListIcon,
 	TrendingUpIcon,
 } from "lucide-react";
 
@@ -79,5 +80,12 @@ export const REPORT_CARDS = linkOptions([
 		description: "Report for all income and expenses.",
 		icon: TrendingUpIcon,
 		permission: "reports:income-statement",
+	},
+	{
+		to: "/app/reports/finance/trial-balance",
+		title: "Trial Balance",
+		description: "Verify ledger debits and credits.",
+		icon: ListIcon,
+		permission: "reports:trial-balance",
 	},
 ]);

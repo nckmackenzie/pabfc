@@ -152,5 +152,23 @@ export const paymentsReportFormSchema = dateRangeRequiredSchema.safeExtend({
 	vendorId: z.string().min(1, "Select vendor"),
 });
 
+export const trialBalanceValidateSearchSchema = z.object({
+	asOfDate: z.iso.date().optional(),
+});
+
+export const trialBalanceReportFormSchema = z.object({
+	asOfDate: z.iso
+		.date({
+			error: (iss) => (!iss.input ? "Select as of date" : "Invalid date"),
+		})
+		.refine(
+			(date) =>
+				new Date(date).setHours(0, 0, 0, 0) <= new Date().setHours(0, 0, 0, 0),
+			{
+				error: "As of date cannot be in the future",
+			},
+		),
+});
+
 export type BankingValidateSchema = z.infer<typeof bankingReportFormSchema>;
 export type PaymentsReportFormSchema = z.infer<typeof paymentsReportFormSchema>;
