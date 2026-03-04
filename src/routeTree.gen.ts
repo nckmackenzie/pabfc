@@ -92,6 +92,7 @@ import { Route as AppBankingsPostingsNewRouteImport } from './routes/app/banking
 import { Route as AppReportsFinanceReceiptsIndexRouteImport } from './routes/app/reports/finance/receipts/index'
 import { Route as AppReportsFinancePaymentsIndexRouteImport } from './routes/app/reports/finance/payments/index'
 import { Route as AppReportsFinanceInvoicesIndexRouteImport } from './routes/app/reports/finance/invoices/index'
+import { Route as AppReportsFinanceIncomeStatementIndexRouteImport } from './routes/app/reports/finance/income-statement/index'
 import { Route as AppReportsFinanceExpensesIndexRouteImport } from './routes/app/reports/finance/expenses/index'
 import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/reports/finance/banking/index'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
@@ -533,6 +534,12 @@ const AppReportsFinanceInvoicesIndexRoute =
     path: '/invoices/',
     getParentRoute: () => AppReportsFinanceRouteRoute,
   } as any)
+const AppReportsFinanceIncomeStatementIndexRoute =
+  AppReportsFinanceIncomeStatementIndexRouteImport.update({
+    id: '/income-statement/',
+    path: '/income-statement/',
+    getParentRoute: () => AppReportsFinanceRouteRoute,
+  } as any)
 const AppReportsFinanceExpensesIndexRoute =
   AppReportsFinanceExpensesIndexRouteImport.update({
     id: '/expenses/',
@@ -661,6 +668,7 @@ export interface FileRoutesByFullPath {
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/income-statement': typeof AppReportsFinanceIncomeStatementIndexRoute
   '/app/reports/finance/invoices': typeof AppReportsFinanceInvoicesIndexRoute
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
@@ -739,6 +747,7 @@ export interface FileRoutesByTo {
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/income-statement': typeof AppReportsFinanceIncomeStatementIndexRoute
   '/app/reports/finance/invoices': typeof AppReportsFinanceInvoicesIndexRoute
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
@@ -832,6 +841,7 @@ export interface FileRoutesById {
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/income-statement/': typeof AppReportsFinanceIncomeStatementIndexRoute
   '/app/reports/finance/invoices/': typeof AppReportsFinanceInvoicesIndexRoute
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
@@ -925,6 +935,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/$roleId/edit'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
+    | '/app/reports/finance/income-statement'
     | '/app/reports/finance/invoices'
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
@@ -1003,6 +1014,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/$roleId/edit'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
+    | '/app/reports/finance/income-statement'
     | '/app/reports/finance/invoices'
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
@@ -1095,6 +1107,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/$roleId/edit'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
+    | '/app/reports/finance/income-statement/'
     | '/app/reports/finance/invoices/'
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
@@ -1699,6 +1712,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsFinanceInvoicesIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
+    '/app/reports/finance/income-statement/': {
+      id: '/app/reports/finance/income-statement/'
+      path: '/income-statement'
+      fullPath: '/app/reports/finance/income-statement'
+      preLoaderRoute: typeof AppReportsFinanceIncomeStatementIndexRouteImport
+      parentRoute: typeof AppReportsFinanceRouteRoute
+    }
     '/app/reports/finance/expenses/': {
       id: '/app/reports/finance/expenses/'
       path: '/expenses'
@@ -2007,6 +2027,7 @@ interface AppReportsFinanceRouteRouteChildren {
   AppReportsFinanceIndexRoute: typeof AppReportsFinanceIndexRoute
   AppReportsFinanceBankingIndexRoute: typeof AppReportsFinanceBankingIndexRoute
   AppReportsFinanceExpensesIndexRoute: typeof AppReportsFinanceExpensesIndexRoute
+  AppReportsFinanceIncomeStatementIndexRoute: typeof AppReportsFinanceIncomeStatementIndexRoute
   AppReportsFinanceInvoicesIndexRoute: typeof AppReportsFinanceInvoicesIndexRoute
   AppReportsFinancePaymentsIndexRoute: typeof AppReportsFinancePaymentsIndexRoute
   AppReportsFinanceReceiptsIndexRoute: typeof AppReportsFinanceReceiptsIndexRoute
@@ -2017,6 +2038,8 @@ const AppReportsFinanceRouteRouteChildren: AppReportsFinanceRouteRouteChildren =
     AppReportsFinanceIndexRoute: AppReportsFinanceIndexRoute,
     AppReportsFinanceBankingIndexRoute: AppReportsFinanceBankingIndexRoute,
     AppReportsFinanceExpensesIndexRoute: AppReportsFinanceExpensesIndexRoute,
+    AppReportsFinanceIncomeStatementIndexRoute:
+      AppReportsFinanceIncomeStatementIndexRoute,
     AppReportsFinanceInvoicesIndexRoute: AppReportsFinanceInvoicesIndexRoute,
     AppReportsFinancePaymentsIndexRoute: AppReportsFinancePaymentsIndexRoute,
     AppReportsFinanceReceiptsIndexRoute: AppReportsFinanceReceiptsIndexRoute,
