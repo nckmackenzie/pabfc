@@ -68,7 +68,9 @@ import { Route as AppReportsFinanceRouteRouteImport } from './routes/app/reports
 import { Route as AppExpensesExpenseIdRouteRouteImport } from './routes/app/expenses/$expenseId/route'
 import { Route as AppBankingsPostingsRouteRouteImport } from './routes/app/bankings/postings/route'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
+import { Route as AppReportsMembersIndexRouteImport } from './routes/app/reports/members/index'
 import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports/finance/index'
+import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
 import { Route as AppBankingsPostingsIndexRouteImport } from './routes/app/bankings/postings/index'
 import { Route as ApiCronDailyIndexRouteImport } from './routes/api/cron/daily/index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
@@ -96,6 +98,7 @@ import { Route as AppReportsFinanceInvoicesIndexRouteImport } from './routes/app
 import { Route as AppReportsFinanceIncomeStatementIndexRouteImport } from './routes/app/reports/finance/income-statement/index'
 import { Route as AppReportsFinanceExpensesIndexRouteImport } from './routes/app/reports/finance/expenses/index'
 import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/reports/finance/banking/index'
+import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes/app/reports/finance/balance-sheet/index'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 import { Route as AppBankingsPostingsPostingIdEditRouteImport } from './routes/app/bankings/postings/$postingId/edit'
 import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/payments/pabfc/stk/callback'
@@ -401,11 +404,22 @@ const AppUsersRolesIndexRoute = AppUsersRolesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppUsersRolesRouteRoute,
 } as any)
+const AppReportsMembersIndexRoute = AppReportsMembersIndexRouteImport.update({
+  id: '/reports/members/',
+  path: '/reports/members/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppReportsFinanceIndexRoute = AppReportsFinanceIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppReportsFinanceRouteRoute,
 } as any)
+const AppReportsAttendanceIndexRoute =
+  AppReportsAttendanceIndexRouteImport.update({
+    id: '/reports/attendance/',
+    path: '/reports/attendance/',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 const AppBankingsPostingsIndexRoute =
   AppBankingsPostingsIndexRouteImport.update({
     id: '/',
@@ -559,6 +573,12 @@ const AppReportsFinanceBankingIndexRoute =
     path: '/banking/',
     getParentRoute: () => AppReportsFinanceRouteRoute,
   } as any)
+const AppReportsFinanceBalanceSheetIndexRoute =
+  AppReportsFinanceBalanceSheetIndexRouteImport.update({
+    id: '/balance-sheet/',
+    path: '/balance-sheet/',
+    getParentRoute: () => AppReportsFinanceRouteRoute,
+  } as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/$roleId/edit',
   path: '/$roleId/edit',
@@ -666,13 +686,16 @@ export interface FileRoutesByFullPath {
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/api/cron/daily': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
+  '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
+  '/app/reports/members': typeof AppReportsMembersIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
+  '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
   '/app/reports/finance/income-statement': typeof AppReportsFinanceIncomeStatementIndexRoute
@@ -746,13 +769,16 @@ export interface FileRoutesByTo {
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/api/cron/daily': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings': typeof AppBankingsPostingsIndexRoute
+  '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance': typeof AppReportsFinanceIndexRoute
+  '/app/reports/members': typeof AppReportsMembersIndexRoute
   '/app/users/roles': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
+  '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
   '/app/reports/finance/income-statement': typeof AppReportsFinanceIncomeStatementIndexRoute
@@ -841,13 +867,16 @@ export interface FileRoutesById {
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
+  '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
+  '/app/reports/members/': typeof AppReportsMembersIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
+  '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
   '/app/reports/finance/income-statement/': typeof AppReportsFinanceIncomeStatementIndexRoute
@@ -936,13 +965,16 @@ export interface FileRouteTypes {
     | '/app/users/roles/new'
     | '/api/cron/daily'
     | '/app/bankings/postings/'
+    | '/app/reports/attendance'
     | '/app/reports/finance/'
+    | '/app/reports/members'
     | '/app/users/roles/'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
+    | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
     | '/app/reports/finance/income-statement'
@@ -1016,13 +1048,16 @@ export interface FileRouteTypes {
     | '/app/users/roles/new'
     | '/api/cron/daily'
     | '/app/bankings/postings'
+    | '/app/reports/attendance'
     | '/app/reports/finance'
+    | '/app/reports/members'
     | '/app/users/roles'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
+    | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
     | '/app/reports/finance/income-statement'
@@ -1110,13 +1145,16 @@ export interface FileRouteTypes {
     | '/app/users/roles/new'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
+    | '/app/reports/attendance/'
     | '/app/reports/finance/'
+    | '/app/reports/members/'
     | '/app/users/roles/'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
+    | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
     | '/app/reports/finance/income-statement/'
@@ -1557,12 +1595,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUsersRolesIndexRouteImport
       parentRoute: typeof AppUsersRolesRouteRoute
     }
+    '/app/reports/members/': {
+      id: '/app/reports/members/'
+      path: '/reports/members'
+      fullPath: '/app/reports/members'
+      preLoaderRoute: typeof AppReportsMembersIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/reports/finance/': {
       id: '/app/reports/finance/'
       path: '/'
       fullPath: '/app/reports/finance/'
       preLoaderRoute: typeof AppReportsFinanceIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
+    }
+    '/app/reports/attendance/': {
+      id: '/app/reports/attendance/'
+      path: '/reports/attendance'
+      fullPath: '/app/reports/attendance'
+      preLoaderRoute: typeof AppReportsAttendanceIndexRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/app/bankings/postings/': {
       id: '/app/bankings/postings/'
@@ -1751,6 +1803,13 @@ declare module '@tanstack/react-router' {
       path: '/banking'
       fullPath: '/app/reports/finance/banking'
       preLoaderRoute: typeof AppReportsFinanceBankingIndexRouteImport
+      parentRoute: typeof AppReportsFinanceRouteRoute
+    }
+    '/app/reports/finance/balance-sheet/': {
+      id: '/app/reports/finance/balance-sheet/'
+      path: '/balance-sheet'
+      fullPath: '/app/reports/finance/balance-sheet'
+      preLoaderRoute: typeof AppReportsFinanceBalanceSheetIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/users/roles/$roleId/edit': {
@@ -2045,6 +2104,7 @@ const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
 
 interface AppReportsFinanceRouteRouteChildren {
   AppReportsFinanceIndexRoute: typeof AppReportsFinanceIndexRoute
+  AppReportsFinanceBalanceSheetIndexRoute: typeof AppReportsFinanceBalanceSheetIndexRoute
   AppReportsFinanceBankingIndexRoute: typeof AppReportsFinanceBankingIndexRoute
   AppReportsFinanceExpensesIndexRoute: typeof AppReportsFinanceExpensesIndexRoute
   AppReportsFinanceIncomeStatementIndexRoute: typeof AppReportsFinanceIncomeStatementIndexRoute
@@ -2057,6 +2117,8 @@ interface AppReportsFinanceRouteRouteChildren {
 const AppReportsFinanceRouteRouteChildren: AppReportsFinanceRouteRouteChildren =
   {
     AppReportsFinanceIndexRoute: AppReportsFinanceIndexRoute,
+    AppReportsFinanceBalanceSheetIndexRoute:
+      AppReportsFinanceBalanceSheetIndexRoute,
     AppReportsFinanceBankingIndexRoute: AppReportsFinanceBankingIndexRoute,
     AppReportsFinanceExpensesIndexRoute: AppReportsFinanceExpensesIndexRoute,
     AppReportsFinanceIncomeStatementIndexRoute:
@@ -2094,6 +2156,8 @@ interface AppRouteRouteChildren {
   AppAttendancesIndexRoute: typeof AppAttendancesIndexRoute
   AppCommunicationIndexRoute: typeof AppCommunicationIndexRoute
   AppProfileIndexRoute: typeof AppProfileIndexRoute
+  AppReportsAttendanceIndexRoute: typeof AppReportsAttendanceIndexRoute
+  AppReportsMembersIndexRoute: typeof AppReportsMembersIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -2117,6 +2181,8 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAttendancesIndexRoute: AppAttendancesIndexRoute,
   AppCommunicationIndexRoute: AppCommunicationIndexRoute,
   AppProfileIndexRoute: AppProfileIndexRoute,
+  AppReportsAttendanceIndexRoute: AppReportsAttendanceIndexRoute,
+  AppReportsMembersIndexRoute: AppReportsMembersIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

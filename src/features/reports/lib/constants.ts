@@ -2,6 +2,7 @@ import { linkOptions } from "@tanstack/react-router";
 import {
 	BanknoteArrowDownIcon,
 	BanknoteArrowUpIcon,
+	BookOpenTextIcon,
 	FileTextIcon,
 	HandshakeIcon,
 	LandmarkIcon,
@@ -36,6 +37,21 @@ export const BANKING_REPORT_STATUS = [
 	{ label: "Cleared", value: "cleared" },
 	{ label: "Uncleared", value: "uncleared" },
 	{ label: "Both", value: "both" },
+] as const;
+
+export const MEMBERS_REPORT_TYPE = [
+	{ label: "All Members", value: "all" },
+	{ label: "By Status", value: "by-status" },
+] as const;
+
+export const MEMBERS_STATUS_REPORT_FILTER = [
+	{ label: "Active", value: "active" },
+	{ label: "Inactive", value: "inactive" },
+] as const;
+
+export const ATTENDANCE_REPORT_TYPE = [
+	{ label: "All", value: "all" },
+	{ label: "By Member", value: "by-member" },
 ] as const;
 
 export const REPORT_CARDS = linkOptions([
@@ -87,5 +103,12 @@ export const REPORT_CARDS = linkOptions([
 		description: "Verify ledger debits and credits.",
 		icon: ListIcon,
 		permission: "reports:trial-balance",
+	},
+	{
+		to: "/app/reports/finance/balance-sheet",
+		title: "Balance Sheet",
+		description: "Assets, liabilities, and equity snapshot.",
+		icon: BookOpenTextIcon,
+		permission: "reports:balance-sheet",
 	},
 ]);
