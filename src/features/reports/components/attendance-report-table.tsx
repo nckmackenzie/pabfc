@@ -1,10 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/datatable";
-import { TableCell } from "@/components/ui/table";
 import { getAttendanceReport } from "@/features/reports/services/attendance-report.api";
 import type { AttendanceReportFormSchema } from "@/features/reports/services/schema";
-import { currencyFormatter, dateFormat, toNumber } from "@/lib/helpers";
+import { dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 type AttendanceReportItem = Awaited<
@@ -21,33 +20,9 @@ export function AttendanceReportTable({
 		queryFn: () => getAttendanceReport({ data: filters }),
 	});
 
-	const totalPayments = data.reduce(
-		(acc, row) => acc + toNumber(row.totalPayments),
-		0,
-	);
-
 	const columns = getColumns(filters.asOfDate, filters.reportType);
 
-	return (
-		<DataTable
-			data={data}
-			columns={columns}
-			customFooter={
-				<>
-					<TableCell
-						colSpan={columns.length - 1}
-						className="font-semibold text-right"
-					>
-						Total Payments
-					</TableCell>
-					<TableCell className="font-semibold text-right">
-						{currencyFormatter(totalPayments, false)}
-					</TableCell>
-				</>
-			}
-			exportToExcel
-		/>
-	);
+	return <DataTable data={data} columns={columns} exportToExcel />;
 }
 
 function getColumns(

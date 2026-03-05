@@ -18,7 +18,6 @@ export type AttendanceReportRow = {
 	planName: string | null;
 	dateJoined: Date;
 	lastAttendance: Date | null;
-	totalPayments: string;
 };
 
 export const getAttendanceReport = createServerFn()
@@ -35,14 +34,6 @@ export const getAttendanceReport = createServerFn()
 					MAX(al.check_in_time) AS last_attendance
 				FROM attendance_logs al
 				GROUP BY al.member_id
-			),
-			payment_totals AS (
-				SELECT
-					p.member_id,
-					COALESCE(SUM(p.total_amount), 0) AS total_payments
-				FROM payments p
-				WHERE DATE(p.payment_date) <= ${asOfDate}
-				GROUP BY p.member_id
 			)
 			SELECT
 				ao.id,
@@ -56,8 +47,7 @@ export const getAttendanceReport = createServerFn()
 				ao.duration::text AS "sessionDuration",
 				ao.active_plan_name AS "planName",
 				m.created_at AS "dateJoined",
-				la.last_attendance AS "lastAttendance",
-				COALESCE(pt.total_payments, 0)::text AS "totalPayments"
+				la.last_attendance AS "lastAttendance"
 			FROM vw_attendance_details ao
 			JOIN attendance_logs al
 				ON al.id = ao.id
@@ -67,8 +57,6 @@ export const getAttendanceReport = createServerFn()
 				ON mo.id = al.member_id
 			LEFT JOIN latest_attendance la
 				ON la.member_id = al.member_id
-			LEFT JOIN payment_totals pt
-				ON pt.member_id = al.member_id
 			WHERE DATE(ao.check_in_time) <= ${asOfDate}
 			${
 				reportType === "by-member" && memberId
