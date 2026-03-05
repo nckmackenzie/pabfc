@@ -192,7 +192,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 	.inputValidator(
 		z.object({
 			id: z.number(),
-			asOfDate: z.string(),
+			asOfDate: z.iso.date(),
 			q: z.string().optional(),
 		}),
 	)
@@ -227,8 +227,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 				SELECT a.id
 				FROM ledger_accounts a
 				WHERE a.id = ${id}
-					AND a.is_active = true
-
+					
 				UNION ALL
 
 				SELECT c.id
