@@ -39,6 +39,7 @@ export const getMembersReport = createServerFn()
 					al.member_id,
 					MAX(al.check_in_time) AS last_attendance
 				FROM attendance_logs al
+				WHERE DATE(al.check_in_time) <= ${asOfDate}
 				GROUP BY al.member_id
 			),
 			latest_plan AS (
@@ -92,7 +93,9 @@ export const getMembersReport = createServerFn()
 			WHERE DATE(m.created_at) <= ${asOfDate}
 			${
 				reportType === "by-status" && status
-					? sql`AND m.member_status = ${status}`
+					? status === "active"
+						? sql`AND m.member_status = ${status}`
+						: sql`AND m.member_status IN ('inactive', 'frozen', 'terminated')`
 					: sql``
 			}
 			ORDER BY m.member_no DESC;
