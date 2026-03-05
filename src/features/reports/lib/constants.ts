@@ -2,6 +2,7 @@ import { linkOptions } from "@tanstack/react-router";
 import {
 	BanknoteArrowDownIcon,
 	BanknoteArrowUpIcon,
+	BookOpenTextIcon,
 	FileTextIcon,
 	HandshakeIcon,
 	LandmarkIcon,
@@ -87,5 +88,12 @@ export const REPORT_CARDS = linkOptions([
 		description: "Verify ledger debits and credits.",
 		icon: ListIcon,
 		permission: "reports:trial-balance",
+	},
+	{
+		to: "/app/reports/finance/balance-sheet",
+		title: "Balance Sheet",
+		description: "Assets, liabilities, and equity snapshot.",
+		icon: BookOpenTextIcon,
+		permission: "reports:balance-sheet",
 	},
 ]);
