@@ -39,6 +39,21 @@ export const BANKING_REPORT_STATUS = [
 	{ label: "Both", value: "both" },
 ] as const;
 
+export const MEMBERS_REPORT_TYPE = [
+	{ label: "All Members", value: "all" },
+	{ label: "By Status", value: "by-status" },
+] as const;
+
+export const MEMBERS_STATUS_REPORT_FILTER = [
+	{ label: "Active", value: "active" },
+	{ label: "Inactive", value: "inactive" },
+] as const;
+
+export const ATTENDANCE_REPORT_TYPE = [
+	{ label: "All", value: "all" },
+	{ label: "By Member", value: "by-member" },
+] as const;
+
 export const REPORT_CARDS = linkOptions([
 	{
 		to: "/app/reports/finance/receipts",

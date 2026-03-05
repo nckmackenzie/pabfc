@@ -1,9 +1,12 @@
 import { z } from "zod";
 import {
+	ATTENDANCE_REPORT_TYPE,
 	BANKING_REPORT_STATUS,
 	BANKING_REPORT_TYPE,
 	EXPENSES_REPORT_TYPE,
 	INVOICES_REPORT_TYPE,
+	MEMBERS_REPORT_TYPE,
+	MEMBERS_STATUS_REPORT_FILTER,
 	RECEIPTS_REPORT_TYPE,
 } from "@/features/reports/lib/constants";
 import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
@@ -170,5 +173,93 @@ export const trialBalanceReportFormSchema = z.object({
 		),
 });
 
+export const membersReportValidateSearchSchema = z.object({
+	asOfDate: z.iso.date().optional(),
+	reportType: z.enum(MEMBERS_REPORT_TYPE.map((type) => type.value)).optional(),
+	status: z
+		.enum(MEMBERS_STATUS_REPORT_FILTER.map((type) => type.value))
+		.optional(),
+});
+
+export const membersReportFormSchema = z
+	.object({
+		asOfDate: z.iso
+			.date({
+				error: (iss) => (!iss.input ? "Select as of date" : "Invalid date"),
+			})
+			.refine(
+				(date) =>
+					new Date(date).setHours(0, 0, 0, 0) <=
+					new Date().setHours(0, 0, 0, 0),
+				{
+					error: "As of date cannot be in the future",
+				},
+			),
+		reportType: z.enum(
+			MEMBERS_REPORT_TYPE.map((type) => type.value),
+			{
+				error: (iss) =>
+					!iss.input ? "Select report type" : "Invalid report type",
+			},
+		),
+		status: z
+			.enum(MEMBERS_STATUS_REPORT_FILTER.map((type) => type.value))
+			.optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.reportType === "by-status" && !data.status) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Select status",
+				path: ["status"],
+			});
+		}
+	});
+
+export const attendanceReportValidateSearchSchema = z.object({
+	asOfDate: z.iso.date().optional(),
+	reportType: z
+		.enum(ATTENDANCE_REPORT_TYPE.map((type) => type.value))
+		.optional(),
+	memberId: z.string().optional(),
+});
+
+export const attendanceReportFormSchema = z
+	.object({
+		asOfDate: z.iso
+			.date({
+				error: (iss) => (!iss.input ? "Select as of date" : "Invalid date"),
+			})
+			.refine(
+				(date) =>
+					new Date(date).setHours(0, 0, 0, 0) <=
+					new Date().setHours(0, 0, 0, 0),
+				{
+					error: "As of date cannot be in the future",
+				},
+			),
+		reportType: z.enum(
+			ATTENDANCE_REPORT_TYPE.map((type) => type.value),
+			{
+				error: (iss) =>
+					!iss.input ? "Select report type" : "Invalid report type",
+			},
+		),
+		memberId: z.string().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.reportType === "by-member" && !data.memberId) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Select member",
+				path: ["memberId"],
+			});
+		}
+	});
+
 export type BankingValidateSchema = z.infer<typeof bankingReportFormSchema>;
 export type PaymentsReportFormSchema = z.infer<typeof paymentsReportFormSchema>;
+export type MembersReportFormSchema = z.infer<typeof membersReportFormSchema>;
+export type AttendanceReportFormSchema = z.infer<
+	typeof attendanceReportFormSchema
+>;
