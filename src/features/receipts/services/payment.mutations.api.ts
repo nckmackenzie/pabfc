@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { mpesaStkRequests, payments } from "@/drizzle/schema";
-import { getPlan } from "@/features/plans/services/plans.api";
+import { finalizeMembershipPayment } from "@/features/receipts/services/membership-payment-finalizer";
 import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
 import { paymentSchema } from "@/features/receipts/services/schemas";
-import { AuthorizationError } from "@/lib/error-handling/app-error";
 import {
 	discountCalculator,
 	generateFullPaymentInvoiceNo,
@@ -14,9 +14,16 @@ import { initiateMpesaStkPush, registerUrlCallacks } from "@/lib/mpesa";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
+const stkPaymentSchema = paymentSchema.extend({
+	phoneNumber: z
+		.string()
+		.min(1, { error: "Phone Number is required" })
+		.regex(/254\d{9}/, { error: "Invalid phone number" }),
+});
+
 export const initiateStkPushFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(paymentSchema)
+	.inputValidator(stkPaymentSchema)
 	.handler(
 		async ({
 			data,
@@ -24,11 +31,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
-			if (!requirePermission("payments:create")) {
-				throw new AuthorizationError(
-					"You do not have permission to create a payment",
-				);
-			}
+			await requirePermission("receipts:create");
 
 			const {
 				phoneNumber,
@@ -43,7 +46,9 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				columns: { billing: true },
 			});
 
-			const plan = await getPlan({ data: planId });
+			const plan = await db.query.membershipPlans.findFirst({
+				where: (plans, { eq }) => eq(plans.id, planId),
+			});
 
 			if (!plan) {
 				throw new Error("Plan not found");
@@ -134,3 +139,101 @@ export const registerUrlCallacksFn = createServerFn({ method: "POST" })
 		await registerUrlCallacks();
 		return { success: true };
 	});
+
+export const createManualMembershipPaymentFn = createServerFn({
+	method: "POST",
+})
+	.middleware([authMiddleware])
+	.inputValidator(paymentSchema)
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("receipts:create");
+
+			const {
+				memberId,
+				planId,
+				paymentDate,
+				discountType,
+				discount,
+				reference,
+			} = data;
+			const paymentNo = await getPaymentNo();
+			const settings = await db.query.settings.findFirst({
+				columns: { billing: true },
+			});
+			const plan = await db.query.membershipPlans.findFirst({
+				where: (plans, { eq }) => eq(plans.id, planId),
+			});
+
+			if (!plan) {
+				throw new Error("Plan not found");
+			}
+
+			const discountedAmount = discountCalculator(
+				discountType,
+				discount ?? 0,
+				plan.price,
+			);
+			const amount = Math.max(0, plan.price - discountedAmount);
+
+			if (amount <= 0) {
+				throw new Error("Payment amount must be greater than zero");
+			}
+
+			const taxType = settings?.billing?.applyTaxToMembership
+				? (settings.billing?.vatType ?? "inclusive")
+				: "none";
+			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(
+				amount,
+				taxType,
+			);
+
+			const result = await db.transaction(async (tx) => {
+				const [payment] = await tx
+					.insert(payments)
+					.values({
+						paymentDate: new Date(paymentDate),
+						amount: plan.price.toString(),
+						lineTotal: amountExlusiveTax.toString(),
+						memberId,
+						planId,
+						paymentNo: paymentNo.toString(),
+						status: "completed",
+						discountType,
+						discount: discount ? discount.toString() : null,
+						discountedAmount: discountedAmount.toString(),
+						method: "mpesa_manual",
+						channel: "staff",
+						taxAmount: taxAmount.toString(),
+						totalAmount: totalInclusiveTax.toString(),
+						reference,
+						createdByUserId: userId,
+						vatType: taxType,
+					})
+					.returning();
+
+				return finalizeMembershipPayment({
+					tx,
+					payment,
+					reference,
+					updatePendingPayment: false,
+					activityLog: {
+						action: "create receipt",
+						description: `Created membership receipt ${paymentNo}.`,
+						userId,
+					},
+				});
+			});
+
+			return {
+				success: true,
+				paymentId: result.paymentId,
+				membershipId: result.membershipId,
+			};
+		},
+	);

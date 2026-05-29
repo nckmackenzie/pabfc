@@ -6,7 +6,7 @@ import type { PaymentSchema } from "@/features/receipts/services/schemas";
 export function useStkPush() {
 	return useMutation({
 		mutationKey: ["mpesa", "stkPush"],
-		mutationFn: async (input: PaymentSchema) => {
+		mutationFn: async (input: PaymentSchema & { phoneNumber: string }) => {
 			return await initiateStkPushFn({ data: input });
 		},
 	});

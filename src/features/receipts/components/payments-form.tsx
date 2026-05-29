@@ -1,5 +1,5 @@
 import { useStore } from "@tanstack/react-form";
-import { useQueries } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { addDays, format } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -11,15 +11,16 @@ import { Input } from "@/components/ui/input";
 import { SelectItem } from "@/components/ui/select";
 import { ToastContent } from "@/components/ui/toast-content";
 import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
-import { memberQueries } from "@/features/members/services/queries";
-import { usePaymentStatus } from "@/features/receipts/hooks/use-payment-status";
-import { useStkPush } from "@/features/receipts/hooks/use-stk-push";
+import { useManualMembershipPayment } from "@/features/receipts/hooks/use-manual-membership-payment";
+// import { memberQueries } from "@/features/members/services/queries";
+// import { usePaymentStatus } from "@/features/receipts/hooks/use-payment-status";
+// import { useStkPush } from "@/features/receipts/hooks/use-stk-push";
 import {
 	type PaymentSchema,
 	paymentSchema,
 } from "@/features/receipts/services/schemas";
 import { useAppForm } from "@/lib/form";
-import { discountCalculator, internationalizePhoneNumber } from "@/lib/helpers";
+import { discountCalculator } from "@/lib/helpers";
 import { generateRandomId } from "@/lib/utils";
 
 const DISCOUNT_TYPES = [
@@ -30,16 +31,19 @@ const DISCOUNT_TYPES = [
 
 export function PaymentForm() {
 	const { members, plans } = getRouteApi("/app/receipts/new").useLoaderData();
+	const queryClient = useQueryClient()
 	const navigate = useNavigate({ from: "/app/receipts/new" });
 	const [newDates, setNewDates] = useState({
 		startDate: "",
 		endDate: "",
 	});
 
-	const stkMutation = useStkPush();
-	const statusQuery = usePaymentStatus(
-		stkMutation.data?.checkoutRequestId ?? null,
-	);
+	const manualPaymentMutation = useManualMembershipPayment();
+	// STK push is disabled while payments are collected by an external provider.
+	// const stkMutation = useStkPush();
+	// const statusQuery = usePaymentStatus(
+	// 	stkMutation.data?.checkoutRequestId ?? null,
+	// );
 
 	const form = useAppForm({
 		defaultValues: {
@@ -47,7 +51,7 @@ export function PaymentForm() {
 			memberId: "",
 			paymentDate: format(new Date(), "yyyy-MM-dd"),
 			amount: 0,
-			phoneNumber: "",
+			reference: "",
 			discountType: "none",
 			discount: 0,
 		} as PaymentSchema,
@@ -55,7 +59,24 @@ export function PaymentForm() {
 			onSubmit: paymentSchema,
 		},
 		onSubmit: ({ value }) => {
-			stkMutation.mutate(value);
+			manualPaymentMutation.mutate(value, {
+				onSuccess: (data) => {
+					form.reset();
+					queryClient.invalidateQueries({queryKey: ['receipts']})
+					queryClient.invalidateQueries({queryKey: ['members']})
+					toast.success((t) => (
+						<ToastContent
+							title="Payment recorded"
+							t={t}
+							message="Payment has been recorded successfully"
+						/>
+					));
+					navigate({
+						to: "/app/receipts",
+						search: { payment: data.paymentId },
+					});
+				},
+			});
 		},
 	});
 
@@ -70,29 +91,22 @@ export function PaymentForm() {
 		],
 	);
 
-	const [
-		{ data: activeMembership, isLoading: isLoadingPlan },
-		{ data: member },
-	] = useQueries({
-		queries: [
-			{
-				queryKey: ["member-active-plan", memberId],
-				queryFn: () => getMemberPreviousPlanDetails({ data: memberId }),
-				enabled: memberId.trim().length > 0,
-				refetchOnWindowFocus: false,
-			},
-			memberQueries.detail(memberId),
-		],
+	const { data: activeMembership, isLoading: isLoadingPlan } = useQuery({
+		queryKey: ["member-active-plan", memberId],
+		queryFn: () => getMemberPreviousPlanDetails({ data: memberId }),
+		enabled: memberId.trim().length > 0,
+		refetchOnWindowFocus: false,
 	});
 
-	useEffect(() => {
-		if (member?.contact) {
-			form.setFieldValue(
-				"phoneNumber",
-				internationalizePhoneNumber(member.contact),
-			);
-		}
-	}, [member?.contact, form]);
+	// STK phone-number prefill is disabled with the STK provider flow.
+	// useEffect(() => {
+	// 	if (member?.contact) {
+	// 		form.setFieldValue(
+	// 			"phoneNumber",
+	// 			internationalizePhoneNumber(member.contact),
+	// 		);
+	// 	}
+	// }, [member?.contact, form]);
 
 	useEffect(() => {
 		const plan = plans.find((plan) => plan.id === planId);
@@ -118,29 +132,45 @@ export function PaymentForm() {
 		}
 
 		// Calculate Dates based on Payment Date
-		const effectiveDate = paymentDate ? new Date(paymentDate) : new Date();
+		const paymentStartDate = paymentDate ? new Date(paymentDate) : new Date();
+		const activeEndDate = activeMembership?.endDate
+			? new Date(activeMembership.endDate)
+			: null;
+		const effectiveDate =
+			activeEndDate && activeEndDate >= paymentStartDate
+				? addDays(activeEndDate, 1)
+				: paymentStartDate;
 		setNewDates({
 			startDate: format(effectiveDate, "PP"),
 			endDate: format(addDays(effectiveDate, plan.duration), "PP"),
 		});
-	}, [planId, plans, form, discountType, discount, paymentDate]);
+	}, [
+		planId,
+		plans,
+		form,
+		discountType,
+		discount,
+		paymentDate,
+		activeMembership?.endDate,
+	]);
 
-	useEffect(() => {
-		if (statusQuery.data?.status === "success") {
-			form.reset();
-			toast.success((t) => (
-				<ToastContent
-					title="Payment successful"
-					t={t}
-					message="Payment has been processed successfully"
-				/>
-			));
-			navigate({
-				to: "/app/receipts",
-				search: { payment: stkMutation.data?.paymentId },
-			});
-		}
-	}, [statusQuery.data?.status, form, navigate, stkMutation.data?.paymentId]);
+	// STK polling and success navigation are disabled with the STK provider flow.
+	// useEffect(() => {
+	// 	if (statusQuery.data?.status === "success") {
+	// 		form.reset();
+	// 		toast.success((t) => (
+	// 			<ToastContent
+	// 				title="Payment successful"
+	// 				t={t}
+	// 				message="Payment has been processed successfully"
+	// 			/>
+	// 		));
+	// 		navigate({
+	// 			to: "/app/receipts",
+	// 			search: { payment: stkMutation.data?.paymentId },
+	// 		});
+	// 	}
+	// }, [statusQuery.data?.status, form, navigate, stkMutation.data?.paymentId]);
 
 	const currentPlanName = activeMembership?.membershipPlan?.name || "";
 	const startDate = activeMembership?.startDate
@@ -174,8 +204,12 @@ export function PaymentForm() {
 				</form.AppField>
 			</FieldGroup>
 			<FieldGroup>
-				<form.AppField name="phoneNumber">
+				{/* STK phone input is disabled while payment collection happens outside the app. */}
+				{/* <form.AppField name="phoneNumber">
 					{(field) => <field.Input label="Phone Number" required />}
+				</form.AppField> */}
+				<form.AppField name="reference">
+					{(field) => <field.Input label="Payment Reference" required />}
 				</form.AppField>
 			</FieldGroup>
 			<FieldGroup className="grid lg:grid-cols-3 gap-4 relative">
@@ -273,14 +307,15 @@ export function PaymentForm() {
 				</form.AppField>
 			</FieldGroup>
 			<div className="max-w-lg mx-auto">
-				{stkMutation.error && (
+				{manualPaymentMutation.error && (
 					<CustomAlert
 						variant="destructive"
 						title="Error"
-						description={stkMutation.error.message}
+						description={manualPaymentMutation.error.message}
 					/>
 				)}
-				{stkMutation.data?.checkoutRequestId && (
+				{/* STK status polling is disabled while payment collection happens outside the app. */}
+				{/* {stkMutation.data?.checkoutRequestId && (
 					<CustomAlert
 						variant={
 							statusQuery.data && !statusQuery.data.exists
@@ -301,17 +336,13 @@ export function PaymentForm() {
 							)
 						}
 					/>
-				)}
+				)} */}
 			</div>
 			<form.AppForm>
 				<form.SubmitButton
-					buttonText="Prompt Payment"
+					buttonText="Record Payment"
 					withReset
-					isLoading={
-						stkMutation.isPending ||
-						statusQuery.isLoading ||
-						statusQuery.data?.status === "pending"
-					}
+					isLoading={manualPaymentMutation.isPending}
 				/>
 			</form.AppForm>
 		</form>
