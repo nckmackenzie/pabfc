@@ -72,7 +72,7 @@ export async function finalizeMembershipPayment({
 
 	const bankAccount = await tx.query.ledgerAccounts.findFirst({
 		columns: { id: true },
-		where: eq(sql`lower(${ledgerAccounts.name})`, "mpesa wallet"),
+		where: eq(sql`lower(${ledgerAccounts.name})`, "cash at bank"),
 	});
 
 	const activeMembership = await tx.query.memberMemberships.findFirst({
