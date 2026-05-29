@@ -28,6 +28,10 @@ import { getStatDates } from "@/features/dashboard/lib/helpers";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { dateFormat, normalizeDateRange } from "@/lib/helpers";
+import {
+	requireAnyPermission,
+	requirePermission,
+} from "@/lib/permissions/permissions";
 import { paymentFilters } from "@/lib/query-helpers";
 import {
 	type dateRangeWithSearchSchema,
@@ -46,6 +50,14 @@ export const getPlans = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator(searchValidateSchema)
 	.handler(async ({ data }) => {
+		await requireAnyPermission([
+			"plans:view",
+			"receipts:create",
+			"members:view",
+			"communication:view",
+			"communication:create",
+		]);
+
 		return db.query.membershipPlans.findMany({
 			where: data.q
 				? or(
@@ -67,6 +79,8 @@ export const getPlanActiveMembers = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: string) => data)
 	.handler(async ({ data: planId }) => {
+		await requireAnyPermission(["plans:view-members", "communication:create"]);
+
 		return db.query.memberMemberships.findMany({
 			columns: { memberId: true },
 			where: and(
@@ -80,6 +94,8 @@ export const getPlanWithSummary = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: string) => data)
 	.handler(async ({ data: planId }) => {
+		await requirePermission("plans:view-members");
+
 		const planDetails = await db.query.membershipPlans.findFirst({
 			where: eq(membershipPlans.id, planId),
 		});
@@ -118,6 +134,8 @@ export const getPlanMembers = createServerFn()
 			data,
 	)
 	.handler(async ({ data }) => {
+		await requirePermission("plans:view-members");
+
 		const {
 			planId,
 			filters: { q },
@@ -184,6 +202,8 @@ export const getPlanRevenueStats = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: PlanWithDateRange) => data)
 	.handler(async ({ data: { dateRange, planId } }) => {
+		await requirePermission("plans:view-plan-revenue");
+
 		const { from: dateFrom, to: dateTo } = normalizeDateRange(
 			dateRange.from ?? startOfYear(new Date()),
 			dateRange.to ?? new Date(),
@@ -201,14 +221,16 @@ export const getPlanRevenueStats = createServerFn()
 				db
 					.select({
 						totalRevenue:
-							sql<string>`coalesce(sum(${payments.amount}),0)`.mapWith(Number),
+							sql<string>`coalesce(sum(${payments.lineTotal}),0)`.mapWith(
+								Number,
+							),
 					})
 					.from(payments)
 					.where(filters),
 				db
 					.select({
 						averagePayment:
-							sql<string>`AVG(CAST(COALESCE(${payments.amount}, 0) AS DECIMAL(10,2)))`.mapWith(
+							sql<string>`AVG(CAST(COALESCE(${payments.lineTotal}, 0) AS DECIMAL(10,2)))`.mapWith(
 								Number,
 							),
 					})
@@ -217,7 +239,9 @@ export const getPlanRevenueStats = createServerFn()
 				db
 					.select({
 						revenueThisMonth:
-							sql<string>`coalesce(sum(${payments.amount}),0)`.mapWith(Number),
+							sql<string>`coalesce(sum(${payments.lineTotal}),0)`.mapWith(
+								Number,
+							),
 					})
 					.from(payments)
 					.where(
@@ -231,7 +255,9 @@ export const getPlanRevenueStats = createServerFn()
 				db
 					.select({
 						totalRevenue:
-							sql<string>`coalesce(sum(${payments.amount}),0)`.mapWith(Number),
+							sql<string>`coalesce(sum(${payments.lineTotal}),0)`.mapWith(
+								Number,
+							),
 					})
 					.from(payments)
 					.where(
@@ -260,6 +286,8 @@ export const getPlanPaymentsByDuration = createServerFn()
 		}) => data,
 	)
 	.handler(async ({ data }) => {
+		await requirePermission("plans:view-plan-revenue");
+
 		const {
 			planId,
 			filters: { from, to, q },
@@ -317,6 +345,8 @@ export const getPlanRevenueTrend = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: PlanWithDateRange) => data)
 	.handler(async ({ data: { dateRange, planId } }) => {
+		await requirePermission("plans:view-plan-revenue");
+
 		const { from: dateFrom, to: dateTo } = normalizeDateRange(
 			dateRange.from ?? startOfYear(new Date()),
 			dateRange.to ?? new Date(),
@@ -339,7 +369,7 @@ export const getPlanRevenueTrend = createServerFn()
 					month: sql<string>`TO_CHAR(${payments.paymentDate}, 'Mon')`,
 					year: sql<string>`TO_CHAR(${payments.paymentDate}, 'YYYY')`,
 					dateValue: sql<string>`TO_CHAR(${payments.paymentDate}, 'YYYY-MM')`,
-					revenue: sql<number>`SUM(${payments.totalAmount})`.mapWith(Number),
+					revenue: sql<number>`SUM(${payments.lineTotal})`.mapWith(Number),
 				})
 				.from(payments)
 				.where(filters)
@@ -360,7 +390,7 @@ export const getPlanRevenueTrend = createServerFn()
 			.select({
 				date: sql<string>`TO_CHAR(${payments.paymentDate}, 'DD Mon')`,
 				fullDate: sql<string>`TO_CHAR(${payments.paymentDate}, 'YYYY-MM-DD')`,
-				revenue: sql<number>`SUM(${payments.totalAmount})`.mapWith(Number),
+				revenue: sql<number>`SUM(${payments.lineTotal})`.mapWith(Number),
 			})
 			.from(payments)
 			.where(filters)
@@ -386,6 +416,8 @@ export const createPlan = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("plans:create");
+
 			if (await planNameExists({ data: { value: data.name } })) {
 				throw new ConflictError("Plan");
 			}
@@ -420,6 +452,13 @@ export const getPlan = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: string) => data)
 	.handler(async ({ data: planId }) => {
+		await requireAnyPermission([
+			"plans:view",
+			"plans:update",
+			"plans:view-plan-revenue",
+			"receipts:create",
+		]);
+
 		return db.query.membershipPlans.findFirst({
 			where: eq(membershipPlans.id, planId),
 		});
@@ -435,6 +474,8 @@ export const updatePlan = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("plans:update");
+
 			if (await planNameExists({ data: { value: values.name, planId } })) {
 				throw new ConflictError("Plan");
 			}
@@ -475,6 +516,8 @@ export const deletePlan = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("plans:delete");
+
 			const plan = await db.query.membershipPlans.findFirst({
 				where: eq(membershipPlans.id, planId),
 			});
@@ -507,6 +550,8 @@ export const planNameExists = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator((data: { value: string; planId?: string }) => data)
 	.handler(async ({ data: { value, planId } }) => {
+		await requireAnyPermission(["plans:create", "plans:update"]);
+
 		return db.query.membershipPlans.findFirst({
 			columns: { id: true },
 			where: and(
