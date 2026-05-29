@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday } from "date-fns";
 import { and, inArray, lte, notInArray, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { bills, financialYears, forms, vwInvoices } from "@/drizzle/schema";
+import { bills, financialYears, vwInvoices } from "@/drizzle/schema";
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
+import { runMembershipMaintenance } from "@/features/receipts/services/membership-payment-finalizer";
 import { normalizeDateRange } from "@/lib/helpers";
 import { deleteOlderLogs } from "@/services/activity-logger";
 
@@ -32,16 +33,6 @@ async function autoCreateFinancialYear() {
 }
 
 async function runDailyMaintenance() {
-	await db.insert(forms).values({
-		menuOrder: 1,
-		moduleId: 1,
-		module: "test",
-		name: "test form",
-		path: "/",
-		resource: "test",
-		active: true,
-	});
-
 	// 1) delete older audit logs
 	await deleteOlderLogs();
 
@@ -69,6 +60,9 @@ async function runDailyMaintenance() {
 
 	// 3) auto create financial year
 	await autoCreateFinancialYear();
+
+	// 4) update membership status rollovers
+	await runMembershipMaintenance();
 }
 
 export const Route = createFileRoute("/api/cron/daily/")({

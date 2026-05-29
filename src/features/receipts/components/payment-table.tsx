@@ -1,11 +1,6 @@
-import {
-	useQuery,
-	useQueryClient,
-	useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ViewDetailsAction } from "@/components/ui/custom-button";
 import { DataTable } from "@/components/ui/datatable";
@@ -15,30 +10,30 @@ import { CheckIcon, LoaderIcon, ResetIcon, XIcon } from "@/components/ui/icons";
 import { MemberAvatar } from "@/features/members/components/member-table";
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { useFilters } from "@/hooks/use-filters";
-import { dateFormat } from "@/lib/helpers";
+import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 export function ReceiptsTable() {
-	const { filters, setFilters } = useFilters(getRouteApi("/app/receipts/").id);
-	const queryClient = useQueryClient();
+	const { filters } = useFilters(getRouteApi("/app/receipts/").id);
+	// const queryClient = useQueryClient();
 	const { data: payments } = useSuspenseQuery(paymentsQueries.list(filters));
-	const { data: freshPayments } = useQuery({
-		...paymentsQueries.list(filters),
-		enabled: !!filters.payment,
-		refetchInterval: 2000,
-	});
+	// const { data: freshPayments } = useQuery({
+	// 	...paymentsQueries.list(filters),
+	// 	enabled: !!filters.payment,
+	// 	refetchInterval: 2000,
+	// });
 
-	useEffect(() => {
-		if (freshPayments && filters.payment) {
-			const payment = freshPayments.find(
-				(payment) => payment.id === filters.payment,
-			);
-			if (payment?.status === "completed") {
-				queryClient.invalidateQueries({ queryKey: ["payments"] });
-				setFilters({ payment: undefined });
-			}
-		}
-	}, [freshPayments, filters.payment, setFilters, queryClient]);
+	// useEffect(() => {
+	// 	if (freshPayments && filters.payment) {
+	// 		const payment = freshPayments.find(
+	// 			(payment) => payment.id === filters.payment,
+	// 		);
+	// 		if (payment?.status === "completed") {
+	// 			queryClient.invalidateQueries({ queryKey: ["receipts"] });
+	// 			setFilters({ payment: undefined });
+	// 		}
+	// 	}
+	// }, [freshPayments, filters.payment, setFilters, queryClient]);
 
 	const columns: Array<ColumnDef<(typeof payments)[0]>> = [
 		{
@@ -80,7 +75,11 @@ export function ReceiptsTable() {
 		{
 			accessorKey: "amount",
 			header: "Amount",
-			cell: ({ row }) => row.original.amount,
+			cell: ({ row }) => (
+				<Badge variant="outline">
+					{currencyFormatter(row.original.amount)}
+				</Badge>
+			),
 		},
 		{
 			accessorKey: "status",
