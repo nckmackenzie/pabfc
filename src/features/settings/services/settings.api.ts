@@ -1,13 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
+import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
-import { settings } from "@/drizzle/schema";
+import { biotimeSettings, settings } from "@/drizzle/schema";
 import {
 	billingSchema,
+	biometricSettingsSchema,
 	securitySchema,
 	settingsDataSchema,
 	settingsNotificationSchema,
 } from "@/features/settings/services/schemas";
+import { decrypt, encrypt } from "@/features/settings/services/utils";
 import { AuthorizationError } from "@/lib/error-handling/app-error";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -17,6 +20,16 @@ function nullifyZeroValues(value: number | undefined | null) {
 		return +value === 0 ? undefined : value;
 	}
 	return undefined;
+}
+
+function getBiotimeSecret() {
+	const secret = process.env.BETTER_AUTH_SECRET;
+
+	if (!secret) {
+		throw new Error("error: BETTER_AUTH_SECRET is not configured");
+	}
+
+	return secret;
 }
 
 export const getSettings = createServerFn({ method: "GET" })
@@ -35,6 +48,35 @@ export const getSettings = createServerFn({ method: "GET" })
 				updatedBy: false,
 			},
 		});
+	});
+
+export const getBiotimeSettings = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.handler(async ({ context: { user } }) => {
+		if (user.role !== "admin") {
+			throw new AuthorizationError(
+				"You do not have permission to perform this action",
+			);
+		}
+		const biotimeSettings = await db.query.biotimeSettings.findFirst({
+			columns: {
+				createdAt: false,
+				updatedAt: false,
+				notes: false,
+			},
+		});
+
+		if (!biotimeSettings) {
+			return null;
+		}
+
+		return {
+			...biotimeSettings,
+			username: biotimeSettings.username ?? "",
+			password: biotimeSettings.password
+				? decrypt(biotimeSettings.password, getBiotimeSecret())
+				: "",
+		};
 	});
 
 export const upsertDataSettings = createServerFn({ method: "POST" })
@@ -243,4 +285,65 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 			},
 		});
 		return "Settings updated successfully!!";
+	});
+
+export const upsertBiotimeSettings = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(biometricSettingsSchema)
+	.handler(async ({ data, context: { user } }) => {
+		if (user.role !== "admin") {
+			throw new AuthorizationError(
+				"You do not have permission to perform this action",
+			);
+		}
+
+		const existingSettings = await db.query.biotimeSettings.findFirst({
+			columns: { id: true },
+		});
+
+		if (existingSettings?.id) {
+			await db
+				.update(biotimeSettings)
+				.set({
+					baseUrl: data.baseUrl,
+					username: data.username,
+					password: encrypt(data.password, getBiotimeSecret()),
+					defaultDepartmentId: data.defaultDepartmentId,
+					authorizedAreaId: data.authorizedAreaId,
+					unauthorizedAreaId: data.unauthorizedAreaId,
+					deviceSerialNumber: data.deviceSerialNumber ?? null,
+					syncEnabled: data.syncEnabled,
+					pollIntervalSeconds: data.pollIntervalSeconds,
+					batchSize: data.batchSize,
+				})
+				.where(eq(biotimeSettings.id, existingSettings.id));
+		} else {
+			await db.insert(biotimeSettings).values({
+				id: data.id ?? crypto.randomUUID(),
+				baseUrl: data.baseUrl,
+				username: data.username,
+				password: encrypt(data.password, getBiotimeSecret()),
+				defaultDepartmentId: data.defaultDepartmentId,
+				authorizedAreaId: data.authorizedAreaId,
+				unauthorizedAreaId: data.unauthorizedAreaId,
+				deviceSerialNumber: data.deviceSerialNumber ?? null,
+				syncEnabled: data.syncEnabled,
+				pollIntervalSeconds: data.pollIntervalSeconds,
+				batchSize: data.batchSize,
+			});
+		}
+
+		await logActivity({
+			data: {
+				action: existingSettings?.id
+					? "Update BioTime Settings"
+					: "Create BioTime Settings",
+				description: existingSettings?.id
+					? "Updated biometric integration settings"
+					: "Created biometric integration settings",
+				userId: user.id,
+			},
+		});
+
+		return "BioTime settings updated successfully!!";
 	});

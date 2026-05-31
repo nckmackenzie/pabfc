@@ -6,28 +6,38 @@ import {
 	BellIcon,
 	DollarSignIcon,
 	LockOpenIcon,
+	MonitorIcon,
 	ShieldAlertIcon,
 } from "@/components/ui/icons";
 import { BillingForm } from "@/features/settings/components/billing-form";
+import { BiometricForm } from "@/features/settings/components/biometric-form";
 import { DataForm } from "@/features/settings/components/data-form";
 import { NotificationsForm } from "@/features/settings/components/notifications-form";
 import { SecurityForm } from "@/features/settings/components/security-form";
-import { settingsQuery } from "@/features/settings/services/queries";
+import {
+	biotimeSettingsQuery,
+	settingsQuery,
+} from "@/features/settings/services/queries";
 import { cn } from "@/lib/utils";
 
 const tabs = [
 	{ id: "data", label: "Data Retention & Privacy", icon: ShieldAlertIcon },
-	{ id: "notification", label: "Notification Settings", icon: BellIcon },
-	{ id: "security", label: "Security Settings", icon: LockOpenIcon },
-	{ id: "billing", label: "Financial Settings", icon: DollarSignIcon },
+	{ id: "notification", label: "Notification", icon: BellIcon },
+	{ id: "security", label: "Security", icon: LockOpenIcon },
+	{ id: "billing", label: "Financial", icon: DollarSignIcon },
+	{ id: "biometric", label: "Biometric", icon: MonitorIcon },
 ];
 
 export function SettingsForm() {
 	const [activeTab, setActiveTab] = useState("data");
-	const { settings: settingsLoaderData } =
-		getRouteApi("/app/settings").useLoaderData();
+	const {
+		settings: settingsLoaderData,
+		biotimeSettings: biotimeSettingsLoaderData,
+	} = getRouteApi("/app/settings").useLoaderData();
 	const { data: freshData } = useQuery(settingsQuery());
-	const settingsData = freshData || settingsLoaderData;
+	const { data: freshBiotimeData } = useQuery(biotimeSettingsQuery());
+	const settingsData = freshData ?? settingsLoaderData;
+	const biometricSettingsData = freshBiotimeData ?? biotimeSettingsLoaderData;
 
 	return (
 		<div className="space-y-6">
@@ -105,6 +115,9 @@ export function SettingsForm() {
 							: undefined
 					}
 				/>
+			)}
+			{activeTab === "biometric" && (
+				<BiometricForm biometricSettings={biometricSettingsData ?? undefined} />
 			)}
 		</div>
 	);

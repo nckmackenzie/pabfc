@@ -4,7 +4,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
 import { accountQueries } from "@/features/coa/services/queries";
 import { SettingsForm } from "@/features/settings/components/settings-form";
-import { settingsQuery } from "@/features/settings/services/queries";
+import {
+	biotimeSettingsQuery,
+	settingsQuery,
+} from "@/features/settings/services/queries";
 import { generateRandomId } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/settings")({
@@ -22,13 +25,15 @@ export const Route = createFileRoute("/app/settings")({
 	component: RouteComponent,
 	pendingComponent: SettingsSkeleton,
 	loader: async ({ context: { queryClient } }) => {
-		const [settings, accounts] = await Promise.all([
+		const [settings, biotimeSettings, accounts] = await Promise.all([
 			queryClient.ensureQueryData(settingsQuery()),
+			queryClient.ensureQueryData(biotimeSettingsQuery()),
 			queryClient.ensureQueryData(accountQueries.list({})),
 		]);
 
 		return {
 			settings,
+			biotimeSettings,
 			accounts: accounts
 				.filter(
 					(acc) => acc.type === "liability" && acc.isActive && acc.isPosting,
