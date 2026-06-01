@@ -1,15 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
-import { members, users } from "@/drizzle/schema";
+import {
+	accessControlSyncJobs,
+	memberAccessProfiles,
+	members,
+	users,
+} from "@/drizzle/schema";
 import {
 	type MemberFormSchema,
 	memberFormSchema,
 	memberRevokePortalAccessSchema,
 	memberToggleActiveSchema,
 } from "@/features/members/services/schemas";
-import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import {
+	ApplicationError,
+	ConflictError,
+	NotFoundError,
+} from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -18,6 +27,10 @@ import {
 	getMember,
 	getMemberNo,
 } from "./members.queries.api";
+
+function generateBioTimeEmployeeCode(memberNo: number) {
+	return `M${String(memberNo).padStart(6, "0")}`;
+}
 
 export const createMember = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
@@ -37,14 +50,65 @@ export const createMember = createServerFn({ method: "POST" })
 			const memberNo = await getMemberNo();
 			const memberData = mapMemberData(data);
 
+			const settings = await db.query.biotimeSettings.findFirst();
+
+			// if (!settings || !settings.syncEnabled) {
+			// 	throw new ApplicationError(
+			// 		"Access Control Sync settings not properly set.",
+			// 	);
+			// }
+
 			const memberId = await db.transaction(async (tx) => {
-				const [{ id }] = await tx
+				const [member] = await tx
 					.insert(members)
 					.values({
 						...memberData,
 						memberNo,
 					})
-					.returning({ id: members.id });
+					.returning();
+
+				const empCode = generateBioTimeEmployeeCode(memberNo);
+
+				const payload = {
+					empCode,
+					firstName: member.firstName,
+					lastName: member.lastName,
+					departmentId: settings?.defaultDepartmentId ?? 1,
+					areaIds: [settings?.authorizedAreaId ?? 2],
+					mobile: member.contact,
+					email: member.email,
+					gender: member.gender,
+					birthday: member.dateOfBirth,
+				};
+
+				const existingProfile = await db.query.memberAccessProfiles.findFirst({
+					where: eq(memberAccessProfiles.memberId, member.id),
+				});
+
+				if (existingProfile) {
+					throw new ApplicationError("Access Control Profile already exists");
+				}
+
+				await tx.insert(memberAccessProfiles).values({
+					memberId: member.id,
+					biotimeEmployeeCode: empCode,
+					biotimeDepartmentId: settings?.defaultDepartmentId ?? 1,
+					authorizedAreaId: settings?.authorizedAreaId ?? 2,
+					unauthorizedAreaId: settings?.unauthorizedAreaId ?? 1,
+					currentAreaId: null,
+					desiredAccessEnabled: true,
+					accessControlStatus: "pending_sync",
+					biometricEnrollmentStatus: "pending",
+					lastSyncPayload: payload,
+				});
+
+				await tx.insert(accessControlSyncJobs).values({
+					memberId: member.id,
+					action: "CREATE_EMPLOYEE",
+					status: "pending",
+					payload,
+					idempotencyKey: `CREATE_EMPLOYEE:${member.id}:${empCode}`,
+				});
 
 				await logActivity({
 					data: {
@@ -54,7 +118,7 @@ export const createMember = createServerFn({ method: "POST" })
 					},
 				});
 
-				return id;
+				return member.id;
 			});
 
 			await inngest.send({
@@ -86,6 +150,14 @@ export const updateMember = createServerFn({ method: "POST" })
 
 			const memberData = mapMemberData(value);
 
+			const member = await db.query.members.findFirst({
+				where: eq(members.id, id),
+			});
+
+			if (!member) {
+				throw new NotFoundError("Member not found");
+			}
+
 			await db.transaction(async (tx) => {
 				await tx.update(members).set(memberData).where(eq(members.id, id));
 
@@ -95,8 +167,69 @@ export const updateMember = createServerFn({ method: "POST" })
 						name: `${value.firstName} ${value.lastName}`,
 						contact: value.contact,
 						email: value.email,
+						active: value.memberStatus === "active",
 					})
 					.where(eq(users.memberId, id));
+
+				const memberProfile = await tx.query.memberAccessProfiles.findFirst({
+					where: eq(memberAccessProfiles.memberId, id),
+				});
+
+				if (memberProfile) {
+					if (
+						value.memberStatus !== "active" &&
+						member.memberStatus === "active"
+					) {
+						await tx
+							.update(memberAccessProfiles)
+							.set({
+								desiredAccessEnabled: false,
+								accessControlStatus: "pending_sync",
+								currentAreaId: memberProfile.unauthorizedAreaId,
+								updatedAt: new Date(),
+							})
+							.where(eq(memberAccessProfiles.memberId, member.id));
+
+						await tx.insert(accessControlSyncJobs).values({
+							memberId: member.id,
+							action: "DISABLE_ACCESS",
+							status: "pending",
+							payload: {
+								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
+								areaIds: [memberProfile.unauthorizedAreaId],
+								reason: "membership_expired",
+							},
+							idempotencyKey: `DISABLE_ACCESS:${member.id}:${Date.now()}`,
+						});
+					}
+
+					if (
+						value.memberStatus === "active" &&
+						member.memberStatus !== "active"
+					) {
+						await tx
+							.update(memberAccessProfiles)
+							.set({
+								desiredAccessEnabled: true,
+								accessControlStatus: "pending_sync",
+								currentAreaId: memberProfile.authorizedAreaId,
+								updatedAt: new Date(),
+							})
+							.where(eq(memberAccessProfiles.memberId, member.id));
+
+						await tx.insert(accessControlSyncJobs).values({
+							memberId: member.id,
+							action: "ENABLE_ACCESS",
+							status: "pending",
+							payload: {
+								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
+								areaIds: [memberProfile.authorizedAreaId],
+								reason: "membership_paid_or_reactivated",
+							},
+							idempotencyKey: `ENABLE_ACCESS:${member.id}:${Date.now()}`,
+						});
+					}
+				}
 
 				await logActivity({
 					data: {
@@ -121,7 +254,8 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
-			if (!(await getMember({ data: memberId }))) {
+			const member = await getMember({ data: memberId });
+			if (!member) {
 				throw new NotFoundError("Member not found");
 			}
 
@@ -138,6 +272,39 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 					.update(users)
 					.set({ banned: !banned, banReason: revokeReason ?? null })
 					.where(eq(users.id, user.id));
+
+				await tx
+					.update(members)
+					.set({ deletedAt: new Date() })
+					.where(and(eq(members.id, member.id), isNull(members.deletedAt)));
+
+				const memberProfile = await db.query.memberAccessProfiles.findFirst({
+					where: eq(memberAccessProfiles.memberId, memberId),
+				});
+
+				if (memberProfile) {
+					await tx
+						.update(memberAccessProfiles)
+						.set({
+							desiredAccessEnabled: false,
+							accessControlStatus: "pending_sync",
+							currentAreaId: 1,
+							updatedAt: new Date(),
+						})
+						.where(eq(memberAccessProfiles.memberId, member.id));
+
+					await tx.insert(accessControlSyncJobs).values({
+						memberId: member.id,
+						action: "DISABLE_ACCESS",
+						status: "pending",
+						payload: {
+							biotimeEmployeeId: memberProfile.biotimeEmployeeId,
+							areaIds: [memberProfile.unauthorizedAreaId],
+							reason: "member_deletedd",
+						},
+						idempotencyKey: `DISABLE_ACCESS:${member.id}:${Date.now()}`,
+					});
+				}
 
 				await logActivity({
 					data: {

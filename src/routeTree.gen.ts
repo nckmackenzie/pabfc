@@ -99,11 +99,15 @@ import { Route as AppReportsFinanceIncomeStatementIndexRouteImport } from './rou
 import { Route as AppReportsFinanceExpensesIndexRouteImport } from './routes/app/reports/finance/expenses/index'
 import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/reports/finance/banking/index'
 import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes/app/reports/finance/balance-sheet/index'
+import { Route as ApiAccessControlAgentHeartbeatIndexRouteImport } from './routes/api/access-control/agent/heartbeat/index'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 import { Route as AppBankingsPostingsPostingIdEditRouteImport } from './routes/app/bankings/postings/$postingId/edit'
 import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/payments/pabfc/stk/callback'
 import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc/c2b/validate'
 import { Route as ApiPaymentsPabfcC2bConfRouteImport } from './routes/api/payments/pabfc/c2b/conf'
+import { Route as ApiAccessControlAgentJobsClaimIndexRouteImport } from './routes/api/access-control/agent/jobs/claim/index'
+import { Route as ApiAccessControlAgentJobsJobIdSuccessIndexRouteImport } from './routes/api/access-control/agent/jobs/$jobId/success/index'
+import { Route as ApiAccessControlAgentJobsJobIdFailureIndexRouteImport } from './routes/api/access-control/agent/jobs/$jobId/failure/index'
 
 const MemberRouteRoute = MemberRouteRouteImport.update({
   id: '/member',
@@ -579,6 +583,12 @@ const AppReportsFinanceBalanceSheetIndexRoute =
     path: '/balance-sheet/',
     getParentRoute: () => AppReportsFinanceRouteRoute,
   } as any)
+const ApiAccessControlAgentHeartbeatIndexRoute =
+  ApiAccessControlAgentHeartbeatIndexRouteImport.update({
+    id: '/api/access-control/agent/heartbeat/',
+    path: '/api/access-control/agent/heartbeat/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   id: '/$roleId/edit',
   path: '/$roleId/edit',
@@ -607,6 +617,24 @@ const ApiPaymentsPabfcC2bConfRoute = ApiPaymentsPabfcC2bConfRouteImport.update({
   path: '/api/payments/pabfc/c2b/conf',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAccessControlAgentJobsClaimIndexRoute =
+  ApiAccessControlAgentJobsClaimIndexRouteImport.update({
+    id: '/api/access-control/agent/jobs/claim/',
+    path: '/api/access-control/agent/jobs/claim/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAccessControlAgentJobsJobIdSuccessIndexRoute =
+  ApiAccessControlAgentJobsJobIdSuccessIndexRouteImport.update({
+    id: '/api/access-control/agent/jobs/$jobId/success/',
+    path: '/api/access-control/agent/jobs/$jobId/success/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAccessControlAgentJobsJobIdFailureIndexRoute =
+  ApiAccessControlAgentJobsJobIdFailureIndexRouteImport.update({
+    id: '/api/access-control/agent/jobs/$jobId/failure/',
+    path: '/api/access-control/agent/jobs/$jobId/failure/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -695,6 +723,7 @@ export interface FileRoutesByFullPath {
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
+  '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
@@ -703,6 +732,9 @@ export interface FileRoutesByFullPath {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/jobs/claim': typeof ApiAccessControlAgentJobsClaimIndexRoute
+  '/api/access-control/agent/jobs/$jobId/failure': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
+  '/api/access-control/agent/jobs/$jobId/success': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -778,6 +810,7 @@ export interface FileRoutesByTo {
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
+  '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
@@ -786,6 +819,9 @@ export interface FileRoutesByTo {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/jobs/claim': typeof ApiAccessControlAgentJobsClaimIndexRoute
+  '/api/access-control/agent/jobs/$jobId/failure': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
+  '/api/access-control/agent/jobs/$jobId/success': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -876,6 +912,7 @@ export interface FileRoutesById {
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
+  '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
@@ -884,6 +921,9 @@ export interface FileRoutesById {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/jobs/claim/': typeof ApiAccessControlAgentJobsClaimIndexRoute
+  '/api/access-control/agent/jobs/$jobId/failure/': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
+  '/api/access-control/agent/jobs/$jobId/success/': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -974,6 +1014,7 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
+    | '/api/access-control/agent/heartbeat'
     | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
@@ -982,6 +1023,9 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/api/access-control/agent/jobs/claim'
+    | '/api/access-control/agent/jobs/$jobId/failure'
+    | '/api/access-control/agent/jobs/$jobId/success'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1057,6 +1101,7 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
+    | '/api/access-control/agent/heartbeat'
     | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
@@ -1065,6 +1110,9 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/api/access-control/agent/jobs/claim'
+    | '/api/access-control/agent/jobs/$jobId/failure'
+    | '/api/access-control/agent/jobs/$jobId/success'
   id:
     | '__root__'
     | '/'
@@ -1154,6 +1202,7 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
+    | '/api/access-control/agent/heartbeat/'
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
@@ -1162,6 +1211,9 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/api/access-control/agent/jobs/claim/'
+    | '/api/access-control/agent/jobs/$jobId/failure/'
+    | '/api/access-control/agent/jobs/$jobId/success/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1178,6 +1230,10 @@ export interface RootRouteChildren {
   ApiPaymentsPabfcC2bConfRoute: typeof ApiPaymentsPabfcC2bConfRoute
   ApiPaymentsPabfcC2bValidateRoute: typeof ApiPaymentsPabfcC2bValidateRoute
   ApiPaymentsPabfcStkCallbackRoute: typeof ApiPaymentsPabfcStkCallbackRoute
+  ApiAccessControlAgentHeartbeatIndexRoute: typeof ApiAccessControlAgentHeartbeatIndexRoute
+  ApiAccessControlAgentJobsClaimIndexRoute: typeof ApiAccessControlAgentJobsClaimIndexRoute
+  ApiAccessControlAgentJobsJobIdFailureIndexRoute: typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
+  ApiAccessControlAgentJobsJobIdSuccessIndexRoute: typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1812,6 +1868,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsFinanceBalanceSheetIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
+    '/api/access-control/agent/heartbeat/': {
+      id: '/api/access-control/agent/heartbeat/'
+      path: '/api/access-control/agent/heartbeat'
+      fullPath: '/api/access-control/agent/heartbeat'
+      preLoaderRoute: typeof ApiAccessControlAgentHeartbeatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/users/roles/$roleId/edit': {
       id: '/app/users/roles/$roleId/edit'
       path: '/$roleId/edit'
@@ -1845,6 +1908,27 @@ declare module '@tanstack/react-router' {
       path: '/api/payments/pabfc/c2b/conf'
       fullPath: '/api/payments/pabfc/c2b/conf'
       preLoaderRoute: typeof ApiPaymentsPabfcC2bConfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/access-control/agent/jobs/claim/': {
+      id: '/api/access-control/agent/jobs/claim/'
+      path: '/api/access-control/agent/jobs/claim'
+      fullPath: '/api/access-control/agent/jobs/claim'
+      preLoaderRoute: typeof ApiAccessControlAgentJobsClaimIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/access-control/agent/jobs/$jobId/success/': {
+      id: '/api/access-control/agent/jobs/$jobId/success/'
+      path: '/api/access-control/agent/jobs/$jobId/success'
+      fullPath: '/api/access-control/agent/jobs/$jobId/success'
+      preLoaderRoute: typeof ApiAccessControlAgentJobsJobIdSuccessIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/access-control/agent/jobs/$jobId/failure/': {
+      id: '/api/access-control/agent/jobs/$jobId/failure/'
+      path: '/api/access-control/agent/jobs/$jobId/failure'
+      fullPath: '/api/access-control/agent/jobs/$jobId/failure'
+      preLoaderRoute: typeof ApiAccessControlAgentJobsJobIdFailureIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -2217,6 +2301,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPaymentsPabfcC2bConfRoute: ApiPaymentsPabfcC2bConfRoute,
   ApiPaymentsPabfcC2bValidateRoute: ApiPaymentsPabfcC2bValidateRoute,
   ApiPaymentsPabfcStkCallbackRoute: ApiPaymentsPabfcStkCallbackRoute,
+  ApiAccessControlAgentHeartbeatIndexRoute:
+    ApiAccessControlAgentHeartbeatIndexRoute,
+  ApiAccessControlAgentJobsClaimIndexRoute:
+    ApiAccessControlAgentJobsClaimIndexRoute,
+  ApiAccessControlAgentJobsJobIdFailureIndexRoute:
+    ApiAccessControlAgentJobsJobIdFailureIndexRoute,
+  ApiAccessControlAgentJobsJobIdSuccessIndexRoute:
+    ApiAccessControlAgentJobsJobIdSuccessIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

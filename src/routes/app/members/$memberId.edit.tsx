@@ -26,8 +26,7 @@ export const Route = createFileRoute("/app/members/$memberId/edit")({
 		return member;
 	},
 	staticData: {
-		breadcrumb: (match) =>
-			`Edit ${toTitleCase(match.loaderData.member.fullName)}`,
+		breadcrumb: (match) => `Edit ${toTitleCase(match.loaderData.firstName)} details`,
 	},
 });
 

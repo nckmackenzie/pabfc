@@ -1,5 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
+	type AccessControlDashboardFilters,
+	getAccessControlDashboard,
+} from "@/features/dashboard/services/access-control.api";
+import {
 	dashboardStats,
 	getAverageAttendanceByDay,
 	getExpiringMemberships,
@@ -34,5 +38,11 @@ export const dashboardQueries = {
 		queryOptions({
 			queryKey: [...dashboardQueries.all, "finance-stats"],
 			queryFn: () => getFinanceStats(),
+		}),
+	accessControl: (filters: AccessControlDashboardFilters) =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "access-control", filters],
+			queryFn: () => getAccessControlDashboard({ data: filters }),
+			refetchInterval: 30 * 1000,
 		}),
 };

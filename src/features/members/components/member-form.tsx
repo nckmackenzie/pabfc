@@ -16,6 +16,7 @@ import {
 	EMERGENCY_CONTACT_RELATIONSHIPS,
 	GENDER,
 	ID_TYPES,
+	MEMBER_STATUS,
 } from "@/features/members/lib/constants";
 import {
 	createMember,
@@ -204,6 +205,22 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 								/>
 							)}
 						</form.AppField>
+						{member && (
+							<form.AppField name="memberStatus">
+								{(field) => (
+									<field.Select
+										label="Member Status"
+										placeholder="Select a member status"
+									>
+										{MEMBER_STATUS.map((status) => (
+											<SelectItem key={status.value} value={status.value}>
+												{status.label}
+											</SelectItem>
+										))}
+									</field.Select>
+								)}
+							</form.AppField>
+						)}
 					</div>
 				)}
 				{activeTab === "contact" && (
