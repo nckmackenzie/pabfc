@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncAttempts,
@@ -44,9 +44,9 @@ export const Route = createFileRoute(
 
 					const hasReachedMaxAttempts = job.attempts >= job.maxAttempts;
 
-					await db.transaction(async (tx) => {
+					const result = await db.transaction(async (tx) => {
 						// 1. Mark job failed or return it to pending
-						await tx
+						const updatedJobs = await tx
 							.update(accessControlSyncJobs)
 							.set({
 								status: hasReachedMaxAttempts ? "failed" : "pending",
@@ -55,7 +55,23 @@ export const Route = createFileRoute(
 								lastError: body.errorMessage ?? "Unknown BioTime sync error",
 								updatedAt: now,
 							})
-							.where(eq(accessControlSyncJobs.id, job.id));
+							.where(
+								and(
+									eq(accessControlSyncJobs.id, job.id),
+									eq(accessControlSyncJobs.status, "processing"),
+									or(
+										gt(accessControlSyncJobs.claimedUntil, now),
+										job.claimedUntil
+											? eq(accessControlSyncJobs.claimedUntil, job.claimedUntil)
+											: isNull(accessControlSyncJobs.claimedUntil),
+									),
+								),
+							)
+							.returning({ id: accessControlSyncJobs.id });
+
+						if (updatedJobs.length === 0) {
+							return { conflict: true } as const;
+						}
 
 						// 2. Log attempt
 						await tx.insert(accessControlSyncAttempts).values({
@@ -80,7 +96,24 @@ export const Route = createFileRoute(
 								updatedAt: now,
 							})
 							.where(eq(memberAccessProfiles.memberId, job.memberId));
+
+						return { conflict: false } as const;
 					});
+
+					if (result.conflict) {
+						return new Response(
+							JSON.stringify({
+								success: false,
+								message: "Job is no longer claimable by this failure callback",
+							}),
+							{
+								status: 409,
+								headers: {
+									"Content-Type": "application/json",
+								},
+							},
+						);
+					}
 
 					return new Response(
 						JSON.stringify({

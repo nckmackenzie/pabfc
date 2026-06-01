@@ -364,11 +364,7 @@ export const retryAccessControlJob = createServerFn({ method: "POST" })
 			throw new NotFoundError("Sync job not found");
 		}
 
-		if (job.status !== "failed") {
-			throw new ConflictError("Only failed jobs can be retried");
-		}
-
-		await db
+		const updated = await db
 			.update(accessControlSyncJobs)
 			.set({
 				status: "pending",
@@ -379,7 +375,17 @@ export const retryAccessControlJob = createServerFn({ method: "POST" })
 				completedAt: null,
 				updatedAt: new Date(),
 			})
-			.where(eq(accessControlSyncJobs.id, jobId));
+			.where(
+				and(
+					eq(accessControlSyncJobs.id, jobId),
+					eq(accessControlSyncJobs.status, "failed"),
+				),
+			)
+			.returning({ id: accessControlSyncJobs.id });
+
+		if (updated.length === 0) {
+			throw new ConflictError("Job is no longer failed");
+		}
 
 		return { success: true };
 	});

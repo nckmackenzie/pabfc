@@ -18,7 +18,9 @@ import {
 	WifiOffIcon,
 	XCircleIcon,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useDebounceCallback } from "usehooks-ts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,6 +87,18 @@ export function AccessControlDashboard({
 	setFilters,
 }: AccessControlDashboardProps) {
 	const queryClient = useQueryClient();
+	const [localSearch, setLocalSearch] = useState(filters.syncJobSearch ?? "");
+
+	useEffect(() => {
+		setLocalSearch(filters.syncJobSearch ?? "");
+	}, [filters.syncJobSearch]);
+
+	const updateSearchFilter = useDebounceCallback((term: string) => {
+		setFilters({
+			syncJobSearch: term.trim().length > 0 ? term : undefined,
+		});
+	}, 500);
+
 	const queryFilters: AccessControlDashboardFilters = {
 		status: filters.syncJobStatus ?? "all",
 		action: "all",
@@ -351,12 +365,12 @@ export function AccessControlDashboard({
 					</div>
 					<div className="grid max-w-lg gap-3 sm:grid-cols-2">
 						<Input
-							value={filters.syncJobSearch ?? ""}
-							onChange={(event) =>
-								setFilters({
-									syncJobSearch: event.target.value || undefined,
-								})
-							}
+							value={localSearch}
+							onChange={(event) => {
+								const value = event.target.value;
+								setLocalSearch(value);
+								updateSearchFilter(value);
+							}}
 							placeholder="Search member name"
 							className="w-full"
 						/>

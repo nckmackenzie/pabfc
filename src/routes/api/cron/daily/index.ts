@@ -127,6 +127,7 @@ async function deactivateInactiveMembers() {
 		.where(
 			and(
 				eq(members.memberStatus, "active"),
+				isNull(members.deletedAt),
 				or(
 					lte(lastAttendanceSubquery.lastCheckIn, thresholdDate),
 					and(

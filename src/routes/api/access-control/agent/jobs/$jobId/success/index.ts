@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncAttempts,
@@ -42,9 +42,27 @@ export const Route = createFileRoute(
 							},
 						});
 
-					await db.transaction(async (tx) => {
+					if (
+						job.status !== "processing" ||
+						(job.claimedUntil && job.claimedUntil < now)
+					) {
+						return new Response(
+							JSON.stringify({
+								success: false,
+								message: "Job is no longer claimable by this success callback",
+							}),
+							{
+								status: 409,
+								headers: {
+									"Content-Type": "application/json",
+								},
+							},
+						);
+					}
+
+					const result = await db.transaction(async (tx) => {
 						// 1. Mark job succeeded
-						await tx
+						const updatedJobs = await tx
 							.update(accessControlSyncJobs)
 							.set({
 								status: "succeeded",
@@ -52,7 +70,23 @@ export const Route = createFileRoute(
 								lastError: null,
 								updatedAt: now,
 							})
-							.where(eq(accessControlSyncJobs.id, job.id));
+							.where(
+								and(
+									eq(accessControlSyncJobs.id, job.id),
+									eq(accessControlSyncJobs.status, "processing"),
+									or(
+										gt(accessControlSyncJobs.claimedUntil, now),
+										job.claimedUntil
+											? eq(accessControlSyncJobs.claimedUntil, job.claimedUntil)
+											: isNull(accessControlSyncJobs.claimedUntil),
+									),
+								),
+							)
+							.returning({ id: accessControlSyncJobs.id });
+
+						if (updatedJobs.length === 0) {
+							return { conflict: true } as const;
+						}
 
 						// 2. Log sync attempt
 						await tx.insert(accessControlSyncAttempts).values({
@@ -127,7 +161,24 @@ export const Route = createFileRoute(
 								})
 								.where(eq(memberAccessProfiles.memberId, job.memberId));
 						}
+
+						return { conflict: false } as const;
 					});
+
+					if (result.conflict) {
+						return new Response(
+							JSON.stringify({
+								success: false,
+								message: "Job is no longer claimable by this success callback",
+							}),
+							{
+								status: 409,
+								headers: {
+									"Content-Type": "application/json",
+								},
+							},
+						);
+					}
 
 					return new Response(
 						JSON.stringify({

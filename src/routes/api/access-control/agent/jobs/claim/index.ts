@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { and, asc, eq, inArray, lt, lte, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { accessControlSyncJobs } from "@/drizzle/schema";
 import { authenticateAccessAgent } from "@/services/access-control";
@@ -57,29 +57,23 @@ export const Route = createFileRoute("/api/access-control/agent/jobs/claim/")({
 								),
 							);
 
-						// 2. Select pending jobs
-						const pendingJobs = await tx
-							.select()
+						// 2. Select and claim pending jobs atomically
+						const subquery = tx
+							.select({ id: accessControlSyncJobs.id })
 							.from(accessControlSyncJobs)
 							.where(
 								and(
 									eq(accessControlSyncJobs.status, "pending"),
-									lte(
+									lt(
 										accessControlSyncJobs.attempts,
 										accessControlSyncJobs.maxAttempts,
 									),
 								),
 							)
 							.orderBy(asc(accessControlSyncJobs.createdAt))
-							.limit(batchSize);
+							.limit(batchSize)
+							.for("update", { skipLocked: true });
 
-						if (pendingJobs.length === 0) {
-							return [];
-						}
-
-						const jobIds = pendingJobs.map((job) => job.id);
-
-						// 3. Mark selected jobs as processing
 						const claimedJobs = await tx
 							.update(accessControlSyncJobs)
 							.set({
@@ -89,7 +83,7 @@ export const Route = createFileRoute("/api/access-control/agent/jobs/claim/")({
 								attempts: sql`${accessControlSyncJobs.attempts} + 1`,
 								updatedAt: now,
 							})
-							.where(inArray(accessControlSyncJobs.id, jobIds))
+							.where(inArray(accessControlSyncJobs.id, subquery))
 							.returning();
 
 						return claimedJobs;

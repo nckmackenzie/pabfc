@@ -52,11 +52,11 @@ export const createMember = createServerFn({ method: "POST" })
 
 			const settings = await db.query.biotimeSettings.findFirst();
 
-			if (!settings || !settings.syncEnabled) {
-				throw new ApplicationError(
-					"Access Control Sync settings not properly set.",
-				);
-			}
+			// if (!settings || !settings.syncEnabled) {
+			// 	throw new ApplicationError(
+			// 		"Access Control Sync settings not properly set.",
+			// 	);
+			// }
 
 			const memberId = await db.transaction(async (tx) => {
 				const [member] = await tx
@@ -73,8 +73,8 @@ export const createMember = createServerFn({ method: "POST" })
 					empCode,
 					firstName: member.firstName,
 					lastName: member.lastName,
-					departmentId: settings.defaultDepartmentId,
-					areaIds: [settings.authorizedAreaId],
+					departmentId: settings?.defaultDepartmentId ?? 1,
+					areaIds: [settings?.authorizedAreaId ?? 2],
 					mobile: member.contact,
 					email: member.email,
 					gender: member.gender,
@@ -92,9 +92,9 @@ export const createMember = createServerFn({ method: "POST" })
 				await tx.insert(memberAccessProfiles).values({
 					memberId: member.id,
 					biotimeEmployeeCode: empCode,
-					biotimeDepartmentId: settings.defaultDepartmentId,
-					authorizedAreaId: settings.authorizedAreaId,
-					unauthorizedAreaId: settings.unauthorizedAreaId,
+					biotimeDepartmentId: settings?.defaultDepartmentId ?? 2,
+					authorizedAreaId: settings?.authorizedAreaId ?? 1,
+					unauthorizedAreaId: settings?.unauthorizedAreaId ?? 2,
 					currentAreaId: null,
 					desiredAccessEnabled: true,
 					accessControlStatus: "pending_sync",
@@ -167,7 +167,7 @@ export const updateMember = createServerFn({ method: "POST" })
 						name: `${value.firstName} ${value.lastName}`,
 						contact: value.contact,
 						email: value.email,
-						active: member.memberStatus === "active",
+						active: value.memberStatus === "active",
 					})
 					.where(eq(users.memberId, id));
 
@@ -185,7 +185,7 @@ export const updateMember = createServerFn({ method: "POST" })
 							.set({
 								desiredAccessEnabled: false,
 								accessControlStatus: "pending_sync",
-								currentAreaId: 1,
+								currentAreaId: memberProfile.unauthorizedAreaId,
 								updatedAt: new Date(),
 							})
 							.where(eq(memberAccessProfiles.memberId, member.id));
@@ -212,7 +212,7 @@ export const updateMember = createServerFn({ method: "POST" })
 							.set({
 								desiredAccessEnabled: true,
 								accessControlStatus: "pending_sync",
-								currentAreaId: 2,
+								currentAreaId: memberProfile.authorizedAreaId,
 								updatedAt: new Date(),
 							})
 							.where(eq(memberAccessProfiles.memberId, member.id));
@@ -223,7 +223,7 @@ export const updateMember = createServerFn({ method: "POST" })
 							status: "pending",
 							payload: {
 								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
-								areaIds: [2],
+								areaIds: [memberProfile.authorizedAreaId],
 								reason: "membership_paid_or_reactivated",
 							},
 							idempotencyKey: `ENABLE_ACCESS:${member.id}:${Date.now()}`,
