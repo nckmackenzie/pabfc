@@ -92,9 +92,9 @@ export const createMember = createServerFn({ method: "POST" })
 				await tx.insert(memberAccessProfiles).values({
 					memberId: member.id,
 					biotimeEmployeeCode: empCode,
-					biotimeDepartmentId: settings?.defaultDepartmentId ?? 2,
-					authorizedAreaId: settings?.authorizedAreaId ?? 1,
-					unauthorizedAreaId: settings?.unauthorizedAreaId ?? 2,
+					biotimeDepartmentId: settings?.defaultDepartmentId ?? 1,
+					authorizedAreaId: settings?.authorizedAreaId ?? 2,
+					unauthorizedAreaId: settings?.unauthorizedAreaId ?? 1,
 					currentAreaId: null,
 					desiredAccessEnabled: true,
 					accessControlStatus: "pending_sync",
