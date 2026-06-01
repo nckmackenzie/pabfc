@@ -1,5 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, ilike, ne, or, type SQL, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	ilike,
+	isNull,
+	ne,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { memberMemberships, members, membersOverview } from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
@@ -101,7 +111,7 @@ export const getMember = createServerFn()
 	.handler(async ({ data: memberId }) => {
 		return db.query.members.findFirst({
 			columns: { createdAt: false, updatedAt: false },
-			where: eq(members.id, memberId),
+			where: and(eq(members.id, memberId), isNull(members.deletedAt)),
 		});
 	});
 
