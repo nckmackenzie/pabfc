@@ -4,6 +4,7 @@ import {
 	date,
 	index,
 	integer,
+	jsonb,
 	numeric,
 	pgEnum,
 	pgMaterializedView,
@@ -11,6 +12,8 @@ import {
 	serial,
 	text,
 	timestamp,
+	uniqueIndex,
+	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
@@ -47,6 +50,44 @@ export const membershipStatusEnum = pgEnum(
 	"membership_status",
 	membershipStatus,
 );
+
+export const accessControlStatusEnum = pgEnum("access_control_status", [
+	"not_synced",
+	"pending_sync",
+	"pending_biometric_enrollment",
+	"active",
+	"disabled",
+	"frozen",
+	"sync_failed",
+]);
+
+export const biometricEnrollmentStatusEnum = pgEnum(
+	"biometric_enrollment_status",
+	[
+		"not_required",
+		"pending",
+		"face_enrolled",
+		"fingerprint_enrolled",
+		"face_and_fingerprint_enrolled",
+		"unknown",
+	],
+);
+
+export const accessSyncActionEnum = pgEnum("access_sync_action", [
+	"CREATE_EMPLOYEE",
+	"UPDATE_EMPLOYEE",
+	"ENABLE_ACCESS",
+	"DISABLE_ACCESS",
+	"FULL_RECONCILE",
+]);
+
+export const accessSyncStatusEnum = pgEnum("access_sync_status", [
+	"pending",
+	"processing",
+	"succeeded",
+	"failed",
+	"cancelled",
+]);
 
 export const members = pgTable(
 	"members",
@@ -190,6 +231,65 @@ export const memberRegistrationLinks = pgTable("member_registration_links", {
 	createdAt,
 	updatedAt,
 });
+
+export const memberAccessProfiles = pgTable(
+	"member_access_profiles",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		memberId: varchar("member_id")
+			.notNull()
+			.references(() => members.id, { onDelete: "cascade" }),
+		biotimeEmployeeId: integer("biotime_employee_id"),
+		biotimeEmployeeCode: varchar("biotime_employee_code", {
+			length: 50,
+		}).notNull(),
+		biotimeDepartmentId: integer("biotime_department_id").notNull().default(1),
+		authorizedAreaId: integer("authorized_area_id").notNull().default(2),
+		unauthorizedAreaId: integer("unauthorized_area_id").notNull().default(1),
+		currentAreaId: integer("current_area_id"),
+		desiredAccessEnabled: boolean("desired_access_enabled")
+			.notNull()
+			.default(false),
+
+		accessControlStatus: accessControlStatusEnum("access_control_status")
+			.notNull()
+			.default("not_synced"),
+
+		biometricEnrollmentStatus: biometricEnrollmentStatusEnum(
+			"biometric_enrollment_status",
+		)
+			.notNull()
+			.default("pending"),
+
+		faceEnrolled: boolean("face_enrolled").notNull().default(false),
+		fingerprintEnrolled: boolean("fingerprint_enrolled")
+			.notNull()
+			.default(false),
+		biotimeResignId: integer("biotime_resign_id"),
+
+		lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+		lastSyncAttemptAt: timestamp("last_sync_attempt_at", {
+			withTimezone: true,
+		}),
+		lastSyncError: text("last_sync_error"),
+
+		lastSyncPayload: jsonb("last_sync_payload"),
+		lastSyncResponse: jsonb("last_sync_response"),
+
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		uniqueIndex("uq_member_access_profiles_member").on(table.memberId),
+		uniqueIndex("uq_member_access_profiles_biotime_employee_code").on(
+			table.biotimeEmployeeCode,
+		),
+		uniqueIndex("uq_member_access_profiles_biotime_employee_id").on(
+			table.biotimeEmployeeId,
+		),
+		index("idx_member_access_profiles_status").on(table.accessControlStatus),
+	],
+);
 
 export const membersOverview = pgMaterializedView("vw_member_overview", {
 	id: varchar("id").notNull(),
