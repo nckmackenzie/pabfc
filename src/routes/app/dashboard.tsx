@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { ShieldCheckIcon } from "lucide-react";
 import { Suspense, useEffect } from "react";
 import z from "zod";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
+import {
+	AccessControlDashboard,
+	AccessControlDashboardSkeleton,
+} from "@/features/dashboard/components/access-control-dashboard";
 import {
 	AverageAttendanceByDays,
 	AverageAttendanceByDaysSkeleton,
@@ -26,6 +31,7 @@ import {
 	TodaysCheckings,
 	TodaysCheckingsSkeleton,
 } from "@/features/dashboard/components/todays-checkings";
+import { accessControlDashboardJobStatusFilters } from "@/features/dashboard/services/access-control.api";
 import { useFilters } from "@/hooks/use-filters";
 import { useSession } from "@/lib/auth/client";
 import type { Permission } from "@/lib/permissions/constants";
@@ -37,7 +43,15 @@ export const Route = createFileRoute("/app/dashboard")({
 		meta: [{ title: "Dashboard / Prime Age Beauty & Fitness Center" }],
 	}),
 	validateSearch: z.object({
-		tab: z.enum(["memberships", "finance"]).optional().catch("memberships"),
+		tab: z
+			.enum(["memberships", "finance", "access-control"])
+			.optional()
+			.catch("memberships"),
+		syncJobStatus: z
+			.enum(accessControlDashboardJobStatusFilters)
+			.optional()
+			.catch("all"),
+		syncJobSearch: z.string().trim().max(100).optional().catch(""),
 	}),
 	component: RouteComponent,
 	staticData: {
@@ -48,7 +62,8 @@ export const Route = createFileRoute("/app/dashboard")({
 function RouteComponent() {
 	const { data: session } = useSession();
 	const queryClient = useQueryClient();
-	const { tab } = Route.useSearch();
+	const { tab, syncJobSearch, syncJobStatus } = Route.useSearch();
+	const { setFilters } = useFilters(Route.id);
 	useEffect(() => {
 		queryClient.prefetchQuery({
 			queryKey: ["permissions", session?.user.id],
@@ -63,7 +78,24 @@ function RouteComponent() {
 				description="Welcome to your dashboard"
 				content={<DashboardTabs />}
 			/>
-			{tab === "finance" ? <FinanceDashboard /> : <MemberShipDashboard />}
+			{tab === "finance" ? (
+				<FinanceDashboard />
+			) : tab === "access-control" ? (
+				<ErrorBoundaryWithSuspense
+					loader={<AccessControlDashboardSkeleton />}
+					errorMessage="Failed to load the access control sync dashboard"
+				>
+					<AccessControlDashboard
+						filters={{
+							syncJobSearch,
+							syncJobStatus,
+						}}
+						setFilters={setFilters}
+					/>
+				</ErrorBoundaryWithSuspense>
+			) : (
+				<MemberShipDashboard />
+			)}
 		</Wrapper>
 	);
 }
@@ -80,6 +112,12 @@ const tabs = [
 		label: "Finance",
 		icon: DollarSignIcon,
 		permission: "dashboard:finance" as Permission,
+	},
+	{
+		id: "access-control",
+		label: "Access Control",
+		icon: ShieldCheckIcon,
+		permission: "dashboard:view" as Permission,
 	},
 ] as const;
 
