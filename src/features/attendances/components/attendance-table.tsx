@@ -82,7 +82,6 @@ export function AttendanceTable() {
 					label="Total Check-ins"
 					value={data.length.toString()}
 				/>
-				<StatChip color="bg-amber-500" label="Peak Hour" value={"06:00 AM"} />
 			</div>
 
 			{data.length > 0 ? (

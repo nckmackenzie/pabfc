@@ -25,7 +25,7 @@ export const Route = createFileRoute(
 				const agent = await authenticateAccessAgent(
 					request.headers.get("authorization"),
 				);
-				console.log({ authorization: request.headers.get("authorization") });
+
 				if (!agent)
 					return new Response(JSON.stringify({ error: "Unauthorized" }), {
 						status: 401,

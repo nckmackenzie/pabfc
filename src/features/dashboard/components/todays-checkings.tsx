@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CalendarArrowDownIcon, CalendarCheck2Icon } from "lucide-react";
+import { CalendarCheck2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
@@ -97,7 +97,6 @@ function DashboardAttendanceItem({
 }) {
 	return (
 		<div
-			key={checkIn.id.toString()}
 			className={cn(
 				"group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-secondary/50 border-b",
 				"animate-fade-in",

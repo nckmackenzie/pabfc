@@ -54,6 +54,13 @@ export const Route = createFileRoute(
 					});
 				}
 
+				if (startTime > endTime) {
+					return new Response(
+						JSON.stringify({ error: "startTime must be <= endTime" }),
+						{ status: 400 },
+					);
+				}
+
 				if (!Array.isArray(transactions)) {
 					return new Response(
 						JSON.stringify({ error: "transactions must be an array" }),

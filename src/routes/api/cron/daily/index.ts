@@ -113,7 +113,10 @@ async function deactivateInactiveMembers() {
 		.where(
 			and(
 				eq(memberMemberships.status, "active"),
-				sql`${memberMemberships.endDate} >= ${today}`,
+				or(
+					isNull(memberMemberships.endDate),
+					sql`${memberMemberships.endDate} >= ${today}`,
+				),
 			),
 		);
 

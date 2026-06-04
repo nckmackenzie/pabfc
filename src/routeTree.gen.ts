@@ -106,6 +106,8 @@ import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/pa
 import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc/c2b/validate'
 import { Route as ApiPaymentsPabfcC2bConfRouteImport } from './routes/api/payments/pabfc/c2b/conf'
 import { Route as ApiAccessControlAgentJobsClaimIndexRouteImport } from './routes/api/access-control/agent/jobs/claim/index'
+import { Route as ApiAccessControlAgentAttendanceSyncUploadIndexRouteImport } from './routes/api/access-control/agent/attendance-sync/upload/index'
+import { Route as ApiAccessControlAgentAttendanceSyncStateIndexRouteImport } from './routes/api/access-control/agent/attendance-sync/state/index'
 import { Route as ApiAccessControlAgentJobsJobIdSuccessIndexRouteImport } from './routes/api/access-control/agent/jobs/$jobId/success/index'
 import { Route as ApiAccessControlAgentJobsJobIdFailureIndexRouteImport } from './routes/api/access-control/agent/jobs/$jobId/failure/index'
 
@@ -623,6 +625,18 @@ const ApiAccessControlAgentJobsClaimIndexRoute =
     path: '/api/access-control/agent/jobs/claim/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAccessControlAgentAttendanceSyncUploadIndexRoute =
+  ApiAccessControlAgentAttendanceSyncUploadIndexRouteImport.update({
+    id: '/api/access-control/agent/attendance-sync/upload/',
+    path: '/api/access-control/agent/attendance-sync/upload/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAccessControlAgentAttendanceSyncStateIndexRoute =
+  ApiAccessControlAgentAttendanceSyncStateIndexRouteImport.update({
+    id: '/api/access-control/agent/attendance-sync/state/',
+    path: '/api/access-control/agent/attendance-sync/state/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAccessControlAgentJobsJobIdSuccessIndexRoute =
   ApiAccessControlAgentJobsJobIdSuccessIndexRouteImport.update({
     id: '/api/access-control/agent/jobs/$jobId/success/',
@@ -732,6 +746,8 @@ export interface FileRoutesByFullPath {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/attendance-sync/state': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
+  '/api/access-control/agent/attendance-sync/upload': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   '/api/access-control/agent/jobs/claim': typeof ApiAccessControlAgentJobsClaimIndexRoute
   '/api/access-control/agent/jobs/$jobId/failure': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
   '/api/access-control/agent/jobs/$jobId/success': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
@@ -819,6 +835,8 @@ export interface FileRoutesByTo {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/attendance-sync/state': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
+  '/api/access-control/agent/attendance-sync/upload': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   '/api/access-control/agent/jobs/claim': typeof ApiAccessControlAgentJobsClaimIndexRoute
   '/api/access-control/agent/jobs/$jobId/failure': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
   '/api/access-control/agent/jobs/$jobId/success': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
@@ -921,6 +939,8 @@ export interface FileRoutesById {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/attendance-sync/state/': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
+  '/api/access-control/agent/attendance-sync/upload/': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   '/api/access-control/agent/jobs/claim/': typeof ApiAccessControlAgentJobsClaimIndexRoute
   '/api/access-control/agent/jobs/$jobId/failure/': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
   '/api/access-control/agent/jobs/$jobId/success/': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
@@ -1023,6 +1043,8 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/api/access-control/agent/attendance-sync/state'
+    | '/api/access-control/agent/attendance-sync/upload'
     | '/api/access-control/agent/jobs/claim'
     | '/api/access-control/agent/jobs/$jobId/failure'
     | '/api/access-control/agent/jobs/$jobId/success'
@@ -1110,6 +1132,8 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/api/access-control/agent/attendance-sync/state'
+    | '/api/access-control/agent/attendance-sync/upload'
     | '/api/access-control/agent/jobs/claim'
     | '/api/access-control/agent/jobs/$jobId/failure'
     | '/api/access-control/agent/jobs/$jobId/success'
@@ -1211,6 +1235,8 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/api/access-control/agent/attendance-sync/state/'
+    | '/api/access-control/agent/attendance-sync/upload/'
     | '/api/access-control/agent/jobs/claim/'
     | '/api/access-control/agent/jobs/$jobId/failure/'
     | '/api/access-control/agent/jobs/$jobId/success/'
@@ -1231,6 +1257,8 @@ export interface RootRouteChildren {
   ApiPaymentsPabfcC2bValidateRoute: typeof ApiPaymentsPabfcC2bValidateRoute
   ApiPaymentsPabfcStkCallbackRoute: typeof ApiPaymentsPabfcStkCallbackRoute
   ApiAccessControlAgentHeartbeatIndexRoute: typeof ApiAccessControlAgentHeartbeatIndexRoute
+  ApiAccessControlAgentAttendanceSyncStateIndexRoute: typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
+  ApiAccessControlAgentAttendanceSyncUploadIndexRoute: typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   ApiAccessControlAgentJobsClaimIndexRoute: typeof ApiAccessControlAgentJobsClaimIndexRoute
   ApiAccessControlAgentJobsJobIdFailureIndexRoute: typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
   ApiAccessControlAgentJobsJobIdSuccessIndexRoute: typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
@@ -1917,6 +1945,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAccessControlAgentJobsClaimIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/access-control/agent/attendance-sync/upload/': {
+      id: '/api/access-control/agent/attendance-sync/upload/'
+      path: '/api/access-control/agent/attendance-sync/upload'
+      fullPath: '/api/access-control/agent/attendance-sync/upload'
+      preLoaderRoute: typeof ApiAccessControlAgentAttendanceSyncUploadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/access-control/agent/attendance-sync/state/': {
+      id: '/api/access-control/agent/attendance-sync/state/'
+      path: '/api/access-control/agent/attendance-sync/state'
+      fullPath: '/api/access-control/agent/attendance-sync/state'
+      preLoaderRoute: typeof ApiAccessControlAgentAttendanceSyncStateIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/access-control/agent/jobs/$jobId/success/': {
       id: '/api/access-control/agent/jobs/$jobId/success/'
       path: '/api/access-control/agent/jobs/$jobId/success'
@@ -2303,6 +2345,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPaymentsPabfcStkCallbackRoute: ApiPaymentsPabfcStkCallbackRoute,
   ApiAccessControlAgentHeartbeatIndexRoute:
     ApiAccessControlAgentHeartbeatIndexRoute,
+  ApiAccessControlAgentAttendanceSyncStateIndexRoute:
+    ApiAccessControlAgentAttendanceSyncStateIndexRoute,
+  ApiAccessControlAgentAttendanceSyncUploadIndexRoute:
+    ApiAccessControlAgentAttendanceSyncUploadIndexRoute,
   ApiAccessControlAgentJobsClaimIndexRoute:
     ApiAccessControlAgentJobsClaimIndexRoute,
   ApiAccessControlAgentJobsJobIdFailureIndexRoute:
