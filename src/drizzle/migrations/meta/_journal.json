@@ -393,6 +393,20 @@
       "when": 1780243629808,
       "tag": "0055_young_whistler",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1780473093729,
+      "tag": "0056_cynical_gamora",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1780477975912,
+      "tag": "0057_flaky_sprite",
+      "breakpoints": true
     }
   ]
 }
