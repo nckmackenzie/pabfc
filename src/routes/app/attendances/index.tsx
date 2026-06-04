@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { DatePicker } from "@/components/ui/date-range";
+import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { Search } from "@/components/ui/search";
@@ -33,7 +34,9 @@ function RouteComponent() {
 				description="View member attendance records"
 			/>
 			<Filters />
-			<AttendanceTable />
+			<ErrorBoundaryWithSuspense>
+				<AttendanceTable />
+			</ErrorBoundaryWithSuspense>
 		</ProtectedPageWithWrapper>
 	);
 }
