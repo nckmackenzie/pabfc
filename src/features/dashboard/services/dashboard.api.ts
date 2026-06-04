@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { addDays, endOfDay, endOfYesterday, startOfDay } from "date-fns";
+import { addDays, endOfDay, startOfDay } from "date-fns";
 import { and, avg, between, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
@@ -112,23 +112,24 @@ export const getTodaysAttendances = createServerFn()
 	.handler(async () => {
 		const todaysAttendances = await db
 			.select({
-				id: attendanceOverview.id,
-				memberName: attendanceOverview.memberName,
-				image: attendanceOverview.image,
-				checkInTime: attendanceOverview.checkInTime,
-				checkOutTime: attendanceOverview.checkOutTime,
-				activePlanName: attendanceOverview.activePlanName,
-				duration: attendanceOverview.duration,
+				id: attendanceLogs.id,
+				memberName:
+					sql<string>`${members.firstName} || ' ' || ${members.lastName}`.as(
+						"memberName",
+					),
+				image: members.image,
+				checkInTime: attendanceLogs.checkInTime,
 			})
-			.from(attendanceOverview)
+			.from(attendanceLogs)
+			.innerJoin(members, eq(attendanceLogs.memberId, members.id))
 			.where(
 				between(
-					attendanceOverview.checkInTime,
-					endOfYesterday(),
+					attendanceLogs.checkInTime,
+					startOfDay(new Date()),
 					endOfDay(new Date()),
 				),
 			)
-			.orderBy(desc(attendanceOverview.checkInTime))
+			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
 			.execute();
 
 		return process.env.APP_ENV === "production"

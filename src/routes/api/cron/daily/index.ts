@@ -105,6 +105,21 @@ async function deactivateInactiveMembers() {
 		.groupBy(attendanceLogs.memberId)
 		.as("last_attendance");
 
+	const today = dateFormat(new Date());
+
+	const membersWithActiveSubscription = db
+		.select({ memberId: memberMemberships.memberId })
+		.from(memberMemberships)
+		.where(
+			and(
+				eq(memberMemberships.status, "active"),
+				or(
+					isNull(memberMemberships.endDate),
+					sql`${memberMemberships.endDate} >= ${today}`,
+				),
+			),
+		);
+
 	const membersToDeactivate = await db
 		.select({
 			id: members.id,
@@ -128,6 +143,7 @@ async function deactivateInactiveMembers() {
 			and(
 				eq(members.memberStatus, "active"),
 				isNull(members.deletedAt),
+				notInArray(members.id, membersWithActiveSubscription),
 				or(
 					lte(lastAttendanceSubquery.lastCheckIn, thresholdDate),
 					and(

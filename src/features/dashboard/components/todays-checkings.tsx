@@ -1,10 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import {
-	CalendarArrowDownIcon,
-	CalendarArrowUpIcon,
-	CalendarCheck2Icon,
-} from "lucide-react";
+import { CalendarCheck2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty";
@@ -96,17 +92,13 @@ function DashboardAttendanceItem({
 		memberName: string;
 		image: string | null;
 		checkInTime: Date;
-		checkOutTime: Date | null;
-		activePlanName: string | null;
-		duration: string | null;
 	};
 	index: number;
 }) {
 	return (
 		<div
-			key={checkIn.id}
 			className={cn(
-				"group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-secondary/50",
+				"group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-secondary/50 border-b",
 				"animate-fade-in",
 			)}
 			style={{ animationDelay: `${index * 50}ms` }}
@@ -117,28 +109,11 @@ function DashboardAttendanceItem({
 					<p className="text-sm font-medium text-foreground">
 						{checkIn.memberName}
 					</p>
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
-						<div className="flex items-center gap-1">
-							<CalendarArrowDownIcon className="h-3 w-3" />
-							<span className="text-xs">
-								{format(checkIn.checkInTime, "h:mm a")}
-							</span>
-						</div>
-						<span>•</span>
-						{checkIn.checkOutTime && (
-							<div className="flex items-center gap-1">
-								<CalendarArrowUpIcon className="h-3 w-3" />
-								<span className="text-xs">
-									{format(checkIn.checkOutTime, "h:mm a")}
-								</span>
-							</div>
-						)}
-					</div>
 				</div>
 			</div>
 			<div className="flex items-center gap-2">
-				<Badge variant={checkIn.checkOutTime ? "info" : "success"}>
-					{checkIn.checkOutTime ? checkIn.duration : "In Session"}
+				<Badge variant="success" className="font-mono">
+					{format(checkIn.checkInTime, "h:mm a")}
 				</Badge>
 			</div>
 		</div>
