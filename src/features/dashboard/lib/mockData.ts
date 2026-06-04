@@ -8,72 +8,60 @@ export const mockTodaysAttendances = [
 		memberName: "Kevin Mwangi",
 		image: "https://i.pravatar.cc/150?u=kevin",
 		checkInTime: addHours(today, 6), // 6:00 AM
-		checkOutTime: addHours(today, 7.5), // 7:30 AM
-		activePlanName: "Monthly Gym Access",
-		duration: "01:30:00",
 	},
 	{
 		id: 2,
 		memberName: "Aisha Abdalla",
 		image: "https://i.pravatar.cc/150?u=aisha",
-		checkInTime: addHours(today, 7), // 7:00 AM
-		checkOutTime: addHours(today, 8), // 8:00 AM
-		activePlanName: "Quarterly Gym Access",
-		duration: "01:00:00",
+		checkInTime: addHours(today, 6.75), // 6:45 AM
 	},
 	{
 		id: 3,
 		memberName: "Brian Otieno",
 		image: "https://i.pravatar.cc/150?u=brian",
 		checkInTime: addHours(today, 8.5), // 8:30 AM
-		checkOutTime: addHours(today, 10), // 10:00 AM
-		activePlanName: "Annual Gym + Pool",
-		duration: "01:30:00",
 	},
 	{
 		id: 4,
 		memberName: "Grace Wambui",
 		image: "https://i.pravatar.cc/150?u=grace",
-		checkInTime: addHours(today, 9), // 9:00 AM
-		checkOutTime: null, // In session
-		activePlanName: "Monthly Gym Access",
-		duration: null,
+		checkInTime: addHours(today, 9.25), // 9:15 AM
 	},
 	{
 		id: 5,
 		memberName: "John Kihara",
 		image: "https://i.pravatar.cc/150?u=john",
 		checkInTime: addHours(today, 10), // 10:00 AM
-		checkOutTime: addHours(today, 11), // 11:00 AM
-		activePlanName: "Annual Gym + Pool",
-		duration: "01:00:00",
 	},
 	{
 		id: 6,
 		memberName: "Linet Akinyi",
 		image: "https://i.pravatar.cc/150?u=linet",
 		checkInTime: addHours(today, 11.5), // 11:30 AM
-		checkOutTime: null, // In session
-		activePlanName: "10-Session PT Pack",
-		duration: null,
 	},
 	{
 		id: 7,
 		memberName: "Mark Weins",
 		image: "https://i.pravatar.cc/150?u=mark",
-		checkInTime: addHours(today, 12), // 12:00 PM
-		checkOutTime: addHours(today, 13.5), // 1:30 PM
-		activePlanName: "Monthly Gym Access",
-		duration: "01:30:00",
+		checkInTime: addHours(today, 12.75), // 12:45 PM
 	},
 	{
 		id: 8,
 		memberName: "Charity Musembi",
 		image: "https://i.pravatar.cc/150?u=charity",
-		checkInTime: addHours(today, 13), // 1:00 PM
-		checkOutTime: null, // In session
-		activePlanName: "Quarterly Gym Access",
-		duration: null,
+		checkInTime: addHours(today, 14.25), // 2:15 PM
+	},
+	{
+		id: 9,
+		memberName: "Dennis Kiptoo",
+		image: "https://i.pravatar.cc/150?u=dennis",
+		checkInTime: addHours(today, 16.5), // 4:30 PM
+	},
+	{
+		id: 10,
+		memberName: "Faith Njeri",
+		image: "https://i.pravatar.cc/150?u=faith",
+		checkInTime: addHours(today, 18), // 6:00 PM
 	},
 ];
 
