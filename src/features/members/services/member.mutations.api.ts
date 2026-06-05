@@ -79,6 +79,7 @@ export const createMember = createServerFn({ method: "POST" })
 					email: member.email,
 					gender: member.gender,
 					birthday: member.dateOfBirth,
+					employeeType: 2,
 				};
 
 				const existingProfile = await db.query.memberAccessProfiles.findFirst({
