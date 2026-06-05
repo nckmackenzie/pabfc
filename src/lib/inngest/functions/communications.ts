@@ -97,7 +97,7 @@ export const sendRegistrationLink = inngest.createFunction(
 		const { memberId } = event.data;
 		const member = await db.query.members.findFirst({
 			columns: { contact: true, firstName: true },
-			where: eq(members.id, memberId),
+			where: and(eq(members.id, memberId), isNull(members.deletedAt)),
 		});
 
 		if (!member) {
