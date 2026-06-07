@@ -32,7 +32,7 @@ export const getActiveRoles = createServerFn()
 
 export const getRoles = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((query?: string) => query)
+	.validator((query?: string) => query)
 	.handler(async ({ data: q }) => {
 		return db
 			.select({
@@ -54,7 +54,7 @@ export const getRoles = createServerFn()
 
 export const getRoleById = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((roleId: string) => roleId)
+	.validator((roleId: string) => roleId)
 	.handler(async ({ data: roleId }) => {
 		return db.query.roles.findFirst({
 			columns: { updatedAt: false, isSystem: false },
@@ -74,7 +74,7 @@ export const getRoleById = createServerFn()
 
 export const getRoleByName = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((query: { name: string; roleId?: string }) => query)
+	.validator((query: { name: string; roleId?: string }) => query)
 	.handler(async ({ data }) => {
 		const { name, roleId } = data;
 		return db.query.roles.findFirst({
@@ -88,7 +88,7 @@ export const getRoleByName = createServerFn()
 
 export const roleIsReferenced = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((roleId: string) => roleId)
+	.validator((roleId: string) => roleId)
 	.handler(async ({ data: roleId }) => {
 		const userWithRole = await db.query.userRoles.findFirst({
 			where: eq(userRoles.roleId, roleId),
@@ -99,7 +99,7 @@ export const roleIsReferenced = createServerFn()
 
 export const createRole = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator(roleFormSchema)
+	.validator(roleFormSchema)
 	.handler(async ({ data }) => {
 		const { permissions: permissionValue, name } = data;
 		const roleExists = await getRoleByName({ data: { name } });
@@ -128,7 +128,7 @@ export const createRole = createServerFn()
 
 export const updateRole = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((data: { values: RoleFormValues; roleId: string }) => data)
+	.validator((data: { values: RoleFormValues; roleId: string }) => data)
 	.handler(async ({ data }) => {
 		const {
 			roleId,
@@ -157,7 +157,7 @@ export const updateRole = createServerFn()
 
 export const deleteRole = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((roleId: string) => roleId)
+	.validator((roleId: string) => roleId)
 	.handler(async ({ data: roleId }) => {
 		if (!(await getRoleById({ data: roleId }))) {
 			throw new NotFoundError("Role");
@@ -178,7 +178,7 @@ export const deleteRole = createServerFn()
 
 export const getPermissions = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((query?: string) => query)
+	.validator((query?: string) => query)
 	.handler(async ({ data }) => {
 		return db.query.permissions.findMany({
 			where: data

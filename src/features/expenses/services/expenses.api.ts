@@ -54,7 +54,7 @@ export const getExpenseNo = createServerFn()
 
 export const getExpenses = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(expenseValidateSearch)
+	.validator(expenseValidateSearch)
 	.handler(async ({ data }) => {
 		const { q, from, to } = data;
 
@@ -115,7 +115,7 @@ export const getExpenses = createServerFn()
 
 export const getExpense = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((expenseId: string) => expenseId)
+	.validator((expenseId: string) => expenseId)
 	.handler(async ({ data: expenseId }) => {
 		return db.query.expenseHeaders.findFirst({
 			with: {
@@ -137,7 +137,7 @@ export const getExpense = createServerFn()
 
 export const createExpense = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(expenseSchema)
+	.validator(expenseSchema)
 	.handler(
 		async ({
 			data,
@@ -347,7 +347,7 @@ export const createExpense = createServerFn({ method: "POST" })
 	);
 
 export const getExpenseJournal = createServerFn()
-	.inputValidator((expenseId: string) => expenseId)
+	.validator((expenseId: string) => expenseId)
 	.handler(async ({ data: expenseId }) => {
 		return db
 			.select({
@@ -377,7 +377,7 @@ export const getExpenseJournal = createServerFn()
 
 export const deleteExpense = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((expenseId: string) => expenseId)
+	.validator((expenseId: string) => expenseId)
 	.handler(
 		async ({
 			data: expenseId,

@@ -18,7 +18,7 @@ type WithVendorId = {
 
 export const getInvoicesReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(invoiceReportFormSchema)
+	.validator(invoiceReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:invoices-report");
 		const { reportType, dateRange, vendorId } = data;

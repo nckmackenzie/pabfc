@@ -16,7 +16,7 @@ export const getJournalNo = createServerFn().handler(async () => {
 
 export const getJournalEntry = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((journalNo: number) => journalNo)
+	.validator((journalNo: number) => journalNo)
 	.handler(async ({ data }) => {
 		const journalEntry = await db.query.journalEntries.findFirst({
 			columns: { entryDate: true, journalNo: true, id: true },
@@ -35,7 +35,7 @@ export const getJournalEntry = createServerFn()
 
 export const upsertJournalEntries = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(journalEntrySchema)
+	.validator(journalEntrySchema)
 	.handler(
 		async ({
 			data,
@@ -117,7 +117,7 @@ export const upsertJournalEntries = createServerFn()
 
 export const deleteJournalEntry = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((id: string) => id)
+	.validator((id: string) => id)
 	.handler(
 		async ({
 			data,

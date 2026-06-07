@@ -22,7 +22,7 @@ export type AttendanceReportRow = {
 
 export const getAttendanceReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(attendanceReportFormSchema)
+	.validator(attendanceReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("attendance:view");
 		const { asOfDate, reportType, memberId } = data;

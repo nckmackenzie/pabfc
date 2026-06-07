@@ -18,7 +18,7 @@ export const getPayees = createServerFn().handler(async () => {
 
 export const createPayee = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(payeeSchema)
+	.validator(payeeSchema)
 	.handler(
 		async ({
 			data,

@@ -23,7 +23,7 @@ const stkPaymentSchema = paymentSchema.extend({
 
 export const initiateStkPushFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stkPaymentSchema)
+	.validator(stkPaymentSchema)
 	.handler(
 		async ({
 			data,
@@ -144,7 +144,7 @@ export const createManualMembershipPaymentFn = createServerFn({
 	method: "POST",
 })
 	.middleware([authMiddleware])
-	.inputValidator(paymentSchema)
+	.validator(paymentSchema)
 	.handler(
 		async ({
 			data,

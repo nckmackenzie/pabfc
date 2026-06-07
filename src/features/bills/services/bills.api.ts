@@ -22,7 +22,7 @@ import {
 
 export const getBills = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(billValidateSearch)
+	.validator(billValidateSearch)
 	.handler(async ({ data }) => {
 		await requirePermission("bills:view");
 		const { q, status } = data ?? {};
@@ -48,7 +48,7 @@ export const getBills = createServerFn()
 
 export const getBillById = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((billId: string) => billId)
+	.validator((billId: string) => billId)
 	.handler(async ({ data: billId }) => {
 		await requirePermission("bills:view");
 		const bill = await db.query.bills.findFirst({
@@ -73,7 +73,7 @@ export const getBillById = createServerFn()
 
 export const upsertBill = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(billSchema)
+	.validator(billSchema)
 	.handler(
 		async ({
 			data,
@@ -240,7 +240,7 @@ export const upsertBill = createServerFn()
 
 export const deleteBill = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((billId: string) => billId)
+	.validator((billId: string) => billId)
 	.handler(
 		async ({
 			data: billId,
@@ -282,7 +282,7 @@ export const deleteBill = createServerFn()
 
 export const getUnpaidBillsBySupplier = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((vendorId: string) => vendorId)
+	.validator((vendorId: string) => vendorId)
 	.handler(async ({ data: vendorId }) =>
 		db
 			.select()

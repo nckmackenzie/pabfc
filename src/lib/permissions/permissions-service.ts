@@ -25,7 +25,7 @@ export const getUserPermissions = createServerFn()
 	);
 
 export const hasPermission = createServerFn()
-	.inputValidator((permission: Permission) => permission)
+	.validator((permission: Permission) => permission)
 	.handler(async ({ data: permission }) => {
 		const session = await getUserSession();
 		if (!session) {
@@ -35,7 +35,7 @@ export const hasPermission = createServerFn()
 	});
 
 export const hasAnyPermission = createServerFn()
-	.inputValidator((permissionList: Array<Permission>) => permissionList)
+	.validator((permissionList: Array<Permission>) => permissionList)
 	.handler(async ({ data: permissionList }) => {
 		const session = await getUserSession();
 		if (!session) {
@@ -49,7 +49,7 @@ export const hasAnyPermission = createServerFn()
 	});
 
 export const hasRole = createServerFn()
-	.inputValidator((roleName: string) => roleName)
+	.validator((roleName: string) => roleName)
 	.handler(async ({ data: roleName }) => {
 		const session = await getUserSession();
 		if (!session) {

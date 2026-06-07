@@ -7,7 +7,7 @@ import { authMiddleware } from "@/middlewares/auth-middleware";
 
 export const getActivityLogs = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(activityLogValidateSearch)
+	.validator(activityLogValidateSearch)
 	.handler(
 		async ({
 			data: { q, from, to },

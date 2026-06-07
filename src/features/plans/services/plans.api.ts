@@ -48,7 +48,7 @@ type PlanWithDateRange = {
 
 export const getPlans = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data }) => {
 		await requireAnyPermission([
 			"plans:view",
@@ -77,7 +77,7 @@ export const getPlans = createServerFn()
 
 export const getPlanActiveMembers = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(async ({ data: planId }) => {
 		await requireAnyPermission(["plans:view-members", "communication:create"]);
 
@@ -92,7 +92,7 @@ export const getPlanActiveMembers = createServerFn()
 
 export const getPlanWithSummary = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(async ({ data: planId }) => {
 		await requirePermission("plans:view-members");
 
@@ -129,7 +129,7 @@ export const getPlanWithSummary = createServerFn()
 
 export const getPlanMembers = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		(data: { planId: string; filters: z.infer<typeof searchValidateSchema> }) =>
 			data,
 	)
@@ -200,7 +200,7 @@ export const getPlanMembers = createServerFn()
 
 export const getPlanRevenueStats = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: PlanWithDateRange) => data)
+	.validator((data: PlanWithDateRange) => data)
 	.handler(async ({ data: { dateRange, planId } }) => {
 		await requirePermission("plans:view-plan-revenue");
 
@@ -279,7 +279,7 @@ export const getPlanRevenueStats = createServerFn()
 
 export const getPlanPaymentsByDuration = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		(data: {
 			planId: string;
 			filters: z.infer<typeof dateRangeWithSearchSchema>;
@@ -343,7 +343,7 @@ export const getPlanPaymentsByDuration = createServerFn()
 
 export const getPlanRevenueTrend = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: PlanWithDateRange) => data)
+	.validator((data: PlanWithDateRange) => data)
 	.handler(async ({ data: { dateRange, planId } }) => {
 		await requirePermission("plans:view-plan-revenue");
 
@@ -408,7 +408,7 @@ export const getPlanRevenueTrend = createServerFn()
 
 export const createPlan = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(planSchema)
+	.validator(planSchema)
 	.handler(
 		async ({
 			data,
@@ -450,7 +450,7 @@ export const createPlan = createServerFn({ method: "POST" })
 
 export const getPlan = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(async ({ data: planId }) => {
 		await requireAnyPermission([
 			"plans:view",
@@ -466,7 +466,7 @@ export const getPlan = createServerFn()
 
 export const updatePlan = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((data: { values: PlanSchema; planId: string }) => data)
+	.validator((data: { values: PlanSchema; planId: string }) => data)
 	.handler(
 		async ({
 			data: { values, planId },
@@ -508,7 +508,7 @@ export const updatePlan = createServerFn({ method: "POST" })
 
 export const deletePlan = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(
 		async ({
 			data: planId,
@@ -548,7 +548,7 @@ export const deletePlan = createServerFn({ method: "POST" })
 
 export const planNameExists = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: { value: string; planId?: string }) => data)
+	.validator((data: { value: string; planId?: string }) => data)
 	.handler(async ({ data: { value, planId } }) => {
 		await requireAnyPermission(["plans:create", "plans:update"]);
 

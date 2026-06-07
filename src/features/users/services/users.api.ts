@@ -46,7 +46,7 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export const getUserByContact = createServerFn()
-	.inputValidator((data: { contact: string; userId?: string }) => data)
+	.validator((data: { contact: string; userId?: string }) => data)
 	.handler(async ({ data: { contact, userId } }) => {
 		const user = await db.query.users.findFirst({
 			columns: {
@@ -65,7 +65,7 @@ export const getUserByContact = createServerFn()
 
 export const getUsers = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		const filters: Array<SQL> = [];
 		if (q) {
@@ -113,7 +113,7 @@ export const getUsers = createServerFn()
 
 export const createUser = createServerFn({ method: "POST" })
 	.middleware([adminMiddleware])
-	.inputValidator(userSchema)
+	.validator(userSchema)
 	.handler(
 		async ({
 			data,
@@ -169,7 +169,7 @@ export const createUser = createServerFn({ method: "POST" })
 
 export const getUserWithRole = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: { userId: string }) => data)
+	.validator((data: { userId: string }) => data)
 	.handler(async ({ data }) => {
 		return db.query.users.findFirst({
 			columns: {
@@ -192,7 +192,7 @@ export const getUserWithRole = createServerFn()
 
 export const updateUser = createServerFn({ method: "POST" })
 	.middleware([adminMiddleware])
-	.inputValidator((values: { userId: string; data: UserSchema }) => values)
+	.validator((values: { userId: string; data: UserSchema }) => values)
 	.handler(
 		async ({
 			data: { userId, data },
@@ -239,7 +239,7 @@ export const updateUser = createServerFn({ method: "POST" })
 
 export const deleteUser = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator((userId: string) => userId)
+	.validator((userId: string) => userId)
 	.handler(
 		async ({
 			data: userId,
@@ -270,7 +270,7 @@ export const deleteUser = createServerFn()
 
 export const resetPassword = createServerFn()
 	.middleware([adminMiddleware])
-	.inputValidator(resetPasswordFormSchema)
+	.validator(resetPasswordFormSchema)
 	.handler(async ({ data }) => {
 		const { userId, resetMethod, password } = data;
 

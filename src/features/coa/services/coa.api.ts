@@ -40,7 +40,7 @@ export function defaultNormalBalanceForType(
 
 export const getAccounts = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		await requirePermission("chart-of-accounts:view");
 		return db
@@ -63,7 +63,7 @@ export const getAccounts = createServerFn({ method: "GET" })
 
 export const getAccountsWithBalances = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		// await requirePermission("chart-of-accounts:view");
 
@@ -145,7 +145,7 @@ export const getAccountsWithBalances = createServerFn({ method: "GET" })
 
 export const getAccount = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator((accountId: number) => accountId)
+	.validator((accountId: number) => accountId)
 	.handler(async ({ data: accountId }) => {
 		await requirePermission("chart-of-accounts:view");
 		return db.query.ledgerAccounts.findFirst({
@@ -157,7 +157,7 @@ export const getAccount = createServerFn({ method: "GET" })
 
 export const getChildrenAccountByParentName = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator((parentName: string) => parentName)
+	.validator((parentName: string) => parentName)
 	.handler(async ({ data: parentName }) => {
 		const parentAccount = await db.query.ledgerAccounts.findFirst({
 			columns: { id: true },
@@ -179,7 +179,7 @@ export const getChildrenAccountByParentName = createServerFn({ method: "GET" })
 
 export const createAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(accountsFormSchema)
+	.validator(accountsFormSchema)
 	.handler(async ({ data, context }) => {
 		await requirePermission("chart-of-accounts:create");
 
@@ -263,7 +263,7 @@ export const createAccount = createServerFn({ method: "POST" })
 
 export const updateAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((data: { values: AccountsFormSchema; id: number }) => data)
+	.validator((data: { values: AccountsFormSchema; id: number }) => data)
 	.handler(async ({ data: { values, id: accountId }, context }) => {
 		await requirePermission("chart-of-accounts:update");
 
@@ -330,7 +330,7 @@ export const updateAccount = createServerFn({ method: "POST" })
 
 export const deleteAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((accountId: string) => accountId)
+	.validator((accountId: string) => accountId)
 	.handler(async ({ data: accountId, context }) => {
 		await requirePermission("chart-of-accounts:delete");
 
@@ -386,7 +386,7 @@ export const getVatAccountId = createServerFn()
 
 export const getCashEquivalentsAccountId = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((account: string) => account)
+	.validator((account: string) => account)
 	.handler(async ({ data: account }) => {
 		const ledgerAccount = await db.query.ledgerAccounts.findFirst({
 			columns: { id: true },

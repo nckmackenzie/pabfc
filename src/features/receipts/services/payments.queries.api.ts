@@ -13,7 +13,7 @@ import { authMiddleware } from "@/middlewares/auth-middleware";
 
 export const getPaymentStatusFn = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((checkoutRequestId: string) => checkoutRequestId)
+	.validator((checkoutRequestId: string) => checkoutRequestId)
 	.handler(async ({ data: checkoutRequestId }) => {
 		const payment = await db.query.mpesaStkRequests.findFirst({
 			where: eq(mpesaStkRequests.checkoutRequestId, checkoutRequestId),
@@ -42,7 +42,7 @@ export const getPaymentNo = createServerFn()
 
 export const getPayments = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		return db
 			.select({
@@ -77,7 +77,7 @@ export const getPayments = createServerFn()
 
 export const getPayment = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((id: string) => id)
+	.validator((id: string) => id)
 	.handler(async ({ data: id }) => {
 		const payment = await db.query.payments.findFirst({
 			with: {

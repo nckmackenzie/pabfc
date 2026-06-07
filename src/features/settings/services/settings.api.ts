@@ -81,7 +81,7 @@ export const getBiotimeSettings = createServerFn({ method: "GET" })
 
 export const upsertDataSettings = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(settingsDataSchema)
+	.validator(settingsDataSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
 			throw new AuthorizationError(
@@ -138,7 +138,7 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 
 export const upsertNotificationSettings = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(settingsNotificationSchema)
+	.validator(settingsNotificationSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
 			throw new AuthorizationError(
@@ -189,7 +189,7 @@ export const upsertNotificationSettings = createServerFn({ method: "POST" })
 
 export const upsertSecuritySettings = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(securitySchema)
+	.validator(securitySchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
 			throw new AuthorizationError(
@@ -234,7 +234,7 @@ export const upsertSecuritySettings = createServerFn({ method: "POST" })
 
 export const upsertBillingSettings = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(billingSchema)
+	.validator(billingSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
 			throw new AuthorizationError(
@@ -289,7 +289,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 
 export const upsertBiotimeSettings = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(biometricSettingsSchema)
+	.validator(biometricSettingsSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
 			throw new AuthorizationError(

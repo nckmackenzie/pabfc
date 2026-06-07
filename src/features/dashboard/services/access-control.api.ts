@@ -66,7 +66,7 @@ export type AccessControlDashboardFilters = z.infer<
 
 export const getAccessControlDashboard = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(accessControlDashboardFiltersSchema)
+	.validator(accessControlDashboardFiltersSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("dashboard:view");
 
@@ -352,7 +352,7 @@ export const getAccessControlDashboard = createServerFn()
 
 export const retryAccessControlJob = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(accessControlJobMutationSchema)
+	.validator(accessControlJobMutationSchema)
 	.handler(async ({ data: { jobId } }) => {
 		await requirePermission("dashboard:view");
 
@@ -392,7 +392,7 @@ export const retryAccessControlJob = createServerFn({ method: "POST" })
 
 export const cancelAccessControlJob = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(accessControlJobMutationSchema)
+	.validator(accessControlJobMutationSchema)
 	.handler(async ({ data: { jobId } }) => {
 		await requirePermission("dashboard:view");
 
