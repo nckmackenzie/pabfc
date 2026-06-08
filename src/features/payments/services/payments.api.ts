@@ -37,7 +37,7 @@ export const getPaymentNo = createServerFn()
 
 export const getPayments = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		await requirePermission("payments:view");
 
@@ -81,7 +81,7 @@ export const getPayments = createServerFn()
 
 export const getPayment = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string().min(1, { error: "Payment id is not valid" }))
+	.validator(z.string().min(1, { error: "Payment id is not valid" }))
 	.handler(async ({ data: paymentId }) => {
 		await requirePermission("payments:view");
 		const payment = await db.query.billPayments.findFirst({
@@ -115,7 +115,7 @@ export const getPayment = createServerFn()
 
 export const createPayment = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(paymentFormSchema)
+	.validator(paymentFormSchema)
 	.handler(
 		async ({
 			data,
@@ -327,7 +327,7 @@ export const createPayment = createServerFn({ method: "POST" })
 
 export const deletePayment = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(z.string().min(1, { error: "Payment id is not valid" }))
+	.validator(z.string().min(1, { error: "Payment id is not valid" }))
 	.handler(
 		async ({
 			data: paymentId,

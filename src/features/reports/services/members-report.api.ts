@@ -28,7 +28,7 @@ export type MembersReportRow = {
 
 export const getMembersReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(membersReportFormSchema)
+	.validator(membersReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("members:view");
 		const { asOfDate, reportType, status } = data;

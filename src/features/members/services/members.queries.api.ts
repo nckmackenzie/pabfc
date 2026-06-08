@@ -16,7 +16,7 @@ import { memberValidateSearch } from "@/features/members/services/schemas";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
 export const getMembers = createServerFn()
-	.inputValidator(memberValidateSearch)
+	.validator(memberValidateSearch)
 	.handler(async ({ data: { q, status, plan } }) => {
 		const filters: Array<SQL> = [];
 
@@ -63,7 +63,7 @@ export const getMembers = createServerFn()
 
 export const getMemberProfileData = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((memberId: string) => memberId)
+	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		const member = await db
 			.select()
@@ -73,7 +73,7 @@ export const getMemberProfileData = createServerFn()
 	});
 
 export const checkColumnExists = createServerFn()
-	.inputValidator(
+	.validator(
 		(data: { column: "contact" | "idNo"; value: string; memberId?: string }) =>
 			data,
 	)
@@ -107,7 +107,7 @@ export const getMemberNo = createServerFn()
 
 export const getMember = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((memberId: string) => memberId)
+	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		return db.query.members.findFirst({
 			columns: { createdAt: false, updatedAt: false },
@@ -116,7 +116,7 @@ export const getMember = createServerFn()
 	});
 
 export const getMemberPreviousPlanDetails = createServerFn()
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(async ({ data: memberId }) => {
 		const plan = await db.query.memberMemberships.findFirst({
 			columns: { createdAt: false, updatedAt: false },

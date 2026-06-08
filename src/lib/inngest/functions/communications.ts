@@ -6,6 +6,7 @@ import {
 	members,
 	type SMSBroadcastResponse,
 	smsBroadcasts,
+	users,
 } from "@/drizzle/schema";
 import { replaceVariables } from "@/features/communication/lib/utils";
 import { internationalizePhoneNumber } from "@/lib/helpers";
@@ -87,6 +88,31 @@ export const sendTestSmsToUser = inngest.createFunction(
 		const { content, contact } = event.data;
 		const res = await sendSms({ message: content, to: contact });
 		return res;
+	},
+);
+
+export const sendUserPassword = inngest.createFunction(
+	{ id: "send-user-password" },
+	{ event: "app/users.send.temporary.password" },
+	async ({ event }) => {
+		const { userId, password } = event.data;
+		const user = await db.query.users.findFirst({
+			columns: { contact: true, name: true },
+			where: and(eq(users.id, userId), eq(users.banned, false)),
+		});
+		if (!user) {
+			throw new Error("User not found");
+		}
+
+		const getFirstName = user?.name?.split(" ")[0];
+		const response = await sendSms({
+			message: `Dear ${toTitleCase(getFirstName)}, your temporary password is ${password}. Please change it as soon as you log in!`,
+			to: [internationalizePhoneNumber(user.contact as string, true)],
+		});
+		if (!response) {
+			throw new Error("Failed to send temporary password SMS");
+		}
+		return response;
 	},
 );
 

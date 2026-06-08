@@ -19,7 +19,7 @@ export type AttendanceTimelineRecord = {
 
 export const getAttendances = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(attendanceValidateSearch)
+	.validator(attendanceValidateSearch)
 	.handler(async ({ data }) => {
 		await requirePermission("attendance:view");
 

@@ -3,6 +3,7 @@ import {
 	sendRegistrationLink,
 	sendSmsBroadcast,
 	sendTestSmsToUser,
+	sendUserPassword,
 } from "@/lib/inngest/functions/communications";
 import { createPayment } from "@/lib/inngest/functions/payments";
 
@@ -12,4 +13,5 @@ export const functions = [
 	sendTestSmsToUser,
 	updatePaidInvoiceStatus,
 	sendRegistrationLink,
+	sendUserPassword,
 ];

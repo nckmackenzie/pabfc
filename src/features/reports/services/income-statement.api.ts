@@ -19,7 +19,7 @@ export type IncomeStatementParentRow = {
 
 export const getIncomeStatement = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(dateRangeRequiredSchema)
+	.validator(dateRangeRequiredSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:income-statement");
 		const {
@@ -107,7 +107,7 @@ export const getIncomeStatement = createServerFn()
 
 export const getIncomeStatementDrillDown = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		z.object({
 			id: z.number(),
 			dateFrom: z.string(),

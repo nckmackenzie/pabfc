@@ -15,7 +15,7 @@ import { expenseReportFormSchema } from "./schema";
 
 export const getExpenseReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(expenseReportFormSchema)
+	.validator(expenseReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:expenses-report");
 

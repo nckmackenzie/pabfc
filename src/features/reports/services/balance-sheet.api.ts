@@ -31,7 +31,7 @@ export type BalanceSheetDrillDownRow = {
 
 export const getBalanceSheetReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(trialBalanceReportFormSchema)
+	.validator(trialBalanceReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:balance-sheet");
 		const { asOfDate } = data;
@@ -189,7 +189,7 @@ export const getBalanceSheetReport = createServerFn()
 
 export const getBalanceSheetDrillDown = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		z.object({
 			id: z.number(),
 			asOfDate: z.iso.date(),

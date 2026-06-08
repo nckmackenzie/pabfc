@@ -32,7 +32,7 @@ export type TrialBalanceDrillDownRow = {
 
 export const getTrialBalance = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(trialBalanceReportFormSchema)
+	.validator(trialBalanceReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:trial-balance");
 		const { asOfDate } = data;
@@ -129,7 +129,7 @@ export const getTrialBalance = createServerFn()
 
 export const getTrialBalanceDrillDown = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		z.object({
 			id: z.number(),
 			asOfDate: z.iso.date(),

@@ -10,7 +10,7 @@ import { paymentsReportFormSchema } from "./schema";
 
 export const getPaymentsReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(paymentsReportFormSchema)
+	.validator(paymentsReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:payments-report");
 

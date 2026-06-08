@@ -10,7 +10,7 @@ import { receiptReportFormSchema } from "./schema";
 
 export const getReceiptReport = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(receiptReportFormSchema)
+	.validator(receiptReportFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:receipts-report");
 

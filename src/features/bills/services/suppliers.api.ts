@@ -12,7 +12,7 @@ import { logActivity } from "@/services/activity-logger";
 
 export const getVendors = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		return db.query.vendors.findMany({
 			where: q
@@ -29,7 +29,7 @@ export const getVendors = createServerFn()
 
 export const getVendorById = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string())
+	.validator(z.string())
 	.handler(async ({ data: id }) => {
 		const vendor = await db.query.vendors.findFirst({
 			where: eq(vendors.id, id),
@@ -40,7 +40,7 @@ export const getVendorById = createServerFn()
 
 export const upsertSupplier = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(supplierSchema)
+	.validator(supplierSchema)
 	.handler(
 		async ({
 			data,
@@ -67,7 +67,7 @@ export const upsertSupplier = createServerFn()
 
 export const deleteSupplier = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string())
+	.validator(z.string())
 	.handler(async ({ data: id }) => {
 		const [vendor, bill] = await Promise.all([
 			db.query.vendors.findFirst({

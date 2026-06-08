@@ -16,7 +16,7 @@ import { logActivity } from "@/services/activity-logger";
 
 export const getFinancialYears = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
 		await requirePermission("financial-years:view");
 		const filters: Array<SQL> = [];
@@ -39,7 +39,7 @@ export const getFinancialYears = createServerFn()
 
 export const getFinancialYear = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((financialYearId: string) => financialYearId)
+	.validator((financialYearId: string) => financialYearId)
 	.handler(async ({ data: financialYearId }) => {
 		await requirePermission("financial-years:view");
 		const financialYear = await db.query.financialYears.findFirst({
@@ -52,7 +52,7 @@ export const getFinancialYear = createServerFn()
 
 export const upsertFinancialYear = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(financialYearSchema)
+	.validator(financialYearSchema)
 	.handler(
 		async ({
 			data,
@@ -111,7 +111,7 @@ export const upsertFinancialYear = createServerFn({ method: "POST" })
 
 export const deleteFinancialYear = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((financialYearId: string) => financialYearId)
+	.validator((financialYearId: string) => financialYearId)
 	.handler(
 		async ({
 			data: financialYearId,

@@ -17,7 +17,7 @@ const loggingSchema = z.object({
 });
 
 export const logActivity = createServerFn({ method: "POST" })
-	.inputValidator(loggingSchema)
+	.validator(loggingSchema)
 	.handler(async ({ data: { userId, action, description, id: insertId } }) => {
 		const request = getRequest();
 		const userAgent = request.headers.get("user-agent") ?? "unknown";

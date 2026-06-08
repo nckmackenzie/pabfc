@@ -76,7 +76,7 @@ export const getSmsBroadcasts = createServerFn()
 
 export const upsertTemplate = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(templateFormSchema)
+	.validator(templateFormSchema)
 	.handler(
 		async ({
 			data,
@@ -131,7 +131,7 @@ export const upsertTemplate = createServerFn()
 
 export const deleteTemplate = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((templateId: string) => templateId)
+	.validator((templateId: string) => templateId)
 	.handler(async ({ data }) => {
 		try {
 			const template = await db.query.smsTemplates.findFirst({
@@ -152,7 +152,7 @@ export const deleteTemplate = createServerFn()
 
 export const sendBroadCast = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(broadcastFormSchema)
+	.validator(broadcastFormSchema)
 	.handler(
 		async ({
 			data,

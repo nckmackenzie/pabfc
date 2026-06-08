@@ -41,6 +41,12 @@ type Events = {
 			memberId: string;
 		};
 	};
+	"app/users.send.temporary.password": {
+		data: {
+			userId: string;
+			password: string;
+		};
+	};
 };
 
 export const inngest = new Inngest({

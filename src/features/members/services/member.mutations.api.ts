@@ -34,7 +34,7 @@ function generateBioTimeEmployeeCode(memberNo: number) {
 
 export const createMember = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(memberFormSchema)
+	.validator(memberFormSchema)
 	.handler(
 		async ({
 			data,
@@ -135,7 +135,7 @@ export const createMember = createServerFn({ method: "POST" })
 
 export const updateMember = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((values: { value: MemberFormSchema; id: string }) => values)
+	.validator((values: { value: MemberFormSchema; id: string }) => values)
 	.handler(
 		async ({
 			data: { value, id },
@@ -247,7 +247,7 @@ export const updateMember = createServerFn({ method: "POST" })
 
 export const revokePortalAccess = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(memberRevokePortalAccessSchema)
+	.validator(memberRevokePortalAccessSchema)
 	.handler(
 		async ({
 			data: { memberId, revokeReason, banned },
@@ -322,7 +322,7 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 
 export const sendRegistrationLink = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(z.string().min(1, "member id is required"))
+	.validator(z.string().min(1, "member id is required"))
 	.handler(
 		async ({
 			data: memberId,
@@ -354,7 +354,7 @@ export const sendRegistrationLink = createServerFn({ method: "POST" })
 
 export const toggleActive = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(memberToggleActiveSchema)
+	.validator(memberToggleActiveSchema)
 	.handler(
 		async ({
 			data: { memberId, active },

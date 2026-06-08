@@ -48,7 +48,7 @@ export const getBanks = createServerFn()
 
 export const getBankPostings = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(searchValidateSchema)
+	.validator(searchValidateSchema)
 	.handler(async ({ data }) => {
 		const filters: Array<SQL> = [];
 		filters.push(eq(bankPostings.source, "postings"));
@@ -90,7 +90,7 @@ export const getBankPostings = createServerFn()
 
 export const getBankPosting = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string().min(1, "Bank posting ID is required"))
+	.validator(z.string().min(1, "Bank posting ID is required"))
 	.handler(async ({ data: postingId }) => {
 		const posting = await db.query.bankPostings.findFirst({
 			columns: {
@@ -115,7 +115,7 @@ export const getBankPosting = createServerFn()
 
 export const upsertBankPosting = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(bankPostingSchema)
+	.validator(bankPostingSchema)
 	.handler(
 		async ({
 			data,
@@ -247,7 +247,7 @@ export const upsertBankPosting = createServerFn({ method: "POST" })
 
 export const deleteBankPosting = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(z.string().min(1, "Bank posting ID is required"))
+	.validator(z.string().min(1, "Bank posting ID is required"))
 	.handler(async ({ data: postingId }) => {
 		await requirePermission("banking:delete");
 		const posting = await db.query.bankPostings.findFirst({
@@ -278,7 +278,7 @@ export const deleteBankPosting = createServerFn({ method: "POST" })
 
 export const clearBankPosting = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(bankPostingClearenceFormSchema)
+	.validator(bankPostingClearenceFormSchema)
 	.handler(
 		async ({
 			data,
@@ -332,7 +332,7 @@ export const clearBankPosting = createServerFn({ method: "POST" })
 
 export const getUnclearedBankings = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(clearBankingsFilterFormSchema)
+	.validator(clearBankingsFilterFormSchema)
 	.handler(async ({ data }) => {
 		await requirePermission("banking:clear");
 
@@ -359,7 +359,7 @@ export const getUnclearedBankings = createServerFn()
 
 export const clearBankings = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(bulkBankClearingsFormSchema)
+	.validator(bulkBankClearingsFormSchema)
 	.handler(
 		async ({
 			data,
@@ -452,7 +452,7 @@ export const clearBankings = createServerFn({ method: "POST" })
 
 export const getBankReconcilliation = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(bankReconciliationFormSchema)
+	.validator(bankReconciliationFormSchema)
 	.handler(
 		async ({
 			data: {
@@ -500,7 +500,7 @@ export const getBankReconcilliation = createServerFn()
 
 export const getUnclearedBankingsByTransaction = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		z.object({
 			bankId: z.string(),
 			dateRange: z.object({
