@@ -1,6 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { Alert, AlertDescription, AlertIcon } from "@/components/ui/alert";
 import {
 	Card,
 	CardContent,
@@ -8,7 +7,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { BellIcon } from "@/components/ui/icons";
 import { LoginForm } from "@/features/auth/login/components/login-form";
 import { sanitizeRedirect } from "@/hooks/use-previous-location";
 
@@ -33,7 +31,6 @@ function RouteComponent() {
 	const { safeRedirectTo } = Route.useRouteContext();
 	return (
 		<div className="w-full lg:w-1/2 flex flex-col gap-y-6 items-center justify-center bg-secondary p-6 lg:p-12">
-			<DummyDataWarning />
 			<Card className="w-full max-w-md shadow">
 				<CardHeader>
 					<CardTitle className="text-2xl font-bold">Sign In</CardTitle>
@@ -44,20 +41,5 @@ function RouteComponent() {
 				</CardContent>
 			</Card>
 		</div>
-	);
-}
-
-function DummyDataWarning() {
-	return (
-		<Alert variant="warning" appearance="light" className="max-w-md">
-			<AlertIcon>
-				<BellIcon />
-			</AlertIcon>
-			{/* <AlertTitle>Using dummy data</AlertTitle> */}
-			<AlertDescription>
-				All data used in this environment is AI generated and intended for&nbsp;
-				<span className="font-semibold">development purposes only</span>.
-			</AlertDescription>
-		</Alert>
 	);
 }
