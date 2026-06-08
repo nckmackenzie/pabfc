@@ -89,9 +89,9 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 					<form.AppField name="duration">
 						{(field) => (
 							<field.Input
-								label="Duration"
+								label="Duration (in days)"
 								type="number"
-								placeholder="Enter duration"
+								placeholder="Enter duration in days"
 								required
 							/>
 						)}
