@@ -1,13 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { ErrorComponent } from "@/components/ui/error-component";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
 import { accountQueries } from "@/features/coa/services/queries";
 import { SettingsForm } from "@/features/settings/components/settings-form";
-import {
-	biotimeSettingsQuery,
-	settingsQuery,
-} from "@/features/settings/services/queries";
+import { settingsQuery } from "@/features/settings/services/queries";
 import { generateRandomId } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/settings")({
@@ -23,17 +21,18 @@ export const Route = createFileRoute("/app/settings")({
 		}
 	},
 	component: RouteComponent,
+	errorComponent: ({ error }) => {
+		return <ErrorComponent message={error.message} />;
+	},
 	pendingComponent: SettingsSkeleton,
 	loader: async ({ context: { queryClient } }) => {
-		const [settings, biotimeSettings, accounts] = await Promise.all([
+		const [settings, accounts] = await Promise.all([
 			queryClient.ensureQueryData(settingsQuery()),
-			queryClient.ensureQueryData(biotimeSettingsQuery()),
 			queryClient.ensureQueryData(accountQueries.list({})),
 		]);
 
 		return {
 			settings,
-			biotimeSettings,
 			accounts: accounts
 				.filter(
 					(acc) => acc.type === "liability" && acc.isActive && acc.isPosting,
@@ -64,7 +63,6 @@ export function SettingsSkeleton() {
 			/>
 			<Skeleton className="h-9 w-full rounded-lg" />
 
-			{/* Form Skeleton */}
 			<div className="grid lg:grid-cols-2 gap-4">
 				{Array.from({ length: 5 }).map((_, i) => (
 					<div key={generateRandomId(`skeleton-${i}`)} className="space-y-2">
@@ -74,7 +72,6 @@ export function SettingsSkeleton() {
 					</div>
 				))}
 
-				{/* Button Skeleton */}
 				<div className="col-span-full mt-4">
 					<Skeleton className="h-10 w-48" />
 				</div>
