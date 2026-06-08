@@ -28,6 +28,7 @@ import {
 	userSchema,
 } from "@/features/users/services/schema";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { inngest } from "@/lib/inngest/client";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -157,6 +158,14 @@ export const createUser = createServerFn({ method: "POST" })
 						userId: loggedUserId,
 						action: "create user",
 						description: `Created new user ${data.name}`,
+					},
+				});
+
+				await inngest.send({
+					name: "app/users.send.temporary.password",
+					data: {
+						password: temporaryPassword,
+						userId: id,
 					},
 				});
 
