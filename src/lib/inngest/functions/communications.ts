@@ -105,10 +105,14 @@ export const sendUserPassword = inngest.createFunction(
 		}
 
 		const getFirstName = user?.name?.split(" ")[0];
-		await sendSms({
+		const response = await sendSms({
 			message: `Dear ${toTitleCase(getFirstName)}, your temporary password is ${password}. Please change it as soon as you log in!`,
 			to: [internationalizePhoneNumber(user.contact as string, true)],
 		});
+		if (!response) {
+			throw new Error("Failed to send temporary password SMS");
+		}
+		return response;
 	},
 );
 

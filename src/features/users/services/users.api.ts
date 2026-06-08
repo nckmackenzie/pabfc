@@ -126,7 +126,7 @@ export const createUser = createServerFn({ method: "POST" })
 				throw new ConflictError("Contact");
 			}
 
-			const userId = await db.transaction(async (tx) => {
+			const { userId, temporaryPassword } = await db.transaction(async (tx) => {
 				const [{ id }] = await tx
 					.insert(users)
 					.values({
@@ -161,15 +161,15 @@ export const createUser = createServerFn({ method: "POST" })
 					},
 				});
 
-				await inngest.send({
-					name: "app/users.send.temporary.password",
-					data: {
-						password: temporaryPassword,
-						userId: id,
-					},
-				});
+				return { userId: id, temporaryPassword };
+			});
 
-				return id;
+			await inngest.send({
+				name: "app/users.send.temporary.password",
+				data: {
+					password: temporaryPassword,
+					userId,
+				},
 			});
 
 			return userId;
