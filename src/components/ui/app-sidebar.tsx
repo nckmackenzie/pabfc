@@ -38,19 +38,19 @@ export function AppSidebar() {
 
 	return (
 		<Sidebar>
-			<SidebarHeader className="border-b p-4">
-				<div className="flex items-center gap-2">
+			<SidebarHeader className="border-b max-h-16">
+				<div className="flex items-center justify-center gap-2">
 					<img
-						src="/logo_48.png"
+						src="/prime_age_horizontal_logo.png"
 						alt="Prime Age Beauty and fitness center"
-						className="h-12 w-12"
+						className="h-12 w-auto"
 					/>
-					<div>
+					{/* <div>
 						<p className="text-sm font-semibold text-primary">Prime Age</p>
 						<p className="text-xs text-muted-foreground">
 							Beauty and fitness center
 						</p>
-					</div>
+					</div> */}
 				</div>
 			</SidebarHeader>
 			<SidebarContent>
