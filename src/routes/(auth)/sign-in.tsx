@@ -1,12 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import { LoginForm } from "@/features/auth/login/components/login-form";
 import { sanitizeRedirect } from "@/hooks/use-previous-location";
 
@@ -30,16 +23,12 @@ export const Route = createFileRoute("/(auth)/sign-in")({
 function RouteComponent() {
 	const { safeRedirectTo } = Route.useRouteContext();
 	return (
-		<div className="w-full lg:w-1/2 flex flex-col gap-y-6 items-center justify-center bg-secondary p-6 lg:p-12">
-			<Card className="w-full max-w-md shadow">
-				<CardHeader>
-					<CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-					<CardDescription>Sign in to your account.</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<LoginForm redirectTo={safeRedirectTo} />
-				</CardContent>
-			</Card>
+		<div className="flex flex-col gap-y-6 w-full">
+			<div className="flex flex-col text-center">
+				<h1 className="text-2xl font-bold">Welcome Back</h1>
+				<p className="text-muted-foreground text-sm">Sign in to your account</p>
+			</div>
+			<LoginForm redirectTo={safeRedirectTo} />
 		</div>
 	);
 }

@@ -407,6 +407,20 @@
       "when": 1780477975912,
       "tag": "0057_flaky_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1780995311561,
+      "tag": "0058_flat_miracleman",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1780996027097,
+      "tag": "0059_ordinary_shiva",
+      "breakpoints": true
     }
   ]
 }

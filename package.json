@@ -75,7 +75,7 @@
     "drizzle-orm": "^0.45.2",
     "inngest": "^3.54.2",
     "input-otp": "^1.4.2",
-    "lucide-react": "^0.555.0",
+    "lucide-react": "^1.17.0",
     "nanoid": "^5.1.11",
     "next-themes": "^0.4.6",
     "nitro": "latest",

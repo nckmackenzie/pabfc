@@ -111,7 +111,7 @@ export function MembershipsExpiringSoonSkeleton() {
 						<div
 							// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton items are static
 							key={i}
-							className="rounded-lg border border-border/50 bg-secondary/30 p-4"
+							className="rounded-lg border border-border/50 p-4"
 						>
 							<div className="mb-3 flex items-start justify-between">
 								<div className="space-y-2">

@@ -692,19 +692,19 @@ export interface FileRoutesByFullPath {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
-  '/api/inngest': typeof ApiInngestIndexRoute
-  '/api/mock-api': typeof ApiMockApiIndexRoute
-  '/app/activity-logs': typeof AppActivityLogsIndexRoute
-  '/app/attendances': typeof AppAttendancesIndexRoute
+  '/api/inngest/': typeof ApiInngestIndexRoute
+  '/api/mock-api/': typeof ApiMockApiIndexRoute
+  '/app/activity-logs/': typeof AppActivityLogsIndexRoute
+  '/app/attendances/': typeof AppAttendancesIndexRoute
   '/app/bills/': typeof AppBillsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
-  '/app/communication': typeof AppCommunicationIndexRoute
+  '/app/communication/': typeof AppCommunicationIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
-  '/app/profile': typeof AppProfileIndexRoute
+  '/app/profile/': typeof AppProfileIndexRoute
   '/app/receipts/': typeof AppReceiptsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
@@ -726,31 +726,31 @@ export interface FileRoutesByFullPath {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
-  '/api/cron/daily': typeof ApiCronDailyIndexRoute
+  '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
-  '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
+  '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
-  '/app/reports/members': typeof AppReportsMembersIndexRoute
+  '/app/reports/members/': typeof AppReportsMembersIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
   '/api/payments/pabfc/c2b/conf': typeof ApiPaymentsPabfcC2bConfRoute
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
-  '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
-  '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
-  '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
-  '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
-  '/app/reports/finance/income-statement': typeof AppReportsFinanceIncomeStatementIndexRoute
-  '/app/reports/finance/invoices': typeof AppReportsFinanceInvoicesIndexRoute
-  '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
-  '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
-  '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
-  '/api/access-control/agent/attendance-sync/state': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
-  '/api/access-control/agent/attendance-sync/upload': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
-  '/api/access-control/agent/jobs/claim': typeof ApiAccessControlAgentJobsClaimIndexRoute
-  '/api/access-control/agent/jobs/$jobId/failure': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
-  '/api/access-control/agent/jobs/$jobId/success': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
+  '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
+  '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
+  '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
+  '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/income-statement/': typeof AppReportsFinanceIncomeStatementIndexRoute
+  '/app/reports/finance/invoices/': typeof AppReportsFinanceInvoicesIndexRoute
+  '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
+  '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
+  '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/api/access-control/agent/attendance-sync/state/': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
+  '/api/access-control/agent/attendance-sync/upload/': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
+  '/api/access-control/agent/jobs/claim/': typeof ApiAccessControlAgentJobsClaimIndexRoute
+  '/api/access-control/agent/jobs/$jobId/failure/': typeof ApiAccessControlAgentJobsJobIdFailureIndexRoute
+  '/api/access-control/agent/jobs/$jobId/success/': typeof ApiAccessControlAgentJobsJobIdSuccessIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -989,19 +989,19 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
-    | '/api/inngest'
-    | '/api/mock-api'
-    | '/app/activity-logs'
-    | '/app/attendances'
+    | '/api/inngest/'
+    | '/api/mock-api/'
+    | '/app/activity-logs/'
+    | '/app/attendances/'
     | '/app/bills/'
     | '/app/chart-of-accounts/'
-    | '/app/communication'
+    | '/app/communication/'
     | '/app/expenses/'
     | '/app/financial-years/'
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
-    | '/app/profile'
+    | '/app/profile/'
     | '/app/receipts/'
     | '/app/suppliers/'
     | '/app/users/'
@@ -1023,31 +1023,31 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
-    | '/api/cron/daily'
+    | '/api/cron/daily/'
     | '/app/bankings/postings/'
-    | '/app/reports/attendance'
+    | '/app/reports/attendance/'
     | '/app/reports/finance/'
-    | '/app/reports/members'
+    | '/app/reports/members/'
     | '/app/users/roles/'
     | '/api/payments/pabfc/c2b/conf'
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/users/roles/$roleId/edit'
-    | '/api/access-control/agent/heartbeat'
-    | '/app/reports/finance/balance-sheet'
-    | '/app/reports/finance/banking'
-    | '/app/reports/finance/expenses'
-    | '/app/reports/finance/income-statement'
-    | '/app/reports/finance/invoices'
-    | '/app/reports/finance/payments'
-    | '/app/reports/finance/receipts'
-    | '/app/reports/finance/trial-balance'
-    | '/api/access-control/agent/attendance-sync/state'
-    | '/api/access-control/agent/attendance-sync/upload'
-    | '/api/access-control/agent/jobs/claim'
-    | '/api/access-control/agent/jobs/$jobId/failure'
-    | '/api/access-control/agent/jobs/$jobId/success'
+    | '/api/access-control/agent/heartbeat/'
+    | '/app/reports/finance/balance-sheet/'
+    | '/app/reports/finance/banking/'
+    | '/app/reports/finance/expenses/'
+    | '/app/reports/finance/income-statement/'
+    | '/app/reports/finance/invoices/'
+    | '/app/reports/finance/payments/'
+    | '/app/reports/finance/receipts/'
+    | '/app/reports/finance/trial-balance/'
+    | '/api/access-control/agent/attendance-sync/state/'
+    | '/api/access-control/agent/attendance-sync/upload/'
+    | '/api/access-control/agent/jobs/claim/'
+    | '/api/access-control/agent/jobs/$jobId/failure/'
+    | '/api/access-control/agent/jobs/$jobId/success/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1451,7 +1451,7 @@ declare module '@tanstack/react-router' {
     '/app/profile/': {
       id: '/app/profile/'
       path: '/profile'
-      fullPath: '/app/profile'
+      fullPath: '/app/profile/'
       preLoaderRoute: typeof AppProfileIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
@@ -1493,7 +1493,7 @@ declare module '@tanstack/react-router' {
     '/app/communication/': {
       id: '/app/communication/'
       path: '/communication'
-      fullPath: '/app/communication'
+      fullPath: '/app/communication/'
       preLoaderRoute: typeof AppCommunicationIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
@@ -1514,28 +1514,28 @@ declare module '@tanstack/react-router' {
     '/app/attendances/': {
       id: '/app/attendances/'
       path: '/attendances'
-      fullPath: '/app/attendances'
+      fullPath: '/app/attendances/'
       preLoaderRoute: typeof AppAttendancesIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/activity-logs/': {
       id: '/app/activity-logs/'
       path: '/activity-logs'
-      fullPath: '/app/activity-logs'
+      fullPath: '/app/activity-logs/'
       preLoaderRoute: typeof AppActivityLogsIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/api/mock-api/': {
       id: '/api/mock-api/'
       path: '/api/mock-api'
-      fullPath: '/api/mock-api'
+      fullPath: '/api/mock-api/'
       preLoaderRoute: typeof ApiMockApiIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/inngest/': {
       id: '/api/inngest/'
       path: '/api/inngest'
-      fullPath: '/api/inngest'
+      fullPath: '/api/inngest/'
       preLoaderRoute: typeof ApiInngestIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -1682,7 +1682,7 @@ declare module '@tanstack/react-router' {
     '/app/reports/members/': {
       id: '/app/reports/members/'
       path: '/reports/members'
-      fullPath: '/app/reports/members'
+      fullPath: '/app/reports/members/'
       preLoaderRoute: typeof AppReportsMembersIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
@@ -1696,7 +1696,7 @@ declare module '@tanstack/react-router' {
     '/app/reports/attendance/': {
       id: '/app/reports/attendance/'
       path: '/reports/attendance'
-      fullPath: '/app/reports/attendance'
+      fullPath: '/app/reports/attendance/'
       preLoaderRoute: typeof AppReportsAttendanceIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
@@ -1710,7 +1710,7 @@ declare module '@tanstack/react-router' {
     '/api/cron/daily/': {
       id: '/api/cron/daily/'
       path: '/api/cron/daily'
-      fullPath: '/api/cron/daily'
+      fullPath: '/api/cron/daily/'
       preLoaderRoute: typeof ApiCronDailyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -1843,63 +1843,63 @@ declare module '@tanstack/react-router' {
     '/app/reports/finance/trial-balance/': {
       id: '/app/reports/finance/trial-balance/'
       path: '/trial-balance'
-      fullPath: '/app/reports/finance/trial-balance'
+      fullPath: '/app/reports/finance/trial-balance/'
       preLoaderRoute: typeof AppReportsFinanceTrialBalanceIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/receipts/': {
       id: '/app/reports/finance/receipts/'
       path: '/receipts'
-      fullPath: '/app/reports/finance/receipts'
+      fullPath: '/app/reports/finance/receipts/'
       preLoaderRoute: typeof AppReportsFinanceReceiptsIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/payments/': {
       id: '/app/reports/finance/payments/'
       path: '/payments'
-      fullPath: '/app/reports/finance/payments'
+      fullPath: '/app/reports/finance/payments/'
       preLoaderRoute: typeof AppReportsFinancePaymentsIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/invoices/': {
       id: '/app/reports/finance/invoices/'
       path: '/invoices'
-      fullPath: '/app/reports/finance/invoices'
+      fullPath: '/app/reports/finance/invoices/'
       preLoaderRoute: typeof AppReportsFinanceInvoicesIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/income-statement/': {
       id: '/app/reports/finance/income-statement/'
       path: '/income-statement'
-      fullPath: '/app/reports/finance/income-statement'
+      fullPath: '/app/reports/finance/income-statement/'
       preLoaderRoute: typeof AppReportsFinanceIncomeStatementIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/expenses/': {
       id: '/app/reports/finance/expenses/'
       path: '/expenses'
-      fullPath: '/app/reports/finance/expenses'
+      fullPath: '/app/reports/finance/expenses/'
       preLoaderRoute: typeof AppReportsFinanceExpensesIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/banking/': {
       id: '/app/reports/finance/banking/'
       path: '/banking'
-      fullPath: '/app/reports/finance/banking'
+      fullPath: '/app/reports/finance/banking/'
       preLoaderRoute: typeof AppReportsFinanceBankingIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/app/reports/finance/balance-sheet/': {
       id: '/app/reports/finance/balance-sheet/'
       path: '/balance-sheet'
-      fullPath: '/app/reports/finance/balance-sheet'
+      fullPath: '/app/reports/finance/balance-sheet/'
       preLoaderRoute: typeof AppReportsFinanceBalanceSheetIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
     '/api/access-control/agent/heartbeat/': {
       id: '/api/access-control/agent/heartbeat/'
       path: '/api/access-control/agent/heartbeat'
-      fullPath: '/api/access-control/agent/heartbeat'
+      fullPath: '/api/access-control/agent/heartbeat/'
       preLoaderRoute: typeof ApiAccessControlAgentHeartbeatIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -1941,35 +1941,35 @@ declare module '@tanstack/react-router' {
     '/api/access-control/agent/jobs/claim/': {
       id: '/api/access-control/agent/jobs/claim/'
       path: '/api/access-control/agent/jobs/claim'
-      fullPath: '/api/access-control/agent/jobs/claim'
+      fullPath: '/api/access-control/agent/jobs/claim/'
       preLoaderRoute: typeof ApiAccessControlAgentJobsClaimIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/access-control/agent/attendance-sync/upload/': {
       id: '/api/access-control/agent/attendance-sync/upload/'
       path: '/api/access-control/agent/attendance-sync/upload'
-      fullPath: '/api/access-control/agent/attendance-sync/upload'
+      fullPath: '/api/access-control/agent/attendance-sync/upload/'
       preLoaderRoute: typeof ApiAccessControlAgentAttendanceSyncUploadIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/access-control/agent/attendance-sync/state/': {
       id: '/api/access-control/agent/attendance-sync/state/'
       path: '/api/access-control/agent/attendance-sync/state'
-      fullPath: '/api/access-control/agent/attendance-sync/state'
+      fullPath: '/api/access-control/agent/attendance-sync/state/'
       preLoaderRoute: typeof ApiAccessControlAgentAttendanceSyncStateIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/access-control/agent/jobs/$jobId/success/': {
       id: '/api/access-control/agent/jobs/$jobId/success/'
       path: '/api/access-control/agent/jobs/$jobId/success'
-      fullPath: '/api/access-control/agent/jobs/$jobId/success'
+      fullPath: '/api/access-control/agent/jobs/$jobId/success/'
       preLoaderRoute: typeof ApiAccessControlAgentJobsJobIdSuccessIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/access-control/agent/jobs/$jobId/failure/': {
       id: '/api/access-control/agent/jobs/$jobId/failure/'
       path: '/api/access-control/agent/jobs/$jobId/failure'
-      fullPath: '/api/access-control/agent/jobs/$jobId/failure'
+      fullPath: '/api/access-control/agent/jobs/$jobId/failure/'
       preLoaderRoute: typeof ApiAccessControlAgentJobsJobIdFailureIndexRouteImport
       parentRoute: typeof rootRouteImport
     }

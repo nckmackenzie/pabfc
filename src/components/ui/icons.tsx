@@ -1494,6 +1494,27 @@ export function Users2Icon({ ...props }: React.ComponentProps<"svg">) {
 	);
 }
 
+export function UserKeyIcon({ ...props }: React.ComponentProps<"svg">) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={1.5}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			{...props}
+		>
+			<path d="M20 11v6" />
+			<path d="M20 13h2" />
+			<path d="M3 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 2.072.578" />
+			<circle cx="10" cy="7" r="4" />
+			<circle cx="20" cy="19" r="2" />
+		</svg>
+	);
+}
+
 export function WindowsIcon({ ...props }: React.ComponentProps<"svg">) {
 	return (
 		<svg

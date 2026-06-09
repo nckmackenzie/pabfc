@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -8,6 +7,7 @@ import { UAParser } from "ua-parser-js";
 
 import { db } from "@/drizzle/db";
 import * as schema from "@/drizzle/schema";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {
@@ -56,9 +56,7 @@ export const auth = betterAuth({
 		minPasswordLength: 8,
 		autoSignIn: true,
 		password: {
-			hash: async (password: string) => {
-				return await bcrypt.hash(password, Number(process.env.BCRYPT_ROUNDS));
-			},
+			hash: hashPassword,
 			verify: async ({
 				hash,
 				password,
@@ -66,7 +64,7 @@ export const auth = betterAuth({
 				password: string;
 				hash: string;
 			}) => {
-				return await bcrypt.compare(password, hash);
+				return await verifyPassword(password, hash);
 			},
 		},
 	},

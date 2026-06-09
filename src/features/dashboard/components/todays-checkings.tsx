@@ -98,7 +98,7 @@ function DashboardAttendanceItem({
 	return (
 		<div
 			className={cn(
-				"group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-secondary/50 border-b",
+				"group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent/15 border-b",
 				"animate-fade-in",
 			)}
 			style={{ animationDelay: `${index * 50}ms` }}

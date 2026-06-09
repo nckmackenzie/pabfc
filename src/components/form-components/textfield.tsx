@@ -40,7 +40,13 @@ export function TextField({
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const rawValue = e.target.value;
-		const value = isNumber ? +rawValue : rawValue === "" ? null : rawValue;
+		const value = isNumber
+			? rawValue === ""
+				? null
+				: Number(rawValue)
+			: rawValue === ""
+				? null
+				: rawValue;
 		field.handleChange(value);
 	};
 	return (
@@ -52,7 +58,7 @@ export function TextField({
 			)}
 			{!isPassword ? (
 				<Input
-					value={field.state.value as string}
+					value={(field.state.value ?? "") as string | number}
 					onBlur={field.handleBlur}
 					onChange={handleChange}
 					id={field.name}
@@ -64,7 +70,11 @@ export function TextField({
 				/>
 			) : (
 				<PasswordInput
-					value={field.state.value as string}
+					value={
+						(isNumber && field.state.value === 0
+							? ""
+							: (field.state.value ?? "")) as string
+					}
 					onBlur={field.handleBlur}
 					onChange={handleChange}
 					id={field.name}

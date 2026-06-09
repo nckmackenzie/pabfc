@@ -15,15 +15,8 @@ export function ToastContent({ message, title, t }: Props) {
 			<div className="flex-1">
 				<div className="flex items-start pr-4">
 					<div className="ml-3 flex-1">
-						<p
-							className={cn("text-sm font-medium text-foreground", {
-								"text-toast-foreground-error": t?.type === "error",
-								"text-toast-foreground-success": t?.type === "success",
-							})}
-						>
-							{title}
-						</p>
-						<p className="mt-1 text-sm text-muted-foreground">{message}</p>
+						<p className={cn("text-sm font-medium")}>{title}</p>
+						<p className="mt-1 text-sm ">{message}</p>
 					</div>
 				</div>
 			</div>

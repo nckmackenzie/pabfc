@@ -47,6 +47,11 @@ type Events = {
 			password: string;
 		};
 	};
+	"app/auth.send-password-reset-temporary-password": {
+		data: {
+			challengeId: string;
+		};
+	};
 };
 
 export const inngest = new Inngest({

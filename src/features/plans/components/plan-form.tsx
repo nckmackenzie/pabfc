@@ -13,8 +13,8 @@ import { createPlan, updatePlan } from "../services/plans.api";
 
 const defaultValues = {
 	name: "",
-	duration: 0,
-	price: 0,
+	// duration: 0,
+	// price: 0,
 	description: "",
 	isSessionBased: false,
 	sessionCount: null,
@@ -89,9 +89,9 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 					<form.AppField name="duration">
 						{(field) => (
 							<field.Input
-								label="Duration"
+								label="Duration (in days)"
 								type="number"
-								placeholder="Enter duration"
+								placeholder="Enter duration in days"
 								required
 							/>
 						)}
