@@ -45,7 +45,7 @@ function RouteComponent() {
 						<UserAvatar />
 					</div>
 				</header>
-				<div className="flex flex-1 flex-col gap-4 bg-secondary ">
+				<div className="flex flex-1 flex-col gap-4 bg-muted">
 					<div className="max-w-7xl mx-auto w-full p-4">
 						<Outlet />
 					</div>
