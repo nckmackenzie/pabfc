@@ -13,8 +13,8 @@ import { createPlan, updatePlan } from "../services/plans.api";
 
 const defaultValues = {
 	name: "",
-	duration: 0,
-	price: 0,
+	// duration: 0,
+	// price: 0,
 	description: "",
 	isSessionBased: false,
 	sessionCount: null,

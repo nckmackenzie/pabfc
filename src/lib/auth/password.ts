@@ -6,11 +6,11 @@ const TEMPORARY_PASSWORD_CHARS =
 
 export function generateTemporaryPassword(length = 8): string {
 	let password = "";
-	const randomValues = crypto.randomBytes(length);
-
-	for (const value of randomValues) {
+	for (let i = 0; i < length; i++) {
 		password +=
-			TEMPORARY_PASSWORD_CHARS[value % TEMPORARY_PASSWORD_CHARS.length];
+			TEMPORARY_PASSWORD_CHARS[
+				crypto.randomInt(0, TEMPORARY_PASSWORD_CHARS.length)
+			];
 	}
 
 	return password;

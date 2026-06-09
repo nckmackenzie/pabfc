@@ -32,6 +32,15 @@ const GENERIC_RESET_RESPONSE = {
 		"If an active account matches, we will send a temporary password to the phone number on file.",
 };
 
+function canonicalizeIdentifierForHash(identifier: string) {
+	const normalized = normalizeIdentifier(identifier);
+	try {
+		return internationalizePhoneNumber(normalized, true) || normalized;
+	} catch {
+		return normalized;
+	}
+}
+
 function getAuthSecret() {
 	const secret = process.env.BETTER_AUTH_SECRET;
 	if (!secret) {
@@ -84,7 +93,7 @@ function normalizeIdentifier(identifier: string) {
 function hashIdentifier(identifier: string) {
 	return crypto
 		.createHmac("sha256", getAuthSecret())
-		.update(normalizeIdentifier(identifier))
+		.update(canonicalizeIdentifierForHash(identifier))
 		.digest("hex");
 }
 
