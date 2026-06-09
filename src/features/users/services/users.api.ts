@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import bcrypt from "bcryptjs";
 import {
 	and,
 	asc,
@@ -27,24 +26,12 @@ import {
 	type UserSchema,
 	userSchema,
 } from "@/features/users/services/schema";
+import { generateTemporaryPassword, hashPassword } from "@/lib/auth/password";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
-
-export function generateTemporaryPassword(): string {
-	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-	let password = "";
-	for (let i = 0; i < 8; i++) {
-		password += chars[Math.floor(Math.random() * chars.length)];
-	}
-	return password;
-}
-
-export async function hashPassword(password: string): Promise<string> {
-	return bcrypt.hash(password, Number(process.env.BCRYPT_ROUNDS) ?? 12);
-}
 
 export const getUserByContact = createServerFn()
 	.validator((data: { contact: string; userId?: string }) => data)

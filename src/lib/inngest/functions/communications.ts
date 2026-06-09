@@ -1,13 +1,15 @@
-import crypto from "crypto";
-import { and, eq, isNull } from "drizzle-orm";
+import crypto from "node:crypto";
+import { and, eq, gt, isNotNull, isNull, ne } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	memberRegistrationLinks,
 	members,
+	passwordResetChallenges,
 	type SMSBroadcastResponse,
 	smsBroadcasts,
 	users,
 } from "@/drizzle/schema";
+import { decryptTemporaryPassword } from "@/features/auth/forgot-password/services/forgot-password.api";
 import { replaceVariables } from "@/features/communication/lib/utils";
 import { internationalizePhoneNumber } from "@/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
@@ -112,6 +114,79 @@ export const sendUserPassword = inngest.createFunction(
 		if (!response) {
 			throw new Error("Failed to send temporary password SMS");
 		}
+		return response;
+	},
+);
+
+export const sendPasswordResetTemporaryPassword = inngest.createFunction(
+	{ id: "send-password-reset-temporary-password" },
+	{ event: "app/auth.send-password-reset-temporary-password" },
+	async ({ event, step }) => {
+		const { challengeId } = event.data;
+
+		const challenge = await step.run("get-reset-challenge", async () => {
+			const [record] = await db
+				.select({
+					id: passwordResetChallenges.id,
+					encryptedTemporaryPassword:
+						passwordResetChallenges.encryptedTemporaryPassword,
+					contact: users.contact,
+					name: users.name,
+				})
+				.from(passwordResetChallenges)
+				.innerJoin(users, eq(users.id, passwordResetChallenges.userId))
+				.where(
+					and(
+						eq(passwordResetChallenges.id, challengeId),
+						isNull(passwordResetChallenges.sentAt),
+						isNull(passwordResetChallenges.usedAt),
+						isNotNull(passwordResetChallenges.encryptedTemporaryPassword),
+						gt(passwordResetChallenges.expiresAt, new Date()),
+						eq(users.active, true),
+						eq(users.banned, false),
+						isNull(users.deleted_at),
+						ne(users.role, "member"),
+					),
+				)
+				.limit(1);
+
+			if (!record?.encryptedTemporaryPassword || !record.contact) {
+				throw new Error("Password reset challenge not found");
+			}
+
+			return {
+				...record,
+				contact: record.contact,
+				encryptedTemporaryPassword: record.encryptedTemporaryPassword,
+			};
+		});
+
+		const temporaryPassword = decryptTemporaryPassword(
+			challenge.encryptedTemporaryPassword,
+		);
+
+		const response = await step.run("send-reset-sms", async () => {
+			const firstName = challenge.name.split(" ")[0];
+			return await sendSms({
+				message: `Dear ${toTitleCase(firstName)}, use this temporary password to reset your PABFC account password: ${temporaryPassword}. It expires in 15 minutes and can only be used once.`,
+				to: [internationalizePhoneNumber(challenge.contact, true)],
+			});
+		});
+
+		if (!response) {
+			throw new Error("Failed to send password reset SMS");
+		}
+
+		await step.run("mark-reset-sms-sent", async () => {
+			await db
+				.update(passwordResetChallenges)
+				.set({
+					encryptedTemporaryPassword: null,
+					sentAt: new Date(),
+				})
+				.where(eq(passwordResetChallenges.id, challenge.id));
+		});
+
 		return response;
 	},
 );

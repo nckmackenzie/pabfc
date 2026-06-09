@@ -139,6 +139,59 @@ export const loginAttempts = pgTable(
 	],
 );
 
+export const passwordResetAttempts = pgTable(
+	"password_reset_attempts",
+	{
+		id,
+		userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+		identifierHash: text("identifier_hash").notNull(),
+		ipAddress: inet("ip_address"),
+		userAgent: text("user_agent"),
+		matched: boolean("matched").default(false).notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(table) => [
+		index("password_reset_attempts_user_id_idx").on(table.userId),
+		index("password_reset_attempts_identifier_hash_idx").on(
+			table.identifierHash,
+		),
+		index("password_reset_attempts_ip_address_idx").on(table.ipAddress),
+		index("password_reset_attempts_created_at_idx").on(table.createdAt),
+	],
+);
+
+export const passwordResetChallenges = pgTable(
+	"password_reset_challenges",
+	{
+		id,
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		identifierHash: text("identifier_hash").notNull(),
+		temporaryPasswordHash: text("temporary_password_hash").notNull(),
+		encryptedTemporaryPassword: text("encrypted_temporary_password"),
+		ipAddress: inet("ip_address"),
+		userAgent: text("user_agent"),
+		attemptCount: integer("attempt_count").default(0).notNull(),
+		expiresAt: timestamp("expires_at").notNull(),
+		sentAt: timestamp("sent_at"),
+		usedAt: timestamp("used_at"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at")
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+	(table) => [
+		index("password_reset_challenges_user_id_idx").on(table.userId),
+		index("password_reset_challenges_identifier_hash_idx").on(
+			table.identifierHash,
+		),
+		index("password_reset_challenges_ip_address_idx").on(table.ipAddress),
+		index("password_reset_challenges_expires_at_idx").on(table.expiresAt),
+	],
+);
+
 export const forms = pgTable("forms", {
 	id: serial("id").primaryKey().notNull(),
 	name: varchar("name").notNull(),
@@ -192,6 +245,8 @@ export const usersRelations = relations(users, ({ many }) => ({
 	loginAttempts: many(loginAttempts),
 	accounts: many(accounts),
 	twoFactors: many(twoFactors),
+	passwordResetAttempts: many(passwordResetAttempts),
+	passwordResetChallenges: many(passwordResetChallenges),
 	activityLogs: many(activityLogs),
 }));
 
