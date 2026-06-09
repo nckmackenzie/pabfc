@@ -51,6 +51,15 @@
   --color-info-foreground: var(--info-foreground);
   --color-error: var(--error);
   --color-error-foreground: var(--error-foreground);
+  --color-toast-success: var(--toast-success);
+  --color-toast-success-foreground: var(--toast-success-foreground);
+  --color-toast-success-border: var(--toast-success-border);
+  --color-toast-info: var(--toast-info);
+  --color-toast-info-foreground: var(--toast-info-foreground);
+  --color-toast-info-border: var(--toast-info-border);
+  --color-toast-error: var(--toast-error);
+  --color-toast-error-foreground: var(--toast-error-foreground);
+  --color-toast-error-border: var(--toast-error-border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -127,6 +136,15 @@
   --toast-foreground: oklch(1 0 0);
   --toast-foreground-error: oklch(0.9 0.1 25);
   --toast-foreground-success: oklch(0.9 0.1 150);
+  --toast-success: oklch(0.9529 0.0196 172.79);
+  --toast-success-foreground: oklch(0.330 0.085 162);
+  --toast-success-border: oklch(0.840 0.082 162);
+  --toast-info: oklch(0.947 0.0267 233.96);
+  --toast-info-foreground: oklch(0.262 0.110 250);
+  --toast-info-border: oklch(0.8292 0.0812 235.7);
+  --toast-error: oklch(0.9504 0.0267 340.86);
+  --toast-error-foreground: oklch(0.295 0.148 353);
+  --toast-error-border: oklch(0.8133 0.1011 342.31);
 
   /* Neutrals: Background & Text */
   /* --background: oklch(1 0 0); 
@@ -239,7 +257,6 @@
   --toast-foreground-success: oklch(0.77 0.15 163);
   --warning-foreground: oklch(0.92 0.12 96);
   --success-foreground: oklch(0.9 0.09 164);
-
 }
 
 @layer base {
@@ -256,7 +273,15 @@
   }
 
   .custom-toast {
-    @apply bg-toast! text-toast-foreground!  shadow-lg! max-w-xl! min-w-md! border!;
+    @apply bg-toast-info! text-toast-info-foreground!  shadow-lg! max-w-xl! min-w-md! border-toast-info-border! border;
+  }
+
+  .custom-toast-success{
+    @apply bg-toast-success! text-toast-success-foreground! shadow-lg! max-w-xl! min-w-md! border-toast-success-border! border;
+  }
+
+  .custom-toast-error{
+    @apply bg-toast-error! text-toast-error-foreground! shadow-lg! max-w-xl! min-w-md! border-toast-error-border! border;
   }
 
   .drop-item{

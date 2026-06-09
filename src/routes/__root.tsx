@@ -107,6 +107,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						className: "custom-toast",
 						duration: 5000,
 						removeDelay: 1000,
+						success: {
+							className: "custom-toast-success",
+						},
+						error: {
+							className: "custom-toast-error",
+						},
 					}}
 				/>
 				<TanStackDevtools
