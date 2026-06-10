@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { LoadingSwap } from "@/components/ui/loading-swap";
+import type { Result } from "@/lib/result";
 import { cn } from "@/lib/utils";
 import { ToastContent } from "./toast-content";
 
@@ -23,7 +24,7 @@ export function ActionButton({
 	isDestructive = true,
 	...props
 }: ComponentProps<typeof Button> & {
-	action: () => Promise<{ error: boolean; message?: string }>;
+	action: () => Promise<Result<undefined>>;
 	requireAreYouSure?: boolean;
 	isDestructive?: boolean;
 	areYouSureDescription?: ReactNode;
@@ -33,17 +34,17 @@ export function ActionButton({
 	function performAction() {
 		startTransition(async () => {
 			const data = await action();
-			if (data.error) {
-				toast.error((t) => (
-					<ToastContent t={t} title="Error" message={data.message || "Error"} />
+			if (!data.success) {
+				toast.error(() => (
+					<ToastContent title="Error" message={data.error.message} />
 				));
 				return;
 			}
 			toast.success((t) => (
 				<ToastContent
 					t={t}
-					title="Action completed successfully!"
-					message={data.message || "Success"}
+					title="Success!"
+					message={"Operation completed successfully"}
 				/>
 			));
 		});

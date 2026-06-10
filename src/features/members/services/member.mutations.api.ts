@@ -14,12 +14,10 @@ import {
 	memberRevokePortalAccessSchema,
 	memberToggleActiveSchema,
 } from "@/features/members/services/schemas";
-import {
-	ApplicationError,
-	ConflictError,
-	NotFoundError,
-} from "@/lib/error-handling/app-error";
+import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
+import { requirePermission } from "@/lib/permissions/permissions";
+import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import {
@@ -32,7 +30,227 @@ function generateBioTimeEmployeeCode(memberNo: number) {
 	return `M${String(memberNo).padStart(6, "0")}`;
 }
 
-export const createMember = createServerFn({ method: "POST" })
+const createMember = async ({
+	data,
+	loggedUserId,
+}: {
+	data: MemberFormSchema;
+	loggedUserId: string;
+}) => {
+	await requirePermission("members:create");
+	try {
+		await validateMemberUniqueness({
+			contact: data.contact,
+			idNumber: data.idNumber,
+		});
+
+		const memberNo = await getMemberNo();
+		const memberData = mapMemberData(data);
+
+		const settings = await db.query.biotimeSettings.findFirst();
+
+		const memberId = await db.transaction(async (tx) => {
+			const [member] = await tx
+				.insert(members)
+				.values({
+					...memberData,
+					memberNo,
+				})
+				.returning();
+
+			const empCode = generateBioTimeEmployeeCode(memberNo);
+
+			const payload = {
+				empCode,
+				firstName: member.firstName,
+				lastName: member.lastName,
+				departmentId: settings?.defaultDepartmentId ?? 1,
+				areaIds: [settings?.authorizedAreaId ?? 2],
+				mobile: member.contact,
+				email: member.email,
+				gender: member.gender,
+				birthday: member.dateOfBirth,
+				employeeType: 2,
+			};
+
+			const existingProfile = await db.query.memberAccessProfiles.findFirst({
+				where: eq(memberAccessProfiles.memberId, member.id),
+			});
+
+			if (existingProfile) {
+				throw new ConflictError("Access Control Profile already exists");
+			}
+
+			await tx.insert(memberAccessProfiles).values({
+				memberId: member.id,
+				biotimeEmployeeCode: empCode,
+				biotimeDepartmentId: settings?.defaultDepartmentId ?? 1,
+				authorizedAreaId: settings?.authorizedAreaId ?? 2,
+				unauthorizedAreaId: settings?.unauthorizedAreaId ?? 1,
+				currentAreaId: null,
+				desiredAccessEnabled: true,
+				accessControlStatus: "pending_sync",
+				biometricEnrollmentStatus: "pending",
+				lastSyncPayload: payload,
+			});
+
+			await tx.insert(accessControlSyncJobs).values({
+				memberId: member.id,
+				action: "CREATE_EMPLOYEE",
+				status: "pending",
+				payload,
+				idempotencyKey: `CREATE_EMPLOYEE:${member.id}:${empCode}`,
+			});
+
+			await logActivity({
+				data: {
+					action: "create member",
+					description: `Created member ${data.firstName} ${data.lastName}`,
+					userId: loggedUserId,
+				},
+			});
+
+			return member.id;
+		});
+
+		await inngest.send({
+			name: "app/members.send.registration.link",
+			data: {
+				memberId,
+			},
+		});
+
+		return success(undefined);
+	} catch (err) {
+		console.error(err);
+		return failure({
+			type: "ApplicationError",
+			message: "Failed to create member",
+		});
+	}
+};
+
+const updateMember = async ({
+	value,
+	id,
+	loggedUserId,
+}: {
+	value: MemberFormSchema;
+	id: string;
+	loggedUserId: string;
+}) => {
+	try {
+		await requirePermission("members:update");
+
+		await validateMemberUniqueness({
+			contact: value.contact,
+			idNumber: value.idNumber,
+			memberId: id,
+		});
+
+		const memberData = mapMemberData(value);
+
+		const member = await db.query.members.findFirst({
+			where: eq(members.id, id),
+		});
+
+		if (!member) {
+			return failure({ type: "NotFoundError", message: "Member not found" });
+		}
+
+		await db.transaction(async (tx) => {
+			await tx.update(members).set(memberData).where(eq(members.id, id));
+
+			await tx
+				.update(users)
+				.set({
+					name: `${value.firstName} ${value.lastName}`,
+					contact: value.contact,
+					email: value.email,
+					active: value.memberStatus === "active",
+				})
+				.where(eq(users.memberId, id));
+
+			const memberProfile = await tx.query.memberAccessProfiles.findFirst({
+				where: eq(memberAccessProfiles.memberId, id),
+			});
+
+			if (memberProfile) {
+				if (
+					value.memberStatus !== "active" &&
+					member.memberStatus === "active"
+				) {
+					await tx
+						.update(memberAccessProfiles)
+						.set({
+							desiredAccessEnabled: false,
+							accessControlStatus: "pending_sync",
+							currentAreaId: memberProfile.unauthorizedAreaId,
+							updatedAt: new Date(),
+						})
+						.where(eq(memberAccessProfiles.memberId, member.id));
+
+					await tx.insert(accessControlSyncJobs).values({
+						memberId: member.id,
+						action: "DISABLE_ACCESS",
+						status: "pending",
+						payload: {
+							biotimeEmployeeId: memberProfile.biotimeEmployeeId,
+							areaIds: [memberProfile.unauthorizedAreaId],
+							reason: "membership_expired",
+						},
+						idempotencyKey: `DISABLE_ACCESS:${member.id}:${Date.now()}`,
+					});
+				}
+
+				if (
+					value.memberStatus === "active" &&
+					member.memberStatus !== "active"
+				) {
+					await tx
+						.update(memberAccessProfiles)
+						.set({
+							desiredAccessEnabled: true,
+							accessControlStatus: "pending_sync",
+							currentAreaId: memberProfile.authorizedAreaId,
+							updatedAt: new Date(),
+						})
+						.where(eq(memberAccessProfiles.memberId, member.id));
+
+					await tx.insert(accessControlSyncJobs).values({
+						memberId: member.id,
+						action: "ENABLE_ACCESS",
+						status: "pending",
+						payload: {
+							biotimeEmployeeId: memberProfile.biotimeEmployeeId,
+							areaIds: [memberProfile.authorizedAreaId],
+							reason: "membership_paid_or_reactivated",
+						},
+						idempotencyKey: `ENABLE_ACCESS:${member.id}:${Date.now()}`,
+					});
+				}
+			}
+
+			await logActivity({
+				data: {
+					action: "update member",
+					description: `Updated member ${value.firstName} ${value.lastName} details`,
+					userId: loggedUserId,
+				},
+			});
+		});
+
+		return success(undefined);
+	} catch (error) {
+		console.error(error);
+		return failure({
+			type: "ApplicationError",
+			message: "Failed to update member",
+		});
+	}
+};
+
+export const upsertMember = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(memberFormSchema)
 	.handler(
@@ -42,206 +260,10 @@ export const createMember = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
-			await validateMemberUniqueness({
-				contact: data.contact,
-				idNumber: data.idNumber,
-			});
-
-			const memberNo = await getMemberNo();
-			const memberData = mapMemberData(data);
-
-			const settings = await db.query.biotimeSettings.findFirst();
-
-			// if (!settings || !settings.syncEnabled) {
-			// 	throw new ApplicationError(
-			// 		"Access Control Sync settings not properly set.",
-			// 	);
-			// }
-
-			const memberId = await db.transaction(async (tx) => {
-				const [member] = await tx
-					.insert(members)
-					.values({
-						...memberData,
-						memberNo,
-					})
-					.returning();
-
-				const empCode = generateBioTimeEmployeeCode(memberNo);
-
-				const payload = {
-					empCode,
-					firstName: member.firstName,
-					lastName: member.lastName,
-					departmentId: settings?.defaultDepartmentId ?? 1,
-					areaIds: [settings?.authorizedAreaId ?? 2],
-					mobile: member.contact,
-					email: member.email,
-					gender: member.gender,
-					birthday: member.dateOfBirth,
-					employeeType: 2,
-				};
-
-				const existingProfile = await db.query.memberAccessProfiles.findFirst({
-					where: eq(memberAccessProfiles.memberId, member.id),
-				});
-
-				if (existingProfile) {
-					throw new ApplicationError("Access Control Profile already exists");
-				}
-
-				await tx.insert(memberAccessProfiles).values({
-					memberId: member.id,
-					biotimeEmployeeCode: empCode,
-					biotimeDepartmentId: settings?.defaultDepartmentId ?? 1,
-					authorizedAreaId: settings?.authorizedAreaId ?? 2,
-					unauthorizedAreaId: settings?.unauthorizedAreaId ?? 1,
-					currentAreaId: null,
-					desiredAccessEnabled: true,
-					accessControlStatus: "pending_sync",
-					biometricEnrollmentStatus: "pending",
-					lastSyncPayload: payload,
-				});
-
-				await tx.insert(accessControlSyncJobs).values({
-					memberId: member.id,
-					action: "CREATE_EMPLOYEE",
-					status: "pending",
-					payload,
-					idempotencyKey: `CREATE_EMPLOYEE:${member.id}:${empCode}`,
-				});
-
-				await logActivity({
-					data: {
-						action: "create member",
-						description: `Created member ${data.firstName} ${data.lastName}`,
-						userId: loggedUserId,
-					},
-				});
-
-				return member.id;
-			});
-
-			await inngest.send({
-				name: "app/members.send.registration.link",
-				data: {
-					memberId,
-				},
-			});
-
-			return memberId;
-		},
-	);
-
-export const updateMember = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
-	.validator((values: { value: MemberFormSchema; id: string }) => values)
-	.handler(
-		async ({
-			data: { value, id },
-			context: {
-				user: { id: loggedUserId },
-			},
-		}) => {
-			await validateMemberUniqueness({
-				contact: value.contact,
-				idNumber: value.idNumber,
-				memberId: id,
-			});
-
-			const memberData = mapMemberData(value);
-
-			const member = await db.query.members.findFirst({
-				where: eq(members.id, id),
-			});
-
-			if (!member) {
-				throw new NotFoundError("Member not found");
+			if (data.id) {
+				return updateMember({ value: data, id: data.id, loggedUserId });
 			}
-
-			await db.transaction(async (tx) => {
-				await tx.update(members).set(memberData).where(eq(members.id, id));
-
-				await tx
-					.update(users)
-					.set({
-						name: `${value.firstName} ${value.lastName}`,
-						contact: value.contact,
-						email: value.email,
-						active: value.memberStatus === "active",
-					})
-					.where(eq(users.memberId, id));
-
-				const memberProfile = await tx.query.memberAccessProfiles.findFirst({
-					where: eq(memberAccessProfiles.memberId, id),
-				});
-
-				if (memberProfile) {
-					if (
-						value.memberStatus !== "active" &&
-						member.memberStatus === "active"
-					) {
-						await tx
-							.update(memberAccessProfiles)
-							.set({
-								desiredAccessEnabled: false,
-								accessControlStatus: "pending_sync",
-								currentAreaId: memberProfile.unauthorizedAreaId,
-								updatedAt: new Date(),
-							})
-							.where(eq(memberAccessProfiles.memberId, member.id));
-
-						await tx.insert(accessControlSyncJobs).values({
-							memberId: member.id,
-							action: "DISABLE_ACCESS",
-							status: "pending",
-							payload: {
-								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
-								areaIds: [memberProfile.unauthorizedAreaId],
-								reason: "membership_expired",
-							},
-							idempotencyKey: `DISABLE_ACCESS:${member.id}:${Date.now()}`,
-						});
-					}
-
-					if (
-						value.memberStatus === "active" &&
-						member.memberStatus !== "active"
-					) {
-						await tx
-							.update(memberAccessProfiles)
-							.set({
-								desiredAccessEnabled: true,
-								accessControlStatus: "pending_sync",
-								currentAreaId: memberProfile.authorizedAreaId,
-								updatedAt: new Date(),
-							})
-							.where(eq(memberAccessProfiles.memberId, member.id));
-
-						await tx.insert(accessControlSyncJobs).values({
-							memberId: member.id,
-							action: "ENABLE_ACCESS",
-							status: "pending",
-							payload: {
-								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
-								areaIds: [memberProfile.authorizedAreaId],
-								reason: "membership_paid_or_reactivated",
-							},
-							idempotencyKey: `ENABLE_ACCESS:${member.id}:${Date.now()}`,
-						});
-					}
-				}
-
-				await logActivity({
-					data: {
-						action: "update member",
-						description: `Updated member ${value.firstName} ${value.lastName} details`,
-						userId: loggedUserId,
-					},
-				});
-			});
-
-			return id;
+			return createMember({ data, loggedUserId });
 		},
 	);
 
@@ -395,6 +417,86 @@ export const toggleActive = createServerFn({ method: "POST" })
 			});
 
 			return memberId;
+		},
+	);
+
+export const deleteMember = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator(z.string().min(1, "Member id is required"))
+	.handler(
+		async ({
+			data: memberId,
+			context: {
+				user: { id: loggedUserId },
+			},
+		}) => {
+			await requirePermission("members:delete");
+
+			try {
+				const member = await getMember({ data: memberId });
+				if (!member) {
+					return failure({
+						type: "NotFoundError",
+						message: "Member not found",
+					});
+				}
+
+				await db.transaction(async (tx) => {
+					await tx
+						.update(members)
+						.set({ deletedAt: new Date() })
+						.where(and(eq(members.id, memberId), isNull(members.deletedAt)));
+
+					await tx
+						.update(users)
+						.set({ active: false })
+						.where(eq(users.memberId, memberId));
+
+					const memberProfile = await tx.query.memberAccessProfiles.findFirst({
+						where: eq(memberAccessProfiles.memberId, memberId),
+					});
+
+					if (memberProfile) {
+						await tx
+							.update(memberAccessProfiles)
+							.set({
+								desiredAccessEnabled: false,
+								accessControlStatus: "pending_sync",
+								currentAreaId: memberProfile.unauthorizedAreaId,
+								updatedAt: new Date(),
+							})
+							.where(eq(memberAccessProfiles.memberId, memberId));
+
+						await tx.insert(accessControlSyncJobs).values({
+							memberId,
+							action: "DISABLE_ACCESS",
+							status: "pending",
+							payload: {
+								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
+								areaIds: [memberProfile.unauthorizedAreaId],
+								reason: "member_deleted",
+							},
+							idempotencyKey: `DISABLE_ACCESS:${memberId}:${Date.now()}`,
+						});
+					}
+
+					await logActivity({
+						data: {
+							action: "delete member",
+							description: `Deleted member ${member.firstName} ${member.lastName}`,
+							userId: loggedUserId,
+						},
+					});
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete member",
+				});
+			}
 		},
 	);
 

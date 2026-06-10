@@ -33,6 +33,7 @@ import { memberQueries } from "@/features/members/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { cn, toTitleCase } from "@/lib/utils";
 import { useMemberActions } from "../hooks/use-member-actions";
+import { deleteMember } from "../services/member.mutations.api";
 
 export function MemberTable() {
 	const { filters } = useFilters(getRouteApi("/app/members/").id);
@@ -235,7 +236,7 @@ export function MemberTable() {
 					<DeleteActionButton
 						queryKey={["members"]}
 						resourceId={id}
-						deleteAction={async () => {}}
+						deleteAction={deleteMember}
 					/>
 				</DatatableActions>
 			),

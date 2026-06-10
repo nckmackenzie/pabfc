@@ -3,7 +3,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { payees } from "@/drizzle/schema";
 import { payeeSchema } from "@/features/expenses/services/schemas";
-import { ConflictError } from "@/lib/error-handling/app-error";
+import { failure, success } from "@/lib/result";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -26,28 +26,39 @@ export const createPayee = createServerFn()
 				user: { id: userId },
 			},
 		}) => {
-			const payee = await db.query.payees.findFirst({
-				where: eq(sql`lower(${payees.name})`, data.name.trim().toLowerCase()),
-			});
-			if (payee) {
-				throw new ConflictError("Payee ");
+			try {
+				const payee = await db.query.payees.findFirst({
+					where: eq(sql`lower(${payees.name})`, data.name.trim().toLowerCase()),
+				});
+				if (payee) {
+					return failure({
+						type: "ConflictError",
+						message: "Payee name already exists",
+					});
+				}
+				await db
+					.insert(payees)
+					.values({
+						name: toTitleCase(data.name),
+						isActive: true,
+					})
+					.returning({ id: payees.id });
+
+				await logActivity({
+					data: {
+						action: "create payee",
+						description: `Created payee ${data.name}`,
+						userId,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to create payee",
+				});
 			}
-			const [{ id }] = await db
-				.insert(payees)
-				.values({
-					name: toTitleCase(data.name),
-					isActive: true,
-				})
-				.returning({ id: payees.id });
-
-			await logActivity({
-				data: {
-					action: "create payee",
-					description: `Created payee ${data.name}`,
-					userId,
-				},
-			});
-
-			return id;
 		},
 	);

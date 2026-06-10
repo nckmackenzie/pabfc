@@ -14,7 +14,7 @@ import {
 	type PayeeSchema,
 	payeeSchema,
 } from "@/features/expenses/services/schemas";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 
 export function AddPayee() {
@@ -47,8 +47,8 @@ export function AddPayee() {
 }
 
 function PayeeForm({ setOpen }: { setOpen: (open: boolean) => void }) {
-	const { mutate, isPending } = useFormMutation({
-		createFn: (data: PayeeSchema) => createPayee({ data: { name: data.name } }),
+	const { mutate, isPending } = useFormUpsert({
+		upsertFn: (data: PayeeSchema) => createPayee({ data: { name: data.name } }),
 		entityName: "Payee",
 		queryKey: ["payees"],
 	});
@@ -61,7 +61,7 @@ function PayeeForm({ setOpen }: { setOpen: (open: boolean) => void }) {
 		},
 		onSubmit: async ({ value }) => {
 			mutate(
-				{ data: { name: value.name } },
+				{ name: value.name },
 				{
 					onSuccess: () => {
 						form.reset();

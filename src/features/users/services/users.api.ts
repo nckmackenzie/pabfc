@@ -27,11 +27,142 @@ import {
 	userSchema,
 } from "@/features/users/services/schema";
 import { generateTemporaryPassword, hashPassword } from "@/lib/auth/password";
-import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { NotFoundError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
+import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+
+const createUser = async ({
+	data,
+	loggedUserId,
+}: {
+	data: UserSchema;
+	loggedUserId: string;
+}) => {
+	try {
+		if (await getUserByContact({ data: { contact: data.contact } })) {
+			return failure({
+				type: "ConflictError",
+				message: "Contact already exists",
+			});
+		}
+
+		const { userId, temporaryPassword } = await db.transaction(async (tx) => {
+			const [{ id }] = await tx
+				.insert(users)
+				.values({
+					name: data.name.toLowerCase(),
+					username: data.contact,
+					contact: data.contact,
+					role: data.role,
+					active: true,
+				})
+				.returning({ id: users.id });
+
+			const temporaryPassword = generateTemporaryPassword();
+			await tx.insert(accounts).values({
+				id: nanoid(),
+				accountId: id,
+				providerId: "credential",
+				userId: id,
+				password: await hashPassword(temporaryPassword),
+			});
+
+			if (data.role !== "admin" && data.roleIds?.length) {
+				await tx
+					.insert(userRoles)
+					.values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
+			}
+
+			return { userId: id, temporaryPassword };
+		});
+
+		await logActivity({
+			data: {
+				userId: loggedUserId,
+				action: "create user",
+				description: `Created new user ${data.name}`,
+			},
+		});
+
+		await inngest.send({
+			name: "app/users.send.temporary.password",
+			data: {
+				password: temporaryPassword,
+				userId,
+			},
+		});
+
+		return success(undefined);
+	} catch (error) {
+		console.error(error);
+		return failure({
+			type: "ApplicationError",
+			message: "Failed to create user",
+		});
+	}
+};
+
+const updateUser = async ({
+	data,
+	loggedUserId,
+}: {
+	data: UserSchema;
+	loggedUserId: string;
+}) => {
+	try {
+		if (
+			await getUserByContact({
+				data: { contact: data.contact, userId: data.id },
+			})
+		) {
+			return failure({
+				type: "ConflictError",
+				message: "Contact already exists",
+			});
+		}
+
+		const userId = data.id as string;
+		await db.transaction(async (tx) => {
+			await tx
+				.update(users)
+				.set({
+					name: data.name.toLowerCase(),
+					username: data.contact,
+					contact: data.contact,
+					role: data.role,
+					active: data.active,
+				})
+				.where(eq(users.id, userId));
+
+			await tx.delete(userRoles).where(eq(userRoles.userId, userId));
+
+			if (data.role !== "admin" && data.roleIds?.length) {
+				await tx
+					.insert(userRoles)
+					.values(data.roleIds.map((roleId) => ({ userId, roleId })));
+			}
+		});
+
+		await logActivity({
+			data: {
+				userId: loggedUserId,
+				action: "update user",
+				description: `Updated user ${data.name} details`,
+			},
+		});
+
+		return success(undefined);
+	} catch (error) {
+		console.error(error);
+		return failure({
+			type: "ApplicationError",
+			message: "Failed to update user",
+		});
+	}
+};
 
 export const getUserByContact = createServerFn()
 	.validator((data: { contact: string; userId?: string }) => data)
@@ -99,7 +230,7 @@ export const getUsers = createServerFn()
 			);
 	});
 
-export const createUser = createServerFn({ method: "POST" })
+export const upsertUser = createServerFn({ method: "POST" })
 	.middleware([adminMiddleware])
 	.validator(userSchema)
 	.handler(
@@ -109,57 +240,10 @@ export const createUser = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
-			if (await getUserByContact({ data: { contact: data.contact } })) {
-				throw new ConflictError("Contact");
+			if (data.id) {
+				return updateUser({ data, loggedUserId });
 			}
-
-			const { userId, temporaryPassword } = await db.transaction(async (tx) => {
-				const [{ id }] = await tx
-					.insert(users)
-					.values({
-						name: data.name.toLowerCase(),
-						username: data.contact,
-						contact: data.contact,
-						role: data.role,
-						active: true,
-					})
-					.returning({ id: users.id });
-
-				const temporaryPassword = generateTemporaryPassword();
-				await tx.insert(accounts).values({
-					id: nanoid(),
-					accountId: id,
-					providerId: "credential",
-					userId: id,
-					password: await hashPassword(temporaryPassword),
-				});
-
-				if (data.role !== "admin" && data.roleIds?.length) {
-					await tx
-						.insert(userRoles)
-						.values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
-				}
-
-				await logActivity({
-					data: {
-						userId: loggedUserId,
-						action: "create user",
-						description: `Created new user ${data.name}`,
-					},
-				});
-
-				return { userId: id, temporaryPassword };
-			});
-
-			await inngest.send({
-				name: "app/users.send.temporary.password",
-				data: {
-					password: temporaryPassword,
-					userId,
-				},
-			});
-
-			return userId;
+			return createUser({ data, loggedUserId });
 		},
 	);
 
@@ -186,53 +270,6 @@ export const getUserWithRole = createServerFn()
 		});
 	});
 
-export const updateUser = createServerFn({ method: "POST" })
-	.middleware([adminMiddleware])
-	.validator((values: { userId: string; data: UserSchema }) => values)
-	.handler(
-		async ({
-			data: { userId, data },
-			context: {
-				user: { id },
-			},
-		}) => {
-			if (await getUserByContact({ data: { contact: data.contact, userId } })) {
-				throw new ConflictError("Contact");
-			}
-
-			await db.transaction(async (tx) => {
-				await tx
-					.update(users)
-					.set({
-						name: data.name.toLowerCase(),
-						username: data.contact,
-						contact: data.contact,
-						role: data.role,
-						active: data.active,
-					})
-					.where(eq(users.id, userId));
-
-				await tx.delete(userRoles).where(eq(userRoles.userId, userId));
-
-				if (data.role !== "admin" && data.roleIds?.length) {
-					await tx
-						.insert(userRoles)
-						.values(data.roleIds.map((roleId) => ({ userId, roleId })));
-				}
-			});
-
-			await logActivity({
-				data: {
-					userId: id,
-					action: "update user",
-					description: `Updated user ${data.name} details`,
-				},
-			});
-
-			return userId;
-		},
-	);
-
 export const deleteUser = createServerFn()
 	.middleware([adminMiddleware])
 	.validator((userId: string) => userId)
@@ -243,24 +280,34 @@ export const deleteUser = createServerFn()
 				user: { id },
 			},
 		}) => {
-			if (!(await getUserWithRole({ data: { userId } }))) {
-				throw new NotFoundError("User");
+			try {
+				if (!(await getUserWithRole({ data: { userId } }))) {
+					return failure({ type: "NotFoundError", message: "User not found" });
+				}
+
+				await db.transaction(async (tx) => {
+					await tx.delete(userRoles).where(eq(userRoles.userId, userId));
+					await tx.delete(accounts).where(eq(accounts.userId, userId));
+					await tx.delete(sessions).where(eq(sessions.userId, userId));
+					await tx.delete(users).where(eq(users.id, userId));
+				});
+
+				await logActivity({
+					data: {
+						userId: id,
+						action: "delete user",
+						description: `Deleted user ${userId}`,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete user",
+				});
 			}
-
-			await db.transaction(async (tx) => {
-				await tx.delete(userRoles).where(eq(userRoles.userId, userId));
-				await tx.delete(accounts).where(eq(accounts.userId, userId));
-				await tx.delete(sessions).where(eq(sessions.userId, userId));
-				await tx.delete(users).where(eq(users.id, userId));
-			});
-
-			await logActivity({
-				data: {
-					userId: id,
-					action: "delete user",
-					description: `Deleted user ${userId}`,
-				},
-			});
 		},
 	);
 

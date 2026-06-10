@@ -18,7 +18,7 @@ import {
 	broadcastFormSchema,
 } from "@/features/communication/services/schemas";
 import { MEMBER_STATUS } from "@/features/members/lib/constants";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 
 export function BroadcastForm() {
@@ -27,8 +27,8 @@ export function BroadcastForm() {
 	const formRef = useRef<HTMLFormElement>(null);
 	const queryClient = useQueryClient();
 
-	const { isPending, mutate } = useFormMutation({
-		createFn: (values: BroadcastFormSchema) => sendBroadCast({ data: values }),
+	const { isPending, mutate } = useFormUpsert({
+		upsertFn: (values: BroadcastFormSchema) => sendBroadCast({ data: values }),
 		entityName: "broadcast",
 		queryKey: ["sms-broadcasts"],
 		successMessage: {
@@ -64,7 +64,7 @@ export function BroadcastForm() {
 				return;
 			}
 			mutate(
-				{ data: { ...value, submitType: submitTypeRef.current } },
+				{ ...value, submitType: submitTypeRef.current },
 				{
 					onSuccess: () => {
 						if (submitTypeRef.current === "SEND_TEST") {

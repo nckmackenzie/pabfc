@@ -107,9 +107,18 @@ export function BasePageComponent({
 			{customFilters}
 			<Suspense>
 				<ErrorBoundary
-					fallbackRender={({ error }) => (
-						<AlertErrorComponent message={error.message} />
-					)}
+					fallbackRender={({ error }) => {
+						const errorMessage =
+							error instanceof Error
+								? error.message
+								: "An unknown error occurred";
+						return (
+							<AlertErrorComponent
+								message={errorMessage}
+								title="Error loading page"
+							/>
+						);
+					}}
 				>
 					<Suspense fallback={loadingComponent ?? <DatatableSkeleton />}>
 						{children}

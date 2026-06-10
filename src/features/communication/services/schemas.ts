@@ -10,6 +10,7 @@ export const templateFormSchema = z.object({
 
 export const broadcastFormSchema = z
 	.object({
+		id: z.string().optional(),
 		filterCriteria: z.enum(FILTER_CRITERIA, {
 			error: "Filter criteria is required",
 		}),

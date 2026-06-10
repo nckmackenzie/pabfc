@@ -11,11 +11,8 @@ import {
 	type RoleFormValues,
 	roleFormSchema,
 } from "@/features/users/services/schema";
-import {
-	ConflictError,
-	NotFoundError,
-	ResourceReferencedError,
-} from "@/lib/error-handling/app-error";
+import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { failure, success } from "@/lib/result";
 import { transformOptions } from "@/lib/utils";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
 
@@ -159,21 +156,33 @@ export const deleteRole = createServerFn()
 	.middleware([adminMiddleware])
 	.validator((roleId: string) => roleId)
 	.handler(async ({ data: roleId }) => {
-		if (!(await getRoleById({ data: roleId }))) {
-			throw new NotFoundError("Role");
+		try {
+			if (!(await getRoleById({ data: roleId }))) {
+				return failure({ type: "NotFoundError", message: "Role not found" });
+			}
+
+			if (await roleIsReferenced({ data: roleId })) {
+				return failure({
+					type: "ApplicationError",
+					message: "Role is being referenced and cannot be deleted!!",
+				});
+			}
+
+			await db.transaction(async (tx) => {
+				await tx
+					.delete(rolePermissions)
+					.where(eq(rolePermissions.roleId, roleId));
+
+				await tx.delete(roles).where(eq(roles.id, roleId));
+			});
+			return success(undefined);
+		} catch (error) {
+			console.error(error);
+			return failure({
+				type: "ApplicationError",
+				message: "Failed to delete role",
+			});
 		}
-
-		if (await roleIsReferenced({ data: roleId })) {
-			throw new ResourceReferencedError("Role");
-		}
-
-		await db.transaction(async (tx) => {
-			await tx
-				.delete(rolePermissions)
-				.where(eq(rolePermissions.roleId, roleId));
-
-			await tx.delete(roles).where(eq(roles.id, roleId));
-		});
 	});
 
 export const getPermissions = createServerFn()

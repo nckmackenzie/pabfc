@@ -18,15 +18,12 @@ import {
 	ID_TYPES,
 	MEMBER_STATUS,
 } from "@/features/members/lib/constants";
-import {
-	createMember,
-	updateMember,
-} from "@/features/members/services/member.mutations.api";
+import { upsertMember } from "@/features/members/services/member.mutations.api";
 import {
 	type MemberFormSchema,
 	memberFormSchema,
 } from "@/features/members/services/schemas";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
 import { cn, generateRandomId } from "@/lib/utils";
@@ -71,10 +68,8 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 		}
 	};
 
-	const memberMutation = useFormMutation({
-		createFn: (values: MemberFormSchema) => createMember({ data: values }),
-		updateFn: (id: string, values: MemberFormSchema) =>
-			updateMember({ data: { value: values, id } }),
+	const memberMutation = useFormUpsert({
+		upsertFn: (values: MemberFormSchema) => upsertMember({ data: values }),
 		entityName: "Member",
 		queryKey: ["members"],
 		navigateTo: "/app/members",
@@ -88,7 +83,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 		},
 		onSubmit: ({ value }) => {
 			memberMutation.mutate(
-				{ data: value, id: member?.id },
+				{ ...value, id: member?.id },
 				{
 					onSuccess: () => {
 						form.reset();

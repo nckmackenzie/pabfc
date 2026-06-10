@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { handleClientError } from "@/lib/error-handling/error-handling";
+import type { AppError, Result } from "@/lib/result";
+import { failure, success } from "@/lib/result";
 
 type DeleteConfig = {
 	queryKey: string[];
@@ -12,21 +13,29 @@ export function useDelete() {
 
 	return async (
 		resourceId: string,
-		deleteAction: (params: { data: string }) => Promise<void>,
+		deleteAction: (params: { data: string }) => Promise<Result<undefined>>,
 		config: DeleteConfig,
-	) => {
+	): Promise<Result<undefined>> => {
 		try {
-			await deleteAction({ data: resourceId });
+			const result = await deleteAction({ data: resourceId });
+			if (!result.success) {
+				return failure({
+					type: result.error.type,
+					message:
+						result.error.message ??
+						config.fallbackMessage ??
+						"Error deleting resource",
+				});
+			}
+
 			queryClient.invalidateQueries({ queryKey: config.queryKey });
-			return {
-				error: false,
-				message: config.successMessage || "Resource deleted successfully!",
-			};
-		} catch (error) {
-			const errorMessage = handleClientError(error, {
-				fallbackMessage: config.fallbackMessage || "Error deleting resource",
-			});
-			return { error: true, message: errorMessage };
+			return success(undefined);
+		} catch (err) {
+			const message =
+				err instanceof Error
+					? err.message
+					: (config.fallbackMessage ?? "Error deleting resource");
+			return failure({ type: "UnknownError", message } satisfies AppError);
 		}
 	};
 }

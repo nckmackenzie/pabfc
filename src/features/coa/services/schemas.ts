@@ -3,6 +3,7 @@ import { accountType } from "@/drizzle/schema";
 
 export const accountsFormSchema = z
 	.object({
+		id: z.string().optional(),
 		name: z.string().trim().min(1, { message: "Account Name is required" }),
 		type: z.enum([...accountType], { error: "Select an account type" }),
 		isSubcategory: z.boolean(),

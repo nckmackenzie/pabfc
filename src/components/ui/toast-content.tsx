@@ -1,9 +1,9 @@
-import type { Toast } from "react-hot-toast";
+import { type Toast, toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import type { ColorVariant } from "@/types/index.types";
+import { Button } from "./button";
+import { XIcon } from "./icons";
 
 interface Props {
-	state?: ColorVariant;
 	title: string;
 	message: string;
 	t?: Toast;
@@ -20,6 +20,18 @@ export function ToastContent({ message, title, t }: Props) {
 					</div>
 				</div>
 			</div>
+			{t?.id ? (
+				<Button
+					type="button"
+					size="icon-sm"
+					variant="ghost"
+					onClick={() => t?.id && toast.dismiss(t.id)}
+					aria-label="Dismiss notification"
+					className="hover:bg-transparent hover:text-primary"
+				>
+					<XIcon />
+				</Button>
+			) : null}
 		</div>
 	);
 }

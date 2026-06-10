@@ -13,7 +13,7 @@ import { rolesQueries } from "@/features/users/services/queries";
 import type { Role } from "@/features/users/services/roles.api";
 import { deleteRole } from "@/features/users/services/roles.api";
 import { useFilters } from "@/hooks/use-filters";
-import { handleClientError } from "@/lib/error-handling/error-handling";
+import { failure } from "@/lib/result";
 import { toTitleCase } from "@/lib/utils";
 
 export function RolesTable() {
@@ -22,14 +22,17 @@ export function RolesTable() {
 	const queryClient = useQueryClient();
 	const handleDelete = async (roleId: string) => {
 		try {
-			await deleteRole({ data: roleId });
-			queryClient.invalidateQueries({ queryKey: ["roles"] });
-			return { error: false, message: "Role deleted successfully!" };
+			const response = await deleteRole({ data: roleId });
+			if (response.success) {
+				queryClient.invalidateQueries({ queryKey: ["roles"] });
+			}
+			return response;
 		} catch (error) {
-			const errorMessage = handleClientError(error, {
-				fallbackMessage: "Error deleting role",
+			console.error(error);
+			return failure({
+				type: "ApplicationError",
+				message: "Error deleting role",
 			});
-			return { error: true, message: errorMessage };
 		}
 	};
 	const columns: Array<ColumnDef<Role>> = [

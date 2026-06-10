@@ -189,7 +189,7 @@ export const ChartOfAccountsTable = () => {
 	return (
 		<div className="rounded-md border overflow-x-auto bg-card">
 			<Table className="w-full text-left border-collapse">
-				<TableHeader className="bg-secondary">
+				<TableHeader className="bg-muted">
 					{table.getHeaderGroups().map((headerGroup) => (
 						<TableRow key={headerGroup.id} className="border-b bg-gray-50">
 							{headerGroup.headers.map((header) => (
