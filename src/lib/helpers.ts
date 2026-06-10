@@ -245,3 +245,24 @@ export const toNumber = (value: unknown) => {
 	const n = Number.parseFloat(String(value ?? "0"));
 	return Number.isFinite(n) ? n : 0;
 };
+
+export function normalizeText(value: string | null | undefined): string | null {
+	if (value === null || value === undefined) return null;
+	const trimmed = value.trim();
+	return trimmed === "" ? null : trimmed;
+}
+
+export const seo = ({
+	title,
+	description,
+}: {
+	title: string;
+	description?: string;
+}) => {
+	const tags = [
+		{ title: `${title} / Prime Age Beauty & Fitness Center` },
+		{ name: "description", content: description },
+	];
+
+	return tags;
+};
