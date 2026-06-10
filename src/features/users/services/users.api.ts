@@ -76,15 +76,15 @@ const createUser = async ({
 					.values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
 			}
 
-			await logActivity({
-				data: {
-					userId: loggedUserId,
-					action: "create user",
-					description: `Created new user ${data.name}`,
-				},
-			});
-
 			return { userId: id, temporaryPassword };
+		});
+
+		await logActivity({
+			data: {
+				userId: loggedUserId,
+				action: "create user",
+				description: `Created new user ${data.name}`,
+			},
 		});
 
 		await inngest.send({

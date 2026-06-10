@@ -13,20 +13,16 @@ export function useDelete() {
 
 	return async (
 		resourceId: string,
-		deleteAction: (params: { data: string }) => Promise<unknown>,
+		deleteAction: (params: { data: string }) => Promise<Result<undefined>>,
 		config: DeleteConfig,
 	): Promise<Result<undefined>> => {
 		try {
 			const result = await deleteAction({ data: resourceId });
-			const res = result as
-				| { success?: boolean; error?: { message?: string } }
-				| undefined;
-
-			if (res && res.success === false) {
+			if (!result.success) {
 				return failure({
-					type: "ApplicationError",
+					type: result.error.type,
 					message:
-						res.error?.message ??
+						result.error.message ??
 						config.fallbackMessage ??
 						"Error deleting resource",
 				});

@@ -78,10 +78,7 @@ const createMember = async ({
 			});
 
 			if (existingProfile) {
-				return failure({
-					type: "ApplicationError",
-					message: "Access Control Profile already exists",
-				});
+				throw new ConflictError("Access Control Profile already exists");
 			}
 
 			await tx.insert(memberAccessProfiles).values({
@@ -116,14 +113,12 @@ const createMember = async ({
 			return member.id;
 		});
 
-		if (typeof memberId === "string") {
-			await inngest.send({
-				name: "app/members.send.registration.link",
-				data: {
-					memberId,
-				},
-			});
-		}
+		await inngest.send({
+			name: "app/members.send.registration.link",
+			data: {
+				memberId,
+			},
+		});
 
 		return success(undefined);
 	} catch (err) {

@@ -453,7 +453,7 @@ export const upsertPlan = createServerFn({ method: "POST" })
 						data: {
 							description: `${data.id ? "Updated" : "Created"} plan ${data.name}`,
 							userId,
-							action: "create plan",
+							action: data.id ? "update plan" : "create plan",
 						},
 					});
 				});

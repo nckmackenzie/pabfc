@@ -20,15 +20,18 @@ export function ToastContent({ message, title, t }: Props) {
 					</div>
 				</div>
 			</div>
-			<Button
-				type="button"
-				size="icon-sm"
-				variant="ghost"
-				onClick={() => t?.id && toast.dismiss(t.id)}
-				className="hover:bg-transparent hover:text-primary"
-			>
-				<XIcon />
-			</Button>
+			{t?.id ? (
+				<Button
+					type="button"
+					size="icon-sm"
+					variant="ghost"
+					onClick={() => t?.id && toast.dismiss(t.id)}
+					aria-label="Dismiss notification"
+					className="hover:bg-transparent hover:text-primary"
+				>
+					<XIcon />
+				</Button>
+			) : null}
 		</div>
 	);
 }

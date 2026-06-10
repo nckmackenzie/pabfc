@@ -23,7 +23,9 @@ export function RolesTable() {
 	const handleDelete = async (roleId: string) => {
 		try {
 			const response = await deleteRole({ data: roleId });
-			queryClient.invalidateQueries({ queryKey: ["roles"] });
+			if (response.success) {
+				queryClient.invalidateQueries({ queryKey: ["roles"] });
+			}
 			return response;
 		} catch (error) {
 			console.error(error);

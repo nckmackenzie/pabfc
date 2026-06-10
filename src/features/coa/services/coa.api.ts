@@ -199,7 +199,7 @@ const updateAccount = async ({
 				}
 			}
 
-			const bankId = await db.query.bankAccounts.findFirst({
+			const bankId = await tx.query.bankAccounts.findFirst({
 				columns: { id: true },
 				where: eq(bankAccounts.accountId, accountId),
 			});

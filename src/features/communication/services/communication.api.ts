@@ -191,7 +191,8 @@ export const sendBroadCast = createServerFn({ method: "POST" })
 					if (!user?.contact) {
 						return failure({
 							type: "NotFoundError",
-							message: "User not found",
+							message:
+								"User contact not found. Please update your profile with a phone number.",
 						});
 					}
 
