@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -31,6 +32,9 @@ export const Route = createFileRoute("/app/plans/$planId/edit")({
 
 function RouteComponent() {
 	const plan = Route.useLoaderData();
+	const { planId } = Route.useParams();
+	const { data: freshPlan } = useQuery(planQueries.detail(planId));
+	const currentPlan = freshPlan || plan;
 	return (
 		<ProtectedPageWithWrapper
 			buttonText="Plans List"
@@ -40,8 +44,8 @@ function RouteComponent() {
 		>
 			<PlanForm
 				plan={{
-					...plan,
-					revenueAccountId: plan.revenueAccountId?.toString() ?? "",
+					...currentPlan,
+					revenueAccountId: currentPlan.revenueAccountId?.toString() ?? "",
 				}}
 			/>
 		</ProtectedPageWithWrapper>

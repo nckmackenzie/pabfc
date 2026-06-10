@@ -4,6 +4,7 @@ import { requiredStringSchemaEntry } from "@/lib/schema-rules";
 
 export const userSchema = z
 	.object({
+		id: z.string().optional(),
 		name: requiredStringSchemaEntry("User name is required"),
 		email: z.string().nullish(),
 		contact: z.string().min(1, { error: "contact is required" }),

@@ -12,9 +12,9 @@ import {
 	type AccountsFormSchema,
 	accountsFormSchema,
 } from "@/features/coa/services/schemas";
-import { NotFoundError } from "@/lib/error-handling/app-error";
-import { dateFormat } from "@/lib/helpers";
+import { dateFormat, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -37,6 +37,214 @@ export function defaultNormalBalanceForType(
 			return "credit";
 	}
 }
+
+const createAccount = async ({
+	data,
+	userId,
+}: {
+	data: AccountsFormSchema;
+	userId: string;
+}) => {
+	await requirePermission("chart-of-accounts:create");
+	try {
+		await db.transaction(async (tx) => {
+			const [{ id }] = await tx
+				.insert(ledgerAccounts)
+				.values({
+					name: toTitleCase(data.name),
+					type: data.type,
+					normalBalance: defaultNormalBalanceForType(data.type),
+					parentId: data.isSubcategory ? Number(data.parentId) : null,
+					isActive: data.isActive,
+					description: data.description,
+					isPosting: data.isSubcategory,
+				})
+				.returning({ id: ledgerAccounts.id });
+
+			if (data.isBankAccount) {
+				await tx.insert(bankAccounts).values({
+					bankName: data.name,
+					accountId: id,
+					accountNumber: data.accountNumber as string,
+					currencyCode: "KES",
+				});
+
+				if (data.openingBalance && data.openingBalance !== 0) {
+					const openingBalanceEquity = await createOrGetAccountId(
+						"opening balance equity",
+						"equity",
+						tx,
+					);
+
+					const description = data.description
+						? data.description
+						: `Opening balance for ${data.name}`;
+
+					await createJournalEntry({
+						entry: {
+							entryDate: data.openingBalanceDate
+								? dateFormat(data.openingBalanceDate)
+								: dateFormat(new Date()),
+							source: "opening balance",
+							sourceId: id.toString(),
+							reference: data.accountNumber,
+							description,
+						},
+						lines: [
+							{
+								lineNumber: 1,
+								accountId: id,
+								amount: data.openingBalance.toString(),
+								memo: description,
+								dc: +data.openingBalance > 0 ? "debit" : "credit",
+							},
+							{
+								lineNumber: 2,
+								accountId: openingBalanceEquity,
+								amount: data.openingBalance.toString(),
+								memo: description,
+								dc: +data.openingBalance > 0 ? "credit" : "debit",
+							},
+						],
+						tx,
+					});
+				}
+			}
+
+			await logActivity({
+				data: {
+					action: "create account",
+					userId,
+					description: `Created account ${data.name}`,
+				},
+			});
+		});
+		return success(undefined);
+	} catch (error) {
+		console.error(error);
+		return failure({
+			type: "ApplicationError",
+			message: "Failed to create account",
+		});
+	}
+};
+
+const updateAccount = async ({
+	data,
+	userId,
+}: {
+	data: AccountsFormSchema;
+	userId: string;
+}) => {
+	if (!data.id) {
+		return failure({
+			type: "ApplicationError",
+			message: "Account is required",
+		});
+	}
+
+	const accountId = toNumber(data.id);
+
+	if (typeof accountId !== "number") {
+		return failure({ type: "ApplicationError", message: "Invalid Account ID" });
+	}
+
+	try {
+		await requirePermission("chart-of-accounts:update");
+
+		const account = await getAccount({ data: accountId });
+
+		if (!account) {
+			return failure({ type: "NotFoundError", message: "Account not found" });
+		}
+
+		await db.transaction(async (tx) => {
+			await tx
+				.update(ledgerAccounts)
+				.set({
+					name: toTitleCase(data.name),
+					type: data.type,
+					normalBalance: defaultNormalBalanceForType(data.type),
+					parentId: data.isSubcategory ? Number(data.parentId) : null,
+					isActive: data.isActive,
+					description: data.description,
+					isPosting: data.isSubcategory,
+				})
+				.where(eq(ledgerAccounts.id, accountId))
+				.returning({ id: ledgerAccounts.id });
+
+			if (account.type !== data.type) {
+				const allAccounts = await tx
+					.select({ id: ledgerAccounts.id, parentId: ledgerAccounts.parentId })
+					.from(ledgerAccounts);
+
+				const getDescendantIds = (parentIds: number[]): number[] => {
+					const children = allAccounts.filter(
+						(a) => a.parentId !== null && parentIds.includes(a.parentId),
+					);
+					if (children.length === 0) return [];
+					const childIds = children.map((c) => c.id);
+					return [...childIds, ...getDescendantIds(childIds)];
+				};
+
+				const descendantIds = getDescendantIds([accountId]);
+				if (descendantIds.length > 0) {
+					await tx
+						.update(ledgerAccounts)
+						.set({
+							type: data.type,
+							normalBalance: defaultNormalBalanceForType(data.type),
+						})
+						.where(inArray(ledgerAccounts.id, descendantIds));
+				}
+			}
+
+			const bankId = await db.query.bankAccounts.findFirst({
+				columns: { id: true },
+				where: eq(bankAccounts.accountId, accountId),
+			});
+			if (data.isBankAccount) {
+				if (!bankId) {
+					await tx.insert(bankAccounts).values({
+						bankName: data.name,
+						accountId: accountId,
+						accountNumber: data.accountNumber as string,
+						currencyCode: "KES",
+					});
+				} else {
+					await tx
+						.update(bankAccounts)
+						.set({
+							bankName: data.name,
+							accountNumber: data.accountNumber as string,
+						})
+						.where(eq(bankAccounts.accountId, accountId));
+				}
+			}
+			if (!data.isBankAccount && bankId) {
+				await tx
+					.delete(bankAccounts)
+					.where(eq(bankAccounts.accountId, accountId));
+			}
+
+			await logActivity({
+				data: {
+					action: "update account",
+					userId,
+					description: `Updated account ${account.name} details`,
+				},
+			});
+		});
+
+		return success(undefined);
+	} catch (error) {
+		console.error(error);
+		return failure({
+			type: "ApplicationError",
+			message: "Failed to update account",
+		});
+	}
+};
 
 export const getAccounts = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
@@ -177,155 +385,14 @@ export const getChildrenAccountByParentName = createServerFn({ method: "GET" })
 		});
 	});
 
-export const createAccount = createServerFn({ method: "POST" })
+export const upsertAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(accountsFormSchema)
 	.handler(async ({ data, context }) => {
-		await requirePermission("chart-of-accounts:create");
-
-		const accountId = await db.transaction(async (tx) => {
-			const [{ id }] = await tx
-				.insert(ledgerAccounts)
-				.values({
-					name: toTitleCase(data.name),
-					type: data.type,
-					normalBalance: defaultNormalBalanceForType(data.type),
-					parentId: data.isSubcategory ? Number(data.parentId) : null,
-					isActive: data.isActive,
-					description: data.description,
-					isPosting: data.isSubcategory,
-				})
-				.returning({ id: ledgerAccounts.id });
-
-			if (data.isBankAccount) {
-				await tx.insert(bankAccounts).values({
-					bankName: data.name,
-					accountId: id,
-					accountNumber: data.accountNumber as string,
-					currencyCode: "KES",
-				});
-
-				if (data.openingBalance && data.openingBalance !== 0) {
-					const openingBalanceEquity = await createOrGetAccountId(
-						"opening balance equity",
-						"equity",
-						tx,
-					);
-
-					const description = data.description
-						? data.description
-						: `Opening balance for ${data.name}`;
-
-					await createJournalEntry({
-						entry: {
-							entryDate: data.openingBalanceDate
-								? dateFormat(data.openingBalanceDate)
-								: dateFormat(new Date()),
-							source: "opening balance",
-							sourceId: id.toString(),
-							reference: data.accountNumber,
-							description,
-						},
-						lines: [
-							{
-								lineNumber: 1,
-								accountId: id,
-								amount: data.openingBalance.toString(),
-								memo: description,
-								dc: +data.openingBalance > 0 ? "debit" : "credit",
-							},
-							{
-								lineNumber: 2,
-								accountId: openingBalanceEquity,
-								amount: data.openingBalance.toString(),
-								memo: description,
-								dc: +data.openingBalance > 0 ? "credit" : "debit",
-							},
-						],
-						tx,
-					});
-				}
-			}
-
-			await logActivity({
-				data: {
-					action: "create account",
-					userId: context.user.id,
-					description: `Created account ${data.name}`,
-				},
-			});
-
-			return id;
-		});
-
-		return accountId;
-	});
-
-export const updateAccount = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
-	.validator((data: { values: AccountsFormSchema; id: number }) => data)
-	.handler(async ({ data: { values, id: accountId }, context }) => {
-		await requirePermission("chart-of-accounts:update");
-
-		const account = await getAccount({ data: accountId });
-
-		if (!account) {
-			throw new NotFoundError("Account");
+		if (data.id) {
+			return updateAccount({ data, userId: context.user.id.toString() });
 		}
-
-		await db.transaction(async (tx) => {
-			await tx
-				.update(ledgerAccounts)
-				.set({
-					name: toTitleCase(values.name),
-					type: values.type,
-					normalBalance: defaultNormalBalanceForType(values.type),
-					parentId: values.isSubcategory ? Number(values.parentId) : null,
-					isActive: values.isActive,
-					description: values.description,
-					isPosting: values.isSubcategory,
-				})
-				.where(eq(ledgerAccounts.id, accountId))
-				.returning({ id: ledgerAccounts.id });
-
-			const bankId = await db.query.bankAccounts.findFirst({
-				columns: { id: true },
-				where: eq(bankAccounts.accountId, accountId),
-			});
-			if (values.isBankAccount) {
-				if (!bankId) {
-					await tx.insert(bankAccounts).values({
-						bankName: values.name,
-						accountId: accountId,
-						accountNumber: values.accountNumber as string,
-						currencyCode: "KES",
-					});
-				} else {
-					await tx
-						.update(bankAccounts)
-						.set({
-							bankName: values.name,
-							accountNumber: values.accountNumber as string,
-						})
-						.where(eq(bankAccounts.accountId, accountId));
-				}
-			}
-			if (!values.isBankAccount && bankId) {
-				await tx
-					.delete(bankAccounts)
-					.where(eq(bankAccounts.accountId, accountId));
-			}
-
-			await logActivity({
-				data: {
-					action: "update account",
-					userId: context.user.id,
-					description: `Updated account ${account.name} details`,
-				},
-			});
-		});
-
-		return accountId;
+		return createAccount({ data, userId: context.user.id.toString() });
 	});
 
 export const deleteAccount = createServerFn({ method: "POST" })
@@ -337,41 +404,54 @@ export const deleteAccount = createServerFn({ method: "POST" })
 		const account = await getAccount({ data: Number(accountId) });
 
 		if (!account) {
-			throw new NotFoundError("Account");
+			return failure({ type: "NotFoundError", message: "Account not found" });
 		}
 
-		const hasChildAccounts = await db.query.ledgerAccounts.findFirst({
-			where: eq(ledgerAccounts.parentId, Number(accountId)),
-		});
+		try {
+			const hasChildAccounts = await db.query.ledgerAccounts.findFirst({
+				where: eq(ledgerAccounts.parentId, Number(accountId)),
+			});
 
-		if (hasChildAccounts) {
-			throw new Error("Account has child accounts");
-		}
-
-		const isBankAccount = await db.query.bankAccounts.findFirst({
-			columns: { id: true },
-			where: eq(bankAccounts.accountId, account.id),
-		});
-
-		await db.transaction(async (tx) => {
-			if (isBankAccount) {
-				await tx
-					.delete(bankAccounts)
-					.where(eq(bankAccounts.id, isBankAccount.id));
+			if (hasChildAccounts) {
+				return failure({
+					type: "ApplicationError",
+					message: "Account has child accounts",
+				});
 			}
 
-			await tx
-				.delete(ledgerAccounts)
-				.where(eq(ledgerAccounts.id, Number(accountId)));
-
-			await logActivity({
-				data: {
-					action: "delete account",
-					userId: context.user.id,
-					description: `Deleted account ${account.name}`,
-				},
+			const isBankAccount = await db.query.bankAccounts.findFirst({
+				columns: { id: true },
+				where: eq(bankAccounts.accountId, account.id),
 			});
-		});
+
+			await db.transaction(async (tx) => {
+				if (isBankAccount) {
+					await tx
+						.delete(bankAccounts)
+						.where(eq(bankAccounts.id, isBankAccount.id));
+				}
+
+				await tx
+					.delete(ledgerAccounts)
+					.where(eq(ledgerAccounts.id, Number(accountId)));
+
+				await logActivity({
+					data: {
+						action: "delete account",
+						userId: context.user.id,
+						description: `Deleted account ${account.name}`,
+					},
+				});
+			});
+
+			return success(undefined);
+		} catch (error) {
+			console.error(error);
+			return failure({
+				type: "ApplicationError",
+				message: "Could not delete account",
+			});
+		}
 	});
 
 export const getVatAccountId = createServerFn()

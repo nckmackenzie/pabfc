@@ -47,6 +47,7 @@ function RouteComponent() {
 					accountNumber: account.bank?.accountNumber || null,
 					openingBalance: null,
 					openingBalanceDate: null,
+					id: account.id.toString(),
 				}}
 			/>
 		</ProtectedPageWithWrapper>

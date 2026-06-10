@@ -25,14 +25,14 @@ import {
 	payments,
 } from "@/drizzle/schema";
 import { getStatDates } from "@/features/dashboard/lib/helpers";
-import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
-import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
+import { planSchema } from "@/features/plans/services/schemas";
 import { dateFormat, normalizeDateRange } from "@/lib/helpers";
 import {
 	requireAnyPermission,
 	requirePermission,
 } from "@/lib/permissions/permissions";
 import { paymentFilters } from "@/lib/query-helpers";
+import { failure, success } from "@/lib/result";
 import {
 	type dateRangeWithSearchSchema,
 	type reportDateRangeSchema,
@@ -406,7 +406,7 @@ export const getPlanRevenueTrend = createServerFn()
 		}));
 	});
 
-export const createPlan = createServerFn({ method: "POST" })
+export const upsertPlan = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(planSchema)
 	.handler(
@@ -416,35 +416,56 @@ export const createPlan = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
-			await requirePermission("plans:create");
+			await requirePermission(!data.id ? "plans:create" : "plans:update");
 
-			if (await planNameExists({ data: { value: data.name } })) {
-				throw new ConflictError("Plan");
-			}
+			try {
+				if (
+					await planNameExists({ data: { value: data.name, planId: data.id } })
+				) {
+					return failure({
+						type: "ConflictError",
+						message: "Plan name already exists",
+					});
+				}
 
-			const planId = await db.transaction(async (tx) => {
-				const [{ id }] = await tx
-					.insert(membershipPlans)
-					.values({
-						...data,
-						sessionCount: data.isSessionBased ? (data.sessionCount ?? 0) : 0,
-						description: data.description ?? null,
-						revenueAccountId: +data.revenueAccountId,
-					})
-					.returning({ id: membershipPlans.id });
+				await db.transaction(async (tx) => {
+					await tx
+						.insert(membershipPlans)
+						.values({
+							...data,
+							sessionCount: data.isSessionBased ? (data.sessionCount ?? 0) : 0,
+							description: data.description ?? null,
+							revenueAccountId: +data.revenueAccountId,
+						})
+						.onConflictDoUpdate({
+							target: membershipPlans.id,
+							set: {
+								...data,
+								sessionCount: data.isSessionBased
+									? (data.sessionCount ?? 0)
+									: 0,
+								description: data.description ?? null,
+								revenueAccountId: +data.revenueAccountId,
+							},
+						});
 
-				await logActivity({
-					data: {
-						description: `Created plan ${data.name}`,
-						userId,
-						action: "create plan",
-					},
+					await logActivity({
+						data: {
+							description: `${data.id ? "Updated" : "Created"} plan ${data.name}`,
+							userId,
+							action: "create plan",
+						},
+					});
 				});
 
-				return id;
-			});
-
-			return planId;
+				return success(true);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to save plan",
+				});
+			}
 		},
 	);
 
@@ -464,48 +485,6 @@ export const getPlan = createServerFn()
 		});
 	});
 
-export const updatePlan = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
-	.validator((data: { values: PlanSchema; planId: string }) => data)
-	.handler(
-		async ({
-			data: { values, planId },
-			context: {
-				user: { id: userId },
-			},
-		}) => {
-			await requirePermission("plans:update");
-
-			if (await planNameExists({ data: { value: values.name, planId } })) {
-				throw new ConflictError("Plan");
-			}
-
-			await db.transaction(async (tx) => {
-				await tx
-					.update(membershipPlans)
-					.set({
-						...values,
-						sessionCount: values.isSessionBased
-							? (values.sessionCount ?? 0)
-							: 0,
-						description: values.description ?? null,
-						revenueAccountId: +values.revenueAccountId,
-					})
-					.where(eq(membershipPlans.id, planId));
-
-				await logActivity({
-					data: {
-						description: `Updated plan ${values.name} details`,
-						userId,
-						action: "update plan",
-					},
-				});
-			});
-
-			return planId;
-		},
-	);
-
 export const deletePlan = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator((data: string) => data)
@@ -518,31 +497,44 @@ export const deletePlan = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("plans:delete");
 
-			const plan = await db.query.membershipPlans.findFirst({
-				where: eq(membershipPlans.id, planId),
-			});
-			if (!plan) {
-				throw new NotFoundError("Plan");
+			try {
+				const plan = await db.query.membershipPlans.findFirst({
+					where: eq(membershipPlans.id, planId),
+				});
+				if (!plan) {
+					return failure({ type: "NotFoundError", message: "Plan not found" });
+				}
+
+				const referenced = await db.query.memberMemberships.findFirst({
+					columns: { id: true },
+					where: eq(memberMemberships.membershipPlanId, planId),
+				});
+
+				if (referenced) {
+					return failure({
+						type: "ApplicationError",
+						message: "Plan is being referenced and cannot be deleted!!",
+					});
+				}
+
+				await db.delete(membershipPlans).where(eq(membershipPlans.id, planId));
+
+				await logActivity({
+					data: {
+						description: `Deleted plan ${plan.name}`,
+						userId,
+						action: "delete plan",
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete plan",
+				});
 			}
-
-			const referenced = await db.query.memberMemberships.findFirst({
-				columns: { id: true },
-				where: eq(memberMemberships.membershipPlanId, planId),
-			});
-
-			if (referenced) {
-				throw new Error("Plan is being referenced and cannot be deleted!!");
-			}
-
-			await db.delete(membershipPlans).where(eq(membershipPlans.id, planId));
-
-			await logActivity({
-				data: {
-					description: `Deleted plan ${plan.name}`,
-					userId,
-					action: "delete plan",
-				},
-			});
 		},
 	);
 

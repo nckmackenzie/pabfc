@@ -3,7 +3,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { journalEntries, journalLines } from "@/drizzle/schema";
 import { journalEntrySchema } from "@/features/journal-entries/services/schemas";
-import { ApplicationError } from "@/lib/error-handling/app-error";
+import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
@@ -45,73 +45,82 @@ export const upsertJournalEntries = createServerFn()
 		}) => {
 			const { journalNo: formJournalNo, journalLines: lines, date, id } = data;
 
-			const journalNo = id ? formJournalNo : await getJournalNo();
-			const { totalDebits, totalCredits } = lines.reduce(
-				(acc, line) => {
-					acc.totalDebits += line.debit || 0;
-					acc.totalCredits += line.credit || 0;
-					return acc;
-				},
-				{ totalDebits: 0, totalCredits: 0 },
-			);
-			if (totalDebits !== totalCredits) {
-				throw new ApplicationError("Debits and credits must be equal");
-			}
-
-			const journalId = await db.transaction(async (tx) => {
-				let jid: string | undefined;
-				if (!id) {
-					const [{ id: createdId }] = await tx
-						.insert(journalEntries)
-						.values({
-							journalNo,
-							entryDate: date,
-							source: "journal",
-							sourceId: journalNo.toString(),
-						})
-						.returning({ id: journalEntries.id });
-					jid = createdId.toString();
-				} else {
-					jid = id;
-					await tx
-						.update(journalEntries)
-						.set({
-							entryDate: date,
-						})
-						.where(eq(journalEntries.id, +id));
-					await tx
-						.delete(journalLines)
-						.where(eq(journalLines.journalEntryId, +id));
+			try {
+				const journalNo = id ? formJournalNo : await getJournalNo();
+				const { totalDebits, totalCredits } = lines.reduce(
+					(acc, line) => {
+						acc.totalDebits += line.debit || 0;
+						acc.totalCredits += line.credit || 0;
+						return acc;
+					},
+					{ totalDebits: 0, totalCredits: 0 },
+				);
+				if (totalDebits !== totalCredits) {
+					return failure({
+						type: "ApplicationError",
+						message: "Debits and credits must be equal",
+					});
 				}
 
-				const formattedLines = lines.map((line, index) => ({
-					journalEntryId: +jid,
-					accountId: parseInt(line.accountId, 10),
-					dc: line.debit ? "debit" : ("credit" as "debit" | "credit"),
-					amount:
-						line.debit && line.debit > 0
-							? line.debit.toString()
-							: line.credit?.toString() || "0",
-					lineNumber: index + 1,
-					memo: line.description?.toLowerCase(),
-				}));
+				await db.transaction(async (tx) => {
+					let jid: string | undefined;
+					if (!id) {
+						const [{ id: createdId }] = await tx
+							.insert(journalEntries)
+							.values({
+								journalNo,
+								entryDate: date,
+								source: "journal",
+								sourceId: journalNo.toString(),
+							})
+							.returning({ id: journalEntries.id });
+						jid = createdId.toString();
+					} else {
+						jid = id;
+						await tx
+							.update(journalEntries)
+							.set({
+								entryDate: date,
+							})
+							.where(eq(journalEntries.id, +id));
+						await tx
+							.delete(journalLines)
+							.where(eq(journalLines.journalEntryId, +id));
+					}
 
-				await tx.insert(journalLines).values(formattedLines);
+					const formattedLines = lines.map((line, index) => ({
+						journalEntryId: +jid,
+						accountId: parseInt(line.accountId, 10),
+						dc: line.debit ? "debit" : ("credit" as "debit" | "credit"),
+						amount:
+							line.debit && line.debit > 0
+								? line.debit.toString()
+								: line.credit?.toString() || "0",
+						lineNumber: index + 1,
+						memo: line.description?.toLowerCase(),
+					}));
 
-				await logActivity({
-					data: {
-						action: id ? "update journal" : "create journal",
-						description: id
-							? `Updated journal ${journalNo}`
-							: `Created journal ${journalNo}`,
-						userId,
-					},
+					await tx.insert(journalLines).values(formattedLines);
+
+					await logActivity({
+						data: {
+							action: id ? "update journal" : "create journal",
+							description: id
+								? `Updated journal ${journalNo}`
+								: `Created journal ${journalNo}`,
+							userId,
+						},
+					});
 				});
 
-				return jid;
-			});
-
-			return journalId;
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to upsert journal entry",
+				});
+			}
 		},
 	);
 
@@ -125,25 +134,38 @@ export const deleteJournalEntry = createServerFn()
 				user: { id: userId },
 			},
 		}) => {
-			const journal = await db.query.journalEntries.findFirst({
-				columns: { id: true, journalNo: true },
-				where: eq(journalEntries.id, +data),
-			});
+			try {
+				const journal = await db.query.journalEntries.findFirst({
+					columns: { id: true, journalNo: true },
+					where: eq(journalEntries.id, +data),
+				});
 
-			if (!journal) {
-				return { error: true, message: `Journal not found` };
+				if (!journal) {
+					return failure({
+						type: "NotFoundError",
+						message: "Journal not found",
+					});
+				}
+
+				await db
+					.delete(journalEntries)
+					.where(eq(journalEntries.id, journal.id));
+
+				await logActivity({
+					data: {
+						action: "delete journal",
+						description: `Deleted journal ${journal.journalNo}`,
+						userId,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete journal entry",
+				});
 			}
-
-			await db.delete(journalEntries).where(eq(journalEntries.id, journal.id));
-
-			await logActivity({
-				data: {
-					action: "delete journal",
-					description: `Deleted journal ${journal.journalNo}`,
-					userId,
-				},
-			});
-
-			return { error: false, message: `Deleted journal ${journal.journalNo}` };
 		},
 	);

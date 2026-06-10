@@ -8,9 +8,9 @@ import {
 	billSchema,
 	billValidateSearch,
 } from "@/features/bills/services/schemas";
-import { ConflictError } from "@/lib/error-handling/app-error";
 import { taxCalculator } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import {
@@ -153,7 +153,10 @@ export const upsertBill = createServerFn()
 			});
 
 			if (!areJournalValuesBalanced(ledgerLines)) {
-				throw new Error("Journal entry values do not balance");
+				return failure({
+					type: "ApplicationError",
+					message: "Journal entry values do not balance",
+				});
 			}
 
 			try {
@@ -230,10 +233,13 @@ export const upsertBill = createServerFn()
 					});
 				});
 
-				return "Completed successfully";
+				return success(undefined);
 			} catch (error) {
 				console.error(error);
-				throw new Error(`Failed to ${id ? "update" : "create"} bill`);
+				return failure({
+					type: "ApplicationError",
+					message: `Failed to ${id ? "update" : "create"} bill`,
+				});
 			}
 		},
 	);
@@ -258,25 +264,43 @@ export const deleteBill = createServerFn()
 				},
 			});
 
-			if (!bill) throw notFound();
-
-			if (bill.payments.length > 0) {
-				throw new ConflictError("Bill");
+			if (!bill) {
+				return failure({
+					type: "ApplicationError",
+					message: "Bill not found",
+				});
 			}
 
-			await db.transaction(async (tx) => {
-				await tx.delete(billItems).where(eq(billItems.billId, billId));
-				await deleteJournalEntry({ source: "bills", sourceId: billId, tx });
-				await tx.delete(bills).where(eq(bills.id, billId));
-			});
+			if (bill.payments.length > 0) {
+				return failure({
+					type: "ApplicationError",
+					message: "Bill has payments",
+				});
+			}
 
-			await logActivity({
-				data: {
-					action: "delete bill",
-					userId,
-					description: `Deleted bill for invoice ${bill.invoiceNo}`,
-				},
-			});
+			try {
+				await db.transaction(async (tx) => {
+					await tx.delete(billItems).where(eq(billItems.billId, billId));
+					await deleteJournalEntry({ source: "bills", sourceId: billId, tx });
+					await tx.delete(bills).where(eq(bills.id, billId));
+				});
+
+				await logActivity({
+					data: {
+						action: "delete bill",
+						userId,
+						description: `Deleted bill for invoice ${bill.invoiceNo}`,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete bill",
+				});
+			}
 		},
 	);
 

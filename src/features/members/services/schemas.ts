@@ -18,6 +18,7 @@ export const memberValidateSearch = z.object({
 
 export const memberFormSchema = z
 	.object({
+		id: z.string().optional(),
 		firstName: z.string().min(1, { error: "First name is required" }),
 		lastName: z.string().min(1, "Last name is required"),
 		dateOfBirth: z.iso.date().nullish(),

@@ -3,6 +3,7 @@ import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const planSchema = z
 	.object({
+		id: z.string().optional(),
 		name: z.string().min(1, "Name is required"),
 		duration: z.number().min(1, "Duration is required"),
 		price: z.number().min(1, "Price is required"),

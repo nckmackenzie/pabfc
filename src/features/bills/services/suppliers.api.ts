@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { bills, vendors } from "@/drizzle/schema";
 import { supplierSchema } from "@/features/bills/services/schemas";
-import { ConflictError } from "@/lib/error-handling/app-error";
+import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -62,26 +62,49 @@ export const upsertSupplier = createServerFn()
 					userId,
 				},
 			});
+
+			return success(undefined);
 		},
 	);
 
 export const deleteSupplier = createServerFn()
 	.middleware([authMiddleware])
 	.validator(z.string())
-	.handler(async ({ data: id }) => {
-		const [vendor, bill] = await Promise.all([
-			db.query.vendors.findFirst({
-				columns: { name: true },
-				where: eq(vendors.id, id),
-			}),
-			db.query.bills.findFirst({
-				columns: { id: true },
-				where: eq(bills.vendorId, id),
-			}),
-		]);
-		if (!vendor) throw notFound();
+	.handler(
+		async ({
+			data: id,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			const [vendor, bill] = await Promise.all([
+				db.query.vendors.findFirst({
+					columns: { name: true },
+					where: eq(vendors.id, id),
+				}),
+				db.query.bills.findFirst({
+					columns: { id: true },
+					where: eq(bills.vendorId, id),
+				}),
+			]);
+			if (!vendor) throw notFound();
 
-		if (bill) throw new ConflictError("Supplier");
+			if (bill)
+				return failure({
+					type: "ApplicationError",
+					message: "Supplier has bills and cannot be deleted",
+				});
 
-		await db.delete(vendors).where(eq(vendors.id, id));
-	});
+			await db.delete(vendors).where(eq(vendors.id, id));
+
+			await logActivity({
+				data: {
+					action: "delete supplier",
+					userId,
+					description: `Deleted supplier ${vendor.name.toLowerCase()}`,
+				},
+			});
+
+			return success(undefined);
+		},
+	);

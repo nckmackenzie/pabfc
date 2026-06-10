@@ -26,12 +26,9 @@ import {
 	expenseValidateSearch,
 } from "@/features/expenses/services/schemas";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
-import {
-	ApplicationError,
-	NotFoundError,
-} from "@/lib/error-handling/app-error";
 import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
@@ -163,186 +160,198 @@ export const createExpense = createServerFn({ method: "POST" })
 			const { subTotal, taxAmount, grandTotal, lines } =
 				calculateExpenseRequest(details);
 
-			const vatAccountId = await createOrGetAccountId("vat input", "asset");
+			try {
+				const vatAccountId = await createOrGetAccountId("vat input", "asset");
 
-			if (taxAmount > 0 && vatAccountId === null) {
-				throw new Error("VAT Account not found. Define one in settings.");
-			}
+				if (taxAmount > 0 && vatAccountId === null) {
+					return failure({
+						type: "ApplicationError",
+						message: "VAT Account not found. Define one in settings.",
+					});
+				}
 
-			const cashEquivalentAccountId = await getCashEquivalentAccountId({
-				paymentMethod,
-				bankId,
-				creditingAccountId,
-			});
+				const cashEquivalentAccountId = await getCashEquivalentAccountId({
+					paymentMethod,
+					bankId,
+					creditingAccountId,
+				});
 
-			const jLines = lines.map((line, index) => ({
-				lineNumber: index + 1,
-				accountId: parseInt(line.accountId, 10),
-				amount: line.amountExlusiveTax.toString(),
-				memo: line.description,
-				dc: "debit" as "debit" | "credit",
-			}));
+				const jLines = lines.map((line, index) => ({
+					lineNumber: index + 1,
+					accountId: parseInt(line.accountId, 10),
+					amount: line.amountExlusiveTax.toString(),
+					memo: line.description,
+					dc: "debit" as "debit" | "credit",
+				}));
 
-			if (taxAmount > 0) {
+				if (taxAmount > 0) {
+					jLines.push({
+						lineNumber: lines.length + 1,
+						accountId: vatAccountId,
+						amount: taxAmount.toString(),
+						memo: `VAT Input for expense no ${data.id ? data.expenseNo : expenseNo}`,
+						dc: "debit" as "debit" | "credit",
+					});
+				}
+
 				jLines.push({
 					lineNumber: lines.length + 1,
-					accountId: vatAccountId,
-					amount: taxAmount.toString(),
-					memo: `VAT Input for expense no ${data.id ? data.expenseNo : expenseNo}`,
-					dc: "debit" as "debit" | "credit",
+					accountId: cashEquivalentAccountId,
+					amount: grandTotal.toString(),
+					memo: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
+					dc: "credit" as "debit" | "credit",
 				});
-			}
 
-			jLines.push({
-				lineNumber: lines.length + 1,
-				accountId: cashEquivalentAccountId,
-				amount: grandTotal.toString(),
-				memo: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
-				dc: "credit" as "debit" | "credit",
-			});
-
-			if (!areJournalValuesBalanced(jLines)) {
-				throw new ApplicationError("Journal values are not balanced");
-			}
-
-			const returnedId = await db.transaction(async (tx) => {
-				let expenseId: string;
-				if (data.id) {
-					expenseId = data.id;
-					await tx
-						.update(expenseHeaders)
-						.set({
-							expenseDate,
-							payeeId,
-							paymentMethod,
-							reference,
-							bankId,
-							creditingAccountId:
-								paymentMethod === "cash" || paymentMethod === "mpesa"
-									? creditingAccountId
-										? parseInt(creditingAccountId, 10)
-										: null
-									: null,
-							subTotal: subTotal.toString(),
-							taxAmount: taxAmount.toString(),
-							totalAmount: grandTotal.toString(),
-							createdByUserId: userId,
-						})
-						.where(eq(expenseHeaders.id, data.id));
-				} else {
-					const [{ id }] = await tx
-						.insert(expenseHeaders)
-						.values({
-							expenseDate,
-							expenseNo,
-							payeeId,
-							paymentMethod,
-							reference,
-							bankId,
-							creditingAccountId:
-								paymentMethod === "cash" || paymentMethod === "mpesa"
-									? creditingAccountId
-										? parseInt(creditingAccountId, 10)
-										: null
-									: null,
-							subTotal: subTotal.toString(),
-							taxAmount: taxAmount.toString(),
-							totalAmount: grandTotal.toString(),
-							createdByUserId: userId,
-						})
-						.returning({ id: expenseHeaders.id });
-					expenseId = id;
-				}
-
-				if (data.id) {
-					await deleteBankingEntry({
-						source: "expenses",
-						sourceId: expenseId,
-						tx,
-					});
-
-					await tx
-						.delete(expenseDetails)
-						.where(eq(expenseDetails.expenseHeaderId, expenseId));
-					await tx
-						.delete(expenseAttachments)
-						.where(eq(expenseAttachments.expenseHeaderId, expenseId));
-					await deleteJournalEntry({
-						source: "expenses",
-						sourceId: expenseId,
-						tx,
+				if (!areJournalValuesBalanced(jLines)) {
+					return failure({
+						type: "ApplicationError",
+						message: "Journal values are not balanced",
 					});
 				}
 
-				if (attachments && attachments.length > 0) {
-					const formattedAttachments = attachments.map((attachment) => ({
-						expenseHeaderId: expenseId,
-						fileUrl: attachment.url,
-						fileName: attachment.filename,
-						fileType: attachment.mimeType,
-					}));
-					await tx.insert(expenseAttachments).values(formattedAttachments);
-				}
+				await db.transaction(async (tx) => {
+					let expenseId: string;
+					if (data.id) {
+						expenseId = data.id;
+						await tx
+							.update(expenseHeaders)
+							.set({
+								expenseDate,
+								payeeId,
+								paymentMethod,
+								reference,
+								bankId,
+								creditingAccountId:
+									paymentMethod === "cash" || paymentMethod === "mpesa"
+										? creditingAccountId
+											? parseInt(creditingAccountId, 10)
+											: null
+										: null,
+								subTotal: subTotal.toString(),
+								taxAmount: taxAmount.toString(),
+								totalAmount: grandTotal.toString(),
+								createdByUserId: userId,
+							})
+							.where(eq(expenseHeaders.id, data.id));
+					} else {
+						const [{ id }] = await tx
+							.insert(expenseHeaders)
+							.values({
+								expenseDate,
+								expenseNo,
+								payeeId,
+								paymentMethod,
+								reference,
+								bankId,
+								creditingAccountId:
+									paymentMethod === "cash" || paymentMethod === "mpesa"
+										? creditingAccountId
+											? parseInt(creditingAccountId, 10)
+											: null
+										: null,
+								subTotal: subTotal.toString(),
+								taxAmount: taxAmount.toString(),
+								totalAmount: grandTotal.toString(),
+								createdByUserId: userId,
+							})
+							.returning({ id: expenseHeaders.id });
+						expenseId = id;
+					}
 
-				if (lines.length > 0) {
-					await tx.insert(expenseDetails).values(
-						lines.map((line, index) => ({
-							expenseHeaderId: expenseId,
-							lineNumber: index + 1,
-							accountId: parseInt(line.accountId, 10),
-							quantity: line.quantity.toString(),
-							unitPrice: line.unitPrice.toString(),
-							lineSubtotal: line.amountExlusiveTax.toString(),
-							vatType: line.vatType,
-							taxAmount: line.taxAmount.toString(),
-							lineTotal: line.totalInclusiveTax.toString(),
-							description: line.description,
-						})),
-					);
-				}
-
-				await createJournalEntry({
-					entry: {
-						entryDate: expenseDate,
-						source: "expenses",
-						sourceId: expenseId,
-						reference: data.reference,
-						description: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
-					},
-					lines: jLines,
-					tx,
-				});
-
-				if (bankId) {
-					await createBankingEntry({
-						entry: {
+					if (data.id) {
+						await deleteBankingEntry({
 							source: "expenses",
 							sourceId: expenseId,
-							transactionDate: expenseDate,
-							dc: "credit" as const,
-							amount: grandTotal.toString(),
-							reference: reference ?? `Expense No ${expenseNo}`,
-							narration: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
-							bankId,
+							tx,
+						});
+
+						await tx
+							.delete(expenseDetails)
+							.where(eq(expenseDetails.expenseHeaderId, expenseId));
+						await tx
+							.delete(expenseAttachments)
+							.where(eq(expenseAttachments.expenseHeaderId, expenseId));
+						await deleteJournalEntry({
+							source: "expenses",
+							sourceId: expenseId,
+							tx,
+						});
+					}
+
+					if (attachments && attachments.length > 0) {
+						const formattedAttachments = attachments.map((attachment) => ({
+							expenseHeaderId: expenseId,
+							fileUrl: attachment.url,
+							fileName: attachment.filename,
+							fileType: attachment.mimeType,
+						}));
+						await tx.insert(expenseAttachments).values(formattedAttachments);
+					}
+
+					if (lines.length > 0) {
+						await tx.insert(expenseDetails).values(
+							lines.map((line, index) => ({
+								expenseHeaderId: expenseId,
+								lineNumber: index + 1,
+								accountId: parseInt(line.accountId, 10),
+								quantity: line.quantity.toString(),
+								unitPrice: line.unitPrice.toString(),
+								lineSubtotal: line.amountExlusiveTax.toString(),
+								vatType: line.vatType,
+								taxAmount: line.taxAmount.toString(),
+								lineTotal: line.totalInclusiveTax.toString(),
+								description: line.description,
+							})),
+						);
+					}
+
+					await createJournalEntry({
+						entry: {
+							entryDate: expenseDate,
+							source: "expenses",
+							sourceId: expenseId,
+							reference: data.reference,
+							description: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
 						},
+						lines: jLines,
 						tx,
 					});
-				}
 
-				await logActivity({
-					data: {
-						action: data.id ? "update expense" : "create expense",
-						userId,
-						description: data.id
-							? `Updated expense ${expenseNoFormData}`
-							: `Created expense ${expenseNo}`,
-					},
+					if (bankId) {
+						await createBankingEntry({
+							entry: {
+								source: "expenses",
+								sourceId: expenseId,
+								transactionDate: expenseDate,
+								dc: "credit" as const,
+								amount: grandTotal.toString(),
+								reference: reference ?? `Expense No ${expenseNo}`,
+								narration: `Expense no ${data.id ? data.expenseNo : expenseNo}`,
+								bankId,
+							},
+							tx,
+						});
+					}
+
+					await logActivity({
+						data: {
+							action: data.id ? "update expense" : "create expense",
+							userId,
+							description: data.id
+								? `Updated expense ${expenseNoFormData}`
+								: `Created expense ${expenseNo}`,
+						},
+					});
 				});
 
-				return expenseId;
-			});
-
-			return returnedId;
+				return success(undefined);
+			} catch (error) {
+				console.log(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to save expense",
+				});
+			}
 		},
 	);
 
@@ -387,41 +396,56 @@ export const deleteExpense = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("expenses:delete");
 
-			const expense = await db.query.expenseHeaders.findFirst({
-				columns: { expenseNo: true },
-				where: eq(expenseHeaders.id, expenseId),
-			});
+			try {
+				const expense = await db.query.expenseHeaders.findFirst({
+					columns: { expenseNo: true },
+					where: eq(expenseHeaders.id, expenseId),
+				});
 
-			if (!expense) {
-				throw new NotFoundError("Expense");
+				if (!expense) {
+					return failure({
+						type: "NotFoundError",
+						message: "Expense not found",
+					});
+				}
+
+				await db.transaction(async (tx) => {
+					await tx
+						.delete(expenseDetails)
+						.where(eq(expenseDetails.expenseHeaderId, expenseId));
+					await tx
+						.delete(expenseAttachments)
+						.where(eq(expenseAttachments.expenseHeaderId, expenseId));
+					await deleteJournalEntry({
+						source: "expenses",
+						sourceId: expenseId,
+						tx,
+					});
+					await tx
+						.delete(expenseHeaders)
+						.where(eq(expenseHeaders.id, expenseId));
+					await deleteBankingEntry({
+						source: "expenses",
+						sourceId: expenseId,
+						tx,
+					});
+
+					await logActivity({
+						data: {
+							action: "delete expense",
+							userId,
+							description: `Deleted expense ${expense.expenseNo}`,
+						},
+					});
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.log(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete expense",
+				});
 			}
-
-			await db.transaction(async (tx) => {
-				await tx
-					.delete(expenseDetails)
-					.where(eq(expenseDetails.expenseHeaderId, expenseId));
-				await tx
-					.delete(expenseAttachments)
-					.where(eq(expenseAttachments.expenseHeaderId, expenseId));
-				await deleteJournalEntry({
-					source: "expenses",
-					sourceId: expenseId,
-					tx,
-				});
-				await tx.delete(expenseHeaders).where(eq(expenseHeaders.id, expenseId));
-				await deleteBankingEntry({
-					source: "expenses",
-					sourceId: expenseId,
-					tx,
-				});
-
-				await logActivity({
-					data: {
-						action: "delete expense",
-						userId,
-						description: `Deleted expense ${expense.expenseNo}`,
-					},
-				});
-			});
 		},
 	);

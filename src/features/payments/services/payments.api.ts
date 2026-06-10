@@ -15,6 +15,7 @@ import { paymentFormSchema } from "@/features/payments/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -150,7 +151,10 @@ export const createPayment = createServerFn({ method: "POST" })
 			const paidBills = bills.filter((bill) => bill.selected);
 
 			if (paidBills.length === 0) {
-				throw new ApplicationError("No bills selected");
+				return failure({
+					type: "ApplicationError",
+					message: "No bills selected",
+				});
 			}
 
 			const totalAmountPaid = paidBills.reduce(
@@ -172,9 +176,11 @@ export const createPayment = createServerFn({ method: "POST" })
 				creditingAccountId = accountId;
 			} else {
 				if (!cashEquivalentAccountId) {
-					throw new ApplicationError(
-						"Cash equivalent account is required for this payment method",
-					);
+					return failure({
+						type: "ApplicationError",
+						message:
+							"Cash equivalent account is required for this payment method",
+					});
 				}
 				creditingAccountId = Number(cashEquivalentAccountId);
 			}
@@ -197,7 +203,10 @@ export const createPayment = createServerFn({ method: "POST" })
 			];
 
 			if (!areJournalValuesBalanced(journalLines)) {
-				throw new ApplicationError("Journal values are not balanced");
+				return failure({
+					type: "ApplicationError",
+					message: "Journal values are not balanced",
+				});
 			}
 
 			if (!id) {
@@ -210,7 +219,10 @@ export const createPayment = createServerFn({ method: "POST" })
 						parseFloat(bill.amount?.toString() ?? "0") >
 						parseFloat(currentBalance)
 					) {
-						throw new ApplicationError("Payment amount exceeds bill balance");
+						return failure({
+							type: "ApplicationError",
+							message: "Payment amount exceeds bill balance",
+						});
 					}
 					bill.balance = parseFloat(currentBalance);
 				}
@@ -316,12 +328,15 @@ export const createPayment = createServerFn({ method: "POST" })
 						},
 					});
 				});
+
+				return success(undefined);
 			} catch (error) {
 				console.error("🔥", error);
-				throw new Error("Failed to create/update payment");
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to create/update payment",
+				});
 			}
-
-			return "Completed Successfully!";
 		},
 	);
 
@@ -337,42 +352,55 @@ export const deletePayment = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("payments:delete");
 
-			const payment = await db.query.billPayments.findFirst({
-				columns: { id: true, paymentNo: true },
-				where: eq(billPayments.id, paymentId),
-			});
+			try {
+				const payment = await db.query.billPayments.findFirst({
+					columns: { id: true, paymentNo: true },
+					where: eq(billPayments.id, paymentId),
+				});
 
-			if (!payment) {
-				throw notFound();
+				if (!payment) {
+					return failure({
+						type: "NotFoundError",
+						message: "Payment not found",
+					});
+				}
+
+				await db.transaction(async (tx) => {
+					await tx.delete(billPayments).where(eq(billPayments.id, paymentId));
+					await deleteJournalEntry({
+						source: "bill payment",
+						sourceId: paymentId,
+						tx,
+					});
+					await deleteBankingEntry({
+						source: "bill payment",
+						sourceId: paymentId,
+						tx,
+					});
+				});
+
+				await logActivity({
+					data: {
+						action: "delete payment",
+						userId,
+						description: `Deleted payment no ${payment.paymentNo}`,
+					},
+				});
+
+				await inngest.send({
+					name: "app/bills.update.invoice.status",
+					data: {
+						paidInvoiceIds: [payment.id],
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete payment",
+				});
 			}
-
-			await db.transaction(async (tx) => {
-				await tx.delete(billPayments).where(eq(billPayments.id, paymentId));
-				await deleteJournalEntry({
-					source: "bill payment",
-					sourceId: paymentId,
-					tx,
-				});
-				await deleteBankingEntry({
-					source: "bill payment",
-					sourceId: paymentId,
-					tx,
-				});
-			});
-
-			await logActivity({
-				data: {
-					action: "delete payment",
-					userId,
-					description: `Deleted payment no ${payment.paymentNo}`,
-				},
-			});
-
-			await inngest.send({
-				name: "app/bills.update.invoice.status",
-				data: {
-					paidInvoiceIds: [payment.id],
-				},
-			});
 		},
 	);

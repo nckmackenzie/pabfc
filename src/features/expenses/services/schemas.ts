@@ -74,6 +74,7 @@ export const expenseSchema = z
 	);
 
 export const payeeSchema = z.object({
+	id: z.string().optional(),
 	name: z.string().min(1, { error: "Enter Payee Name" }),
 });
 

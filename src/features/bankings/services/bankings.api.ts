@@ -27,6 +27,7 @@ import {
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -159,7 +160,10 @@ export const upsertBankPosting = createServerFn({ method: "POST" })
 			];
 
 			if (!areJournalValuesBalanced(journalLines)) {
-				throw new ApplicationError("Journal values are not balanced");
+				return failure({
+					type: "ApplicationError",
+					message: "Journal values are not balanced",
+				});
 			}
 
 			if (data.id) {
@@ -172,7 +176,10 @@ export const upsertBankPosting = createServerFn({ method: "POST" })
 					),
 				});
 				if (!posting) {
-					throw new ApplicationError("Cannot update the bank posting!");
+					return failure({
+						type: "ApplicationError",
+						message: "Cannot update the bank posting!",
+					});
 				}
 			}
 
@@ -236,11 +243,14 @@ export const upsertBankPosting = createServerFn({ method: "POST" })
 						},
 					});
 				});
+
+				return success(undefined);
 			} catch (error) {
 				console.error(error);
-				throw new ApplicationError(
-					`Failed to ${data.id ? "update" : "create"} bank posting`,
-				);
+				return failure({
+					type: "ApplicationError",
+					message: `Failed to ${data.id ? "update" : "create"} bank posting`,
+				});
 			}
 		},
 	);
@@ -258,7 +268,10 @@ export const deleteBankPosting = createServerFn({ method: "POST" })
 			),
 		});
 		if (!posting) {
-			throw new ApplicationError("Cannot delete the bank posting!");
+			return failure({
+				type: "ApplicationError",
+				message: "Cannot delete the bank posting!",
+			});
 		}
 
 		try {
@@ -270,9 +283,13 @@ export const deleteBankPosting = createServerFn({ method: "POST" })
 				});
 				await tx.delete(bankPostings).where(eq(bankPostings.id, postingId));
 			});
+			return success(undefined);
 		} catch (error) {
 			console.error(error);
-			throw new ApplicationError("Failed to delete bank posting");
+			return failure({
+				type: "ApplicationError",
+				message: "Failed to delete bank posting",
+			});
 		}
 	});
 
@@ -296,16 +313,20 @@ export const clearBankPosting = createServerFn({ method: "POST" })
 				),
 			});
 			if (!posting) {
-				throw new ApplicationError("Cannot clear the bank posting!");
+				return failure({
+					type: "ApplicationError",
+					message: "Cannot clear the bank posting!",
+				});
 			}
 
 			if (
 				new Date(clearedAt).setHours(23, 59, 59, 999) <
 				new Date(posting.transactionDate).setHours(23, 59, 59, 999)
 			) {
-				throw new ApplicationError(
-					"Clearing date cannot be before the transaction date",
-				);
+				return failure({
+					type: "ApplicationError",
+					message: "Clearing date cannot be before the transaction date",
+				});
 			}
 
 			try {
@@ -323,9 +344,13 @@ export const clearBankPosting = createServerFn({ method: "POST" })
 						},
 					});
 				});
+				return success(undefined);
 			} catch (error) {
 				console.error(error);
-				throw new ApplicationError("Failed to clear bank posting");
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to clear bank posting",
+				});
 			}
 		},
 	);
@@ -372,7 +397,10 @@ export const clearBankings = createServerFn({ method: "POST" })
 			const clearedOnlyBankings = bankings.filter((b) => b.selected);
 
 			if (clearedOnlyBankings.length === 0) {
-				throw new ApplicationError("No bankings selected to clear");
+				return failure({
+					type: "ApplicationError",
+					message: "No bankings selected to clear",
+				});
 			}
 
 			const bankingIds = clearedOnlyBankings.map((b) => b.bankingId);
@@ -394,36 +422,41 @@ export const clearBankings = createServerFn({ method: "POST" })
 				);
 
 				if (!existing) {
-					throw new ApplicationError(
-						`Banking record not found: ${banking.bankingId}`,
-					);
+					return failure({
+						type: "ApplicationError",
+						message: `Banking record not found: ${banking.bankingId}`,
+					});
 				}
 
 				if (existing.bankId !== bankId) {
-					throw new ApplicationError(
-						`Banking record ${banking.bankingId} does not belong to the specified bank`,
-					);
+					return failure({
+						type: "ApplicationError",
+						message: `Banking record ${banking.bankingId} does not belong to the specified bank`,
+					});
 				}
 
 				if (existing.cleared) {
-					throw new ApplicationError(
-						`Banking record ${banking.bankingId} is already cleared`,
-					);
+					return failure({
+						type: "ApplicationError",
+						message: `Banking record ${banking.bankingId} is already cleared`,
+					});
 				}
 
 				if (!banking.clearedAt) {
-					throw new ApplicationError(
-						`Cleared date is required for banking ${banking.bankingId}`,
-					);
+					return failure({
+						type: "ApplicationError",
+						message: `Cleared date is required for banking ${banking.bankingId}`,
+					});
 				}
 
 				if (
 					new Date(banking.clearedAt).setHours(23, 59, 59, 999) <
 					new Date(existing.transactionDate).setHours(23, 59, 59, 999)
 				) {
-					throw new ApplicationError(
-						`Cleared date cannot be before transaction date for banking ${banking.bankingId}`,
-					);
+					return failure({
+						type: "ApplicationError",
+						message: `Cleared date cannot be before transaction date for banking ${banking.bankingId}`,
+					});
 				}
 			}
 
@@ -444,9 +477,7 @@ export const clearBankings = createServerFn({ method: "POST" })
 				});
 			});
 
-			return {
-				message: "Bankings cleared successfully",
-			};
+			return success({ message: "Bankings cleared successfully" });
 		},
 	);
 

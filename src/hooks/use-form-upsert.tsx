@@ -3,13 +3,14 @@ import { useNavigate } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import { ToastContent } from "@/components/ui/toast-content";
 import { parseErrorMessage } from "@/lib/error-handling/error-handling";
+import type { AppError, Result } from "@/lib/result";
 import type { Route } from "@/types/index.types";
 
 interface UseFormMutationOptions<
 	TData extends { id?: string },
 	TResult = void,
 > {
-	upsertFn: (data: TData) => Promise<TResult>;
+	upsertFn: (data: TData) => Promise<Result<TResult>>;
 	entityName: string;
 	navigateTo?: Route;
 	queryKey: string[];
@@ -22,6 +23,7 @@ interface UseFormMutationOptions<
 		update?: string;
 	};
 	onSuccessCallback?: (result: TResult, isEdit: boolean) => void;
+	onErrorCallback?: (error: AppError, isEdit: boolean) => void;
 	displaySuccessToast?: boolean;
 	onReset?: () => void;
 }
@@ -34,6 +36,7 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 	successMessage,
 	errorMessage,
 	onSuccessCallback,
+	onErrorCallback,
 	displaySuccessToast = true,
 	onReset,
 }: UseFormMutationOptions<TData, TResult>) {
@@ -70,6 +73,25 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 		},
 		onSuccess: (result, variables) => {
 			const isEdit = !!variables.id;
+
+			if (!result.success) {
+				onErrorCallback?.(result.error, isEdit);
+				if (result.error.type === "AuthenticationError") {
+					toast.error(() => (
+						<ToastContent
+							title="Unauthenticated request!"
+							message="You need to be logged in to perform this action!"
+						/>
+					));
+					navigate({ to: "/sign-in" });
+					return;
+				}
+				toast.error(() => (
+					<ToastContent title="Error" message={result.error.message} />
+				));
+				return;
+			}
+
 			const action = isEdit ? "updated" : "created";
 			const defaultMessage = `${entityName} has been ${action} successfully.`;
 
@@ -86,7 +108,7 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 			onReset?.();
 
 			queryClient.invalidateQueries({ queryKey });
-			onSuccessCallback?.(result, isEdit);
+			onSuccessCallback?.(result.data, isEdit);
 
 			if (navigateTo) {
 				setTimeout(() => {

@@ -6,10 +6,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { accountQueries } from "@/features/coa/services/queries";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
-import type { WithId } from "@/types/index.types";
-import { createPlan, updatePlan } from "../services/plans.api";
+import { upsertPlan } from "../services/plans.api";
 
 const defaultValues = {
 	name: "",
@@ -22,7 +21,7 @@ const defaultValues = {
 	revenueAccountId: "",
 } as PlanSchema;
 
-export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
+export function PlanForm({ plan }: { plan?: PlanSchema }) {
 	const contextAccounts = useRouteContext({
 		from: "/app/plans",
 		select: (ctx) => ctx.accounts,
@@ -36,7 +35,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 		},
 		onSubmit: ({ value }) => {
 			planMutation.mutate(
-				{ data: value, id: plan?.id },
+				{ ...value, id: plan?.id },
 				{
 					onSuccess: () => {
 						form.reset();
@@ -46,14 +45,12 @@ export function PlanForm({ plan }: { plan?: PlanSchema & WithId }) {
 		},
 	});
 
-	const planMutation = useFormMutation({
-		createFn: (values: PlanSchema) => createPlan({ data: values }),
+	const planMutation = useFormUpsert({
+		upsertFn: (values: PlanSchema) => upsertPlan({ data: values }),
 		entityName: "Plan",
 		queryKey: ["plans"],
 		navigateTo: "/app/plans",
 		onReset: () => form.reset(),
-		updateFn: (planId: string, values: PlanSchema) =>
-			updatePlan({ data: { values, planId } }),
 	});
 
 	const [isSessionBased] = useStore(form.store, (state) => [

@@ -11,8 +11,8 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { type UserSchema, userSchema } from "@/features/users/services/schema";
-import { createUser, updateUser } from "@/features/users/services/users.api";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { upsertUser } from "@/features/users/services/users.api";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
 import type { Option } from "@/types/index.types";
@@ -35,13 +35,11 @@ export function UserForm({
 	user,
 	roles,
 }: {
-	user?: UserSchema & { id: string };
+	user?: UserSchema;
 	roles: Array<Option>;
 }) {
-	const userMutation = useFormMutation({
-		createFn: (data: UserSchema) => createUser({ data }),
-		updateFn: (userId: string, data: UserSchema) =>
-			updateUser({ data: { userId, data } }),
+	const userMutation = useFormUpsert({
+		upsertFn: (data: UserSchema) => upsertUser({ data }),
 		entityName: "User",
 		queryKey: ["users"],
 		navigateTo: "/app/users",
@@ -54,7 +52,7 @@ export function UserForm({
 		},
 		onSubmit: ({ value }) => {
 			userMutation.mutate(
-				{ data: value, id: user?.id },
+				{ ...value, id: user?.id },
 				{
 					onSuccess: () => {
 						form.reset();

@@ -5,13 +5,13 @@ import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { ACCOUNT_TYPES } from "@/features/coa/lib/constants";
-import { createAccount, updateAccount } from "@/features/coa/services/coa.api";
+import { upsertAccount } from "@/features/coa/services/coa.api";
 import { accountQueries } from "@/features/coa/services/queries";
 import {
 	type AccountsFormSchema,
 	accountsFormSchema,
 } from "@/features/coa/services/schemas";
-import { useFormMutation } from "@/hooks/use-form-mutation";
+import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
 
@@ -31,7 +31,7 @@ const defaultValues = {
 export function ChartOfAccountsForm({
 	account,
 }: {
-	account?: AccountsFormSchema & { id: number };
+	account?: AccountsFormSchema;
 }) {
 	const loaderParentAccounts = useRouteContext({
 		from: "/app/chart-of-accounts",
@@ -41,10 +41,8 @@ export function ChartOfAccountsForm({
 		accountQueries.parentAccounts(),
 	);
 	const parentAccounts = parentAccountsFreshData || loaderParentAccounts;
-	const accountMutation = useFormMutation({
-		createFn: (values: AccountsFormSchema) => createAccount({ data: values }),
-		updateFn: (accountId: string, values: AccountsFormSchema) =>
-			updateAccount({ data: { values, id: Number(accountId) } }),
+	const accountMutation = useFormUpsert({
+		upsertFn: (values: AccountsFormSchema) => upsertAccount({ data: values }),
 		entityName: "Account",
 		queryKey: ["accounts"],
 		onReset: () => form.reset(),
@@ -57,7 +55,7 @@ export function ChartOfAccountsForm({
 			onSubmit: accountsFormSchema,
 		},
 		onSubmit: ({ value }) => {
-			accountMutation.mutate({ data: value, id: account?.id.toString() });
+			accountMutation.mutate({ ...value, id: account?.id });
 		},
 	});
 
@@ -65,6 +63,7 @@ export function ChartOfAccountsForm({
 		state.values.isSubcategory,
 		state.values.type,
 		state.values.isBankAccount,
+		state.errors,
 	]);
 
 	return (

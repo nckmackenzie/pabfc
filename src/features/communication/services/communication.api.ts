@@ -7,9 +7,9 @@ import {
 	broadcastFormSchema,
 	templateFormSchema,
 } from "@/features/communication/services/schemas";
-import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { internationalizePhoneNumber } from "@/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
+import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
@@ -86,46 +86,58 @@ export const upsertTemplate = createServerFn()
 		}) => {
 			const { name, content, id, description } = data;
 			const variables = extractVariables(content);
-			const templateName = await db.query.smsTemplates.findFirst({
-				columns: { id: true },
-				where: and(
-					eq(sql`lower(${smsTemplates.name})`, name.toLowerCase()),
-					id ? ne(smsTemplates.id, id) : undefined,
-				),
-			});
-			if (templateName) {
-				throw new ConflictError("Template name");
-			}
-			if (!id) {
-				await db.insert(smsTemplates).values({
-					name,
-					content,
-					variables,
-					description,
+
+			try {
+				const templateName = await db.query.smsTemplates.findFirst({
+					columns: { id: true },
+					where: and(
+						eq(sql`lower(${smsTemplates.name})`, name.toLowerCase()),
+						id ? ne(smsTemplates.id, id) : undefined,
+					),
 				});
-			} else {
-				await db
-					.update(smsTemplates)
-					.set({
+				if (templateName) {
+					return failure({
+						type: "ConflictError",
+						message: "Template name already exists",
+					});
+				}
+				if (!id) {
+					await db.insert(smsTemplates).values({
 						name,
 						content,
 						variables,
 						description,
-					})
-					.where(eq(smsTemplates.id, id));
+					});
+				} else {
+					await db
+						.update(smsTemplates)
+						.set({
+							name,
+							content,
+							variables,
+							description,
+						})
+						.where(eq(smsTemplates.id, id));
+				}
+
+				await logActivity({
+					data: {
+						action: id ? "update sms template" : "create sms template",
+						userId,
+						description: id
+							? `Updated sms template ${name}`
+							: `Created sms template ${name}`,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to save template",
+				});
 			}
-
-			await logActivity({
-				data: {
-					action: id ? "update sms template" : "create sms template",
-					userId,
-					description: id
-						? `Updated sms template ${name}`
-						: `Created sms template ${name}`,
-				},
-			});
-
-			return "Completed successfully";
 		},
 	);
 
@@ -169,48 +181,58 @@ export const sendBroadCast = createServerFn({ method: "POST" })
 				submitType,
 			} = data;
 
-			if (submitType === "SEND_TEST") {
-				const user = await db.query.users.findFirst({
-					columns: { contact: true },
-					where: eq(users.id, userId),
-				});
+			try {
+				if (submitType === "SEND_TEST") {
+					const user = await db.query.users.findFirst({
+						columns: { contact: true },
+						where: eq(users.id, userId),
+					});
 
-				if (!user?.contact) {
-					throw new NotFoundError("User");
+					if (!user?.contact) {
+						return failure({
+							type: "NotFoundError",
+							message: "User not found",
+						});
+					}
+
+					await inngest.send({
+						name: "app/communications.send-test-to-user",
+						data: {
+							content,
+							contact: [internationalizePhoneNumber(user.contact, true)],
+						},
+					});
 				}
 
-				await inngest.send({
-					name: "app/communications.send-test-to-user",
-					data: {
-						content,
-						contact: [internationalizePhoneNumber(user.contact, true)],
-					},
+				if (submitType === "SUBMIT") {
+					const [{ id: broadcastId }] = await db
+						.insert(smsBroadcasts)
+						.values({
+							filterCriteria,
+							criteria,
+							smsTemplateId,
+							smsBroadcastStatus: "sending",
+							content,
+							receipients,
+							sentAt: new Date(),
+						})
+						.returning({ id: smsBroadcasts.id });
+
+					await inngest.send({
+						name: "app/communications.send-sms-broadcast",
+						data: {
+							broadcastId,
+						},
+					});
+				}
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to send message",
 				});
-
-				return "Completed successfully";
-			}
-
-			if (submitType === "SUBMIT") {
-				const [{ id: broadcastId }] = await db
-					.insert(smsBroadcasts)
-					.values({
-						filterCriteria,
-						criteria,
-						smsTemplateId,
-						smsBroadcastStatus: "sending",
-						content,
-						receipients,
-						sentAt: new Date(),
-					})
-					.returning({ id: smsBroadcasts.id });
-
-				await inngest.send({
-					name: "app/communications.send-sms-broadcast",
-					data: {
-						broadcastId,
-					},
-				});
-				return broadcastId;
 			}
 		},
 	);
