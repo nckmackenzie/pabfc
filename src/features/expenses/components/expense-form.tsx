@@ -248,7 +248,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 									<ButtonGroup>
 										<Button
 											type="button"
-											variant="secondary"
+											variant="outline"
 											onClick={() =>
 												field.pushValue({
 													accountId: "",
@@ -444,7 +444,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 						)}
 					</form.Field>
 
-					<div className="bg-secondary p-4 rounded-md space-y-4">
+					<div className="bg-accent p-4 rounded-md space-y-4">
 						<h2 className="text-sm font-semibold">Expense Summary</h2>
 						<div className="flex items-center justify-between">
 							<div className="text-xs font-medium text-muted-foreground">
