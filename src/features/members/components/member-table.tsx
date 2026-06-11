@@ -233,11 +233,13 @@ export function MemberTable() {
 							</span>
 						</DropdownMenuItem>
 					)}
-					<DeleteActionButton
-						queryKey={["members"]}
-						resourceId={id}
-						deleteAction={deleteMember}
-					/>
+					<PermissionGate permission="members:delete">
+						<DeleteActionButton
+							queryKey={["members"]}
+							resourceId={id}
+							deleteAction={deleteMember}
+						/>
+					</PermissionGate>
 				</DatatableActions>
 			),
 		},
