@@ -108,6 +108,20 @@ export const collapsibleMenuItems = [
 		},
 	},
 	{
+		title: "HR & Payroll",
+		icon: UsersIcon,
+		items: [
+			{
+				title: "Employees",
+				url: "/app/employees",
+				permission: "employees:view",
+			},
+		],
+		get permissions(): Permission[] {
+			return this.items.map((item) => item.permission as Permission);
+		},
+	},
+	{
 		title: "Reports",
 		icon: BarChartIcon,
 		items: [
