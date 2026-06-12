@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncJobs,
-	memberAccessProfiles,
+	biotimePersonProfiles,
 	members,
 	users,
 } from "@/drizzle/schema";
@@ -14,6 +14,10 @@ import {
 	memberRevokePortalAccessSchema,
 	memberToggleActiveSchema,
 } from "@/features/members/services/schemas";
+import {
+	queueDeleteBioTimePerson,
+	softDeleteMemberLocally,
+} from "@/lib/access-control";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -64,42 +68,50 @@ const createMember = async ({
 				empCode,
 				firstName: member.firstName,
 				lastName: member.lastName,
-				departmentId: settings?.defaultDepartmentId ?? 1,
+				departmentId: 2,
 				areaIds: [settings?.authorizedAreaId ?? 2],
 				mobile: member.contact,
 				email: member.email,
 				gender: member.gender,
 				birthday: member.dateOfBirth,
-				employeeType: 2,
+				employeeType: 1,
 			};
 
-			const existingProfile = await db.query.memberAccessProfiles.findFirst({
-				where: eq(memberAccessProfiles.memberId, member.id),
+			const existingProfile = await db.query.biotimePersonProfiles.findFirst({
+				where: and(
+					eq(biotimePersonProfiles.memberId, member.id),
+					eq(biotimePersonProfiles.personType, "member"),
+				),
 			});
 
 			if (existingProfile) {
 				throw new ConflictError("Access Control Profile already exists");
 			}
 
-			await tx.insert(memberAccessProfiles).values({
-				memberId: member.id,
-				biotimeEmployeeCode: empCode,
-				biotimeDepartmentId: settings?.defaultDepartmentId ?? 1,
-				authorizedAreaId: settings?.authorizedAreaId ?? 2,
-				unauthorizedAreaId: settings?.unauthorizedAreaId ?? 1,
-				currentAreaId: null,
-				desiredAccessEnabled: true,
-				accessControlStatus: "pending_sync",
-				biometricEnrollmentStatus: "pending",
-				lastSyncPayload: payload,
-			});
+			const [profile] = await tx
+				.insert(biotimePersonProfiles)
+				.values({
+					personType: "member",
+					memberId: member.id,
+					employeeId: null,
+					biotimeEmployeeCode: empCode,
+					biotimeDepartmentId: 1,
+					authorizedAreaId: 2,
+					unauthorizedAreaId: 1,
+					desiredAccessEnabled: true,
+					accessControlStatus: "pending_sync",
+					biometricEnrollmentStatus: "pending",
+					lastSyncPayload: payload,
+				})
+				.returning();
 
 			await tx.insert(accessControlSyncJobs).values({
+				biotimePersonProfileId: profile.id,
 				memberId: member.id,
 				action: "CREATE_EMPLOYEE",
 				status: "pending",
 				payload,
-				idempotencyKey: `CREATE_EMPLOYEE:${member.id}:${empCode}`,
+				idempotencyKey: `CREATE_EMPLOYEE:${profile.id}:${empCode}`,
 			});
 
 			await logActivity({
@@ -171,8 +183,11 @@ const updateMember = async ({
 				})
 				.where(eq(users.memberId, id));
 
-			const memberProfile = await tx.query.memberAccessProfiles.findFirst({
-				where: eq(memberAccessProfiles.memberId, id),
+			const memberProfile = await tx.query.biotimePersonProfiles.findFirst({
+				where: and(
+					eq(biotimePersonProfiles.memberId, id),
+					eq(biotimePersonProfiles.personType, "member"),
+				),
 			});
 
 			if (memberProfile) {
@@ -181,16 +196,23 @@ const updateMember = async ({
 					member.memberStatus === "active"
 				) {
 					await tx
-						.update(memberAccessProfiles)
+						.update(biotimePersonProfiles)
 						.set({
 							desiredAccessEnabled: false,
 							accessControlStatus: "pending_sync",
 							currentAreaId: memberProfile.unauthorizedAreaId,
 							updatedAt: new Date(),
 						})
-						.where(eq(memberAccessProfiles.memberId, member.id));
+						.where(
+							and(
+								eq(biotimePersonProfiles.memberId, member.id),
+								eq(biotimePersonProfiles.personType, "member"),
+							),
+						);
 
 					await tx.insert(accessControlSyncJobs).values({
+						biotimePersonProfileId: memberProfile.id,
+						personType: "member",
 						memberId: member.id,
 						action: "DISABLE_ACCESS",
 						status: "pending",
@@ -208,17 +230,24 @@ const updateMember = async ({
 					member.memberStatus !== "active"
 				) {
 					await tx
-						.update(memberAccessProfiles)
+						.update(biotimePersonProfiles)
 						.set({
 							desiredAccessEnabled: true,
 							accessControlStatus: "pending_sync",
 							currentAreaId: memberProfile.authorizedAreaId,
 							updatedAt: new Date(),
 						})
-						.where(eq(memberAccessProfiles.memberId, member.id));
+						.where(
+							and(
+								eq(biotimePersonProfiles.memberId, member.id),
+								eq(biotimePersonProfiles.personType, "member"),
+							),
+						);
 
 					await tx.insert(accessControlSyncJobs).values({
 						memberId: member.id,
+						biotimePersonProfileId: memberProfile.id,
+						personType: "member",
 						action: "ENABLE_ACCESS",
 						status: "pending",
 						payload: {
@@ -296,28 +325,38 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 					.set({ banned: !banned, banReason: revokeReason ?? null })
 					.where(eq(users.id, user.id));
 
-				await tx
-					.update(members)
-					.set({ deletedAt: new Date() })
-					.where(and(eq(members.id, member.id), isNull(members.deletedAt)));
+				await softDeleteMemberLocally({
+					memberId: member.id,
+					tx,
+				});
 
-				const memberProfile = await db.query.memberAccessProfiles.findFirst({
-					where: eq(memberAccessProfiles.memberId, memberId),
+				const memberProfile = await tx.query.biotimePersonProfiles.findFirst({
+					where: and(
+						eq(biotimePersonProfiles.memberId, memberId),
+						eq(biotimePersonProfiles.personType, "member"),
+					),
 				});
 
 				if (memberProfile) {
 					await tx
-						.update(memberAccessProfiles)
+						.update(biotimePersonProfiles)
 						.set({
 							desiredAccessEnabled: false,
 							accessControlStatus: "pending_sync",
 							currentAreaId: 1,
 							updatedAt: new Date(),
 						})
-						.where(eq(memberAccessProfiles.memberId, member.id));
+						.where(
+							and(
+								eq(biotimePersonProfiles.memberId, member.id),
+								eq(biotimePersonProfiles.personType, "member"),
+							),
+						);
 
 					await tx.insert(accessControlSyncJobs).values({
 						memberId: member.id,
+						biotimePersonProfileId: memberProfile.id,
+						personType: "member",
 						action: "DISABLE_ACCESS",
 						status: "pending",
 						payload: {
@@ -441,52 +480,13 @@ export const deleteMember = createServerFn({ method: "POST" })
 					});
 				}
 
-				await db.transaction(async (tx) => {
-					await tx
-						.update(members)
-						.set({ deletedAt: new Date() })
-						.where(and(eq(members.id, memberId), isNull(members.deletedAt)));
-
-					await tx
-						.update(users)
-						.set({ active: false })
-						.where(eq(users.memberId, memberId));
-
-					const memberProfile = await tx.query.memberAccessProfiles.findFirst({
-						where: eq(memberAccessProfiles.memberId, memberId),
-					});
-
-					if (memberProfile) {
-						await tx
-							.update(memberAccessProfiles)
-							.set({
-								desiredAccessEnabled: false,
-								accessControlStatus: "pending_sync",
-								currentAreaId: memberProfile.unauthorizedAreaId,
-								updatedAt: new Date(),
-							})
-							.where(eq(memberAccessProfiles.memberId, memberId));
-
-						await tx.insert(accessControlSyncJobs).values({
-							memberId,
-							action: "DISABLE_ACCESS",
-							status: "pending",
-							payload: {
-								biotimeEmployeeId: memberProfile.biotimeEmployeeId,
-								areaIds: [memberProfile.unauthorizedAreaId],
-								reason: "member_deleted",
-							},
-							idempotencyKey: `DISABLE_ACCESS:${memberId}:${Date.now()}`,
-						});
-					}
-
-					await logActivity({
-						data: {
-							action: "delete member",
-							description: `Deleted member ${member.firstName} ${member.lastName}`,
-							userId: loggedUserId,
-						},
-					});
+				await queueDeleteBioTimePerson({ personType: "member", memberId });
+				await logActivity({
+					data: {
+						action: "delete member",
+						description: `Deleted member ${member.firstName} ${member.lastName}`,
+						userId: loggedUserId,
+					},
 				});
 
 				return success(undefined);

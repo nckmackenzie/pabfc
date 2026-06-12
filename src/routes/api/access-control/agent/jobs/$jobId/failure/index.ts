@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncAttempts,
 	accessControlSyncJobs,
-	memberAccessProfiles,
+	biotimePersonProfiles,
 } from "@/drizzle/schema";
 import { authenticateAccessAgent } from "@/services/access-control";
 
@@ -42,6 +42,25 @@ export const Route = createFileRoute(
 							},
 						});
 
+					if (
+						job.status !== "processing" ||
+						!job.claimedUntil ||
+						job.claimedUntil < now
+					) {
+						return new Response(
+							JSON.stringify({
+								success: false,
+								message: "Job is no longer claimable by this failure callback",
+							}),
+							{
+								status: 409,
+								headers: {
+									"Content-Type": "application/json",
+								},
+							},
+						);
+					}
+
 					const hasReachedMaxAttempts = job.attempts >= job.maxAttempts;
 
 					const result = await db.transaction(async (tx) => {
@@ -59,12 +78,7 @@ export const Route = createFileRoute(
 								and(
 									eq(accessControlSyncJobs.id, job.id),
 									eq(accessControlSyncJobs.status, "processing"),
-									or(
-										gt(accessControlSyncJobs.claimedUntil, now),
-										job.claimedUntil
-											? eq(accessControlSyncJobs.claimedUntil, job.claimedUntil)
-											: isNull(accessControlSyncJobs.claimedUntil),
-									),
+									gt(accessControlSyncJobs.claimedUntil, now),
 								),
 							)
 							.returning({ id: accessControlSyncJobs.id });
@@ -84,18 +98,20 @@ export const Route = createFileRoute(
 
 						// 3. Update member access profile
 						await tx
-							.update(memberAccessProfiles)
+							.update(biotimePersonProfiles)
 							.set({
 								accessControlStatus: hasReachedMaxAttempts
 									? "sync_failed"
-									: "pending_sync",
+									: job.action === "DELETE_EMPLOYEE"
+										? "pending_delete"
+										: "pending_sync",
 								lastSyncAttemptAt: now,
 								lastSyncError:
 									body.errorMessage ?? "Unknown BioTime sync error",
 								lastSyncResponse: body.responsePayload ?? null,
 								updatedAt: now,
 							})
-							.where(eq(memberAccessProfiles.memberId, job.memberId));
+							.where(eq(biotimePersonProfiles.id, job.biotimePersonProfileId));
 
 						return { conflict: false } as const;
 					});
