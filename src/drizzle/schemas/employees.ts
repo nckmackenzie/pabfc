@@ -18,7 +18,7 @@ export const EMPLOYMENT_TYPES = [
 	"contract",
 	"temporary",
 ] as const;
-export const EMPLOYEMENT_TYPES = EMPLOYMENT_TYPES;
+// export const EMPLOYEMENT_TYPES = EMPLOYMENT_TYPES;
 export const EMPLOYMENT_STATUSES = [
 	"active",
 	"on_leave",

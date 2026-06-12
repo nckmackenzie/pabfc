@@ -353,6 +353,8 @@ async function createEmployee({
 
 		try {
 			const settings = await db.query.biotimeSettings.findFirst();
+			const isNotActive =
+				data.status === "resigned" || data.status === "terminated";
 
 			const employeeResult = await db.transaction(async (tx) => {
 				const [employee] = await tx
@@ -383,7 +385,7 @@ async function createEmployee({
 						biotimeDepartmentId: 2,
 						authorizedAreaId: settings?.authorizedAreaId ?? 2,
 						unauthorizedAreaId: settings?.unauthorizedAreaId ?? 1,
-						desiredAccessEnabled: true,
+						desiredAccessEnabled: !isNotActive,
 						accessControlStatus: "pending_sync",
 						biometricEnrollmentStatus: "pending",
 						lastSyncPayload: payload,
@@ -494,7 +496,13 @@ async function updateEmployee({
 			});
 
 			if (employeeProfile) {
-				if (data.status === "resigned" || data.status === "terminated") {
+				const wasTerminal =
+					existingEmployee.status === "resigned" ||
+					existingEmployee.status === "terminated";
+				const isTerminal =
+					data.status === "resigned" || data.status === "terminated";
+
+				if (!wasTerminal && isTerminal) {
 					await tx
 						.update(biotimePersonProfiles)
 						.set({
@@ -649,13 +657,30 @@ export const getEmployee = createServerFn()
 	.handler(async ({ data: employeeId }) => {
 		await requireAnyPermission(["employees:view", "employees:update"]);
 
-		return db.query.employees.findFirst({
+		const employee = await db.query.employees.findFirst({
 			columns: {
 				createdAt: false,
 				updatedAt: false,
 			},
 			where: and(eq(employees.id, employeeId), isNull(employees.deletedAt)),
 		});
+
+		if (!employee) {
+			return null;
+		}
+
+		const canManagePayrollInformation = await hasPermission({
+			data: "employees:payroll-information",
+		});
+
+		if (canManagePayrollInformation) {
+			return employee;
+		}
+
+		return {
+			...employee,
+			...getDefaultPayrollRestrictedValues(),
+		};
 	});
 
 export const upsertEmployee = createServerFn({ method: "POST" })

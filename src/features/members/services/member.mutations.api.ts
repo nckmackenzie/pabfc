@@ -68,7 +68,7 @@ const createMember = async ({
 				empCode,
 				firstName: member.firstName,
 				lastName: member.lastName,
-				departmentId: 2,
+				departmentId: 1,
 				areaIds: [settings?.authorizedAreaId ?? 2],
 				mobile: member.contact,
 				email: member.email,
@@ -77,7 +77,7 @@ const createMember = async ({
 				employeeType: 1,
 			};
 
-			const existingProfile = await db.query.biotimePersonProfiles.findFirst({
+			const existingProfile = await tx.query.biotimePersonProfiles.findFirst({
 				where: and(
 					eq(biotimePersonProfiles.memberId, member.id),
 					eq(biotimePersonProfiles.personType, "member"),

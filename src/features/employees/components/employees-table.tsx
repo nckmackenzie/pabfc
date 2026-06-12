@@ -88,7 +88,7 @@ export function EmployeesTable() {
 					</PermissionGate>
 					<PermissionGate permission="employees:delete">
 						<DeleteActionButton
-							queryKey={["members"]}
+							queryKey={["employees"]}
 							resourceId={row.original.id}
 							deleteAction={deleteEmployee}
 						/>
