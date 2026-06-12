@@ -59,6 +59,9 @@ export const accessControlStatusEnum = pgEnum("access_control_status", [
 	"disabled",
 	"frozen",
 	"sync_failed",
+	"resigned",
+	"pending_delete",
+	"deleted",
 ]);
 
 export const biometricEnrollmentStatusEnum = pgEnum(
@@ -79,6 +82,9 @@ export const accessSyncActionEnum = pgEnum("access_sync_action", [
 	"ENABLE_ACCESS",
 	"DISABLE_ACCESS",
 	"FULL_RECONCILE",
+	"RESIGN_EMPLOYEE",
+	"REINSTATE_EMPLOYEE",
+	"DELETE_EMPLOYEE",
 ]);
 
 export const accessSyncStatusEnum = pgEnum("access_sync_status", [

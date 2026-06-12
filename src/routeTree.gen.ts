@@ -29,6 +29,7 @@ import { Route as AppPaymentsRouteRouteImport } from './routes/app/payments/rout
 import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
 import { Route as AppFinancialYearsRouteRouteImport } from './routes/app/financial-years/route'
 import { Route as AppExpensesRouteRouteImport } from './routes/app/expenses/route'
+import { Route as AppEmployeesRouteRouteImport } from './routes/app/employees/route'
 import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-of-accounts/route'
 import { Route as AppBillsRouteRouteImport } from './routes/app/bills/route'
 import { Route as AppBankingsRouteRouteImport } from './routes/app/bankings/route'
@@ -41,6 +42,7 @@ import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/inde
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
 import { Route as AppFinancialYearsIndexRouteImport } from './routes/app/financial-years/index'
 import { Route as AppExpensesIndexRouteImport } from './routes/app/expenses/index'
+import { Route as AppEmployeesIndexRouteImport } from './routes/app/employees/index'
 import { Route as AppCommunicationIndexRouteImport } from './routes/app/communication/index'
 import { Route as AppChartOfAccountsIndexRouteImport } from './routes/app/chart-of-accounts/index'
 import { Route as AppBillsIndexRouteImport } from './routes/app/bills/index'
@@ -56,6 +58,7 @@ import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
 import { Route as AppFinancialYearsNewRouteImport } from './routes/app/financial-years/new'
 import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
+import { Route as AppEmployeesNewRouteImport } from './routes/app/employees/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
 import { Route as AppBillsNewRouteImport } from './routes/app/bills/new'
 import { Route as AppBankingsReconcilliationRouteImport } from './routes/app/bankings/reconcilliation'
@@ -88,6 +91,7 @@ import { Route as AppMembersMemberIdEditRouteImport } from './routes/app/members
 import { Route as AppFinancialYearsFinancialYearIdEditRouteImport } from './routes/app/financial-years/$financialYearId/edit'
 import { Route as AppExpensesExpenseIdViewRouteImport } from './routes/app/expenses/$expenseId/view'
 import { Route as AppExpensesExpenseIdEditRouteImport } from './routes/app/expenses/$expenseId/edit'
+import { Route as AppEmployeesEmployeeIdEditRouteImport } from './routes/app/employees/$employeeId.edit'
 import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
 import { Route as AppBillsBillIdEditRouteImport } from './routes/app/bills/$billId/edit'
 import { Route as AppBankingsPostingsNewRouteImport } from './routes/app/bankings/postings/new'
@@ -210,6 +214,11 @@ const AppExpensesRouteRoute = AppExpensesRouteRouteImport.update({
   path: '/expenses',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppEmployeesRouteRoute = AppEmployeesRouteRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppChartOfAccountsRouteRoute = AppChartOfAccountsRouteRouteImport.update({
   id: '/chart-of-accounts',
   path: '/chart-of-accounts',
@@ -269,6 +278,11 @@ const AppExpensesIndexRoute = AppExpensesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppExpensesRouteRoute,
+} as any)
+const AppEmployeesIndexRoute = AppEmployeesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppEmployeesRouteRoute,
 } as any)
 const AppCommunicationIndexRoute = AppCommunicationIndexRouteImport.update({
   id: '/communication/',
@@ -344,6 +358,11 @@ const AppExpensesNewRoute = AppExpensesNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppExpensesRouteRoute,
+} as any)
+const AppEmployeesNewRoute = AppEmployeesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppEmployeesRouteRoute,
 } as any)
 const AppChartOfAccountsNewRoute = AppChartOfAccountsNewRouteImport.update({
   id: '/new',
@@ -521,6 +540,12 @@ const AppExpensesExpenseIdEditRoute =
     path: '/edit',
     getParentRoute: () => AppExpensesExpenseIdRouteRoute,
   } as any)
+const AppEmployeesEmployeeIdEditRoute =
+  AppEmployeesEmployeeIdEditRouteImport.update({
+    id: '/$employeeId/edit',
+    path: '/$employeeId/edit',
+    getParentRoute: () => AppEmployeesRouteRoute,
+  } as any)
 const AppChartOfAccountsAccountIdEditRoute =
   AppChartOfAccountsAccountIdEditRouteImport.update({
     id: '/$accountId/edit',
@@ -657,6 +682,7 @@ export interface FileRoutesByFullPath {
   '/app/bankings': typeof AppBankingsRouteRouteWithChildren
   '/app/bills': typeof AppBillsRouteRouteWithChildren
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
+  '/app/employees': typeof AppEmployeesRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
   '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
@@ -684,6 +710,7 @@ export interface FileRoutesByFullPath {
   '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
   '/app/bills/new': typeof AppBillsNewRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
+  '/app/employees/new': typeof AppEmployeesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
@@ -699,6 +726,7 @@ export interface FileRoutesByFullPath {
   '/app/bills/': typeof AppBillsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/communication/': typeof AppCommunicationIndexRoute
+  '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
@@ -711,6 +739,7 @@ export interface FileRoutesByFullPath {
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
+  '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
   '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
@@ -773,6 +802,7 @@ export interface FileRoutesByTo {
   '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
   '/app/bills/new': typeof AppBillsNewRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
+  '/app/employees/new': typeof AppEmployeesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
@@ -788,6 +818,7 @@ export interface FileRoutesByTo {
   '/app/bills': typeof AppBillsIndexRoute
   '/app/chart-of-accounts': typeof AppChartOfAccountsIndexRoute
   '/app/communication': typeof AppCommunicationIndexRoute
+  '/app/employees': typeof AppEmployeesIndexRoute
   '/app/expenses': typeof AppExpensesIndexRoute
   '/app/financial-years': typeof AppFinancialYearsIndexRoute
   '/app/members': typeof AppMembersIndexRoute
@@ -800,6 +831,7 @@ export interface FileRoutesByTo {
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
+  '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
   '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
@@ -850,6 +882,7 @@ export interface FileRoutesById {
   '/app/bankings': typeof AppBankingsRouteRouteWithChildren
   '/app/bills': typeof AppBillsRouteRouteWithChildren
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
+  '/app/employees': typeof AppEmployeesRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
   '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
@@ -877,6 +910,7 @@ export interface FileRoutesById {
   '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
   '/app/bills/new': typeof AppBillsNewRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
+  '/app/employees/new': typeof AppEmployeesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/members/new': typeof AppMembersNewRoute
@@ -892,6 +926,7 @@ export interface FileRoutesById {
   '/app/bills/': typeof AppBillsIndexRoute
   '/app/chart-of-accounts/': typeof AppChartOfAccountsIndexRoute
   '/app/communication/': typeof AppCommunicationIndexRoute
+  '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
@@ -904,6 +939,7 @@ export interface FileRoutesById {
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
+  '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
   '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
@@ -954,6 +990,7 @@ export interface FileRouteTypes {
     | '/app/bankings'
     | '/app/bills'
     | '/app/chart-of-accounts'
+    | '/app/employees'
     | '/app/expenses'
     | '/app/financial-years'
     | '/app/members'
@@ -981,6 +1018,7 @@ export interface FileRouteTypes {
     | '/app/bankings/reconcilliation'
     | '/app/bills/new'
     | '/app/chart-of-accounts/new'
+    | '/app/employees/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
     | '/app/members/new'
@@ -996,6 +1034,7 @@ export interface FileRouteTypes {
     | '/app/bills/'
     | '/app/chart-of-accounts/'
     | '/app/communication/'
+    | '/app/employees/'
     | '/app/expenses/'
     | '/app/financial-years/'
     | '/app/members/'
@@ -1008,6 +1047,7 @@ export interface FileRouteTypes {
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
+    | '/app/employees/$employeeId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
     | '/app/financial-years/$financialYearId/edit'
@@ -1070,6 +1110,7 @@ export interface FileRouteTypes {
     | '/app/bankings/reconcilliation'
     | '/app/bills/new'
     | '/app/chart-of-accounts/new'
+    | '/app/employees/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
     | '/app/members/new'
@@ -1085,6 +1126,7 @@ export interface FileRouteTypes {
     | '/app/bills'
     | '/app/chart-of-accounts'
     | '/app/communication'
+    | '/app/employees'
     | '/app/expenses'
     | '/app/financial-years'
     | '/app/members'
@@ -1097,6 +1139,7 @@ export interface FileRouteTypes {
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
+    | '/app/employees/$employeeId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
     | '/app/financial-years/$financialYearId/edit'
@@ -1146,6 +1189,7 @@ export interface FileRouteTypes {
     | '/app/bankings'
     | '/app/bills'
     | '/app/chart-of-accounts'
+    | '/app/employees'
     | '/app/expenses'
     | '/app/financial-years'
     | '/app/members'
@@ -1173,6 +1217,7 @@ export interface FileRouteTypes {
     | '/app/bankings/reconcilliation'
     | '/app/bills/new'
     | '/app/chart-of-accounts/new'
+    | '/app/employees/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
     | '/app/members/new'
@@ -1188,6 +1233,7 @@ export interface FileRouteTypes {
     | '/app/bills/'
     | '/app/chart-of-accounts/'
     | '/app/communication/'
+    | '/app/employees/'
     | '/app/expenses/'
     | '/app/financial-years/'
     | '/app/members/'
@@ -1200,6 +1246,7 @@ export interface FileRouteTypes {
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
+    | '/app/employees/$employeeId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
     | '/app/financial-years/$financialYearId/edit'
@@ -1406,6 +1453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExpensesRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/employees': {
+      id: '/app/employees'
+      path: '/employees'
+      fullPath: '/app/employees'
+      preLoaderRoute: typeof AppEmployeesRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/chart-of-accounts': {
       id: '/app/chart-of-accounts'
       path: '/chart-of-accounts'
@@ -1489,6 +1543,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/expenses/'
       preLoaderRoute: typeof AppExpensesIndexRouteImport
       parentRoute: typeof AppExpensesRouteRoute
+    }
+    '/app/employees/': {
+      id: '/app/employees/'
+      path: '/'
+      fullPath: '/app/employees/'
+      preLoaderRoute: typeof AppEmployeesIndexRouteImport
+      parentRoute: typeof AppEmployeesRouteRoute
     }
     '/app/communication/': {
       id: '/app/communication/'
@@ -1594,6 +1655,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/expenses/new'
       preLoaderRoute: typeof AppExpensesNewRouteImport
       parentRoute: typeof AppExpensesRouteRoute
+    }
+    '/app/employees/new': {
+      id: '/app/employees/new'
+      path: '/new'
+      fullPath: '/app/employees/new'
+      preLoaderRoute: typeof AppEmployeesNewRouteImport
+      parentRoute: typeof AppEmployeesRouteRoute
     }
     '/app/chart-of-accounts/new': {
       id: '/app/chart-of-accounts/new'
@@ -1818,6 +1886,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/expenses/$expenseId/edit'
       preLoaderRoute: typeof AppExpensesExpenseIdEditRouteImport
       parentRoute: typeof AppExpensesExpenseIdRouteRoute
+    }
+    '/app/employees/$employeeId/edit': {
+      id: '/app/employees/$employeeId/edit'
+      path: '/$employeeId/edit'
+      fullPath: '/app/employees/$employeeId/edit'
+      preLoaderRoute: typeof AppEmployeesEmployeeIdEditRouteImport
+      parentRoute: typeof AppEmployeesRouteRoute
     }
     '/app/chart-of-accounts/$accountId/edit': {
       id: '/app/chart-of-accounts/$accountId/edit'
@@ -2058,6 +2133,21 @@ const AppChartOfAccountsRouteRouteWithChildren =
     AppChartOfAccountsRouteRouteChildren,
   )
 
+interface AppEmployeesRouteRouteChildren {
+  AppEmployeesNewRoute: typeof AppEmployeesNewRoute
+  AppEmployeesIndexRoute: typeof AppEmployeesIndexRoute
+  AppEmployeesEmployeeIdEditRoute: typeof AppEmployeesEmployeeIdEditRoute
+}
+
+const AppEmployeesRouteRouteChildren: AppEmployeesRouteRouteChildren = {
+  AppEmployeesNewRoute: AppEmployeesNewRoute,
+  AppEmployeesIndexRoute: AppEmployeesIndexRoute,
+  AppEmployeesEmployeeIdEditRoute: AppEmployeesEmployeeIdEditRoute,
+}
+
+const AppEmployeesRouteRouteWithChildren =
+  AppEmployeesRouteRoute._addFileChildren(AppEmployeesRouteRouteChildren)
+
 interface AppExpensesExpenseIdRouteRouteChildren {
   AppExpensesExpenseIdEditRoute: typeof AppExpensesExpenseIdEditRoute
   AppExpensesExpenseIdViewRoute: typeof AppExpensesExpenseIdViewRoute
@@ -2265,6 +2355,7 @@ interface AppRouteRouteChildren {
   AppBankingsRouteRoute: typeof AppBankingsRouteRouteWithChildren
   AppBillsRouteRoute: typeof AppBillsRouteRouteWithChildren
   AppChartOfAccountsRouteRoute: typeof AppChartOfAccountsRouteRouteWithChildren
+  AppEmployeesRouteRoute: typeof AppEmployeesRouteRouteWithChildren
   AppExpensesRouteRoute: typeof AppExpensesRouteRouteWithChildren
   AppFinancialYearsRouteRoute: typeof AppFinancialYearsRouteRouteWithChildren
   AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
@@ -2290,6 +2381,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppBankingsRouteRoute: AppBankingsRouteRouteWithChildren,
   AppBillsRouteRoute: AppBillsRouteRouteWithChildren,
   AppChartOfAccountsRouteRoute: AppChartOfAccountsRouteRouteWithChildren,
+  AppEmployeesRouteRoute: AppEmployeesRouteRouteWithChildren,
   AppExpensesRouteRoute: AppExpensesRouteRouteWithChildren,
   AppFinancialYearsRouteRoute: AppFinancialYearsRouteRouteWithChildren,
   AppMembersRouteRoute: AppMembersRouteRouteWithChildren,

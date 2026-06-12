@@ -1,8 +1,10 @@
 import {
+	bigserial,
 	boolean,
 	index,
 	integer,
 	jsonb,
+	pgEnum,
 	pgTable,
 	text,
 	timestamp,
@@ -11,16 +13,29 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
-import { members } from "@/drizzle/schemas/member";
-import { accessSyncActionEnum, accessSyncStatusEnum } from "./member";
+import {
+	biometricEnrollmentStatusEnum,
+	members,
+} from "@/drizzle/schemas/member";
+import { employees } from "./employees";
+import {
+	accessControlStatusEnum,
+	accessSyncActionEnum,
+	accessSyncStatusEnum,
+} from "./member";
+
+export const biotimePersonTypeEnum = pgEnum("biotime_person_type", [
+	"member",
+	"employee",
+]);
 
 export const accessControlSyncJobs = pgTable(
 	"access_control_sync_jobs",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		memberId: varchar("member_id")
-			.notNull()
-			.references(() => members.id, { onDelete: "cascade" }),
+		memberId: varchar("member_id").references(() => members.id, {
+			onDelete: "cascade",
+		}),
 		action: accessSyncActionEnum("action").notNull(),
 		status: accessSyncStatusEnum("status").notNull().default("pending"),
 		payload: jsonb("payload").notNull(),
@@ -30,6 +45,15 @@ export const accessControlSyncJobs = pgTable(
 		claimedAt: timestamp("claimed_at", { withTimezone: true }),
 		claimedUntil: timestamp("claimed_until", { withTimezone: true }),
 		lastError: text("last_error"),
+		biotimePersonProfileId: uuid("biotime_person_profile_id")
+			.notNull()
+			.references(() => biotimePersonProfiles.id, { onDelete: "cascade" }),
+		personType: biotimePersonTypeEnum("person_type")
+			.notNull()
+			.default("member"),
+		employeeId: varchar("employee_id").references(() => employees.id, {
+			onDelete: "cascade",
+		}),
 
 		createdAt,
 		updatedAt,
@@ -99,3 +123,76 @@ export const accessControlAgents = pgTable(
 		index("idx_access_control_agents_status").on(table.status),
 	],
 );
+
+export const biotimePersonProfiles = pgTable(
+	"biotime_person_profiles",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		personType: biotimePersonTypeEnum("person_type").notNull(),
+		memberId: varchar("member_id").references(() => members.id, {
+			onDelete: "cascade",
+		}),
+		employeeId: varchar("employee_id").references(() => employees.id, {
+			onDelete: "cascade",
+		}),
+		biotimeEmployeeId: integer("biotime_employee_id"),
+		biotimeEmployeeCode: varchar("biotime_employee_code", {
+			length: 50,
+		}).notNull(),
+		biotimeDepartmentId: integer("biotime_department_id").notNull(),
+		authorizedAreaId: integer("authorized_area_id").notNull().default(2),
+		unauthorizedAreaId: integer("unauthorized_area_id").notNull().default(1),
+		currentAreaId: integer("current_area_id"),
+		desiredAccessEnabled: boolean("desired_access_enabled")
+			.notNull()
+			.default(false),
+		accessControlStatus: accessControlStatusEnum("access_control_status")
+			.notNull()
+			.default("not_synced"),
+		biometricEnrollmentStatus: biometricEnrollmentStatusEnum(
+			"biometric_enrollment_status",
+		)
+			.notNull()
+			.default("pending"),
+		faceEnrolled: boolean("face_enrolled").notNull().default(false),
+		fingerprintEnrolled: boolean("fingerprint_enrolled")
+			.notNull()
+			.default(false),
+		biotimeResignId: integer("biotime_resign_id"),
+		lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+		lastSyncAttemptAt: timestamp("last_sync_attempt_at", {
+			withTimezone: true,
+		}),
+		lastSyncError: text("last_sync_error"),
+		lastSyncPayload: jsonb("last_sync_payload"),
+		lastSyncResponse: jsonb("last_sync_response"),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		uniqueIndex("uq_biotime_person_profiles_emp_code").on(
+			table.biotimeEmployeeCode,
+		),
+		uniqueIndex("uq_biotime_person_profiles_biotime_id").on(
+			table.biotimeEmployeeId,
+		),
+		index("idx_biotime_person_profiles_type").on(table.personType),
+		index("idx_biotime_person_profiles_member").on(table.memberId),
+		index("idx_biotime_person_profiles_employee").on(table.employeeId),
+		index("idx_biotime_person_profiles_status").on(table.accessControlStatus),
+	],
+);
+
+export const employeeAttendanceLogs = pgTable("employee_attendance_logs", {
+	id: bigserial("id", { mode: "bigint" }).primaryKey(),
+	employeeId: varchar("employee_id")
+		.notNull()
+		.references(() => employees.id),
+	checkInTime: timestamp("check_in_time", { withTimezone: true }).notNull(),
+	checkOutTime: timestamp("check_out_time", { withTimezone: true }),
+	source: varchar("source", { length: 30 }).default("biotime"),
+	deviceId: varchar("device_id", { length: 100 }),
+	notes: text("notes"),
+	biotimeId: integer("biotime_id").unique(),
+	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});

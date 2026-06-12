@@ -1,0 +1,1 @@
+ALTER TABLE "access_control_sync_jobs" ALTER COLUMN "biotime_person_profile_id" SET NOT NULL;

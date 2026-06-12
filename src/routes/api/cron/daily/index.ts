@@ -16,8 +16,8 @@ import {
 	accessControlSyncJobs,
 	attendanceLogs,
 	bills,
+	biotimePersonProfiles,
 	financialYears,
-	memberAccessProfiles,
 	memberMemberships,
 	members,
 	users,
@@ -126,9 +126,9 @@ async function deactivateInactiveMembers() {
 			memberNo: members.memberNo,
 			firstName: members.firstName,
 			lastName: members.lastName,
-			profileId: memberAccessProfiles.id,
-			biotimeEmployeeId: memberAccessProfiles.biotimeEmployeeId,
-			unauthorizedAreaId: memberAccessProfiles.unauthorizedAreaId,
+			profileId: biotimePersonProfiles.id,
+			biotimeEmployeeId: biotimePersonProfiles.biotimeEmployeeId,
+			unauthorizedAreaId: biotimePersonProfiles.unauthorizedAreaId,
 		})
 		.from(members)
 		.leftJoin(
@@ -136,8 +136,8 @@ async function deactivateInactiveMembers() {
 			eq(members.id, lastAttendanceSubquery.memberId),
 		)
 		.leftJoin(
-			memberAccessProfiles,
-			eq(members.id, memberAccessProfiles.memberId),
+			biotimePersonProfiles,
+			eq(members.id, biotimePersonProfiles.memberId),
 		)
 		.where(
 			and(
@@ -185,13 +185,13 @@ async function deactivateInactiveMembers() {
 			// 3) Update access profile if exists
 			if (member.profileId) {
 				await tx
-					.update(memberAccessProfiles)
+					.update(biotimePersonProfiles)
 					.set({
 						desiredAccessEnabled: false,
 						accessControlStatus: "pending_sync",
 						updatedAt: now,
 					})
-					.where(eq(memberAccessProfiles.id, member.profileId));
+					.where(eq(biotimePersonProfiles.id, member.profileId));
 
 				if (
 					member.biotimeEmployeeId !== null &&
@@ -200,6 +200,8 @@ async function deactivateInactiveMembers() {
 					// 4) Insert access control sync job
 					await tx.insert(accessControlSyncJobs).values({
 						memberId: member.id,
+						biotimePersonProfileId: member.profileId,
+						personType: "member",
 						action: "DISABLE_ACCESS",
 						status: "pending",
 						payload: {
@@ -260,14 +262,14 @@ async function expireMembershipsAndDisableAccess() {
 				.select({
 					memberId: members.id,
 					memberNo: members.memberNo,
-					profileId: memberAccessProfiles.id,
-					biotimeEmployeeId: memberAccessProfiles.biotimeEmployeeId,
-					unauthorizedAreaId: memberAccessProfiles.unauthorizedAreaId,
+					profileId: biotimePersonProfiles.id,
+					biotimeEmployeeId: biotimePersonProfiles.biotimeEmployeeId,
+					unauthorizedAreaId: biotimePersonProfiles.unauthorizedAreaId,
 				})
 				.from(members)
 				.leftJoin(
-					memberAccessProfiles,
-					eq(members.id, memberAccessProfiles.memberId),
+					biotimePersonProfiles,
+					eq(members.id, biotimePersonProfiles.memberId),
 				)
 				.where(eq(members.id, memberId))
 				.limit(1);
@@ -299,22 +301,29 @@ async function expireMembershipsAndDisableAccess() {
 			// 6) Update access profile
 			if (row.profileId) {
 				await tx
-					.update(memberAccessProfiles)
+					.update(biotimePersonProfiles)
 					.set({
 						desiredAccessEnabled: false,
 						accessControlStatus: "pending_sync",
 						lastSyncError: null,
 						updatedAt: now,
 					})
-					.where(eq(memberAccessProfiles.id, row.profileId));
+					.where(
+						and(
+							eq(biotimePersonProfiles.id, row.profileId),
+							eq(biotimePersonProfiles.personType, "member"),
+						),
+					);
 			}
 
 			// 7) Create BioTime disable job
-			if (row.biotimeEmployeeId) {
+			if (row.biotimeEmployeeId && row.profileId) {
 				await tx
 					.insert(accessControlSyncJobs)
 					.values({
 						memberId,
+						biotimePersonProfileId: row.profileId,
+						personType: "member",
 						action: "DISABLE_ACCESS",
 						status: "pending",
 						payload: {
