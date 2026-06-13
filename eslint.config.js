@@ -45,6 +45,7 @@ export default tseslint.config(
           allowConstantExport: true,
         },
       ],
+      "@typescript-eslint/consistent-type-imports": "error",
 
       "@typescript-eslint/no-unused-vars": [
         "warn",
