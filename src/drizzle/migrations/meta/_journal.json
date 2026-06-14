@@ -449,6 +449,13 @@
       "when": 1781251500248,
       "tag": "0063_gifted_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1781285574352,
+      "tag": "0064_handy_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

@@ -116,6 +116,11 @@ export const collapsibleMenuItems = [
 				url: "/app/employees",
 				permission: "employees:view",
 			},
+			{
+				title: "Leave Management",
+				url: "/app/leaves",
+				permission: "leaves:view",
+			},
 		],
 		get permissions(): Permission[] {
 			return this.items.map((item) => item.permission as Permission);

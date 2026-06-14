@@ -27,6 +27,7 @@ import { Route as AppReceiptsRouteRouteImport } from './routes/app/receipts/rout
 import { Route as AppPlansRouteRouteImport } from './routes/app/plans/route'
 import { Route as AppPaymentsRouteRouteImport } from './routes/app/payments/route'
 import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
+import { Route as AppLeavesRouteRouteImport } from './routes/app/leaves/route'
 import { Route as AppFinancialYearsRouteRouteImport } from './routes/app/financial-years/route'
 import { Route as AppExpensesRouteRouteImport } from './routes/app/expenses/route'
 import { Route as AppEmployeesRouteRouteImport } from './routes/app/employees/route'
@@ -40,6 +41,7 @@ import { Route as AppProfileIndexRouteImport } from './routes/app/profile/index'
 import { Route as AppPlansIndexRouteImport } from './routes/app/plans/index'
 import { Route as AppPaymentsIndexRouteImport } from './routes/app/payments/index'
 import { Route as AppMembersIndexRouteImport } from './routes/app/members/index'
+import { Route as AppLeavesIndexRouteImport } from './routes/app/leaves/index'
 import { Route as AppFinancialYearsIndexRouteImport } from './routes/app/financial-years/index'
 import { Route as AppExpensesIndexRouteImport } from './routes/app/expenses/index'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app/employees/index'
@@ -56,6 +58,8 @@ import { Route as AppReceiptsNewRouteImport } from './routes/app/receipts/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
+import { Route as AppLeavesNewRouteImport } from './routes/app/leaves/new'
+import { Route as AppLeavesBalancesRouteImport } from './routes/app/leaves/balances'
 import { Route as AppFinancialYearsNewRouteImport } from './routes/app/financial-years/new'
 import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
 import { Route as AppEmployeesNewRouteImport } from './routes/app/employees/new'
@@ -204,6 +208,11 @@ const AppMembersRouteRoute = AppMembersRouteRouteImport.update({
   path: '/members',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppLeavesRouteRoute = AppLeavesRouteRouteImport.update({
+  id: '/leaves',
+  path: '/leaves',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppFinancialYearsRouteRoute = AppFinancialYearsRouteRouteImport.update({
   id: '/financial-years',
   path: '/financial-years',
@@ -268,6 +277,11 @@ const AppMembersIndexRoute = AppMembersIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppMembersRouteRoute,
+} as any)
+const AppLeavesIndexRoute = AppLeavesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppLeavesRouteRoute,
 } as any)
 const AppFinancialYearsIndexRoute = AppFinancialYearsIndexRouteImport.update({
   id: '/',
@@ -348,6 +362,16 @@ const AppMembersNewRoute = AppMembersNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppMembersRouteRoute,
+} as any)
+const AppLeavesNewRoute = AppLeavesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppLeavesRouteRoute,
+} as any)
+const AppLeavesBalancesRoute = AppLeavesBalancesRouteImport.update({
+  id: '/balances',
+  path: '/balances',
+  getParentRoute: () => AppLeavesRouteRoute,
 } as any)
 const AppFinancialYearsNewRoute = AppFinancialYearsNewRouteImport.update({
   id: '/new',
@@ -685,6 +709,7 @@ export interface FileRoutesByFullPath {
   '/app/employees': typeof AppEmployeesRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
   '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
+  '/app/leaves': typeof AppLeavesRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/payments': typeof AppPaymentsRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
@@ -713,6 +738,8 @@ export interface FileRoutesByFullPath {
   '/app/employees/new': typeof AppEmployeesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
+  '/app/leaves/balances': typeof AppLeavesBalancesRoute
+  '/app/leaves/new': typeof AppLeavesNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
@@ -729,6 +756,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
+  '/app/leaves/': typeof AppLeavesIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
@@ -805,6 +833,8 @@ export interface FileRoutesByTo {
   '/app/employees/new': typeof AppEmployeesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
+  '/app/leaves/balances': typeof AppLeavesBalancesRoute
+  '/app/leaves/new': typeof AppLeavesNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
@@ -821,6 +851,7 @@ export interface FileRoutesByTo {
   '/app/employees': typeof AppEmployeesIndexRoute
   '/app/expenses': typeof AppExpensesIndexRoute
   '/app/financial-years': typeof AppFinancialYearsIndexRoute
+  '/app/leaves': typeof AppLeavesIndexRoute
   '/app/members': typeof AppMembersIndexRoute
   '/app/payments': typeof AppPaymentsIndexRoute
   '/app/plans': typeof AppPlansIndexRoute
@@ -885,6 +916,7 @@ export interface FileRoutesById {
   '/app/employees': typeof AppEmployeesRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
   '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
+  '/app/leaves': typeof AppLeavesRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/payments': typeof AppPaymentsRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
@@ -913,6 +945,8 @@ export interface FileRoutesById {
   '/app/employees/new': typeof AppEmployeesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
+  '/app/leaves/balances': typeof AppLeavesBalancesRoute
+  '/app/leaves/new': typeof AppLeavesNewRoute
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/plans/new': typeof AppPlansNewRoute
@@ -929,6 +963,7 @@ export interface FileRoutesById {
   '/app/employees/': typeof AppEmployeesIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
+  '/app/leaves/': typeof AppLeavesIndexRoute
   '/app/members/': typeof AppMembersIndexRoute
   '/app/payments/': typeof AppPaymentsIndexRoute
   '/app/plans/': typeof AppPlansIndexRoute
@@ -993,6 +1028,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/expenses'
     | '/app/financial-years'
+    | '/app/leaves'
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
@@ -1021,6 +1057,8 @@ export interface FileRouteTypes {
     | '/app/employees/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
+    | '/app/leaves/balances'
+    | '/app/leaves/new'
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/plans/new'
@@ -1037,6 +1075,7 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/expenses/'
     | '/app/financial-years/'
+    | '/app/leaves/'
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
@@ -1113,6 +1152,8 @@ export interface FileRouteTypes {
     | '/app/employees/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
+    | '/app/leaves/balances'
+    | '/app/leaves/new'
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/plans/new'
@@ -1129,6 +1170,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/expenses'
     | '/app/financial-years'
+    | '/app/leaves'
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
@@ -1192,6 +1234,7 @@ export interface FileRouteTypes {
     | '/app/employees'
     | '/app/expenses'
     | '/app/financial-years'
+    | '/app/leaves'
     | '/app/members'
     | '/app/payments'
     | '/app/plans'
@@ -1220,6 +1263,8 @@ export interface FileRouteTypes {
     | '/app/employees/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
+    | '/app/leaves/balances'
+    | '/app/leaves/new'
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/plans/new'
@@ -1236,6 +1281,7 @@ export interface FileRouteTypes {
     | '/app/employees/'
     | '/app/expenses/'
     | '/app/financial-years/'
+    | '/app/leaves/'
     | '/app/members/'
     | '/app/payments/'
     | '/app/plans/'
@@ -1439,6 +1485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMembersRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/leaves': {
+      id: '/app/leaves'
+      path: '/leaves'
+      fullPath: '/app/leaves'
+      preLoaderRoute: typeof AppLeavesRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/financial-years': {
       id: '/app/financial-years'
       path: '/financial-years'
@@ -1529,6 +1582,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/members/'
       preLoaderRoute: typeof AppMembersIndexRouteImport
       parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/leaves/': {
+      id: '/app/leaves/'
+      path: '/'
+      fullPath: '/app/leaves/'
+      preLoaderRoute: typeof AppLeavesIndexRouteImport
+      parentRoute: typeof AppLeavesRouteRoute
     }
     '/app/financial-years/': {
       id: '/app/financial-years/'
@@ -1641,6 +1701,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/members/new'
       preLoaderRoute: typeof AppMembersNewRouteImport
       parentRoute: typeof AppMembersRouteRoute
+    }
+    '/app/leaves/new': {
+      id: '/app/leaves/new'
+      path: '/new'
+      fullPath: '/app/leaves/new'
+      preLoaderRoute: typeof AppLeavesNewRouteImport
+      parentRoute: typeof AppLeavesRouteRoute
+    }
+    '/app/leaves/balances': {
+      id: '/app/leaves/balances'
+      path: '/balances'
+      fullPath: '/app/leaves/balances'
+      preLoaderRoute: typeof AppLeavesBalancesRouteImport
+      parentRoute: typeof AppLeavesRouteRoute
     }
     '/app/financial-years/new': {
       id: '/app/financial-years/new'
@@ -2198,6 +2272,22 @@ const AppFinancialYearsRouteRouteWithChildren =
     AppFinancialYearsRouteRouteChildren,
   )
 
+interface AppLeavesRouteRouteChildren {
+  AppLeavesBalancesRoute: typeof AppLeavesBalancesRoute
+  AppLeavesNewRoute: typeof AppLeavesNewRoute
+  AppLeavesIndexRoute: typeof AppLeavesIndexRoute
+}
+
+const AppLeavesRouteRouteChildren: AppLeavesRouteRouteChildren = {
+  AppLeavesBalancesRoute: AppLeavesBalancesRoute,
+  AppLeavesNewRoute: AppLeavesNewRoute,
+  AppLeavesIndexRoute: AppLeavesIndexRoute,
+}
+
+const AppLeavesRouteRouteWithChildren = AppLeavesRouteRoute._addFileChildren(
+  AppLeavesRouteRouteChildren,
+)
+
 interface AppMembersRouteRouteChildren {
   AppMembersNewRoute: typeof AppMembersNewRoute
   AppMembersIndexRoute: typeof AppMembersIndexRoute
@@ -2358,6 +2448,7 @@ interface AppRouteRouteChildren {
   AppEmployeesRouteRoute: typeof AppEmployeesRouteRouteWithChildren
   AppExpensesRouteRoute: typeof AppExpensesRouteRouteWithChildren
   AppFinancialYearsRouteRoute: typeof AppFinancialYearsRouteRouteWithChildren
+  AppLeavesRouteRoute: typeof AppLeavesRouteRouteWithChildren
   AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
   AppPaymentsRouteRoute: typeof AppPaymentsRouteRouteWithChildren
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
@@ -2384,6 +2475,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppEmployeesRouteRoute: AppEmployeesRouteRouteWithChildren,
   AppExpensesRouteRoute: AppExpensesRouteRouteWithChildren,
   AppFinancialYearsRouteRoute: AppFinancialYearsRouteRouteWithChildren,
+  AppLeavesRouteRoute: AppLeavesRouteRouteWithChildren,
   AppMembersRouteRoute: AppMembersRouteRouteWithChildren,
   AppPaymentsRouteRoute: AppPaymentsRouteRouteWithChildren,
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,

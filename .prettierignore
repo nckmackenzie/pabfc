@@ -1,0 +1,8 @@
+node_modules
+dist
+build
+.vinxi
+.output
+.tanstack
+routeTree.gen.ts
+**/routeTree.gen.ts
