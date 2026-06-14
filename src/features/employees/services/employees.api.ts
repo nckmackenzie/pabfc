@@ -375,11 +375,13 @@ async function createEmployee({
         };
       });
 
-      const { initialiseLeaveBalancesForEmployeeRows } =
+      const { initialiseLeaveBalancesForEmployee } =
         await import("@/features/leaves/services/leave.api");
-      const leaveBalanceResult = await initialiseLeaveBalancesForEmployeeRows({
-        employeeId: employeeResult.employeeId,
-        leaveYear: new Date().getFullYear(),
+      const leaveBalanceResult = await initialiseLeaveBalancesForEmployee({
+        data: {
+          employeeId: employeeResult.employeeId,
+          leaveYear: new Date().getFullYear(),
+        },
       });
 
       if (!leaveBalanceResult.success) {

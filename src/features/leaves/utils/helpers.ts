@@ -6,9 +6,9 @@ import {
   getExistingOneOffRequest,
   getHolidayDatesInRange,
   getOverlappingRequests,
-  LeaveBalanceRow,
-  LeaveEntitlementRow,
-  LeaveRequestPayload,
+  type LeaveBalanceRow,
+  type LeaveEntitlementRow,
+  type LeaveRequestPayload,
 } from "../services/leave.api";
 import { failure, success } from "@/lib/result";
 import { dateFormat } from "@/lib/helpers";
@@ -24,7 +24,7 @@ import {
   startOfDay,
   startOfYear,
 } from "date-fns";
-import { LeaveType } from "@/drizzle/schema";
+import type { LeaveType } from "@/drizzle/schema";
 
 type NumericValue = string | number | Big | null | undefined;
 
