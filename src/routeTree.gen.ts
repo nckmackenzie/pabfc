@@ -25,6 +25,7 @@ import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
 import { Route as AppSuppliersRouteRouteImport } from './routes/app/suppliers/route'
 import { Route as AppReceiptsRouteRouteImport } from './routes/app/receipts/route'
 import { Route as AppPlansRouteRouteImport } from './routes/app/plans/route'
+import { Route as AppPayrollRouteRouteImport } from './routes/app/payroll/route'
 import { Route as AppPaymentsRouteRouteImport } from './routes/app/payments/route'
 import { Route as AppMembersRouteRouteImport } from './routes/app/members/route'
 import { Route as AppLeavesRouteRouteImport } from './routes/app/leaves/route'
@@ -72,12 +73,14 @@ import { Route as ApiCommunicationsGetMembersRouteImport } from './routes/api/co
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesRouteRouteImport } from './routes/app/users/roles.route'
 import { Route as AppReportsFinanceRouteRouteImport } from './routes/app/reports/finance/route'
+import { Route as AppPayrollSalaryStructuresRouteRouteImport } from './routes/app/payroll/salary-structures/route'
 import { Route as AppExpensesExpenseIdRouteRouteImport } from './routes/app/expenses/$expenseId/route'
 import { Route as AppBankingsPostingsRouteRouteImport } from './routes/app/bankings/postings/route'
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
 import { Route as AppReportsMembersIndexRouteImport } from './routes/app/reports/members/index'
 import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports/finance/index'
 import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
+import { Route as AppPayrollSalaryStructuresIndexRouteImport } from './routes/app/payroll/salary-structures/index'
 import { Route as AppBankingsPostingsIndexRouteImport } from './routes/app/bankings/postings/index'
 import { Route as ApiCronDailyIndexRouteImport } from './routes/api/cron/daily/index'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
@@ -88,6 +91,7 @@ import { Route as AppReceiptsReceiptIdDetailsRouteImport } from './routes/app/re
 import { Route as AppPlansPlanIdViewMembersRouteImport } from './routes/app/plans/$planId/view-members'
 import { Route as AppPlansPlanIdRevenueRouteImport } from './routes/app/plans/$planId/revenue'
 import { Route as AppPlansPlanIdEditRouteImport } from './routes/app/plans/$planId/edit'
+import { Route as AppPayrollSalaryStructuresNewRouteImport } from './routes/app/payroll/salary-structures/new'
 import { Route as AppPaymentsPaymentIdEditRouteImport } from './routes/app/payments/$paymentId/edit'
 import { Route as AppPaymentsPaymentIdDetailsRouteImport } from './routes/app/payments/$paymentId/details'
 import { Route as AppMembersMemberIdProfileRouteImport } from './routes/app/members/$memberId.profile'
@@ -109,6 +113,8 @@ import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/
 import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes/app/reports/finance/balance-sheet/index'
 import { Route as ApiAccessControlAgentHeartbeatIndexRouteImport } from './routes/api/access-control/agent/heartbeat/index'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
+import { Route as AppPayrollSalaryStructuresStructureStructureIdRouteImport } from './routes/app/payroll/salary-structures/structure.$structureId'
+import { Route as AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport } from './routes/app/payroll/salary-structures/employee.$employeeId'
 import { Route as AppBankingsPostingsPostingIdEditRouteImport } from './routes/app/bankings/postings/$postingId/edit'
 import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/payments/pabfc/stk/callback'
 import { Route as ApiPaymentsPabfcC2bValidateRouteImport } from './routes/api/payments/pabfc/c2b/validate'
@@ -196,6 +202,11 @@ const AppReceiptsRouteRoute = AppReceiptsRouteRouteImport.update({
 const AppPlansRouteRoute = AppPlansRouteRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppPayrollRouteRoute = AppPayrollRouteRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppPaymentsRouteRoute = AppPaymentsRouteRouteImport.update({
@@ -436,6 +447,12 @@ const AppReportsFinanceRouteRoute = AppReportsFinanceRouteRouteImport.update({
   path: '/reports/finance',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppPayrollSalaryStructuresRouteRoute =
+  AppPayrollSalaryStructuresRouteRouteImport.update({
+    id: '/salary-structures',
+    path: '/salary-structures',
+    getParentRoute: () => AppPayrollRouteRoute,
+  } as any)
 const AppExpensesExpenseIdRouteRoute =
   AppExpensesExpenseIdRouteRouteImport.update({
     id: '/$expenseId',
@@ -468,6 +485,12 @@ const AppReportsAttendanceIndexRoute =
     id: '/reports/attendance/',
     path: '/reports/attendance/',
     getParentRoute: () => AppRouteRoute,
+  } as any)
+const AppPayrollSalaryStructuresIndexRoute =
+  AppPayrollSalaryStructuresIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppPayrollSalaryStructuresRouteRoute,
   } as any)
 const AppBankingsPostingsIndexRoute =
   AppBankingsPostingsIndexRouteImport.update({
@@ -523,6 +546,12 @@ const AppPlansPlanIdEditRoute = AppPlansPlanIdEditRouteImport.update({
   path: '/$planId/edit',
   getParentRoute: () => AppPlansRouteRoute,
 } as any)
+const AppPayrollSalaryStructuresNewRoute =
+  AppPayrollSalaryStructuresNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AppPayrollSalaryStructuresRouteRoute,
+  } as any)
 const AppPaymentsPaymentIdEditRoute =
   AppPaymentsPaymentIdEditRouteImport.update({
     id: '/$paymentId/edit',
@@ -645,6 +674,18 @@ const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   path: '/$roleId/edit',
   getParentRoute: () => AppUsersRolesRouteRoute,
 } as any)
+const AppPayrollSalaryStructuresStructureStructureIdRoute =
+  AppPayrollSalaryStructuresStructureStructureIdRouteImport.update({
+    id: '/structure/$structureId',
+    path: '/structure/$structureId',
+    getParentRoute: () => AppPayrollSalaryStructuresRouteRoute,
+  } as any)
+const AppPayrollSalaryStructuresEmployeeEmployeeIdRoute =
+  AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport.update({
+    id: '/employee/$employeeId',
+    path: '/employee/$employeeId',
+    getParentRoute: () => AppPayrollSalaryStructuresRouteRoute,
+  } as any)
 const AppBankingsPostingsPostingIdEditRoute =
   AppBankingsPostingsPostingIdEditRouteImport.update({
     id: '/$postingId/edit',
@@ -712,6 +753,7 @@ export interface FileRoutesByFullPath {
   '/app/leaves': typeof AppLeavesRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/payments': typeof AppPaymentsRouteRouteWithChildren
+  '/app/payroll': typeof AppPayrollRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
   '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
   '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
@@ -726,6 +768,7 @@ export interface FileRoutesByFullPath {
   '/member/login': typeof MemberLoginRoute
   '/app/bankings/postings': typeof AppBankingsPostingsRouteRouteWithChildren
   '/app/expenses/$expenseId': typeof AppExpensesExpenseIdRouteRouteWithChildren
+  '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresRouteRouteWithChildren
   '/app/reports/finance': typeof AppReportsFinanceRouteRouteWithChildren
   '/app/users/roles': typeof AppUsersRolesRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -775,6 +818,7 @@ export interface FileRoutesByFullPath {
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
   '/app/payments/$paymentId/edit': typeof AppPaymentsPaymentIdEditRoute
+  '/app/payroll/salary-structures/new': typeof AppPayrollSalaryStructuresNewRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
@@ -785,6 +829,7 @@ export interface FileRoutesByFullPath {
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
+  '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
   '/app/reports/members/': typeof AppReportsMembersIndexRoute
@@ -793,6 +838,8 @@ export interface FileRoutesByFullPath {
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
+  '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
+  '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
@@ -814,6 +861,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteRouteWithChildren
   '/member': typeof MemberRouteRouteWithChildren
   '/app/bankings': typeof AppBankingsRouteRouteWithChildren
+  '/app/payroll': typeof AppPayrollRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -870,6 +918,7 @@ export interface FileRoutesByTo {
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
   '/app/payments/$paymentId/edit': typeof AppPaymentsPaymentIdEditRoute
+  '/app/payroll/salary-structures/new': typeof AppPayrollSalaryStructuresNewRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
@@ -880,6 +929,7 @@ export interface FileRoutesByTo {
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/api/cron/daily': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings': typeof AppBankingsPostingsIndexRoute
+  '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance': typeof AppReportsFinanceIndexRoute
   '/app/reports/members': typeof AppReportsMembersIndexRoute
@@ -888,6 +938,8 @@ export interface FileRoutesByTo {
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
+  '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
+  '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
@@ -919,6 +971,7 @@ export interface FileRoutesById {
   '/app/leaves': typeof AppLeavesRouteRouteWithChildren
   '/app/members': typeof AppMembersRouteRouteWithChildren
   '/app/payments': typeof AppPaymentsRouteRouteWithChildren
+  '/app/payroll': typeof AppPayrollRouteRouteWithChildren
   '/app/plans': typeof AppPlansRouteRouteWithChildren
   '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
   '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
@@ -933,6 +986,7 @@ export interface FileRoutesById {
   '/member/login': typeof MemberLoginRoute
   '/app/bankings/postings': typeof AppBankingsPostingsRouteRouteWithChildren
   '/app/expenses/$expenseId': typeof AppExpensesExpenseIdRouteRouteWithChildren
+  '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresRouteRouteWithChildren
   '/app/reports/finance': typeof AppReportsFinanceRouteRouteWithChildren
   '/app/users/roles': typeof AppUsersRolesRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -982,6 +1036,7 @@ export interface FileRoutesById {
   '/app/members/$memberId/profile': typeof AppMembersMemberIdProfileRoute
   '/app/payments/$paymentId/details': typeof AppPaymentsPaymentIdDetailsRoute
   '/app/payments/$paymentId/edit': typeof AppPaymentsPaymentIdEditRoute
+  '/app/payroll/salary-structures/new': typeof AppPayrollSalaryStructuresNewRoute
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
@@ -992,6 +1047,7 @@ export interface FileRoutesById {
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
+  '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
   '/app/reports/members/': typeof AppReportsMembersIndexRoute
@@ -1000,6 +1056,8 @@ export interface FileRoutesById {
   '/api/payments/pabfc/c2b/validate': typeof ApiPaymentsPabfcC2bValidateRoute
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
+  '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
+  '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
@@ -1031,6 +1089,7 @@ export interface FileRouteTypes {
     | '/app/leaves'
     | '/app/members'
     | '/app/payments'
+    | '/app/payroll'
     | '/app/plans'
     | '/app/receipts'
     | '/app/suppliers'
@@ -1045,6 +1104,7 @@ export interface FileRouteTypes {
     | '/member/login'
     | '/app/bankings/postings'
     | '/app/expenses/$expenseId'
+    | '/app/payroll/salary-structures'
     | '/app/reports/finance'
     | '/app/users/roles'
     | '/api/auth/$'
@@ -1094,6 +1154,7 @@ export interface FileRouteTypes {
     | '/app/members/$memberId/profile'
     | '/app/payments/$paymentId/details'
     | '/app/payments/$paymentId/edit'
+    | '/app/payroll/salary-structures/new'
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
@@ -1104,6 +1165,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/new'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
+    | '/app/payroll/salary-structures/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
     | '/app/reports/members/'
@@ -1112,6 +1174,8 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
+    | '/app/payroll/salary-structures/employee/$employeeId'
+    | '/app/payroll/salary-structures/structure/$structureId'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
     | '/app/reports/finance/balance-sheet/'
@@ -1133,6 +1197,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/member'
     | '/app/bankings'
+    | '/app/payroll'
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
@@ -1189,6 +1254,7 @@ export interface FileRouteTypes {
     | '/app/members/$memberId/profile'
     | '/app/payments/$paymentId/details'
     | '/app/payments/$paymentId/edit'
+    | '/app/payroll/salary-structures/new'
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
@@ -1199,6 +1265,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/new'
     | '/api/cron/daily'
     | '/app/bankings/postings'
+    | '/app/payroll/salary-structures'
     | '/app/reports/attendance'
     | '/app/reports/finance'
     | '/app/reports/members'
@@ -1207,6 +1274,8 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
+    | '/app/payroll/salary-structures/employee/$employeeId'
+    | '/app/payroll/salary-structures/structure/$structureId'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat'
     | '/app/reports/finance/balance-sheet'
@@ -1237,6 +1306,7 @@ export interface FileRouteTypes {
     | '/app/leaves'
     | '/app/members'
     | '/app/payments'
+    | '/app/payroll'
     | '/app/plans'
     | '/app/receipts'
     | '/app/suppliers'
@@ -1251,6 +1321,7 @@ export interface FileRouteTypes {
     | '/member/login'
     | '/app/bankings/postings'
     | '/app/expenses/$expenseId'
+    | '/app/payroll/salary-structures'
     | '/app/reports/finance'
     | '/app/users/roles'
     | '/api/auth/$'
@@ -1300,6 +1371,7 @@ export interface FileRouteTypes {
     | '/app/members/$memberId/profile'
     | '/app/payments/$paymentId/details'
     | '/app/payments/$paymentId/edit'
+    | '/app/payroll/salary-structures/new'
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
@@ -1310,6 +1382,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/new'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
+    | '/app/payroll/salary-structures/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
     | '/app/reports/members/'
@@ -1318,6 +1391,8 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/c2b/validate'
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
+    | '/app/payroll/salary-structures/employee/$employeeId'
+    | '/app/payroll/salary-structures/structure/$structureId'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
     | '/app/reports/finance/balance-sheet/'
@@ -1469,6 +1544,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/app/plans'
       preLoaderRoute: typeof AppPlansRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/payroll': {
+      id: '/app/payroll'
+      path: '/payroll'
+      fullPath: '/app/payroll'
+      preLoaderRoute: typeof AppPayrollRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/payments': {
@@ -1800,6 +1882,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsFinanceRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/payroll/salary-structures': {
+      id: '/app/payroll/salary-structures'
+      path: '/salary-structures'
+      fullPath: '/app/payroll/salary-structures'
+      preLoaderRoute: typeof AppPayrollSalaryStructuresRouteRouteImport
+      parentRoute: typeof AppPayrollRouteRoute
+    }
     '/app/expenses/$expenseId': {
       id: '/app/expenses/$expenseId'
       path: '/$expenseId'
@@ -1841,6 +1930,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/reports/attendance/'
       preLoaderRoute: typeof AppReportsAttendanceIndexRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/app/payroll/salary-structures/': {
+      id: '/app/payroll/salary-structures/'
+      path: '/'
+      fullPath: '/app/payroll/salary-structures/'
+      preLoaderRoute: typeof AppPayrollSalaryStructuresIndexRouteImport
+      parentRoute: typeof AppPayrollSalaryStructuresRouteRoute
     }
     '/app/bankings/postings/': {
       id: '/app/bankings/postings/'
@@ -1911,6 +2007,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/plans/$planId/edit'
       preLoaderRoute: typeof AppPlansPlanIdEditRouteImport
       parentRoute: typeof AppPlansRouteRoute
+    }
+    '/app/payroll/salary-structures/new': {
+      id: '/app/payroll/salary-structures/new'
+      path: '/new'
+      fullPath: '/app/payroll/salary-structures/new'
+      preLoaderRoute: typeof AppPayrollSalaryStructuresNewRouteImport
+      parentRoute: typeof AppPayrollSalaryStructuresRouteRoute
     }
     '/app/payments/$paymentId/edit': {
       id: '/app/payments/$paymentId/edit'
@@ -2058,6 +2161,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/users/roles/$roleId/edit'
       preLoaderRoute: typeof AppUsersRolesRoleIdEditRouteImport
       parentRoute: typeof AppUsersRolesRouteRoute
+    }
+    '/app/payroll/salary-structures/structure/$structureId': {
+      id: '/app/payroll/salary-structures/structure/$structureId'
+      path: '/structure/$structureId'
+      fullPath: '/app/payroll/salary-structures/structure/$structureId'
+      preLoaderRoute: typeof AppPayrollSalaryStructuresStructureStructureIdRouteImport
+      parentRoute: typeof AppPayrollSalaryStructuresRouteRoute
+    }
+    '/app/payroll/salary-structures/employee/$employeeId': {
+      id: '/app/payroll/salary-structures/employee/$employeeId'
+      path: '/employee/$employeeId'
+      fullPath: '/app/payroll/salary-structures/employee/$employeeId'
+      preLoaderRoute: typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport
+      parentRoute: typeof AppPayrollSalaryStructuresRouteRoute
     }
     '/app/bankings/postings/$postingId/edit': {
       id: '/app/bankings/postings/$postingId/edit'
@@ -2323,6 +2440,41 @@ const AppPaymentsRouteRouteChildren: AppPaymentsRouteRouteChildren = {
 const AppPaymentsRouteRouteWithChildren =
   AppPaymentsRouteRoute._addFileChildren(AppPaymentsRouteRouteChildren)
 
+interface AppPayrollSalaryStructuresRouteRouteChildren {
+  AppPayrollSalaryStructuresNewRoute: typeof AppPayrollSalaryStructuresNewRoute
+  AppPayrollSalaryStructuresIndexRoute: typeof AppPayrollSalaryStructuresIndexRoute
+  AppPayrollSalaryStructuresEmployeeEmployeeIdRoute: typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
+  AppPayrollSalaryStructuresStructureStructureIdRoute: typeof AppPayrollSalaryStructuresStructureStructureIdRoute
+}
+
+const AppPayrollSalaryStructuresRouteRouteChildren: AppPayrollSalaryStructuresRouteRouteChildren =
+  {
+    AppPayrollSalaryStructuresNewRoute: AppPayrollSalaryStructuresNewRoute,
+    AppPayrollSalaryStructuresIndexRoute: AppPayrollSalaryStructuresIndexRoute,
+    AppPayrollSalaryStructuresEmployeeEmployeeIdRoute:
+      AppPayrollSalaryStructuresEmployeeEmployeeIdRoute,
+    AppPayrollSalaryStructuresStructureStructureIdRoute:
+      AppPayrollSalaryStructuresStructureStructureIdRoute,
+  }
+
+const AppPayrollSalaryStructuresRouteRouteWithChildren =
+  AppPayrollSalaryStructuresRouteRoute._addFileChildren(
+    AppPayrollSalaryStructuresRouteRouteChildren,
+  )
+
+interface AppPayrollRouteRouteChildren {
+  AppPayrollSalaryStructuresRouteRoute: typeof AppPayrollSalaryStructuresRouteRouteWithChildren
+}
+
+const AppPayrollRouteRouteChildren: AppPayrollRouteRouteChildren = {
+  AppPayrollSalaryStructuresRouteRoute:
+    AppPayrollSalaryStructuresRouteRouteWithChildren,
+}
+
+const AppPayrollRouteRouteWithChildren = AppPayrollRouteRoute._addFileChildren(
+  AppPayrollRouteRouteChildren,
+)
+
 interface AppPlansRouteRouteChildren {
   AppPlansNewRoute: typeof AppPlansNewRoute
   AppPlansIndexRoute: typeof AppPlansIndexRoute
@@ -2451,6 +2603,7 @@ interface AppRouteRouteChildren {
   AppLeavesRouteRoute: typeof AppLeavesRouteRouteWithChildren
   AppMembersRouteRoute: typeof AppMembersRouteRouteWithChildren
   AppPaymentsRouteRoute: typeof AppPaymentsRouteRouteWithChildren
+  AppPayrollRouteRoute: typeof AppPayrollRouteRouteWithChildren
   AppPlansRouteRoute: typeof AppPlansRouteRouteWithChildren
   AppReceiptsRouteRoute: typeof AppReceiptsRouteRouteWithChildren
   AppSuppliersRouteRoute: typeof AppSuppliersRouteRouteWithChildren
@@ -2478,6 +2631,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppLeavesRouteRoute: AppLeavesRouteRouteWithChildren,
   AppMembersRouteRoute: AppMembersRouteRouteWithChildren,
   AppPaymentsRouteRoute: AppPaymentsRouteRouteWithChildren,
+  AppPayrollRouteRoute: AppPayrollRouteRouteWithChildren,
   AppPlansRouteRoute: AppPlansRouteRouteWithChildren,
   AppReceiptsRouteRoute: AppReceiptsRouteRouteWithChildren,
   AppSuppliersRouteRoute: AppSuppliersRouteRouteWithChildren,

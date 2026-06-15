@@ -121,6 +121,11 @@ export const collapsibleMenuItems = [
 				url: "/app/leaves",
 				permission: "leaves:view",
 			},
+			{
+				title: "Salary Structures",
+				url: "/app/payroll/salary-structures",
+				permission: "salary-structures:view",
+			},
 		],
 		get permissions(): Permission[] {
 			return this.items.map((item) => item.permission as Permission);

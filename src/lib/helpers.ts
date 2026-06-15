@@ -3,17 +3,14 @@
 import { format } from "date-fns";
 import type z from "zod";
 import type { DiscountType, VatType } from "@/drizzle/schema";
-import type {
-	SchemaValidationFailure,
-	SchemaValidationSuccess,
-} from "@/types/index.types";
+import type { SchemaValidationFailure, SchemaValidationSuccess } from "@/types/index.types";
 
 type DateRangeString = { from: string; to: string };
 type DateRangeDate = { from: Date; to: Date };
 
 export const validateSchema = <T>(
 	values: unknown,
-	schema: z.ZodSchema<T>,
+	schema: z.ZodSchema<T>
 ): SchemaValidationFailure | SchemaValidationSuccess<T> => {
 	const result = schema.safeParse(values);
 
@@ -30,28 +27,11 @@ export const validateSchema = <T>(
 	} satisfies SchemaValidationSuccess<T>;
 };
 
-export function hasAtLeastOneDefinedValue(
-	obj: Record<string, any> | null,
-): boolean {
-	if (!obj || typeof obj !== "object") return false;
-
-	return Object.values(obj).some(
-		(value) =>
-			value !== undefined &&
-			value !== null &&
-			value !== "" &&
-			!(typeof value === "number" && Number.isNaN(value)),
-	);
-}
-
-export const nonEmptyObjectRefinement = (obj: Record<string, any> | null) =>
-	hasAtLeastOneDefinedValue(obj);
-
 export const currencyFormatter = (
 	value: string | number,
 	isCurrency = true,
 	compact?: boolean,
-	replaceZeroNumbers = false,
+	replaceZeroNumbers = false
 ) => {
 	const numberValue = typeof value === "string" ? parseFloat(value) : value;
 	const formatted = new Intl.NumberFormat("en-KE", {
@@ -75,7 +55,7 @@ export const currencyFormatter = (
 
 export const dateFormat = (
 	date: Date | string,
-	formattingType: "regular" | "reporting" | "long" = "regular",
+	formattingType: "regular" | "reporting" | "long" = "regular"
 ) => {
 	if (formattingType === "reporting") {
 		return format(new Date(date), "dd/MM/yyyy");
@@ -88,7 +68,7 @@ export const dateFormat = (
 export const discountCalculator = (
 	discountType: DiscountType,
 	discountValue: number,
-	itemsTotal: number,
+	itemsTotal: number
 ) => {
 	let discountAmount = 0;
 
@@ -106,11 +86,7 @@ export const discountCalculator = (
 	return discountAmount;
 };
 
-export const taxCalculator = (
-	subTotal: number,
-	taxType: VatType,
-	taxRate = 16,
-) => {
+export const taxCalculator = (subTotal: number, taxType: VatType, taxRate = 16) => {
 	switch (taxType) {
 		case "none":
 			return {
@@ -137,26 +113,17 @@ export const taxCalculator = (
 	}
 };
 
-export function internationalizePhoneNumber(
-	phoneNumber: string,
-	withPlus = false,
-) {
+export function internationalizePhoneNumber(phoneNumber: string, withPlus = false) {
 	if (phoneNumber.startsWith("+")) {
 		return phoneNumber;
 	}
 	if (phoneNumber.startsWith("0")) {
-		return withPlus
-			? `+254${phoneNumber.slice(1)}`
-			: `254${phoneNumber.slice(1)}`;
+		return withPlus ? `+254${phoneNumber.slice(1)}` : `254${phoneNumber.slice(1)}`;
 	}
 	return phoneNumber;
 }
 
-export function generateFullPaymentInvoiceNo(
-	paymentNo: number,
-	prefix?: string,
-	padding?: number,
-) {
+export function generateFullPaymentInvoiceNo(paymentNo: number, prefix?: string, padding?: number) {
 	const paddedPaymentNo = padding
 		? paymentNo.toString().padStart(padding, "0")
 		: paymentNo.toString();
@@ -174,17 +141,17 @@ export function generateFullPaymentInvoiceNo(
 export function normalizeDateRange(
 	from: string | Date,
 	to: string | Date,
-	returnAsDate: true,
+	returnAsDate: true
 ): DateRangeDate;
 export function normalizeDateRange(
 	from: string | Date,
 	to: string | Date,
-	returnAsDate?: false,
+	returnAsDate?: false
 ): DateRangeString;
 export function normalizeDateRange(
 	from: string | Date,
 	to: string | Date,
-	returnAsDate = false,
+	returnAsDate = false
 ): DateRangeString | DateRangeDate {
 	const processDate = (date: string | Date, type: "from" | "to") => {
 		const d = new Date(date);
@@ -236,9 +203,7 @@ export function percentageChangeCalculator(current: number, previous: number) {
 }
 
 export function percentage(partialValue: number, totalValue: number) {
-	return Number.isNaN((100 * partialValue) / totalValue)
-		? 0
-		: (100 * partialValue) / totalValue;
+	return Number.isNaN((100 * partialValue) / totalValue) ? 0 : (100 * partialValue) / totalValue;
 }
 
 export const toNumber = (value: unknown) => {
@@ -252,13 +217,7 @@ export function normalizeText(value: string | null | undefined): string | null {
 	return trimmed === "" ? null : trimmed;
 }
 
-export const seo = ({
-	title,
-	description,
-}: {
-	title: string;
-	description?: string;
-}) => {
+export const seo = ({ title, description }: { title: string; description?: string }) => {
 	const tags = [
 		{ title: `${title} / Prime Age Beauty & Fitness Center` },
 		{ name: "description", content: description },

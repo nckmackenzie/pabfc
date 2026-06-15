@@ -13,4 +13,5 @@ export * from "@/drizzle/schemas/settings";
 export * from "@/drizzle/schemas/sms";
 export * from "@/drizzle/schemas/employees";
 export * from "@/drizzle/schemas/leave";
+export * from "@/drizzle/schemas/payroll";
 
