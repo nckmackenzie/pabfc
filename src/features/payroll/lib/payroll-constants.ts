@@ -20,8 +20,6 @@ export const SALARY_STRUCTURE_METADATA_FIELDS = [
 	"notes",
 	"pensionFundName",
 	"otherAllowancesDescription",
-	"hasHelbLoan",
-	"helbMonthlyDeduction",
 ] as const;
 
 export const SALARY_STRUCTURE_FINANCIAL_FIELDS = [

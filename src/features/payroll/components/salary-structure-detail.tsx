@@ -21,8 +21,6 @@ type MetadataFormValues = {
 	notes: string | null;
 	pensionFundName: string | null;
 	otherAllowancesDescription: string | null;
-	hasHelbLoan: boolean;
-	helbMonthlyDeduction: number;
 };
 
 export function SalaryStructureDetail({
@@ -47,8 +45,6 @@ export function SalaryStructureDetail({
 						notes: data.notes,
 						pensionFundName: data.pensionFundName,
 						otherAllowancesDescription: data.otherAllowancesDescription,
-						hasHelbLoan: data.hasHelbLoan,
-						helbMonthlyDeduction: data.helbMonthlyDeduction,
 					},
 				},
 			}),
@@ -65,8 +61,6 @@ export function SalaryStructureDetail({
 			notes: structure.notes,
 			pensionFundName: structure.pensionFundName,
 			otherAllowancesDescription: structure.otherAllowancesDescription,
-			hasHelbLoan: structure.hasHelbLoan,
-			helbMonthlyDeduction: Number(structure.helbMonthlyDeduction ?? 0),
 		} satisfies MetadataFormValues,
 		onSubmit: ({ value }) => metadataMutation.mutate(value),
 	});
@@ -101,7 +95,7 @@ export function SalaryStructureDetail({
 	const deactivateForm = useAppForm({
 		defaultValues: {
 			id: String(structure.id),
-			effectiveTo: structure.effectiveTo ?? new Date().toISOString().slice(0, 10),
+			effectiveTo: structure.effectiveTo ?? dateFormat(new Date()),
 		},
 		onSubmit: ({ value }) => deactivateMutation.mutate(value.effectiveTo),
 	});
@@ -217,14 +211,6 @@ export function SalaryStructureDetail({
 							</metadataForm.AppField>
 							<metadataForm.AppField name="otherAllowancesDescription">
 								{(field) => <field.Textarea label="Other Allowances Description" rows={3} />}
-							</metadataForm.AppField>
-							<metadataForm.AppField name="hasHelbLoan">
-								{(field) => <field.Switch label="Has HELB Loan" />}
-							</metadataForm.AppField>
-							<metadataForm.AppField name="helbMonthlyDeduction">
-								{(field) => (
-									<field.Input label="HELB Deduction" type="number" min={0} step="0.01" />
-								)}
 							</metadataForm.AppField>
 							<metadataForm.AppForm>
 								<metadataForm.SubmitButton

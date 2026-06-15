@@ -50,6 +50,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { dateSchema } from "@/lib/schema-rules";
 
 type SalaryStructureRecord = typeof salaryStructures.$inferSelect;
 type SalaryStructureCreatePayload = z.infer<typeof salaryStructureCreateRequestSchema>;
@@ -234,6 +235,38 @@ async function getCurrentActiveStructure(
 	return getActiveStructureForPeriod(employeeId, new Date().toISOString().slice(0, 10));
 }
 
+async function getActiveStructuresForEmployeesForPeriod(employeeIds: string[], periodDate: string) {
+	if (!employeeIds.length) {
+		return {};
+	}
+
+	const structures = await db.query.salaryStructures.findMany({
+		where: and(
+			inArray(salaryStructures.employeeId, employeeIds),
+			lte(salaryStructures.effectiveFrom, periodDate),
+			or(isNull(salaryStructures.effectiveTo), gte(salaryStructures.effectiveTo, periodDate))
+		),
+		orderBy: [
+			asc(salaryStructures.employeeId),
+			desc(salaryStructures.effectiveFrom),
+			desc(salaryStructures.id),
+		],
+	});
+
+	const structuresByEmployeeId: Record<string, SalaryStructureWithComputedComponents> = {};
+
+	for (const structure of structures) {
+		if (!structuresByEmployeeId[structure.employeeId]) {
+			structuresByEmployeeId[structure.employeeId] = {
+				...structure,
+				computedComponents: computeGrossPayComponents(structure),
+			};
+		}
+	}
+
+	return structuresByEmployeeId;
+}
+
 async function createSalaryStructure({
 	payload,
 	createdBy,
@@ -400,21 +433,6 @@ async function updateSalaryStructure({
 	}
 
 	const metadataPayload = pickSalaryStructureMetadataPayload(payload);
-	const hasHelbLoan =
-		typeof metadataPayload.hasHelbLoan === "boolean"
-			? metadataPayload.hasHelbLoan
-			: existing.hasHelbLoan;
-	const helbMonthlyDeduction =
-		typeof metadataPayload.helbMonthlyDeduction === "number"
-			? metadataPayload.helbMonthlyDeduction
-			: Number(existing.helbMonthlyDeduction ?? 0);
-
-	if (hasHelbLoan && helbMonthlyDeduction <= 0) {
-		return failure({
-			type: "ValidationError",
-			message: "HELB monthly deduction must be greater than zero when a HELB loan exists",
-		});
-	}
 
 	try {
 		const [updated] = await db
@@ -436,8 +454,6 @@ async function updateSalaryStructure({
 								(metadataPayload.otherAllowancesDescription as string | null | undefined) ?? null
 							)
 						: existing.otherAllowancesDescription,
-				hasHelbLoan,
-				helbMonthlyDeduction: toPayrollDecimalString(hasHelbLoan ? helbMonthlyDeduction : 0),
 			})
 			.where(eq(salaryStructures.id, structureId))
 			.returning();
@@ -470,10 +486,10 @@ async function deactivateSalaryStructure({
 		});
 	}
 
-	if (effectiveTo < existing.effectiveFrom) {
+	if (effectiveTo <= existing.effectiveFrom) {
 		return failure({
 			type: "ValidationError",
-			message: "Effective to date cannot be before the record effective from date",
+			message: "Effective to date must be after the record effective from date",
 		});
 	}
 
@@ -559,32 +575,10 @@ async function getAllActiveStructuresForPeriod(
 		};
 	}
 
-	const structures = await db.query.salaryStructures.findMany({
-		where: and(
-			inArray(
-				salaryStructures.employeeId,
-				activeEmployees.map((employee) => employee.id)
-			),
-			lte(salaryStructures.effectiveFrom, periodDate),
-			or(isNull(salaryStructures.effectiveTo), gte(salaryStructures.effectiveTo, periodDate))
-		),
-		orderBy: [
-			asc(salaryStructures.employeeId),
-			desc(salaryStructures.effectiveFrom),
-			desc(salaryStructures.id),
-		],
-	});
-
-	const structuresByEmployeeId: Record<string, SalaryStructureWithComputedComponents> = {};
-
-	for (const structure of structures) {
-		if (!structuresByEmployeeId[structure.employeeId]) {
-			structuresByEmployeeId[structure.employeeId] = {
-				...structure,
-				computedComponents: computeGrossPayComponents(structure),
-			};
-		}
-	}
+	const structuresByEmployeeId = await getActiveStructuresForEmployeesForPeriod(
+		activeEmployees.map((employee) => employee.id),
+		periodDate
+	);
 
 	const errors = activeEmployees
 		.filter((employee) => !structuresByEmployeeId[employee.id])
@@ -632,22 +626,15 @@ async function getSalaryStructureDirectory(
 		.where(and(...conditions))
 		.orderBy(asc(employees.firstName), asc(employees.lastName));
 
-	const activeStructures = await Promise.all(
-		employeeRows.map(async (employee) => {
-			const current = await getCurrentActiveStructure(employee.id);
-			return {
-				employeeId: employee.id,
-				current,
-			};
-		})
+	const currentMap = await getActiveStructuresForEmployeesForPeriod(
+		employeeRows.map((employee) => employee.id),
+		new Date().toISOString().slice(0, 10)
 	);
 
-	const currentMap = new Map(activeStructures.map((row) => [row.employeeId, row.current]));
-
 	return employeeRows.map((employee) => {
-		const current = currentMap.get(employee.id);
+		const current = currentMap[employee.id];
 
-		if (!current?.success) {
+		if (!current) {
 			return {
 				...employee,
 				currentStructureId: null,
@@ -660,10 +647,10 @@ async function getSalaryStructureDirectory(
 
 		return {
 			...employee,
-			currentStructureId: current.data.id,
-			currentGrossPay: computeGrossPayComponents(current.data).grossPay,
-			currentEffectiveFrom: current.data.effectiveFrom,
-			currentPayFrequency: current.data.payFrequency,
+			currentStructureId: current.id,
+			currentGrossPay: current.computedComponents.grossPay,
+			currentEffectiveFrom: current.effectiveFrom,
+			currentPayFrequency: current.payFrequency,
 			structureStatus: "configured",
 		} satisfies SalaryStructureDirectoryItem;
 	});
@@ -777,7 +764,7 @@ export const getCurrentActiveStructureFn = createServerFn()
 
 export const getAllActiveStructuresForPeriodFn = createServerFn()
 	.middleware([authMiddleware])
-	.validator(z.object({ periodDate: z.string().trim().min(1, "Period date is required") }))
+	.validator(z.object({ periodDate: dateSchema("Period date is required") }))
 	.handler(async ({ data: { periodDate } }) => {
 		await requireSalaryStructureViewAccess();
 		return getAllActiveStructuresForPeriod(periodDate);

@@ -87,7 +87,7 @@ export const salaryStructureCreateSchema = z
 			});
 		}
 
-		if (data.hasHelbLoan && data.helbMonthlyDeduction && data.helbMonthlyDeduction <= 0) {
+		if (data.hasHelbLoan && (data.helbMonthlyDeduction ?? 0) <= 0) {
 			ctx.addIssue({
 				code: "custom",
 				message: "HELB deduction must be greater than zero when a HELB loan is enabled",
@@ -103,19 +103,8 @@ export const salaryStructureMetadataUpdateSchema = z
 		notes: optionalTextField(5000),
 		pensionFundName: optionalTextField(100),
 		otherAllowancesDescription: optionalTextField(255),
-		hasHelbLoan: z.boolean().optional(),
-		helbMonthlyDeduction: nonNegativeNumberField("HELB deduction").optional(),
 	})
-	.passthrough()
-	.superRefine((data, ctx) => {
-		if (data.hasHelbLoan === true && (data.helbMonthlyDeduction ?? 0) <= 0) {
-			ctx.addIssue({
-				code: "custom",
-				message: "HELB deduction must be greater than zero when a HELB loan is enabled",
-				path: ["helbMonthlyDeduction"],
-			});
-		}
-	});
+	.passthrough();
 
 export const salaryStructureUpdateRequestSchema = z.object({
 	structureId: salaryStructureIdSchema,

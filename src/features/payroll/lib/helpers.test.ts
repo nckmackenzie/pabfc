@@ -10,11 +10,9 @@ import {
 
 type SalaryStructureRecord = typeof salaryStructures.$inferSelect;
 
-function createStructure(
-	overrides: Partial<SalaryStructureRecord> = {},
-): SalaryStructureRecord {
+function createStructure(overrides: Partial<SalaryStructureRecord> = {}): SalaryStructureRecord {
 	return {
-		id: 1,
+		id: "salary_structure_1",
 		employeeId: "employee_1",
 		effectiveFrom: "2026-01-01",
 		effectiveTo: null,
@@ -70,7 +68,7 @@ describe("payroll helpers", () => {
 				effectiveFrom: "2026-08-01",
 				effectiveTo: null,
 				today: "2026-06-15",
-			}),
+			})
 		).toBe("future");
 
 		expect(
@@ -78,7 +76,7 @@ describe("payroll helpers", () => {
 				effectiveFrom: "2026-01-01",
 				effectiveTo: null,
 				today: "2026-06-15",
-			}),
+			})
 		).toBe("active");
 
 		expect(
@@ -86,7 +84,7 @@ describe("payroll helpers", () => {
 				effectiveFrom: "2025-01-01",
 				effectiveTo: "2025-12-31",
 				today: "2026-06-15",
-			}),
+			})
 		).toBe("superseded");
 	});
 
@@ -97,7 +95,7 @@ describe("payroll helpers", () => {
 				existingEffectiveTo: null,
 				newEffectiveFrom: "2026-07-01",
 				newEffectiveTo: null,
-			}),
+			})
 		).toBe(true);
 
 		expect(
@@ -106,7 +104,7 @@ describe("payroll helpers", () => {
 				existingEffectiveTo: "2026-06-30",
 				newEffectiveFrom: "2026-07-01",
 				newEffectiveTo: null,
-			}),
+			})
 		).toBe(false);
 
 		expect(
@@ -114,7 +112,7 @@ describe("payroll helpers", () => {
 				existingEffectiveFrom: "2026-01-01",
 				existingEffectiveTo: null,
 				newEffectiveFrom: "2026-07-01",
-			}),
+			})
 		).toBe(true);
 	});
 

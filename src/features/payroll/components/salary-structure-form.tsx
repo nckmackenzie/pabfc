@@ -14,6 +14,7 @@ import {
 	type SalaryStructureCreateFormInput,
 	salaryStructureCreateSchema,
 } from "../services/schemas";
+import { dateFormat } from "@/lib/helpers";
 
 const PAY_FREQUENCY_OPTIONS = [
 	{ value: "monthly", label: "Monthly" },
@@ -24,7 +25,7 @@ const PAY_FREQUENCY_OPTIONS = [
 const defaultValues = {
 	id: undefined,
 	employeeId: "",
-	effectiveFrom: new Date().toISOString().slice(0, 10),
+	effectiveFrom: dateFormat(new Date()),
 	effectiveTo: null,
 	payFrequency: "monthly",
 	basicSalary: 0,

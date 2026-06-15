@@ -203,7 +203,9 @@ export function percentageChangeCalculator(current: number, previous: number) {
 }
 
 export function percentage(partialValue: number, totalValue: number) {
-	return Number.isNaN((100 * partialValue) / totalValue) ? 0 : (100 * partialValue) / totalValue;
+	if (totalValue === 0) return 0;
+	const value = (100 * partialValue) / totalValue;
+	return Number.isFinite(value) ? value : 0;
 }
 
 export const toNumber = (value: unknown) => {
