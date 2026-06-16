@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
+import { SalaryStructureFormPendingComponent } from "@/features/payroll/components/salary-structure-form-skeleton";
 import { SalaryStructureForm } from "@/features/payroll/components/salary-structure-form";
 import { salaryStructureQueries } from "@/features/payroll/services/queries";
 import { salaryStructureCreatePrefillSearchSchema } from "@/features/payroll/services/schemas";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/app/payroll/salary-structures/new")({
 	loader: ({ context: { queryClient } }) =>
 		queryClient.ensureQueryData(salaryStructureQueries.employees()),
 	head: () => ({ meta: seo({ title: "Add Salary Structure" }) }),
+	pendingComponent: SalaryStructureFormPendingComponent,
 	staticData: {
 		breadcrumb: "Add Salary Structure",
 	},
@@ -27,9 +29,7 @@ function RouteComponent() {
 
 	return (
 		<div className="space-y-6">
-			<BackLink href="/app/payroll/salary-structures">
-				Back to Salary Structures
-			</BackLink>
+			<BackLink href="/app/payroll/salary-structures">Back to Salary Structures</BackLink>
 			<SalaryStructureForm
 				employees={employees}
 				preselectedEmployeeId={search.employeeId || undefined}
