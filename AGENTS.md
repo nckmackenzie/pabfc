@@ -16,6 +16,40 @@
 - Keep responsibilities separated: validation and normalization belong in schemas/helpers, persistence in server-side services, and UI components should stay focused on rendering and interaction.
 - Preserve permission boundaries on the server. Hiding fields or actions in the UI is not sufficient protection.
 - Prefer small composable functions, explicit types, and predictable data flow over large multi-purpose components or helpers.
+- Don't expose sensitive operations like database queries or updates in regular functions. Use server functions or API routes to expose logic to the frontend. See example below;
+```
+// ❌ DON'T DO THIS
+export async function getEmployees(orgId: string) {
+  return await db.query.employees.findMany({
+    where: eq(employees.orgId, orgId),
+    columns: { id: true, fullName: true, email: true, isActive: true },
+  });
+}
+
+// ✅ DO THIS
+export const getEmployees = createServerFn().validator(employeeSchema).handler(async (params) => {
+  // logic here
+});
+
+// incase you want to separate some logic in their own file
+
+// services.ts
+async function getEmployees(orgId: string) {
+  return await db.query.employees.findMany({
+    where: eq(employees.orgId, orgId),
+    columns: { id: true, fullName: true, email: true, isActive: true },
+  });
+}
+
+export const getEmployeesFn = createServerFn().validator(employeeSchema).handler(async (params) => {
+  return getEmployees(params.data.orgId);
+});
+```
+
+
+
+- Prefer the existing UI components and patterns over creating new ones. 
+
 
 ## Build, Test, and Development Commands
 - `pnpm dev`: start Vite dev server on port 3000.

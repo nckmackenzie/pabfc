@@ -22,12 +22,7 @@ export function BackLink({
 	href?: Route;
 }) {
 	return (
-		<Button
-			variant={variant}
-			size={size || "sm"}
-			className={cn("", className)}
-			asChild
-		>
+		<Button variant={variant} size={size || "sm"} className={cn("", className)} asChild>
 			<Link to={href ?? ".."}>
 				<ArrowLeftIcon />
 				{children}

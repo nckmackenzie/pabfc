@@ -456,6 +456,13 @@
       "when": 1781285574352,
       "tag": "0064_handy_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1781514553472,
+      "tag": "0065_fixed_pandemic",
+      "breakpoints": true
     }
   ]
 }
