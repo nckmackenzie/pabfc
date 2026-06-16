@@ -122,6 +122,11 @@ export const collapsibleMenuItems = [
 				permission: "leaves:view",
 			},
 			{
+				title: "Payroll Account Mappings",
+				url: "/app/payroll/account-mappings",
+				permission: "payroll-account-mappings:view",
+			},
+			{
 				title: "Salary Structures",
 				url: "/app/payroll/salary-structures",
 				permission: "salary-structures:view",

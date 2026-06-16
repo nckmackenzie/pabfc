@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
 	check,
@@ -8,11 +8,17 @@ import {
 	numeric,
 	pgEnum,
 	pgTable,
+	serial,
 	text,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
+import {
+	PAYROLL_ACCOUNT_ROLE_KEYS,
+	type PayrollAccountRole,
+} from "@/features/payroll/lib/payroll-constants";
 import { users } from "./auth";
+import { ledgerAccounts } from "./chart-of-accounts";
 import { employees } from "./employees";
 import { nanoid } from "nanoid";
 
@@ -20,6 +26,15 @@ export const PAY_FREQUENCIES = ["monthly", "bi_weekly", "weekly"] as const;
 export type PayFrequency = (typeof PAY_FREQUENCIES)[number];
 
 export const payFrequencyEnum = pgEnum("pay_frequency", PAY_FREQUENCIES);
+const payrollAccountRoleValues = PAYROLL_ACCOUNT_ROLE_KEYS as [
+	PayrollAccountRole,
+	...Array<PayrollAccountRole>,
+];
+
+export const payrollAccountRoleEnum = pgEnum(
+	"payroll_account_role",
+	payrollAccountRoleValues
+);
 
 export const salaryStructures = pgTable(
 	"salary_structures",
@@ -162,4 +177,29 @@ export const salaryStructures = pgTable(
 			sql`${table.effectiveTo} is null or ${table.effectiveTo} > ${table.effectiveFrom}`,
 		),
 	],
+);
+
+export const payrollAccountMappings = pgTable(
+	"payroll_account_mappings",
+	{
+		id: serial("id").primaryKey(),
+		role: payrollAccountRoleEnum("role").notNull().unique(),
+		accountId: integer("account_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		description: text("description"),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [index("idx_payroll_account_mappings_role").on(table.role)]
+);
+
+export const payrollAccountMappingsRelations = relations(
+	payrollAccountMappings,
+	({ one }) => ({
+		account: one(ledgerAccounts, {
+			fields: [payrollAccountMappings.accountId],
+			references: [ledgerAccounts.id],
+		}),
+	})
 );
