@@ -14,9 +14,11 @@ import {
 	ledgerAccounts,
 	lineDcEnum,
 } from "@/drizzle/schemas/chart-of-accounts";
+import { payrollAccountMappings } from "@/drizzle/schemas/payroll";
 
-export const ledgerAccountsRelations = relations(ledgerAccounts, ({ one }) => ({
+export const ledgerAccountsRelations = relations(ledgerAccounts, ({ many, one }) => ({
 	bank: one(bankAccounts),
+	payrollAccountMappings: many(payrollAccountMappings),
 }));
 
 export const bankAccounts = pgTable(
