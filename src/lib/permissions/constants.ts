@@ -66,6 +66,8 @@ export const PERMISSIONS = [
 	"salary-structures:create",
 	"salary-structures:update",
 	"salary-structures:deactivate",
+	"payroll-account-mappings:view",
+	"payroll-account-mappings:update",
 	"leaves:view",
 	"leaves:create",
 	"leaves:update",

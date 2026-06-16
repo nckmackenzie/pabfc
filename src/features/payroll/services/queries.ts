@@ -6,6 +6,10 @@ import {
 	getSalaryStructureDirectoryFn,
 	getSalaryStructureEmployeeSummaryFn,
 } from "@/features/payroll/services/salary-structures.api";
+import {
+	getAllAccountMappingsFn,
+	getPayrollMappingAccountOptionsFn,
+} from "@/features/payroll/services/account-mappings.api";
 import type {
 	salaryHistoryParamsSchema,
 	salaryStructureDetailParamsSchema,
@@ -53,5 +57,21 @@ export const salaryStructureQueries = {
 			queryKey: [...salaryStructureQueries.all, "detail", params.structureId] as const,
 			queryFn: () => getSalaryStructureByIdFn({ data: params }),
 			staleTime: 60 * 1000,
+	}),
+};
+
+export const payrollAccountMappingQueries = {
+	all: ["payroll-account-mappings"] as const,
+	list: () =>
+		queryOptions({
+			queryKey: [...payrollAccountMappingQueries.all, "list"] as const,
+			queryFn: () => getAllAccountMappingsFn(),
+			staleTime: 60 * 1000,
+		}),
+	accountOptions: () =>
+		queryOptions({
+			queryKey: [...payrollAccountMappingQueries.all, "account-options"] as const,
+			queryFn: () => getPayrollMappingAccountOptionsFn(),
+			staleTime: 5 * 60 * 1000,
 		}),
 };
