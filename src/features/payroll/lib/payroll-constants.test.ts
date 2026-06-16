@@ -4,6 +4,8 @@ import {
 	PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES,
 	PAYROLL_ACCOUNT_ROLES,
 	PAYROLL_DEFAULT_LEDGER_ACCOUNTS,
+	PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES,
+	PAYROLL_PARENT_LEDGER_ACCOUNTS,
 	PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES,
 } from "./payroll-constants";
 
@@ -28,6 +30,16 @@ describe("payroll account constants", () => {
 
 		for (const code of Object.values(PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES)) {
 			expect(seededCodes.has(code)).toBe(true);
+		}
+	});
+
+	it("assigns every payroll posting account to a seeded reporting parent", () => {
+		const parentCodes = new Set(PAYROLL_PARENT_LEDGER_ACCOUNTS.map((account) => account.code));
+
+		for (const code of PAYROLL_DEFAULT_LEDGER_ACCOUNTS.map((account) => account.code)) {
+			const parentCode = PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES[code];
+			expect(parentCode).toBeDefined();
+			expect(parentCodes.has(parentCode)).toBe(true);
 		}
 	});
 });

@@ -35,6 +35,8 @@ type PayrollAccountMappingView = {
 };
 
 type PayrollAccountMappingsSummary = {
+	hasInvalidMappings: boolean;
+	isConfigurationComplete: boolean;
 	isComplete: boolean;
 	items: PayrollAccountMappingView[];
 	missingRoles: PayrollAccountRole[];
@@ -79,6 +81,13 @@ async function listExistingMappings() {
 	});
 }
 
+function isMappingInvalid(item: PayrollAccountMappingView) {
+	return (
+		item.accountId !== null &&
+		(item.account?.isActive !== true || item.account.type !== item.requiredAccountType)
+	);
+}
+
 function toMappingView(
 	existingMappings: Array<
 		Pick<PayrollAccountMappingRecord, "id" | "role" | "accountId" | "description"> & {
@@ -107,6 +116,9 @@ function toMappingView(
 	const missingRoles = items.filter((item) => item.accountId === null).map((item) => item.role);
 
 	return {
+		hasInvalidMappings: items.some(isMappingInvalid),
+		isConfigurationComplete:
+			missingRoles.length === 0 && !items.some(isMappingInvalid),
 		items,
 		isComplete: missingRoles.length === 0,
 		missingRoles,
@@ -138,7 +150,12 @@ async function getAccountMappingsAsMap(): Promise<
 	}
 
 	const invalidRoles = mappings.items
-		.filter((item) => item.accountId === null || item.account?.isActive !== true)
+		.filter(
+			(item) =>
+				item.accountId === null ||
+				item.account?.isActive !== true ||
+				item.account.type !== item.requiredAccountType
+		)
 		.map((item) => item.role);
 
 	if (invalidRoles.length > 0) {
@@ -146,7 +163,7 @@ async function getAccountMappingsAsMap(): Promise<
 			success: false,
 			error: {
 				type: "ValidationError",
-				message: `Payroll account mappings reference inactive or missing accounts. Invalid roles: ${invalidRoles.join(", ")}`,
+				message: `Payroll account mappings reference missing, inactive, or invalid account types. Invalid roles: ${invalidRoles.join(", ")}`,
 				invalidRoles,
 			},
 		};
@@ -174,6 +191,12 @@ async function validateAllMappingsExist(): Promise<PayrollAccountMappingValidati
 	for (const item of mappings.items) {
 		if (item.accountId !== null && item.account?.isActive !== true) {
 			issues.push(`Mapped account for ${item.label} is inactive or unavailable.`);
+		}
+
+		if (item.accountId !== null && item.account && item.account.type !== item.requiredAccountType) {
+			issues.push(
+				`Mapped account for ${item.label} must be an ${item.requiredAccountType} account.`
+			);
 		}
 	}
 

@@ -91,6 +91,57 @@ export const PAYROLL_ACCOUNT_ROLE_KEYS = Object.keys(
 	PAYROLL_ACCOUNT_ROLES
 ) as Array<PayrollAccountRole>;
 
+export const PAYROLL_PARENT_LEDGER_ACCOUNTS = [
+	{
+		code: "5090",
+		name: "Payroll Expenses",
+		description: "Reporting parent for all payroll-related expense accounts",
+		type: "expense",
+		normalBalance: "debit",
+		parentCode: null,
+	},
+	{
+		code: "5091",
+		name: "Earnings & Compensation Expenses",
+		description: "Reporting parent for salaries, overtime, and bonus payroll expenses",
+		type: "expense",
+		normalBalance: "debit",
+		parentCode: "5090",
+	},
+	{
+		code: "5092",
+		name: "Employer Payroll Contribution Expenses",
+		description: "Reporting parent for employer statutory and pension payroll expenses",
+		type: "expense",
+		normalBalance: "debit",
+		parentCode: "5090",
+	},
+	{
+		code: "2090",
+		name: "Payroll Liabilities",
+		description: "Reporting parent for all payroll-related liability accounts",
+		type: "liability",
+		normalBalance: "credit",
+		parentCode: null,
+	},
+	{
+		code: "2091",
+		name: "Statutory Payroll Liabilities",
+		description: "Reporting parent for statutory payroll remittance liabilities",
+		type: "liability",
+		normalBalance: "credit",
+		parentCode: "2090",
+	},
+	{
+		code: "2092",
+		name: "Employee Payroll Payables",
+		description: "Reporting parent for net salaries and employee-related payroll payables",
+		type: "liability",
+		normalBalance: "credit",
+		parentCode: "2090",
+	},
+] as const;
+
 export const PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES = {
 	salaries_expense: "5100",
 	overtime_expense: "5101",
@@ -242,6 +293,27 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 		normalBalance: "credit",
 	},
 ] as const;
+
+export const PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES = {
+	"5100": "5091",
+	"5101": "5091",
+	"5102": "5091",
+	"5110": "5092",
+	"5111": "5092",
+	"5112": "5092",
+	"5113": "5092",
+	"5114": "5092",
+	"2100": "2092",
+	"2101": "2091",
+	"2102": "2091",
+	"2103": "2091",
+	"2104": "2091",
+	"2105": "2091",
+	"2106": "2091",
+	"2107": "2092",
+	"2108": "2092",
+	"2109": "2092",
+} as const satisfies Record<(typeof PAYROLL_DEFAULT_LEDGER_ACCOUNTS)[number]["code"], string>;
 
 export const PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES = Object.fromEntries(
 	PAYROLL_ACCOUNT_ROLE_KEYS.map((role) => [

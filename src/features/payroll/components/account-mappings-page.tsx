@@ -162,6 +162,7 @@ export function PayrollAccountMappingsPage() {
 	const { data: accountOptions } = useSuspenseQuery(
 		payrollAccountMappingQueries.accountOptions()
 	);
+	const isConfigurationComplete = mappings.isConfigurationComplete;
 
 	const expenseMappings = mappings.items.filter(
 		(mapping) => mapping.requiredAccountType === "expense"
@@ -180,12 +181,12 @@ export function PayrollAccountMappingsPage() {
 					<div className="rounded-md border bg-card p-5">
 						<p className="text-sm font-medium text-muted-foreground">Configuration Status</p>
 						<p className="mt-2 text-2xl font-semibold">
-							{mappings.isComplete ? "Complete" : "Incomplete"}
+							{isConfigurationComplete ? "Complete" : "Incomplete"}
 						</p>
 						<p className="mt-2 text-sm text-muted-foreground">
-							{mappings.isComplete
+							{isConfigurationComplete
 								? "All payroll roles are mapped to active ledger accounts."
-								: "Payroll posting should be blocked until every role is mapped."}
+								: "Payroll posting should be blocked until every role is mapped to an active ledger account of the correct type."}
 						</p>
 					</div>
 					<div className="rounded-md border bg-card p-5">

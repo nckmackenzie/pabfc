@@ -11,19 +11,13 @@ async function main() {
 	console.log("=".repeat(50));
 
 	try {
-		await Promise.all([
-			seedPermissions(),
-			seedUsers(),
-			seedMemberData(),
-			seedAttendance(),
-			seedLeaveEntitlements(),
-			seedPublicHolidays(),
-			seedPayrollAccountMappings(),
-			//   seedProducts(),
-			//   seedCustomer(),
-			//   seedStocksReceipts(),
-			//   seedPurchases(),
-		]);
+		await seedPermissions();
+		await seedUsers();
+		await seedMemberData();
+		await seedAttendance();
+		await seedLeaveEntitlements();
+		await seedPublicHolidays();
+		await seedPayrollAccountMappings();
 
 		console.log("=".repeat(50));
 		console.log("🎉 Database seeding completed successfully!");
