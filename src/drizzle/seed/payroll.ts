@@ -13,10 +13,50 @@ import {
 	PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES,
 } from "@/features/payroll/lib/payroll-constants";
 
+const EXPLICIT_LOAN_RECEIVABLE_ACCOUNT = {
+	code: "1150",
+	name: "Employee Loans Receivable",
+	description: "Receivable balance for employee loans disbursed by the company",
+	type: "asset",
+	normalBalance: "debit",
+} as const;
+
+const EXPLICIT_LOAN_RECEIVABLE_MAPPING = {
+	role: "loans_receivable",
+	code: "1150",
+	description: PAYROLL_ACCOUNT_ROLES.loans_receivable.description,
+} as const;
+
+function getSeedLedgerAccounts() {
+	const defaultAccounts = [...PAYROLL_DEFAULT_LEDGER_ACCOUNTS];
+	const hasLoanReceivableAccount = defaultAccounts.some(
+		(account) => account.code === EXPLICIT_LOAN_RECEIVABLE_ACCOUNT.code
+	);
+
+	if (!hasLoanReceivableAccount) {
+		defaultAccounts.push(EXPLICIT_LOAN_RECEIVABLE_ACCOUNT);
+	}
+
+	return defaultAccounts;
+}
+
+function getSeedMappingRoles() {
+	const roleKeys = [...PAYROLL_ACCOUNT_ROLE_KEYS];
+
+	if (!roleKeys.includes(EXPLICIT_LOAN_RECEIVABLE_MAPPING.role)) {
+		roleKeys.push(EXPLICIT_LOAN_RECEIVABLE_MAPPING.role);
+	}
+
+	return roleKeys;
+}
+
 export async function seedPayrollAccountMappings() {
 	try {
 		console.log("🌱 Seeding payroll account mappings...");
 		await db.transaction(async (tx) => {
+			const seedLedgerAccounts = getSeedLedgerAccounts();
+			const seedMappingRoles = getSeedMappingRoles();
+
 			await tx
 				.insert(ledgerAccounts)
 				.values(
@@ -76,7 +116,7 @@ export async function seedPayrollAccountMappings() {
 			await tx
 				.insert(ledgerAccounts)
 				.values(
-					PAYROLL_DEFAULT_LEDGER_ACCOUNTS.map((account) => ({
+					seedLedgerAccounts.map((account) => ({
 						code: account.code,
 						name: account.name,
 						description: account.description,
@@ -101,7 +141,7 @@ export async function seedPayrollAccountMappings() {
 					and(
 						inArray(
 							ledgerAccounts.code,
-							PAYROLL_DEFAULT_LEDGER_ACCOUNTS.map((account) => account.code)
+							seedLedgerAccounts.map((account) => account.code)
 						)
 					)
 				);
@@ -112,7 +152,7 @@ export async function seedPayrollAccountMappings() {
 					.map((account) => [account.code as string, account.id])
 			);
 
-			for (const account of PAYROLL_DEFAULT_LEDGER_ACCOUNTS) {
+			for (const account of seedLedgerAccounts) {
 				const accountId = accountsByCode.get(account.code);
 				const parentId = parentIdsByCode.get(PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES[account.code]);
 
@@ -135,8 +175,11 @@ export async function seedPayrollAccountMappings() {
 					.where(eq(ledgerAccounts.id, accountId));
 			}
 
-			const mappingValues = PAYROLL_ACCOUNT_ROLE_KEYS.map((role) => {
-				const code = PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES[role];
+			const mappingValues = seedMappingRoles.map((role) => {
+				const code =
+					role === EXPLICIT_LOAN_RECEIVABLE_MAPPING.role
+						? EXPLICIT_LOAN_RECEIVABLE_MAPPING.code
+						: PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES[role];
 				const accountId = accountsByCode.get(code);
 
 				if (!accountId) {
@@ -146,7 +189,10 @@ export async function seedPayrollAccountMappings() {
 				return {
 					role,
 					accountId,
-					description: PAYROLL_ACCOUNT_ROLES[role].description,
+					description:
+						role === EXPLICIT_LOAN_RECEIVABLE_MAPPING.role
+							? EXPLICIT_LOAN_RECEIVABLE_MAPPING.description
+							: PAYROLL_ACCOUNT_ROLES[role].description,
 				};
 			});
 

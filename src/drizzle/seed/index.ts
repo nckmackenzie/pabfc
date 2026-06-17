@@ -11,12 +11,12 @@ async function main() {
 	console.log("=".repeat(50));
 
 	try {
-		await seedPermissions();
-		await seedUsers();
-		await seedMemberData();
-		await seedAttendance();
-		await seedLeaveEntitlements();
-		await seedPublicHolidays();
+		// await seedPermissions();
+		// await seedUsers();
+		// await seedMemberData();
+		// await seedAttendance();
+		// await seedLeaveEntitlements();
+		// await seedPublicHolidays();
 		await seedPayrollAccountMappings();
 
 		console.log("=".repeat(50));
