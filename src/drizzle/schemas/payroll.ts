@@ -10,6 +10,8 @@ import {
 	pgTable,
 	serial,
 	text,
+	timestamp,
+	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
@@ -30,11 +32,14 @@ const payrollAccountRoleValues = PAYROLL_ACCOUNT_ROLE_KEYS as [
 	PayrollAccountRole,
 	...Array<PayrollAccountRole>,
 ];
+export const OVERTIME_STATUSES = ["draft", "approved", "paid"] as const;
+export type OvertimeStatus = (typeof OVERTIME_STATUSES)[number];
 
 export const payrollAccountRoleEnum = pgEnum(
 	"payroll_account_role",
 	payrollAccountRoleValues
 );
+export const overtimeStatusEnum = pgEnum("overtime_status", OVERTIME_STATUSES);
 
 export const salaryStructures = pgTable(
 	"salary_structures",
@@ -179,6 +184,105 @@ export const salaryStructures = pgTable(
 	],
 );
 
+export const overtimeRecords = pgTable(
+	"overtime_records",
+	{
+		id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 }),
+		periodMonth: integer("period_month").notNull(),
+		periodYear: integer("period_year").notNull(),
+		weekdayOvertimeHours: numeric("weekday_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		weekendOvertimeHours: numeric("weekend_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		publicHolidayOvertimeHours: numeric("public_holiday_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		overtimeHourlyRate: numeric("overtime_hourly_rate", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		weekdayOvertimePay: numeric("weekday_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		weekendOvertimePay: numeric("weekend_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		publicHolidayOvertimePay: numeric("public_holiday_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalOvertimePay: numeric("total_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		status: overtimeStatusEnum("status").notNull().default("draft"),
+		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		approvedAt: timestamp("approved_at", { withTimezone: true }),
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 }),
+		notes: text("notes"),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_overtime_records_employee_period").on(
+			table.employeeId,
+			table.periodYear,
+			table.periodMonth,
+		),
+		index("idx_overtime_records_period_status").on(
+			table.periodYear,
+			table.periodMonth,
+			table.status,
+		),
+		index("idx_overtime_records_payroll_slip_id").on(table.payrollSlipId),
+		uniqueIndex("uq_overtime_records_employee_period").on(
+			table.employeeId,
+			table.periodYear,
+			table.periodMonth,
+		),
+		check(
+			"overtime_records_period_month_range",
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`,
+		),
+		check(
+			"overtime_records_period_year_range",
+			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`,
+		),
+	],
+);
+
 export const payrollAccountMappings = pgTable(
 	"payroll_account_mappings",
 	{
@@ -193,6 +297,32 @@ export const payrollAccountMappings = pgTable(
 	},
 	(table) => [index("idx_payroll_account_mappings_role").on(table.role)]
 );
+
+export const salaryStructuresRelations = relations(salaryStructures, ({ one }) => ({
+	employee: one(employees, {
+		fields: [salaryStructures.employeeId],
+		references: [employees.id],
+	}),
+	createdByUser: one(users, {
+		fields: [salaryStructures.createdBy],
+		references: [users.id],
+	}),
+}));
+
+export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => ({
+	employee: one(employees, {
+		fields: [overtimeRecords.employeeId],
+		references: [employees.id],
+	}),
+	createdByUser: one(users, {
+		fields: [overtimeRecords.createdBy],
+		references: [users.id],
+	}),
+	approvedByUser: one(users, {
+		fields: [overtimeRecords.approvedBy],
+		references: [users.id],
+	}),
+}));
 
 export const payrollAccountMappingsRelations = relations(
 	payrollAccountMappings,
