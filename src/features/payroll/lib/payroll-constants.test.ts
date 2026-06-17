@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+	OVERTIME_MAX_HOURS_PER_FORTNIGHT,
+	OVERTIME_MAX_NIGHT_HOURS_PER_FORTNIGHT,
+	OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY,
+	OVERTIME_MULTIPLIER_WEEKDAY,
+	OVERTIME_MULTIPLIER_WEEKEND,
+	OVERTIME_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
 	PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES,
 	PAYROLL_ACCOUNT_ROLES,
@@ -41,5 +47,18 @@ describe("payroll account constants", () => {
 			expect(parentCode).toBeDefined();
 			expect(parentCodes.has(parentCode)).toBe(true);
 		}
+	});
+
+	it("defines overtime constants for payroll computation and workflow filters", () => {
+		expect(OVERTIME_MULTIPLIER_WEEKDAY).toBe(1.5);
+		expect(OVERTIME_MULTIPLIER_WEEKEND).toBe(2);
+		expect(OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY).toBe(2);
+		expect(OVERTIME_MAX_HOURS_PER_FORTNIGHT).toBe(116);
+		expect(OVERTIME_MAX_NIGHT_HOURS_PER_FORTNIGHT).toBe(144);
+		expect(OVERTIME_STATUS).toEqual({
+			DRAFT: "draft",
+			APPROVED: "approved",
+			PAID: "paid",
+		});
 	});
 });

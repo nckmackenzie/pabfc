@@ -131,6 +131,11 @@ export const collapsibleMenuItems = [
 				url: "/app/payroll/salary-structures",
 				permission: "salary-structures:view",
 			},
+			{
+				title: "Overtime Records",
+				url: "/app/payroll/overtime",
+				permission: "overtime-records:view",
+			},
 		],
 		get permissions(): Permission[] {
 			return this.items.map((item) => item.permission as Permission);

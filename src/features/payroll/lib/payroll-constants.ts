@@ -8,6 +8,23 @@ export const PAYROLL_STATUTORY_LIMITS = {
 	insuranceReliefRate: 0.15,
 	insuranceReliefCapMonthly: 5000,
 	defaultOvertimeHourlyRateDivisor: 225,
+	overtimeMaxHoursPerFortnight: 116,
+	overtimeMaxNightHoursPerFortnight: 144,
+} as const;
+
+export const OVERTIME_MULTIPLIER_WEEKDAY = 1.5;
+export const OVERTIME_MULTIPLIER_WEEKEND = 2.0;
+export const OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY = 2.0;
+
+export const OVERTIME_MAX_HOURS_PER_FORTNIGHT =
+	PAYROLL_STATUTORY_LIMITS.overtimeMaxHoursPerFortnight;
+export const OVERTIME_MAX_NIGHT_HOURS_PER_FORTNIGHT =
+	PAYROLL_STATUTORY_LIMITS.overtimeMaxNightHoursPerFortnight;
+
+export const OVERTIME_STATUS = {
+	DRAFT: "draft",
+	APPROVED: "approved",
+	PAID: "paid",
 } as const;
 
 export const PAYROLL_ACCOUNT_ROLES = {

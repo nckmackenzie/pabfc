@@ -1,6 +1,12 @@
 import Big from "big.js";
 import type { salaryStructures } from "@/drizzle/schema";
-import { PAYROLL_STATUTORY_LIMITS, PAYROLL_STATUS } from "@/features/payroll/lib/payroll-constants";
+import {
+	OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY,
+	OVERTIME_MULTIPLIER_WEEKDAY,
+	OVERTIME_MULTIPLIER_WEEKEND,
+	PAYROLL_STATUTORY_LIMITS,
+	PAYROLL_STATUS,
+} from "@/features/payroll/lib/payroll-constants";
 import type { SalaryStructureCreateFormInput } from "../services/schemas";
 
 type SalaryStructureRecord = typeof salaryStructures.$inferSelect;
@@ -241,5 +247,80 @@ export function computeGrossPayComponents(structure: SalaryStructureRecord) {
 		overtimeHourlyRate,
 		hasHelbLoan: structure.hasHelbLoan,
 		helbMonthlyDeduction,
+	};
+}
+
+export function getMonthBoundaryDate(periodYear: number, periodMonth: number, boundary: "start" | "end") {
+	const date =
+		boundary === "start"
+			? new Date(Date.UTC(periodYear, periodMonth - 1, 1))
+			: new Date(Date.UTC(periodYear, periodMonth, 0));
+
+	return date.toISOString().slice(0, 10);
+}
+
+export function getCurrentPeriodParts(today = new Date()) {
+	return {
+		periodMonth: today.getUTCMonth() + 1,
+		periodYear: today.getUTCFullYear(),
+	};
+}
+
+export function isFuturePayrollPeriod(periodMonth: number, periodYear: number, today = new Date()) {
+	const current = getCurrentPeriodParts(today);
+
+	if (periodYear > current.periodYear) {
+		return true;
+	}
+
+	if (periodYear < current.periodYear) {
+		return false;
+	}
+
+	return periodMonth > current.periodMonth;
+}
+
+export function getPeriodIndex(periodMonth: number, periodYear: number) {
+	return periodYear * 100 + periodMonth;
+}
+
+export function computeOvertimePay(
+	weekdayHours: NumericLike,
+	weekendHours: NumericLike,
+	publicHolidayHours: NumericLike,
+	overtimeHourlyRate: NumericLike
+) {
+	const parsedWeekdayHours = toPayrollBig(weekdayHours);
+	const parsedWeekendHours = toPayrollBig(weekendHours);
+	const parsedPublicHolidayHours = toPayrollBig(publicHolidayHours);
+	const parsedOvertimeHourlyRate = toPayrollBig(overtimeHourlyRate);
+
+	const weekdayOvertimePay = roundPayrollAmount(
+		parsedWeekdayHours
+			.times(parsedOvertimeHourlyRate)
+			.times(OVERTIME_MULTIPLIER_WEEKDAY)
+	);
+	const weekendOvertimePay = roundPayrollAmount(
+		parsedWeekendHours
+			.times(parsedOvertimeHourlyRate)
+			.times(OVERTIME_MULTIPLIER_WEEKEND)
+	);
+	const publicHolidayOvertimePay = roundPayrollAmount(
+		parsedPublicHolidayHours
+			.times(parsedOvertimeHourlyRate)
+			.times(OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY)
+	);
+	const totalOvertimePay = roundPayrollAmount(
+		toPayrollBig(weekdayOvertimePay)
+			.plus(weekendOvertimePay)
+			.plus(publicHolidayOvertimePay)
+	);
+
+	return {
+		weekdayOvertimePay,
+		weekendOvertimePay,
+		publicHolidayOvertimePay,
+		totalOvertimePay,
+		overtimeHourlyRate: roundPayrollAmount(parsedOvertimeHourlyRate),
 	};
 }
