@@ -164,10 +164,13 @@ export function PayrollAccountMappingsPage() {
 	);
 	const isConfigurationComplete = mappings.isConfigurationComplete;
 
+	const assetMappings = mappings.items.filter(
+		(mapping) => mapping.requiredAccountType === "asset"
+	);
 	const expenseMappings = mappings.items.filter(
 		(mapping) => mapping.requiredAccountType === "expense"
 	);
-	const payableMappings = mappings.items.filter(
+	const liabilityMappings = mappings.items.filter(
 		(mapping) => mapping.requiredAccountType === "liability"
 	);
 
@@ -204,6 +207,24 @@ export function PayrollAccountMappingsPage() {
 
 				<section className="space-y-4">
 					<div>
+						<h2 className="text-lg font-semibold">Asset Roles</h2>
+						<p className="text-sm text-muted-foreground">
+							These roles track payroll-related receivables or recoverable balances.
+						</p>
+					</div>
+					<div className="space-y-4">
+						{assetMappings.map((mapping) => (
+							<PayrollAccountMappingCard
+								key={mapping.role}
+								accountOptions={accountOptions}
+								mapping={mapping}
+							/>
+						))}
+					</div>
+				</section>
+
+				<section className="space-y-4">
+					<div>
 						<h2 className="text-lg font-semibold">Expense Roles</h2>
 						<p className="text-sm text-muted-foreground">
 							These roles are debited when payroll costs are posted.
@@ -222,13 +243,13 @@ export function PayrollAccountMappingsPage() {
 
 				<section className="space-y-4">
 					<div>
-						<h2 className="text-lg font-semibold">Payable Roles</h2>
+						<h2 className="text-lg font-semibold">Liability Roles</h2>
 						<p className="text-sm text-muted-foreground">
 							These roles are credited when payroll liabilities are posted.
 						</p>
 					</div>
 					<div className="space-y-4">
-						{payableMappings.map((mapping) => (
+						{liabilityMappings.map((mapping) => (
 							<PayrollAccountMappingCard
 								key={mapping.role}
 								accountOptions={accountOptions}

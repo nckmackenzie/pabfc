@@ -29,7 +29,7 @@ type PayrollAccountMappingView = {
 	description: string | null;
 	id: number | null;
 	label: string;
-	requiredAccountType: "expense" | "liability";
+	requiredAccountType: "asset" | "expense" | "liability";
 	role: PayrollAccountRole;
 	roleDescription: string;
 };
@@ -325,7 +325,7 @@ async function getPayrollMappingAccountOptions() {
 		where: and(
 			eq(ledgerAccounts.isActive, true),
 			eq(ledgerAccounts.isPosting, true),
-			inArray(ledgerAccounts.type, ["expense", "liability"])
+			inArray(ledgerAccounts.type, ["asset", "expense", "liability"])
 		),
 		orderBy: [asc(ledgerAccounts.type), asc(ledgerAccounts.code), asc(ledgerAccounts.name)],
 	});

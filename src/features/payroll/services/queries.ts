@@ -17,12 +17,24 @@ import {
 	getAllAccountMappingsFn,
 	getPayrollMappingAccountOptionsFn,
 } from "@/features/payroll/services/account-mappings.api";
+import {
+	getAllActiveLoansFn,
+	getLoanByIdFn,
+	getLoanFormOptionsFn,
+	getLoanLedgerFn,
+	getLoansByEmployeeFn,
+} from "@/features/payroll/services/loans.api";
 import type {
 	salaryHistoryParamsSchema,
 	salaryStructureDetailParamsSchema,
 	salaryStructureDirectoryFilterSchema,
 	salaryStructureEmployeeSummarySchema,
 } from "@/features/payroll/services/schemas";
+import type {
+	allActiveLoansFilterSchema,
+	loanByIdSchema,
+	loansByEmployeeSchema,
+} from "@/features/payroll/services/loan.schemas";
 import type {
 	overtimeRecordByEmployeePeriodSchema,
 	overtimeRecordByIdSchema,
@@ -130,5 +142,46 @@ export const overtimeQueries = {
 			queryFn: () => getOvertimeSummaryForEmployeeFn({ data: params }),
 			placeholderData: keepPreviousData,
 			staleTime: 60 * 1000,
+		}),
+};
+
+export const loanQueries = {
+	all: ["employee-loans"] as const,
+	list: (filters: z.infer<typeof allActiveLoansFilterSchema>) =>
+		queryOptions({
+			queryKey: [...loanQueries.all, "list", filters] as const,
+			queryFn: () => getAllActiveLoansFn({ data: filters }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	detail: (params: z.infer<typeof loanByIdSchema>) =>
+		queryOptions({
+			queryKey: [...loanQueries.all, "detail", params.loanId] as const,
+			queryFn: () => getLoanByIdFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	ledger: (params: z.infer<typeof loanByIdSchema>) =>
+		queryOptions({
+			queryKey: [...loanQueries.all, "ledger", params.loanId] as const,
+			queryFn: () => getLoanLedgerFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	employee: (params: z.infer<typeof loansByEmployeeSchema>) =>
+		queryOptions({
+			queryKey: [
+				...loanQueries.all,
+				"employee",
+				params.employeeId,
+				params.statusFilter ?? "all",
+			] as const,
+			queryFn: () => getLoansByEmployeeFn({ data: params }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	formOptions: () =>
+		queryOptions({
+			queryKey: [...loanQueries.all, "form-options"] as const,
+			queryFn: () => getLoanFormOptionsFn(),
+			staleTime: 5 * 60 * 1000,
 		}),
 };
