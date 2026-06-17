@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { statutoryRates } from "@/drizzle/schema";
+import type { statutoryRates } from "@/drizzle/schema";
 import { PAYE_BANDS, SHIF_MINIMUM_CONTRIBUTION } from "@/features/payroll/lib/payroll-constants";
 import {
 	resolveStatutoryRates,
@@ -9,9 +9,7 @@ import {
 
 type StatutoryRateRecord = typeof statutoryRates.$inferSelect;
 
-function createRateRow(
-	overrides: Partial<StatutoryRateRecord> = {}
-): StatutoryRateRecord {
+function createRateRow(overrides: Partial<StatutoryRateRecord> = {}): StatutoryRateRecord {
 	return {
 		id: "rate_1",
 		category: "paye_band",
