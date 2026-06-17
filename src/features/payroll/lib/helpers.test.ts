@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { salaryStructures } from "@/drizzle/schema";
 import {
 	canAutoCloseCurrentStructure,
+	computeOvertimePay,
 	computeGrossPayComponents,
 	doSalaryRangesOverlap,
 	getSalaryHistoryStatus,
+	isFuturePayrollPeriod,
 	subtractOneDay,
 } from "./helpers";
 
@@ -118,5 +120,24 @@ describe("payroll helpers", () => {
 
 	it("subtracts one day from an iso date", () => {
 		expect(subtractOneDay("2026-07-01")).toBe("2026-06-30");
+	});
+
+	it("computes overtime pay from numeric string inputs", () => {
+		const result = computeOvertimePay("10.5", "4", "2", "444.44");
+
+		expect(result.weekdayOvertimePay).toBe(6999.93);
+		expect(result.weekendOvertimePay).toBe(3555.52);
+		expect(result.publicHolidayOvertimePay).toBe(1777.76);
+		expect(result.totalOvertimePay).toBe(12333.21);
+		expect(result.overtimeHourlyRate).toBe(444.44);
+	});
+
+	it("detects future payroll periods", () => {
+		const referenceDate = new Date("2026-06-15T00:00:00.000Z");
+
+		expect(isFuturePayrollPeriod(7, 2026, referenceDate)).toBe(true);
+		expect(isFuturePayrollPeriod(6, 2026, referenceDate)).toBe(false);
+		expect(isFuturePayrollPeriod(5, 2026, referenceDate)).toBe(false);
+		expect(isFuturePayrollPeriod(1, 2027, referenceDate)).toBe(true);
 	});
 });

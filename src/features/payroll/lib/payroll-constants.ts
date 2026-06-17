@@ -8,6 +8,35 @@ export const PAYROLL_STATUTORY_LIMITS = {
 	insuranceReliefRate: 0.15,
 	insuranceReliefCapMonthly: 5000,
 	defaultOvertimeHourlyRateDivisor: 225,
+	overtimeMaxHoursPerFortnight: 116,
+	overtimeMaxNightHoursPerFortnight: 144,
+} as const;
+
+export const OVERTIME_MULTIPLIER_WEEKDAY = 1.5;
+export const OVERTIME_MULTIPLIER_WEEKEND = 2.0;
+export const OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY = 2.0;
+export const LOAN_MAX_DEDUCTION_RATIO = 2 / 3;
+export const LOAN_DEFAULT_INTEREST_RATE = 0;
+export const LOAN_INTEREST_CALCULATION_METHOD = "reducing_balance" as const;
+
+export const OVERTIME_MAX_HOURS_PER_FORTNIGHT =
+	PAYROLL_STATUTORY_LIMITS.overtimeMaxHoursPerFortnight;
+export const OVERTIME_MAX_NIGHT_HOURS_PER_FORTNIGHT =
+	PAYROLL_STATUTORY_LIMITS.overtimeMaxNightHoursPerFortnight;
+
+export const OVERTIME_STATUS = {
+	DRAFT: "draft",
+	APPROVED: "approved",
+	PAID: "paid",
+} as const;
+
+export const LOAN_STATUS = {
+	PENDING: "pending",
+	ACTIVE: "active",
+	PAUSED: "paused",
+	FULLY_PAID: "fully_paid",
+	WRITTEN_OFF: "written_off",
+	REJECTED: "rejected",
 } as const;
 
 export const PAYROLL_ACCOUNT_ROLES = {
@@ -42,6 +71,10 @@ export const PAYROLL_ACCOUNT_ROLES = {
 	pension_employer_expense: {
 		label: "Employer Pension Contribution Expense",
 		description: "Debited for any employer matching pension contributions",
+	},
+	loans_receivable: {
+		label: "Employee Loans Receivable",
+		description: "Debited when employee loans are disbursed and credited when they are repaid",
 	},
 	paye_payable: {
 		label: "PAYE Payable",
@@ -92,6 +125,22 @@ export const PAYROLL_ACCOUNT_ROLE_KEYS = Object.keys(
 ) as Array<PayrollAccountRole>;
 
 export const PAYROLL_PARENT_LEDGER_ACCOUNTS = [
+	{
+		code: "1090",
+		name: "Payroll Receivables",
+		description: "Reporting parent for payroll-related receivable accounts",
+		type: "asset",
+		normalBalance: "debit",
+		parentCode: null,
+	},
+	{
+		code: "1091",
+		name: "Employee Payroll Receivables",
+		description: "Reporting parent for payroll receivables recoverable from employees",
+		type: "asset",
+		normalBalance: "debit",
+		parentCode: "1090",
+	},
 	{
 		code: "5090",
 		name: "Payroll Expenses",
@@ -151,6 +200,7 @@ export const PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES = {
 	ahl_employer_expense: "5112",
 	nita_expense: "5113",
 	pension_employer_expense: "5114",
+	loans_receivable: "1150",
 	paye_payable: "2101",
 	nssf_payable: "2102",
 	shif_payable: "2103",
@@ -219,6 +269,13 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 		name: "Employer Pension Contribution",
 		description: "Employer contributions to registered pension or provident fund",
 		type: "expense",
+		normalBalance: "debit",
+	},
+	{
+		code: "1150",
+		name: "Employee Loans Receivable",
+		description: "Receivable balance for employee loans disbursed by the company",
+		type: "asset",
 		normalBalance: "debit",
 	},
 	{
@@ -295,6 +352,7 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 ] as const;
 
 export const PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES = {
+	"1150": "1091",
 	"5100": "5091",
 	"5101": "5091",
 	"5102": "5091",
@@ -315,12 +373,27 @@ export const PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES = {
 	"2109": "2092",
 } as const satisfies Record<(typeof PAYROLL_DEFAULT_LEDGER_ACCOUNTS)[number]["code"], string>;
 
-export const PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES = Object.fromEntries(
-	PAYROLL_ACCOUNT_ROLE_KEYS.map((role) => [
-		role,
-		role.endsWith("_expense") ? "expense" : "liability",
-	])
-) as Record<PayrollAccountRole, "expense" | "liability">;
+export const PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES = {
+	salaries_expense: "expense",
+	overtime_expense: "expense",
+	bonus_expense: "expense",
+	nssf_employer_expense: "expense",
+	shif_employer_expense: "expense",
+	ahl_employer_expense: "expense",
+	nita_expense: "expense",
+	pension_employer_expense: "expense",
+	loans_receivable: "asset",
+	paye_payable: "liability",
+	nssf_payable: "liability",
+	shif_payable: "liability",
+	ahl_payable: "liability",
+	nita_payable: "liability",
+	helb_payable: "liability",
+	loan_deductions_payable: "liability",
+	other_deductions_payable: "liability",
+	net_salaries_payable: "liability",
+	salary_advance_payable: "liability",
+} as const satisfies Record<PayrollAccountRole, "asset" | "expense" | "liability">;
 
 export const PAYROLL_STATUS = {
 	active: "active",

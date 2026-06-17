@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+	LOAN_DEFAULT_INTEREST_RATE,
+	LOAN_INTEREST_CALCULATION_METHOD,
+	LOAN_MAX_DEDUCTION_RATIO,
+	LOAN_STATUS,
+	OVERTIME_MAX_HOURS_PER_FORTNIGHT,
+	OVERTIME_MAX_NIGHT_HOURS_PER_FORTNIGHT,
+	OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY,
+	OVERTIME_MULTIPLIER_WEEKDAY,
+	OVERTIME_MULTIPLIER_WEEKEND,
+	OVERTIME_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
 	PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES,
 	PAYROLL_ACCOUNT_ROLES,
@@ -11,14 +21,15 @@ import {
 
 describe("payroll account constants", () => {
 	it("defines all payroll account roles with defaults", () => {
-		expect(PAYROLL_ACCOUNT_ROLE_KEYS).toHaveLength(18);
-		expect(Object.keys(PAYROLL_ACCOUNT_ROLES)).toHaveLength(18);
-		expect(Object.keys(PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES)).toHaveLength(18);
+		expect(PAYROLL_ACCOUNT_ROLE_KEYS).toHaveLength(19);
+		expect(Object.keys(PAYROLL_ACCOUNT_ROLES)).toHaveLength(19);
+		expect(Object.keys(PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES)).toHaveLength(19);
 	});
 
 	it("derives expected account types from role keys", () => {
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.salaries_expense).toBe("expense");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.bonus_expense).toBe("expense");
+		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.loans_receivable).toBe("asset");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.paye_payable).toBe("liability");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.net_salaries_payable).toBe(
 			"liability"
@@ -41,5 +52,32 @@ describe("payroll account constants", () => {
 			expect(parentCode).toBeDefined();
 			expect(parentCodes.has(parentCode)).toBe(true);
 		}
+	});
+
+	it("defines overtime constants for payroll computation and workflow filters", () => {
+		expect(OVERTIME_MULTIPLIER_WEEKDAY).toBe(1.5);
+		expect(OVERTIME_MULTIPLIER_WEEKEND).toBe(2);
+		expect(OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY).toBe(2);
+		expect(OVERTIME_MAX_HOURS_PER_FORTNIGHT).toBe(116);
+		expect(OVERTIME_MAX_NIGHT_HOURS_PER_FORTNIGHT).toBe(144);
+		expect(OVERTIME_STATUS).toEqual({
+			DRAFT: "draft",
+			APPROVED: "approved",
+			PAID: "paid",
+		});
+	});
+
+	it("defines loan constants for payroll loan workflows", () => {
+		expect(LOAN_MAX_DEDUCTION_RATIO).toBeCloseTo(2 / 3);
+		expect(LOAN_DEFAULT_INTEREST_RATE).toBe(0);
+		expect(LOAN_INTEREST_CALCULATION_METHOD).toBe("reducing_balance");
+		expect(LOAN_STATUS).toEqual({
+			PENDING: "pending",
+			ACTIVE: "active",
+			PAUSED: "paused",
+			FULLY_PAID: "fully_paid",
+			WRITTEN_OFF: "written_off",
+			REJECTED: "rejected",
+		});
 	});
 });

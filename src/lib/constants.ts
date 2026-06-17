@@ -7,6 +7,7 @@ import {
 	PercentBadgeIcon,
 	Users2Icon,
 	UsersIcon,
+	UserKeyIcon,
 } from "@/components/ui/icons";
 import type { Permission } from "@/lib/permissions/constants";
 
@@ -30,7 +31,7 @@ export const menuItems: MenuItem[] = [
 	{
 		title: "User Management",
 		url: "/app/users",
-		icon: UsersIcon,
+		icon: UserKeyIcon,
 	},
 	{
 		title: "Member Management",
@@ -130,6 +131,16 @@ export const collapsibleMenuItems = [
 				title: "Salary Structures",
 				url: "/app/payroll/salary-structures",
 				permission: "salary-structures:view",
+			},
+			{
+				title: "Overtime Records",
+				url: "/app/payroll/overtime",
+				permission: "overtime-records:view",
+			},
+			{
+				title: "Employee Loans",
+				url: "/app/payroll/loans",
+				permission: "employee-loans:view",
 			},
 		],
 		get permissions(): Permission[] {

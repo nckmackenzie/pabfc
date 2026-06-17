@@ -10,15 +10,18 @@ import {
 	pgTable,
 	serial,
 	text,
+	timestamp,
+	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
 import {
+	LOAN_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
 	type PayrollAccountRole,
 } from "@/features/payroll/lib/payroll-constants";
 import { users } from "./auth";
-import { ledgerAccounts } from "./chart-of-accounts";
+import { journalEntries, ledgerAccounts } from "./chart-of-accounts";
 import { employees } from "./employees";
 import { nanoid } from "nanoid";
 
@@ -30,11 +33,20 @@ const payrollAccountRoleValues = PAYROLL_ACCOUNT_ROLE_KEYS as [
 	PayrollAccountRole,
 	...Array<PayrollAccountRole>,
 ];
+export const OVERTIME_STATUSES = ["draft", "approved", "paid"] as const;
+export type OvertimeStatus = (typeof OVERTIME_STATUSES)[number];
+const loanStatusValues = Object.values(LOAN_STATUS) as [
+	(string & {}),
+	...(string & {})[],
+];
+export type LoanStatus = (typeof loanStatusValues)[number];
 
 export const payrollAccountRoleEnum = pgEnum(
 	"payroll_account_role",
 	payrollAccountRoleValues
 );
+export const overtimeStatusEnum = pgEnum("overtime_status", OVERTIME_STATUSES);
+export const loanStatusEnum = pgEnum("loan_status", loanStatusValues);
 
 export const salaryStructures = pgTable(
 	"salary_structures",
@@ -179,6 +191,285 @@ export const salaryStructures = pgTable(
 	],
 );
 
+export const overtimeRecords = pgTable(
+	"overtime_records",
+	{
+		id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 }),
+		periodMonth: integer("period_month").notNull(),
+		periodYear: integer("period_year").notNull(),
+		weekdayOvertimeHours: numeric("weekday_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		weekendOvertimeHours: numeric("weekend_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		publicHolidayOvertimeHours: numeric("public_holiday_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		overtimeHourlyRate: numeric("overtime_hourly_rate", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		weekdayOvertimePay: numeric("weekday_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		weekendOvertimePay: numeric("weekend_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		publicHolidayOvertimePay: numeric("public_holiday_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalOvertimePay: numeric("total_overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		status: overtimeStatusEnum("status").notNull().default("draft"),
+		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		approvedAt: timestamp("approved_at", { withTimezone: true }),
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 }),
+		notes: text("notes"),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_overtime_records_employee_period").on(
+			table.employeeId,
+			table.periodYear,
+			table.periodMonth,
+		),
+		index("idx_overtime_records_period_status").on(
+			table.periodYear,
+			table.periodMonth,
+			table.status,
+		),
+		index("idx_overtime_records_payroll_slip_id").on(table.payrollSlipId),
+		uniqueIndex("uq_overtime_records_employee_period").on(
+			table.employeeId,
+			table.periodYear,
+			table.periodMonth,
+		),
+		check(
+			"overtime_records_period_month_range",
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`,
+		),
+		check(
+			"overtime_records_period_year_range",
+			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`,
+		),
+	],
+);
+
+export const employeeLoans = pgTable(
+	"employee_loans",
+	{
+		id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => nanoid()),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		applicationDate: date("application_date").notNull().default(sql`CURRENT_DATE`),
+		principalAmount: numeric("principal_amount", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		annualInterestRate: numeric("annual_interest_rate", {
+			precision: 7,
+			scale: 4,
+		})
+			.notNull()
+			.default("0"),
+		requestedInstalments: integer("requested_instalments").notNull(),
+		purpose: text("purpose"),
+		status: loanStatusEnum("status").notNull().default("pending"),
+		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		approvedAt: timestamp("approved_at", { withTimezone: true }),
+		approvedAmount: numeric("approved_amount", {
+			precision: 14,
+			scale: 2,
+		}),
+		approvedInstalments: integer("approved_instalments"),
+		disbursementAccountId: integer("disbursement_account_id").references(
+			() => ledgerAccounts.id,
+			{
+				onDelete: "set null",
+			},
+		),
+		disbursementDate: date("disbursement_date"),
+		repaymentStartMonth: integer("repayment_start_month"),
+		repaymentStartYear: integer("repayment_start_year"),
+		monthlyInstalment: numeric("monthly_instalment", {
+			precision: 14,
+			scale: 2,
+		}),
+		disbursementJournalEntryId: integer("disbursement_journal_entry_id").references(
+			() => journalEntries.id,
+			{
+				onDelete: "set null",
+			},
+		),
+		rejectedBy: varchar("rejected_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+		rejectionReason: text("rejection_reason"),
+		outstandingBalance: numeric("outstanding_balance", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalPrincipalPaid: numeric("total_principal_paid", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalInterestPaid: numeric("total_interest_paid", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		instalmentsPaid: integer("instalments_paid").notNull().default(0),
+		pausedBy: varchar("paused_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		pausedAt: timestamp("paused_at", { withTimezone: true }),
+		resumedBy: varchar("resumed_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		resumedAt: timestamp("resumed_at", { withTimezone: true }),
+		settledDate: date("settled_date"),
+		settlementJournalEntryId: integer("settlement_journal_entry_id").references(
+			() => journalEntries.id,
+			{
+				onDelete: "set null",
+			},
+		),
+		notes: text("notes"),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_employee_loans_employee_id").on(table.employeeId),
+		index("idx_employee_loans_employee_status").on(table.employeeId, table.status),
+		index("idx_employee_loans_disbursement_account_id").on(table.disbursementAccountId),
+		check(
+			"employee_loans_requested_instalments_range",
+			sql`${table.requestedInstalments} >= 1 and ${table.requestedInstalments} <= 60`,
+		),
+		check(
+			"employee_loans_approved_instalments_range",
+			sql`${table.approvedInstalments} is null or (${table.approvedInstalments} >= 1 and ${table.approvedInstalments} <= 60)`,
+		),
+		check(
+			"employee_loans_interest_rate_range",
+			sql`${table.annualInterestRate} >= 0 and ${table.annualInterestRate} <= 1`,
+		),
+		check(
+			"employee_loans_repayment_start_month_range",
+			sql`${table.repaymentStartMonth} is null or (${table.repaymentStartMonth} >= 1 and ${table.repaymentStartMonth} <= 12)`,
+		),
+		check(
+			"employee_loans_repayment_start_year_range",
+			sql`${table.repaymentStartYear} is null or (${table.repaymentStartYear} >= 2000 and ${table.repaymentStartYear} <= 2100)`,
+		),
+	],
+);
+
+export const loanRepayments = pgTable(
+	"loan_repayments",
+	{
+		id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => nanoid()),
+		loanId: varchar("loan_id", { length: 255 })
+			.notNull()
+			.references(() => employeeLoans.id, { onDelete: "cascade" }),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		repaymentDate: date("repayment_date").notNull(),
+		periodMonth: integer("period_month").notNull(),
+		periodYear: integer("period_year").notNull(),
+		principalComponent: numeric("principal_component", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		interestComponent: numeric("interest_component", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalRepayment: numeric("total_repayment", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		balanceBefore: numeric("balance_before", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		balanceAfter: numeric("balance_after", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		isEarlySettlement: boolean("is_early_settlement").notNull().default(false),
+		// FK to payroll_slips.id — constraint added in payroll calculation engine migration.
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 }),
+		journalEntryId: integer("journal_entry_id").references(() => journalEntries.id, {
+			onDelete: "set null",
+		}),
+		notes: text("notes"),
+		createdAt,
+	},
+	(table) => [
+		index("idx_loan_repayments_loan_id").on(table.loanId),
+		index("idx_loan_repayments_employee_period").on(
+			table.employeeId,
+			table.periodYear,
+			table.periodMonth,
+		),
+		index("idx_loan_repayments_payroll_slip_id").on(table.payrollSlipId),
+		check(
+			"loan_repayments_period_month_range",
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`,
+		),
+		check(
+			"loan_repayments_period_year_range",
+			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`,
+		),
+	],
+);
+
 export const payrollAccountMappings = pgTable(
 	"payroll_account_mappings",
 	{
@@ -193,6 +484,83 @@ export const payrollAccountMappings = pgTable(
 	},
 	(table) => [index("idx_payroll_account_mappings_role").on(table.role)]
 );
+
+export const salaryStructuresRelations = relations(salaryStructures, ({ one }) => ({
+	employee: one(employees, {
+		fields: [salaryStructures.employeeId],
+		references: [employees.id],
+	}),
+	createdByUser: one(users, {
+		fields: [salaryStructures.createdBy],
+		references: [users.id],
+	}),
+}));
+
+export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => ({
+	employee: one(employees, {
+		fields: [overtimeRecords.employeeId],
+		references: [employees.id],
+	}),
+	createdByUser: one(users, {
+		fields: [overtimeRecords.createdBy],
+		references: [users.id],
+	}),
+	approvedByUser: one(users, {
+		fields: [overtimeRecords.approvedBy],
+		references: [users.id],
+	}),
+}));
+
+export const employeeLoansRelations = relations(employeeLoans, ({ many, one }) => ({
+	employee: one(employees, {
+		fields: [employeeLoans.employeeId],
+		references: [employees.id],
+	}),
+	approvedByUser: one(users, {
+		fields: [employeeLoans.approvedBy],
+		references: [users.id],
+	}),
+	rejectedByUser: one(users, {
+		fields: [employeeLoans.rejectedBy],
+		references: [users.id],
+	}),
+	pausedByUser: one(users, {
+		fields: [employeeLoans.pausedBy],
+		references: [users.id],
+	}),
+	resumedByUser: one(users, {
+		fields: [employeeLoans.resumedBy],
+		references: [users.id],
+	}),
+	disbursementAccount: one(ledgerAccounts, {
+		fields: [employeeLoans.disbursementAccountId],
+		references: [ledgerAccounts.id],
+	}),
+	disbursementJournalEntry: one(journalEntries, {
+		fields: [employeeLoans.disbursementJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	settlementJournalEntry: one(journalEntries, {
+		fields: [employeeLoans.settlementJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	repayments: many(loanRepayments),
+}));
+
+export const loanRepaymentsRelations = relations(loanRepayments, ({ one }) => ({
+	loan: one(employeeLoans, {
+		fields: [loanRepayments.loanId],
+		references: [employeeLoans.id],
+	}),
+	employee: one(employees, {
+		fields: [loanRepayments.employeeId],
+		references: [employees.id],
+	}),
+	journalEntry: one(journalEntries, {
+		fields: [loanRepayments.journalEntryId],
+		references: [journalEntries.id],
+	}),
+}));
 
 export const payrollAccountMappingsRelations = relations(
 	payrollAccountMappings,
