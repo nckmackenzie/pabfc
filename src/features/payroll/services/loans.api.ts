@@ -1020,6 +1020,22 @@ async function processPayrollLoanRepayment({
 		});
 	}
 
+	if (loan.repaymentStartMonth === null || loan.repaymentStartYear === null) {
+		return failure({
+			type: "ValidationError",
+			message: "Loan repayment start period is not configured",
+		});
+	}
+
+	const startIndex = getPeriodIndex(loan.repaymentStartMonth, loan.repaymentStartYear);
+	const targetIndex = getPeriodIndex(periodMonth, periodYear);
+	if (targetIndex < startIndex) {
+		return failure({
+			type: "ValidationError",
+			message: "Repayment period cannot be earlier than the loan repayment start period",
+		});
+	}
+
 	const existingRepayment = await db.query.loanRepayments.findFirst({
 		where: and(
 			eq(loanRepayments.loanId, loanId),
@@ -1196,7 +1212,7 @@ async function getLoanById(loanId: string): Promise<Result<LoanDetailView>> {
 
 async function getLoansByEmployee(
 	employeeId: string,
-	statusFilter?: LoanRecord["status"]
+	statusFilter?: LoanRecord["status"] | "all"
 ): Promise<Result<LoanView[]>> {
 	const employee = await getEmployeeForLoan(employeeId);
 
@@ -1210,7 +1226,7 @@ async function getLoansByEmployee(
 	const rows = await db.query.employeeLoans.findMany({
 		where: and(
 			eq(employeeLoans.employeeId, employeeId),
-			statusFilter ? eq(employeeLoans.status, statusFilter) : undefined
+			statusFilter && statusFilter !== "all" ? eq(employeeLoans.status, statusFilter) : undefined
 		),
 		orderBy: [desc(employeeLoans.applicationDate), desc(employeeLoans.createdAt)],
 	});
@@ -1357,7 +1373,7 @@ async function requireLoanApproveAccess() {
 
 async function requireLoanRejectAccess() {
 	await requirePermission("employees:payroll-information");
-	await requirePermission("employee-loans:reject");
+	await requirePermission("employee-loans:approve");
 }
 
 async function requireLoanPauseAccess() {
@@ -1367,7 +1383,7 @@ async function requireLoanPauseAccess() {
 
 async function requireLoanResumeAccess() {
 	await requirePermission("employees:payroll-information");
-	await requirePermission("employee-loans:resume");
+	await requirePermission("employee-loans:pause");
 }
 
 async function requireLoanSettlementAccess() {
@@ -1560,6 +1576,7 @@ export const processPayrollLoanRepaymentFn = createServerFn({ method: "POST" })
 	.validator(payrollLoanRepaymentSchema)
 	.handler(async ({ data }) => {
 		await requireLoanViewAccess();
+		await requirePermission("payroll-process:create");
 		return processPayrollLoanRepayment(data);
 	});
 

@@ -433,7 +433,7 @@ export function LoanDetail({
 								</div>
 							</PermissionGate>
 
-							<PermissionGate permission="employee-loans:reject">
+							<PermissionGate permission="employee-loans:approve">
 								<div className="rounded-md border bg-card p-6 space-y-4">
 									<h2 className="text-lg font-semibold">Reject Loan</h2>
 									<form
@@ -537,7 +537,7 @@ export function LoanDetail({
 					) : null}
 
 					{loan.status === "paused" ? (
-						<PermissionGate permission="employee-loans:resume">
+						<PermissionGate permission="employee-loans:pause">
 							<div className="rounded-md border bg-card p-6 space-y-4">
 								<h2 className="text-lg font-semibold">Resume Repayments</h2>
 								<form

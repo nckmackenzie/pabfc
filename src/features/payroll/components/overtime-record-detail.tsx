@@ -157,6 +157,12 @@ export function OvertimeRecordDetail({ record }: { record: OvertimeRecordDetailR
 	const totalHours =
 		record.weekdayOvertimeHours + record.weekendOvertimeHours + record.publicHolidayOvertimeHours;
 
+	const isAnyMutationPending =
+		updateMutation.isPending ||
+		approveMutation.isPending ||
+		revokeMutation.isPending ||
+		deleteMutation.isPending;
+
 	return (
 		<div className="space-y-6">
 			<div className="rounded-md border bg-card p-6">
@@ -304,7 +310,7 @@ export function OvertimeRecordDetail({ record }: { record: OvertimeRecordDetailR
 								<form.AppForm>
 									<form.SubmitButton
 										buttonText="Save Draft Changes"
-										isLoading={updateMutation.isPending}
+										isLoading={isAnyMutationPending}
 									/>
 								</form.AppForm>
 							) : (
@@ -320,16 +326,13 @@ export function OvertimeRecordDetail({ record }: { record: OvertimeRecordDetailR
 						<div className="flex flex-wrap gap-3">
 							{record.status === "draft" ? (
 								<>
-									<Button
-										onClick={() => approveMutation.mutate()}
-										disabled={approveMutation.isPending}
-									>
+									<Button onClick={() => approveMutation.mutate()} disabled={isAnyMutationPending}>
 										Approve Record
 									</Button>
 									<Button
 										variant="destructive"
 										onClick={() => deleteMutation.mutate()}
-										disabled={deleteMutation.isPending}
+										disabled={isAnyMutationPending}
 									>
 										Delete Draft
 									</Button>
@@ -339,7 +342,7 @@ export function OvertimeRecordDetail({ record }: { record: OvertimeRecordDetailR
 								<Button
 									variant="outline"
 									onClick={() => revokeMutation.mutate()}
-									disabled={revokeMutation.isPending}
+									disabled={isAnyMutationPending}
 								>
 									Revoke Approval
 								</Button>

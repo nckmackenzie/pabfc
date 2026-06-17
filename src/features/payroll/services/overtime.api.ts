@@ -991,7 +991,8 @@ async function getOvertimeFormOptions(): Promise<OvertimeFormOptions> {
 export const linkOvertimeRecordToPayrollSlipFn = createServerFn({ method: "POST" })
 	.validator(overtimePayrollLinkSchema)
 	.handler(async ({ data: { recordId, payrollSlipId } }) => {
-		await requireOvertimeViewAccess();
+		await requireOvertimeApproveAccess();
+		await requirePermission("payroll-process:create");
 
 		const existingRecord = await getOvertimeRecordById(recordId);
 
@@ -1032,8 +1033,18 @@ export const linkOvertimeRecordToPayrollSlipFn = createServerFn({ method: "POST"
 						payrollSlipId,
 						status: OVERTIME_STATUS.PAID,
 					})
-					.where(eq(overtimeRecords.id, recordId))
+					.where(
+						and(
+							eq(overtimeRecords.id, recordId),
+							eq(overtimeRecords.status, OVERTIME_STATUS.APPROVED),
+							isNull(overtimeRecords.payrollSlipId)
+						)
+					)
 					.returning();
+
+				if (!updated) {
+					throw new Error("Overtime record is no longer linkable");
+				}
 
 				return updated;
 			});

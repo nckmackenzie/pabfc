@@ -79,9 +79,7 @@ function OvertimeRecordActions({ record }: { record: OvertimePeriodRecord }) {
 			await queryClient.invalidateQueries({ queryKey: ["overtime-records"] });
 		},
 		onError: (error) => {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to revoke overtime approval."
-			);
+			toast.error(error instanceof Error ? error.message : "Failed to revoke overtime approval.");
 		},
 	});
 
@@ -105,14 +103,24 @@ function OvertimeRecordActions({ record }: { record: OvertimePeriodRecord }) {
 			</PermissionGate>
 			{record.status === "draft" ? (
 				<PermissionGate permission="overtime-records:approve">
-					<DropdownMenuItem onSelect={() => approveMutation.mutate()}>
+					<DropdownMenuItem
+						onSelect={() => {
+							if (approveMutation.isPending) return;
+							approveMutation.mutate();
+						}}
+					>
 						<CheckButton text={approveMutation.isPending ? "Approving..." : "Approve"} />
 					</DropdownMenuItem>
 				</PermissionGate>
 			) : null}
 			{record.status === "approved" && !record.payrollSlipId ? (
 				<PermissionGate permission="overtime-records:approve">
-					<DropdownMenuItem onSelect={() => revokeMutation.mutate()}>
+					<DropdownMenuItem
+						onSelect={() => {
+							if (revokeMutation.isPending) return;
+							revokeMutation.mutate();
+						}}
+					>
 						<CheckButton text={revokeMutation.isPending ? "Revoking..." : "Revoke"} />
 					</DropdownMenuItem>
 				</PermissionGate>
