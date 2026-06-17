@@ -1,12 +1,210 @@
+export const PAYE_BANDS = [
+	{ lowerBound: 0, upperBound: 24000, rate: 0.1 },
+	{ lowerBound: 24001, upperBound: 32333, rate: 0.25 },
+	{ lowerBound: 32334, upperBound: 500000, rate: 0.3 },
+	{ lowerBound: 500001, upperBound: 800000, rate: 0.325 },
+	{ lowerBound: 800001, upperBound: null, rate: 0.35 },
+] as const;
+
+export const NSSF_TIER_1_LOWER_LIMIT = 0;
+export const NSSF_TIER_1_UPPER_LIMIT = 8000;
+export const NSSF_TIER_2_UPPER_LIMIT = 72000;
+export const NSSF_CONTRIBUTION_RATE = 0.06;
+export const NSSF_TIER_1_MAX_EMPLOYEE = 480;
+export const NSSF_TIER_1_MAX_EMPLOYER = 480;
+export const NSSF_TIER_2_MAX_EMPLOYEE = 3840;
+export const NSSF_TIER_2_MAX_EMPLOYER = 3840;
+export const NSSF_MAX_EMPLOYEE = 4320;
+export const NSSF_MAX_EMPLOYER = 4320;
+
+export const SHIF_RATE = 0.0275;
+export const SHIF_MINIMUM_CONTRIBUTION = 300;
+
+export const AHL_EMPLOYEE_RATE = 0.015;
+export const AHL_EMPLOYER_RATE = 0.015;
+
+export const NITA_LEVY_PER_EMPLOYEE = 50;
+
+export const PAYE_PERSONAL_RELIEF = 2400;
+export const PAYE_INSURANCE_RELIEF_RATE = 0.15;
+export const PAYE_INSURANCE_RELIEF_MAX = 5000;
+export const PAYE_INSURANCE_RELIEF_INPUT_MAX = 33333.33;
+export const PAYE_PENSION_ALLOWABLE_MAX = 30000;
+export const PAYE_MORTGAGE_ALLOWABLE_MAX = 30000;
+export const PAYE_POST_RETIREMENT_MEDICAL_MAX = 15000;
+export const PAYE_NON_CASH_BENEFIT_EXEMPT = 5000;
+export const PAYE_MEAL_ALLOWANCE_EXEMPT = 5000;
+
+export const STATUTORY_RATE_CATEGORIES = [
+	"paye_band",
+	"nssf_tier_1_upper_limit",
+	"nssf_tier_2_upper_limit",
+	"nssf_contribution_rate",
+	"nssf_max_employee",
+	"nssf_max_employer",
+	"shif",
+	"ahl_employee_rate",
+	"ahl_employer_rate",
+	"nita",
+	"personal_relief",
+	"insurance_relief",
+	"pension_cap",
+	"mortgage_cap",
+	"post_retirement_medical_cap",
+	"non_cash_benefit_exempt",
+	"meal_allowance_exempt",
+] as const;
+
+export type StatutoryRateCategory = (typeof STATUTORY_RATE_CATEGORIES)[number];
+
+export const STATUTORY_RATE_CATEGORY_METADATA = {
+	paye_band: {
+		label: "PAYE Bands",
+		description: "Progressive PAYE tax bands used for gross tax computation.",
+		valueType: "band",
+	},
+	nssf_tier_1_upper_limit: {
+		label: "NSSF Tier I Upper Limit",
+		description: "Upper pensionable earnings limit for NSSF Tier I.",
+		valueType: "fixed",
+	},
+	nssf_tier_2_upper_limit: {
+		label: "NSSF Tier II Upper Limit",
+		description: "Upper pensionable earnings limit for NSSF Tier II.",
+		valueType: "fixed",
+	},
+	nssf_contribution_rate: {
+		label: "NSSF Contribution Rate",
+		description: "Employer and employee NSSF percentage rate.",
+		valueType: "rate",
+	},
+	nssf_max_employee: {
+		label: "NSSF Max Employee",
+		description: "Maximum monthly employee-side NSSF contribution.",
+		valueType: "fixed",
+	},
+	nssf_max_employer: {
+		label: "NSSF Max Employer",
+		description: "Maximum monthly employer-side NSSF contribution.",
+		valueType: "fixed",
+	},
+	shif: {
+		label: "SHIF",
+		description: "SHIF percentage rate and monthly minimum contribution.",
+		valueType: "rate_with_fixed",
+	},
+	ahl_employee_rate: {
+		label: "AHL Employee Rate",
+		description: "Affordable Housing Levy employee contribution rate.",
+		valueType: "rate",
+	},
+	ahl_employer_rate: {
+		label: "AHL Employer Rate",
+		description: "Affordable Housing Levy employer contribution rate.",
+		valueType: "rate",
+	},
+	nita: {
+		label: "NITA Levy",
+		description: "Flat monthly NITA levy per employee.",
+		valueType: "fixed",
+	},
+	personal_relief: {
+		label: "Personal Relief",
+		description: "Monthly PAYE personal relief amount.",
+		valueType: "fixed",
+	},
+	insurance_relief: {
+		label: "Insurance Relief",
+		description: "Insurance relief rate and monthly maximum relief cap.",
+		valueType: "rate_with_fixed",
+	},
+	pension_cap: {
+		label: "Pension Allowable Cap",
+		description: "Maximum monthly employee pension amount allowable for PAYE.",
+		valueType: "fixed",
+	},
+	mortgage_cap: {
+		label: "Mortgage Allowable Cap",
+		description: "Maximum monthly mortgage interest allowable for PAYE.",
+		valueType: "fixed",
+	},
+	post_retirement_medical_cap: {
+		label: "Post-retirement Medical Cap",
+		description: "Maximum monthly post-retirement medical amount allowable for PAYE.",
+		valueType: "fixed",
+	},
+	non_cash_benefit_exempt: {
+		label: "Non-cash Benefit Exempt",
+		description: "Monthly non-cash benefit PAYE exemption threshold.",
+		valueType: "fixed",
+	},
+	meal_allowance_exempt: {
+		label: "Meal Allowance Exempt",
+		description: "Monthly meal allowance PAYE exemption threshold.",
+		valueType: "fixed",
+	},
+} as const satisfies Record<
+	StatutoryRateCategory,
+	{
+		label: string;
+		description: string;
+		valueType: "band" | "fixed" | "rate" | "rate_with_fixed";
+	}
+>;
+
+export const STATUTORY_RATE_CATEGORY_KEYS = Object.keys(
+	STATUTORY_RATE_CATEGORY_METADATA
+) as Array<StatutoryRateCategory>;
+
+export const STATUTORY_RATE_MULTI_ROW_CATEGORIES = ["paye_band"] as const;
+
+export const STATUTORY_RATE_DEFAULTS = {
+	paye: {
+		bands: PAYE_BANDS,
+		personalRelief: PAYE_PERSONAL_RELIEF,
+		insuranceReliefRate: PAYE_INSURANCE_RELIEF_RATE,
+		insuranceReliefMax: PAYE_INSURANCE_RELIEF_MAX,
+		insuranceReliefInputMax: PAYE_INSURANCE_RELIEF_INPUT_MAX,
+		pensionAllowableMax: PAYE_PENSION_ALLOWABLE_MAX,
+		mortgageAllowableMax: PAYE_MORTGAGE_ALLOWABLE_MAX,
+		postRetirementMedicalMax: PAYE_POST_RETIREMENT_MEDICAL_MAX,
+		nonCashBenefitExempt: PAYE_NON_CASH_BENEFIT_EXEMPT,
+		mealAllowanceExempt: PAYE_MEAL_ALLOWANCE_EXEMPT,
+	},
+	nssf: {
+		tier1LowerLimit: NSSF_TIER_1_LOWER_LIMIT,
+		tier1UpperLimit: NSSF_TIER_1_UPPER_LIMIT,
+		tier2UpperLimit: NSSF_TIER_2_UPPER_LIMIT,
+		contributionRate: NSSF_CONTRIBUTION_RATE,
+		tier1MaxEmployee: NSSF_TIER_1_MAX_EMPLOYEE,
+		tier1MaxEmployer: NSSF_TIER_1_MAX_EMPLOYER,
+		tier2MaxEmployee: NSSF_TIER_2_MAX_EMPLOYEE,
+		tier2MaxEmployer: NSSF_TIER_2_MAX_EMPLOYER,
+		maxEmployee: NSSF_MAX_EMPLOYEE,
+		maxEmployer: NSSF_MAX_EMPLOYER,
+	},
+	shif: {
+		rate: SHIF_RATE,
+		minimumContribution: SHIF_MINIMUM_CONTRIBUTION,
+	},
+	ahl: {
+		employeeRate: AHL_EMPLOYEE_RATE,
+		employerRate: AHL_EMPLOYER_RATE,
+	},
+	nita: {
+		levyPerEmployee: NITA_LEVY_PER_EMPLOYEE,
+	},
+} as const;
+
 export const PAYROLL_STATUTORY_LIMITS = {
-	mealAllowanceExemptMonthly: 5000,
-	airtimeAllowanceExemptMonthly: 5000,
-	pensionAllowableMonthly: 30000,
-	mortgageInterestAllowableMonthly: 30000,
-	postRetirementMedicalAllowableMonthly: 15000,
-	insurancePremiumsReliefInputMonthly: 33333.33,
-	insuranceReliefRate: 0.15,
-	insuranceReliefCapMonthly: 5000,
+	mealAllowanceExemptMonthly: PAYE_MEAL_ALLOWANCE_EXEMPT,
+	airtimeAllowanceExemptMonthly: PAYE_NON_CASH_BENEFIT_EXEMPT,
+	pensionAllowableMonthly: PAYE_PENSION_ALLOWABLE_MAX,
+	mortgageInterestAllowableMonthly: PAYE_MORTGAGE_ALLOWABLE_MAX,
+	postRetirementMedicalAllowableMonthly: PAYE_POST_RETIREMENT_MEDICAL_MAX,
+	insurancePremiumsReliefInputMonthly: PAYE_INSURANCE_RELIEF_INPUT_MAX,
+	insuranceReliefRate: PAYE_INSURANCE_RELIEF_RATE,
+	insuranceReliefCapMonthly: PAYE_INSURANCE_RELIEF_MAX,
 	defaultOvertimeHourlyRateDivisor: 225,
 	overtimeMaxHoursPerFortnight: 116,
 	overtimeMaxNightHoursPerFortnight: 144,
@@ -110,7 +308,8 @@ export const PAYROLL_ACCOUNT_ROLES = {
 	},
 	net_salaries_payable: {
 		label: "Net Salaries Payable",
-		description: "Credited for total net pay owed to employees; cleared when salaries are disbursed",
+		description:
+			"Credited for total net pay owed to employees; cleared when salaries are disbursed",
 	},
 	salary_advance_payable: {
 		label: "Salary Advance Recovery Payable",
@@ -259,8 +458,7 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 	{
 		code: "5113",
 		name: "NITA Levy",
-		description:
-			"National Industrial Training Authority levy at KES 50 per employee per month",
+		description: "National Industrial Training Authority levy at KES 50 per employee per month",
 		type: "expense",
 		normalBalance: "debit",
 	},
@@ -309,8 +507,7 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 	{
 		code: "2104",
 		name: "AHL Payable",
-		description:
-			"Employee and employer Affordable Housing Levy pending remittance",
+		description: "Employee and employer Affordable Housing Levy pending remittance",
 		type: "liability",
 		normalBalance: "credit",
 	},

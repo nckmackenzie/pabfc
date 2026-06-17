@@ -73,6 +73,8 @@ export const PERMISSIONS = [
 	"overtime-records:delete",
 	"payroll-account-mappings:view",
 	"payroll-account-mappings:update",
+	"statutory-rates:view",
+	"statutory-rates:manage",
 	"employee-loans:view",
 	"employee-loans:create",
 	"employee-loans:approve",

@@ -128,6 +128,11 @@ export const collapsibleMenuItems = [
 				permission: "payroll-account-mappings:view",
 			},
 			{
+				title: "Statutory Rates",
+				url: "/app/payroll/statutory-rates",
+				permission: "statutory-rates:view",
+			},
+			{
 				title: "Salary Structures",
 				url: "/app/payroll/salary-structures",
 				permission: "salary-structures:view",

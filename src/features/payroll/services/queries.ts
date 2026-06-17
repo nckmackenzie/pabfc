@@ -18,6 +18,10 @@ import {
 	getPayrollMappingAccountOptionsFn,
 } from "@/features/payroll/services/account-mappings.api";
 import {
+	getCurrentStatutoryRatesFn,
+	getStatutoryRateHistoryFn,
+} from "@/features/payroll/services/statutory-rates.api";
+import {
 	getAllActiveLoansFn,
 	getLoanByIdFn,
 	getLoanFormOptionsFn,
@@ -30,6 +34,7 @@ import type {
 	salaryStructureDirectoryFilterSchema,
 	salaryStructureEmployeeSummarySchema,
 } from "@/features/payroll/services/schemas";
+import type { statutoryRateHistorySchema } from "@/features/payroll/services/statutory-rates.schemas";
 import type {
 	allActiveLoansFilterSchema,
 	loanByIdSchema,
@@ -92,6 +97,23 @@ export const payrollAccountMappingQueries = {
 			queryKey: [...payrollAccountMappingQueries.all, "account-options"] as const,
 			queryFn: () => getPayrollMappingAccountOptionsFn(),
 			staleTime: 5 * 60 * 1000,
+		}),
+};
+
+export const statutoryRateQueries = {
+	all: ["statutory-rates"] as const,
+	current: () =>
+		queryOptions({
+			queryKey: [...statutoryRateQueries.all, "current"] as const,
+			queryFn: () => getCurrentStatutoryRatesFn(),
+			staleTime: 60 * 1000,
+		}),
+	history: (params: z.infer<typeof statutoryRateHistorySchema>) =>
+		queryOptions({
+			queryKey: [...statutoryRateQueries.all, "history", params.category] as const,
+			queryFn: () => getStatutoryRateHistoryFn({ data: params }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
 		}),
 };
 
