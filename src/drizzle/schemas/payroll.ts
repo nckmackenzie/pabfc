@@ -18,6 +18,8 @@ import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
 import {
 	LOAN_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
+	STATUTORY_RATE_CATEGORIES,
+	type StatutoryRateCategory,
 	type PayrollAccountRole,
 } from "@/features/payroll/lib/payroll-constants";
 import { users } from "./auth";
@@ -33,17 +35,19 @@ const payrollAccountRoleValues = PAYROLL_ACCOUNT_ROLE_KEYS as [
 	PayrollAccountRole,
 	...Array<PayrollAccountRole>,
 ];
+const statutoryRateCategoryValues = STATUTORY_RATE_CATEGORIES as unknown as [
+	StatutoryRateCategory,
+	...Array<StatutoryRateCategory>,
+];
 export const OVERTIME_STATUSES = ["draft", "approved", "paid"] as const;
 export type OvertimeStatus = (typeof OVERTIME_STATUSES)[number];
-const loanStatusValues = Object.values(LOAN_STATUS) as [
-	(string & {}),
-	...(string & {})[],
-];
+const loanStatusValues = Object.values(LOAN_STATUS) as [string & {}, ...(string & {})[]];
 export type LoanStatus = (typeof loanStatusValues)[number];
 
-export const payrollAccountRoleEnum = pgEnum(
-	"payroll_account_role",
-	payrollAccountRoleValues
+export const payrollAccountRoleEnum = pgEnum("payroll_account_role", payrollAccountRoleValues);
+export const statutoryRateCategoryEnum = pgEnum(
+	"statutory_rate_category",
+	statutoryRateCategoryValues
 );
 export const overtimeStatusEnum = pgEnum("overtime_status", OVERTIME_STATUSES);
 export const loanStatusEnum = pgEnum("loan_status", loanStatusValues);
@@ -51,15 +55,15 @@ export const loanStatusEnum = pgEnum("loan_status", loanStatusValues);
 export const salaryStructures = pgTable(
 	"salary_structures",
 	{
-		id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
+		id: varchar("id")
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
 		employeeId: varchar("employee_id", { length: 255 })
 			.notNull()
 			.references(() => employees.id, { onDelete: "cascade" }),
 		effectiveFrom: date("effective_from").notNull(),
 		effectiveTo: date("effective_to"),
-		payFrequency: payFrequencyEnum("pay_frequency")
-			.notNull()
-			.default("monthly"),
+		payFrequency: payFrequencyEnum("pay_frequency").notNull().default("monthly"),
 		basicSalary: numeric("basic_salary", {
 			precision: 14,
 			scale: 2,
@@ -122,13 +126,10 @@ export const salaryStructures = pgTable(
 		})
 			.notNull()
 			.default("0"),
-		postRetirementMedicalMonthly: numeric(
-			"post_retirement_medical_monthly",
-			{
-				precision: 14,
-				scale: 2,
-			},
-		)
+		postRetirementMedicalMonthly: numeric("post_retirement_medical_monthly", {
+			precision: 14,
+			scale: 2,
+		})
 			.notNull()
 			.default("0"),
 		insurancePremiumsMonthly: numeric("insurance_premiums_monthly", {
@@ -156,17 +157,12 @@ export const salaryStructures = pgTable(
 		})
 			.notNull()
 			.default("5"),
-		overtimeHourlyRateDivisor: integer("overtime_hourly_rate_divisor")
-			.notNull()
-			.default(225),
+		overtimeHourlyRateDivisor: integer("overtime_hourly_rate_divisor").notNull().default(225),
 		isActive: boolean("is_active").notNull().default(true),
 		notes: text("notes"),
-		createdBy: varchar("created_by", { length: 255 }).references(
-			() => users.id,
-			{
-				onDelete: "set null",
-			},
-		),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
 		createdAt,
 		updatedAt,
 	},
@@ -174,27 +170,23 @@ export const salaryStructures = pgTable(
 		index("idx_salary_structures_employee").on(table.employeeId),
 		index("idx_salary_structures_employee_effective_from").on(
 			table.employeeId,
-			table.effectiveFrom,
+			table.effectiveFrom
 		),
-		index("idx_salary_structures_employee_effective_to").on(
-			table.employeeId,
-			table.effectiveTo,
-		),
-		index("idx_salary_structures_employee_active").on(
-			table.employeeId,
-			table.isActive,
-		),
+		index("idx_salary_structures_employee_effective_to").on(table.employeeId, table.effectiveTo),
+		index("idx_salary_structures_employee_active").on(table.employeeId, table.isActive),
 		check(
 			"salary_structures_effective_to_after_from",
-			sql`${table.effectiveTo} is null or ${table.effectiveTo} > ${table.effectiveFrom}`,
+			sql`${table.effectiveTo} is null or ${table.effectiveTo} > ${table.effectiveFrom}`
 		),
-	],
+	]
 );
 
 export const overtimeRecords = pgTable(
 	"overtime_records",
 	{
-		id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
+		id: varchar("id")
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
 		employeeId: varchar("employee_id", { length: 255 })
 			.notNull()
 			.references(() => employees.id, { onDelete: "cascade" }),
@@ -266,38 +258,42 @@ export const overtimeRecords = pgTable(
 		index("idx_overtime_records_employee_period").on(
 			table.employeeId,
 			table.periodYear,
-			table.periodMonth,
+			table.periodMonth
 		),
 		index("idx_overtime_records_period_status").on(
 			table.periodYear,
 			table.periodMonth,
-			table.status,
+			table.status
 		),
 		index("idx_overtime_records_payroll_slip_id").on(table.payrollSlipId),
 		uniqueIndex("uq_overtime_records_employee_period").on(
 			table.employeeId,
 			table.periodYear,
-			table.periodMonth,
+			table.periodMonth
 		),
 		check(
 			"overtime_records_period_month_range",
-			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`,
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`
 		),
 		check(
 			"overtime_records_period_year_range",
-			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`,
+			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`
 		),
-	],
+	]
 );
 
 export const employeeLoans = pgTable(
 	"employee_loans",
 	{
-		id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => nanoid()),
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
 		employeeId: varchar("employee_id", { length: 255 })
 			.notNull()
 			.references(() => employees.id, { onDelete: "cascade" }),
-		applicationDate: date("application_date").notNull().default(sql`CURRENT_DATE`),
+		applicationDate: date("application_date")
+			.notNull()
+			.default(sql`CURRENT_DATE`),
 		principalAmount: numeric("principal_amount", {
 			precision: 14,
 			scale: 2,
@@ -320,12 +316,9 @@ export const employeeLoans = pgTable(
 			scale: 2,
 		}),
 		approvedInstalments: integer("approved_instalments"),
-		disbursementAccountId: integer("disbursement_account_id").references(
-			() => ledgerAccounts.id,
-			{
-				onDelete: "set null",
-			},
-		),
+		disbursementAccountId: integer("disbursement_account_id").references(() => ledgerAccounts.id, {
+			onDelete: "set null",
+		}),
 		disbursementDate: date("disbursement_date"),
 		repaymentStartMonth: integer("repayment_start_month"),
 		repaymentStartYear: integer("repayment_start_year"),
@@ -337,7 +330,7 @@ export const employeeLoans = pgTable(
 			() => journalEntries.id,
 			{
 				onDelete: "set null",
-			},
+			}
 		),
 		rejectedBy: varchar("rejected_by", { length: 255 }).references(() => users.id, {
 			onDelete: "set null",
@@ -374,7 +367,7 @@ export const employeeLoans = pgTable(
 			() => journalEntries.id,
 			{
 				onDelete: "set null",
-			},
+			}
 		),
 		notes: text("notes"),
 		createdAt,
@@ -386,31 +379,33 @@ export const employeeLoans = pgTable(
 		index("idx_employee_loans_disbursement_account_id").on(table.disbursementAccountId),
 		check(
 			"employee_loans_requested_instalments_range",
-			sql`${table.requestedInstalments} >= 1 and ${table.requestedInstalments} <= 60`,
+			sql`${table.requestedInstalments} >= 1 and ${table.requestedInstalments} <= 60`
 		),
 		check(
 			"employee_loans_approved_instalments_range",
-			sql`${table.approvedInstalments} is null or (${table.approvedInstalments} >= 1 and ${table.approvedInstalments} <= 60)`,
+			sql`${table.approvedInstalments} is null or (${table.approvedInstalments} >= 1 and ${table.approvedInstalments} <= 60)`
 		),
 		check(
 			"employee_loans_interest_rate_range",
-			sql`${table.annualInterestRate} >= 0 and ${table.annualInterestRate} <= 1`,
+			sql`${table.annualInterestRate} >= 0 and ${table.annualInterestRate} <= 1`
 		),
 		check(
 			"employee_loans_repayment_start_month_range",
-			sql`${table.repaymentStartMonth} is null or (${table.repaymentStartMonth} >= 1 and ${table.repaymentStartMonth} <= 12)`,
+			sql`${table.repaymentStartMonth} is null or (${table.repaymentStartMonth} >= 1 and ${table.repaymentStartMonth} <= 12)`
 		),
 		check(
 			"employee_loans_repayment_start_year_range",
-			sql`${table.repaymentStartYear} is null or (${table.repaymentStartYear} >= 2000 and ${table.repaymentStartYear} <= 2100)`,
+			sql`${table.repaymentStartYear} is null or (${table.repaymentStartYear} >= 2000 and ${table.repaymentStartYear} <= 2100)`
 		),
-	],
+	]
 );
 
 export const loanRepayments = pgTable(
 	"loan_repayments",
 	{
-		id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => nanoid()),
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
 		loanId: varchar("loan_id", { length: 255 })
 			.notNull()
 			.references(() => employeeLoans.id, { onDelete: "cascade" }),
@@ -456,18 +451,18 @@ export const loanRepayments = pgTable(
 		index("idx_loan_repayments_employee_period").on(
 			table.employeeId,
 			table.periodYear,
-			table.periodMonth,
+			table.periodMonth
 		),
 		index("idx_loan_repayments_payroll_slip_id").on(table.payrollSlipId),
 		check(
 			"loan_repayments_period_month_range",
-			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`,
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`
 		),
 		check(
 			"loan_repayments_period_year_range",
-			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`,
+			sql`${table.periodYear} >= 2000 and ${table.periodYear} <= 2100`
 		),
-	],
+	]
 );
 
 export const payrollAccountMappings = pgTable(
@@ -483,6 +478,50 @@ export const payrollAccountMappings = pgTable(
 		updatedAt,
 	},
 	(table) => [index("idx_payroll_account_mappings_role").on(table.role)]
+);
+
+export const statutoryRates = pgTable(
+	"statutory_rates",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		category: statutoryRateCategoryEnum("category").notNull(),
+		label: varchar("label", { length: 100 }).notNull(),
+		effectiveFrom: date("effective_from").notNull(),
+		effectiveTo: date("effective_to"),
+		lowerBound: numeric("lower_bound", {
+			precision: 14,
+			scale: 2,
+		}),
+		upperBound: numeric("upper_bound", {
+			precision: 14,
+			scale: 2,
+		}),
+		rate: numeric("rate", {
+			precision: 10,
+			scale: 6,
+		}),
+		fixedAmount: numeric("fixed_amount", {
+			precision: 14,
+			scale: 2,
+		}),
+		notes: text("notes"),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_statutory_rates_category_effective_from").on(table.category, table.effectiveFrom),
+		index("idx_statutory_rates_category_effective_to").on(table.category, table.effectiveTo),
+		index("idx_statutory_rates_effective_from").on(table.effectiveFrom),
+		check(
+			"statutory_rates_effective_to_after_from",
+			sql`${table.effectiveTo} is null or ${table.effectiveTo} >= ${table.effectiveFrom}`
+		),
+	]
 );
 
 export const salaryStructuresRelations = relations(salaryStructures, ({ one }) => ({
@@ -562,12 +601,9 @@ export const loanRepaymentsRelations = relations(loanRepayments, ({ one }) => ({
 	}),
 }));
 
-export const payrollAccountMappingsRelations = relations(
-	payrollAccountMappings,
-	({ one }) => ({
-		account: one(ledgerAccounts, {
-			fields: [payrollAccountMappings.accountId],
-			references: [ledgerAccounts.id],
-		}),
-	})
-);
+export const payrollAccountMappingsRelations = relations(payrollAccountMappings, ({ one }) => ({
+	account: one(ledgerAccounts, {
+		fields: [payrollAccountMappings.accountId],
+		references: [ledgerAccounts.id],
+	}),
+}));
