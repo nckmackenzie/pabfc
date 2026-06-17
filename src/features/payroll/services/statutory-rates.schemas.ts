@@ -111,6 +111,23 @@ export const statutoryRateCreateSchema = z
 				path: ["rate"],
 			});
 		}
+
+		if (metadata.valueType === "rate_with_fixed") {
+			if (data.rate === null) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Rate is required for this category",
+					path: ["rate"],
+				});
+			}
+			if (data.fixedAmount === null) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Fixed amount is required for this category",
+					path: ["fixedAmount"],
+				});
+			}
+		}
 	});
 
 export const supersedeStatutoryRateSchema = z.object({

@@ -519,7 +519,7 @@ export const statutoryRates = pgTable(
 		index("idx_statutory_rates_effective_from").on(table.effectiveFrom),
 		check(
 			"statutory_rates_effective_to_after_from",
-			sql`${table.effectiveTo} is null or ${table.effectiveTo} >= ${table.effectiveFrom}`
+			sql`${table.effectiveTo} is null or ${table.effectiveTo} > ${table.effectiveFrom}`
 		),
 	]
 );

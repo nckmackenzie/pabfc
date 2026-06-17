@@ -1,0 +1,2 @@
+ALTER TABLE "statutory_rates" DROP CONSTRAINT "statutory_rates_effective_to_after_from";--> statement-breakpoint
+ALTER TABLE "statutory_rates" ADD CONSTRAINT "statutory_rates_effective_to_after_from" CHECK ("statutory_rates"."effective_to" is null or "statutory_rates"."effective_to" > "statutory_rates"."effective_from");

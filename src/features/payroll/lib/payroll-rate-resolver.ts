@@ -1,7 +1,8 @@
-import { and, asc, desc, ExtractTablesWithRelations, gte, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, gte, isNull, lte, or } from "drizzle-orm";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import type { PgTransaction } from "drizzle-orm/pg-core";
-import { db } from "@/drizzle/db";
+import type { db } from "@/drizzle/db";
 import type * as schema from "@/drizzle/schema";
 import { dateFormat } from "@/lib/helpers";
 import {
@@ -154,6 +155,27 @@ function buildConstantResolvedRates(): ResolvedStatutoryRates {
 	};
 }
 
+function hasContiguousPayeBandSchedule(rows: StatutoryRateRecord[]) {
+	if (rows.length === 0) {
+		return false;
+	}
+
+	for (let index = 1; index < rows.length; index += 1) {
+		const previousUpperBound = toStatutoryNumber(rows[index - 1]?.upperBound);
+		const currentLowerBound = toStatutoryNumber(rows[index]?.lowerBound);
+
+		if (previousUpperBound === null || currentLowerBound === null) {
+			return false;
+		}
+
+		if (currentLowerBound > previousUpperBound + 1) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 export async function resolveStatutoryRates(
 	computationDate: Date,
 	dbClient: PayrollDbClient
@@ -189,6 +211,9 @@ export async function resolveStatutoryRates(
 			const rightLowerBound = toStatutoryNumber(right.lowerBound) ?? 0;
 			return leftLowerBound - rightLowerBound;
 		});
+	const validPayeBandRows = hasContiguousPayeBandSchedule(payeBandRows)
+		? payeBandRows
+		: [];
 
 	const shifRow = getSingleRow(rowsByCategory, "shif");
 	const insuranceReliefRow = getSingleRow(rowsByCategory, "insurance_relief");
@@ -271,8 +296,8 @@ export async function resolveStatutoryRates(
 
 	return {
 		payeBands:
-			payeBandRows.length > 0
-				? payeBandRows.map((row) => ({
+			validPayeBandRows.length > 0
+				? validPayeBandRows.map((row) => ({
 						lowerBound: toStatutoryNumber(row.lowerBound) ?? 0,
 						upperBound: toStatutoryNumber(row.upperBound),
 						rate: toStatutoryNumber(row.rate) ?? 0,
@@ -297,7 +322,7 @@ export async function resolveStatutoryRates(
 		ahlEmployerRate: ahlEmployerRate.value,
 		nitaLevyPerEmployee: nitaLevyPerEmployee.value,
 		resolvedFrom: {
-			payeBands: payeBandRows.length > 0 ? "database" : "constant",
+			payeBands: validPayeBandRows.length > 0 ? "database" : "constant",
 			personalRelief: personalRelief.source,
 			insuranceReliefRate: insuranceReliefRateValue === null ? "constant" : "database",
 			insuranceReliefMax: insuranceReliefMaxValue === null ? "constant" : "database",
