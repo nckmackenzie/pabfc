@@ -1,5 +1,5 @@
 import { seedMemberData } from "@/drizzle/seed/members";
-import { seedPayrollAccountMappings } from "@/drizzle/seed/payroll";
+import { seedPayrollAccountMappings, seedPayrollStatutoryRates } from "@/drizzle/seed/payroll";
 import { seedPermissions } from "@/drizzle/seed/permissions";
 import { seedUsers } from "@/drizzle/seed/users";
 import { seedAttendance } from "./attendance";
@@ -18,6 +18,7 @@ async function main() {
 		await seedLeaveEntitlements();
 		await seedPublicHolidays();
 		await seedPayrollAccountMappings();
+		await seedPayrollStatutoryRates();
 
 		console.log("=".repeat(50));
 		console.log("🎉 Database seeding completed successfully!");
