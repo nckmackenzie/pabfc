@@ -28,6 +28,22 @@ import {
 	getLoanLedgerFn,
 	getLoansByEmployeeFn,
 } from "@/features/payroll/services/loans.api";
+import {
+	getAdvanceByIdFn,
+	getAdvanceRecoveryStatementFn,
+	getAdvancesByEmployeeFn,
+	getAllActiveAdvancesFn,
+	getAllPendingAdvancesFn,
+	getSalaryAdvanceFormOptionsFn,
+} from "@/features/payroll/services/salary-advances.api";
+import {
+	getActivePayrollPeriodFn,
+	getAllPayrollPeriodsFn,
+	getPayrollPeriodByIdFn,
+	getPeriodRemittanceStatusFn,
+	runPayrollPeriodPreflightFn,
+	getYearToDateTotalsFn,
+} from "@/features/payroll/services/payroll-periods.api";
 import type {
 	salaryHistoryParamsSchema,
 	salaryStructureDetailParamsSchema,
@@ -41,11 +57,21 @@ import type {
 	loansByEmployeeSchema,
 } from "@/features/payroll/services/loan.schemas";
 import type {
+	allActiveSalaryAdvancesFilterSchema,
+	salaryAdvanceByIdSchema,
+	salaryAdvancesByEmployeeSchema,
+} from "@/features/payroll/services/salary-advance.schemas";
+import type {
 	overtimeRecordByEmployeePeriodSchema,
 	overtimeRecordByIdSchema,
 	overtimeRecordPeriodSearchSchema,
 	overtimeSummaryRangeSchema,
 } from "@/features/payroll/services/overtime.schemas";
+import type {
+	payrollPeriodFiltersSchema,
+	payrollPeriodIdSchema,
+	payrollPeriodYearSchema,
+} from "@/features/payroll/services/payroll-period.schemas";
 import type { z } from "zod";
 
 export const salaryStructureQueries = {
@@ -205,5 +231,93 @@ export const loanQueries = {
 			queryKey: [...loanQueries.all, "form-options"] as const,
 			queryFn: () => getLoanFormOptionsFn(),
 			staleTime: 5 * 60 * 1000,
+	}),
+};
+
+export const salaryAdvanceQueries = {
+	all: ["salary-advances"] as const,
+	pending: () =>
+		queryOptions({
+			queryKey: [...salaryAdvanceQueries.all, "pending"] as const,
+			queryFn: () => getAllPendingAdvancesFn(),
+			staleTime: 60 * 1000,
+		}),
+	active: (filters: z.infer<typeof allActiveSalaryAdvancesFilterSchema>) =>
+		queryOptions({
+			queryKey: [...salaryAdvanceQueries.all, "active", filters] as const,
+			queryFn: () => getAllActiveAdvancesFn({ data: filters }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	detail: (params: z.infer<typeof salaryAdvanceByIdSchema>) =>
+		queryOptions({
+			queryKey: [...salaryAdvanceQueries.all, "detail", params.advanceId] as const,
+			queryFn: () => getAdvanceByIdFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	statement: (params: z.infer<typeof salaryAdvanceByIdSchema>) =>
+		queryOptions({
+			queryKey: [...salaryAdvanceQueries.all, "statement", params.advanceId] as const,
+			queryFn: () => getAdvanceRecoveryStatementFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	employee: (params: z.infer<typeof salaryAdvancesByEmployeeSchema>) =>
+		queryOptions({
+			queryKey: [
+				...salaryAdvanceQueries.all,
+				"employee",
+				params.employeeId,
+				params.statusFilter ?? "all",
+			] as const,
+			queryFn: () => getAdvancesByEmployeeFn({ data: params }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	formOptions: () =>
+		queryOptions({
+			queryKey: [...salaryAdvanceQueries.all, "form-options"] as const,
+			queryFn: () => getSalaryAdvanceFormOptionsFn(),
+			staleTime: 5 * 60 * 1000,
+		}),
+};
+
+export const payrollPeriodQueries = {
+	all: ["payroll-periods"] as const,
+	list: (filters: z.infer<typeof payrollPeriodFiltersSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "list", filters] as const,
+			queryFn: () => getAllPayrollPeriodsFn({ data: filters }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	detail: (params: z.infer<typeof payrollPeriodIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "detail", params.periodId] as const,
+			queryFn: () => getPayrollPeriodByIdFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	active: () =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "active"] as const,
+			queryFn: () => getActivePayrollPeriodFn(),
+			staleTime: 60 * 1000,
+		}),
+	remittance: (params: z.infer<typeof payrollPeriodIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "remittance", params.periodId] as const,
+			queryFn: () => getPeriodRemittanceStatusFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	preflight: (params: z.infer<typeof payrollPeriodIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "preflight", params.periodId] as const,
+			queryFn: () => runPayrollPeriodPreflightFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	ytd: (params: z.infer<typeof payrollPeriodYearSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "ytd", params.year] as const,
+			queryFn: () => getYearToDateTotalsFn({ data: params }),
+			staleTime: 60 * 1000,
 		}),
 };

@@ -17,19 +17,23 @@ import {
 	PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES,
 	PAYROLL_PARENT_LEDGER_ACCOUNTS,
 	PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES,
+	SALARY_ADVANCE_MAX_ADVANCE_RATIO,
+	SALARY_ADVANCE_MAX_RECOVERY_MONTHS,
+	SALARY_ADVANCE_STATUS,
 } from "./payroll-constants";
 
 describe("payroll account constants", () => {
 	it("defines all payroll account roles with defaults", () => {
-		expect(PAYROLL_ACCOUNT_ROLE_KEYS).toHaveLength(19);
-		expect(Object.keys(PAYROLL_ACCOUNT_ROLES)).toHaveLength(19);
-		expect(Object.keys(PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES)).toHaveLength(19);
+		expect(PAYROLL_ACCOUNT_ROLE_KEYS).toHaveLength(20);
+		expect(Object.keys(PAYROLL_ACCOUNT_ROLES)).toHaveLength(20);
+		expect(Object.keys(PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES)).toHaveLength(20);
 	});
 
 	it("derives expected account types from role keys", () => {
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.salaries_expense).toBe("expense");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.bonus_expense).toBe("expense");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.loans_receivable).toBe("asset");
+		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.salary_advance_receivable).toBe("asset");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.paye_payable).toBe("liability");
 		expect(PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES.net_salaries_payable).toBe(
 			"liability"
@@ -78,6 +82,20 @@ describe("payroll account constants", () => {
 			FULLY_PAID: "fully_paid",
 			WRITTEN_OFF: "written_off",
 			REJECTED: "rejected",
+		});
+	});
+
+	it("defines salary advance constants for payroll advance workflows", () => {
+		expect(SALARY_ADVANCE_MAX_RECOVERY_MONTHS).toBe(3);
+		expect(SALARY_ADVANCE_MAX_ADVANCE_RATIO).toBe(0.5);
+		expect(SALARY_ADVANCE_STATUS).toEqual({
+			PENDING: "pending",
+			APPROVED: "approved",
+			DISBURSED: "disbursed",
+			RECOVERING: "recovering",
+			FULLY_RECOVERED: "fully_recovered",
+			REJECTED: "rejected",
+			CANCELLED: "cancelled",
 		});
 	});
 });

@@ -1,10 +1,10 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { AlertErrorComponent } from "@/components/ui/error-component";
 
-export const Route = createFileRoute("/app/payroll")({
+export const Route = createFileRoute("/app/payroll/salary-advances")({
 	component: Outlet,
 	staticData: {
-		breadcrumb: "Payroll",
+		breadcrumb: "Salary Advances",
 	},
 	errorComponent: ({ error }) => {
 		let errorMessage;

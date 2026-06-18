@@ -117,8 +117,7 @@ function toMappingView(
 
 	return {
 		hasInvalidMappings: items.some(isMappingInvalid),
-		isConfigurationComplete:
-			missingRoles.length === 0 && !items.some(isMappingInvalid),
+		isConfigurationComplete: missingRoles.length === 0 && !items.some(isMappingInvalid),
 		items,
 		isComplete: missingRoles.length === 0,
 		missingRoles,
