@@ -18,8 +18,11 @@ import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
 import {
 	LOAN_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
+	PAYROLL_PERIOD_STATUS_VALUES,
+	SALARY_ADVANCE_STATUS,
 	STATUTORY_RATE_CATEGORIES,
 	type StatutoryRateCategory,
+	type PayrollPeriodStatus,
 	type PayrollAccountRole,
 } from "@/features/payroll/lib/payroll-constants";
 import { users } from "./auth";
@@ -35,6 +38,10 @@ const payrollAccountRoleValues = PAYROLL_ACCOUNT_ROLE_KEYS as [
 	PayrollAccountRole,
 	...Array<PayrollAccountRole>,
 ];
+const payrollPeriodStatusValues = PAYROLL_PERIOD_STATUS_VALUES as [
+	PayrollPeriodStatus,
+	...Array<PayrollPeriodStatus>,
+];
 const statutoryRateCategoryValues = STATUTORY_RATE_CATEGORIES as unknown as [
 	StatutoryRateCategory,
 	...Array<StatutoryRateCategory>,
@@ -42,15 +49,28 @@ const statutoryRateCategoryValues = STATUTORY_RATE_CATEGORIES as unknown as [
 export const OVERTIME_STATUSES = ["draft", "approved", "paid"] as const;
 export type OvertimeStatus = (typeof OVERTIME_STATUSES)[number];
 const loanStatusValues = Object.values(LOAN_STATUS) as [string & {}, ...(string & {})[]];
+const salaryAdvanceStatusValues = Object.values(SALARY_ADVANCE_STATUS) as [
+	string & {},
+	...(string & {})[],
+];
 export type LoanStatus = (typeof loanStatusValues)[number];
+export type SalaryAdvanceStatus = (typeof salaryAdvanceStatusValues)[number];
 
 export const payrollAccountRoleEnum = pgEnum("payroll_account_role", payrollAccountRoleValues);
+export const payrollPeriodStatusEnum = pgEnum(
+	"payroll_period_status",
+	payrollPeriodStatusValues
+);
 export const statutoryRateCategoryEnum = pgEnum(
 	"statutory_rate_category",
 	statutoryRateCategoryValues
 );
 export const overtimeStatusEnum = pgEnum("overtime_status", OVERTIME_STATUSES);
 export const loanStatusEnum = pgEnum("loan_status", loanStatusValues);
+export const salaryAdvanceStatusEnum = pgEnum(
+	"salary_advance_status",
+	salaryAdvanceStatusValues
+);
 
 export const salaryStructures = pgTable(
 	"salary_structures",
@@ -181,6 +201,130 @@ export const salaryStructures = pgTable(
 	]
 );
 
+export const payrollPeriods = pgTable(
+	"payroll_periods",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		name: varchar("name", { length: 50 }).notNull(),
+		periodMonth: integer("period_month").notNull(),
+		periodYear: integer("period_year").notNull(),
+		periodStart: date("period_start").notNull(),
+		periodEnd: date("period_end").notNull(),
+		payDate: date("pay_date").notNull(),
+		status: payrollPeriodStatusEnum("status").notNull().default("draft"),
+		totalGrossPay: numeric("total_gross_pay", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalNetPay: numeric("total_net_pay", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalPaye: numeric("total_paye", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalNssfEmployee: numeric("total_nssf_employee", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalNssfEmployer: numeric("total_nssf_employer", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalShifEmployee: numeric("total_shif_employee", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalShifEmployer: numeric("total_shif_employer", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalAhlEmployee: numeric("total_ahl_employee", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalAhlEmployer: numeric("total_ahl_employer", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalNita: numeric("total_nita", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalLoanDeductions: numeric("total_loan_deductions", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalAdvanceRecoveries: numeric("total_advance_recoveries", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalOtherDeductions: numeric("total_other_deductions", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalPensionEmployer: numeric("total_pension_employer", {
+			precision: 14,
+			scale: 2,
+		}),
+		employeeCount: integer("employee_count"),
+		processingStartedAt: timestamp("processing_started_at", { withTimezone: true }),
+		processingCompletedAt: timestamp("processing_completed_at", { withTimezone: true }),
+		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		approvedAt: timestamp("approved_at", { withTimezone: true }),
+		paidAt: timestamp("paid_at", { withTimezone: true }),
+		closedAt: timestamp("closed_at", { withTimezone: true }),
+		cancelledBy: varchar("cancelled_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+		cancellationReason: text("cancellation_reason"),
+		disbursementJournalEntryId: integer("disbursement_journal_entry_id").references(
+			() => journalEntries.id,
+			{ onDelete: "set null" }
+		),
+		remittanceJournalEntryId: integer("remittance_journal_entry_id").references(
+			() => journalEntries.id,
+			{ onDelete: "set null" }
+		),
+		payrollJournalEntryId: integer("payroll_journal_entry_id").references(
+			() => journalEntries.id,
+			{ onDelete: "set null" }
+		),
+		notes: text("notes"),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		uniqueIndex("uq_payroll_periods_month_year_active")
+			.on(table.periodMonth, table.periodYear)
+			.where(sql`${table.status} <> 'cancelled'`),
+		index("idx_payroll_periods_status").on(table.status),
+		index("idx_payroll_periods_pay_date").on(table.payDate),
+		index("idx_payroll_periods_year").on(table.periodYear),
+		check(
+			"payroll_periods_period_month_range",
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`
+		),
+		check(
+			"payroll_periods_period_year_range",
+			sql`${table.periodYear} >= 2020 and ${table.periodYear} <= 2100`
+		),
+		check(
+			"payroll_periods_period_dates_order",
+			sql`${table.periodEnd} >= ${table.periodStart}`
+		),
+	]
+);
+
 export const overtimeRecords = pgTable(
 	"overtime_records",
 	{
@@ -190,7 +334,10 @@ export const overtimeRecords = pgTable(
 		employeeId: varchar("employee_id", { length: 255 })
 			.notNull()
 			.references(() => employees.id, { onDelete: "cascade" }),
-		payrollPeriodId: varchar("payroll_period_id", { length: 255 }),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 }).references(
+			() => payrollPeriods.id,
+			{ onDelete: "set null" }
+		),
 		periodMonth: integer("period_month").notNull(),
 		periodYear: integer("period_year").notNull(),
 		weekdayOvertimeHours: numeric("weekday_overtime_hours", {
@@ -465,6 +612,165 @@ export const loanRepayments = pgTable(
 	]
 );
 
+export const salaryAdvances = pgTable(
+	"salary_advances",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		applicationDate: date("application_date")
+			.notNull()
+			.default(sql`CURRENT_DATE`),
+		requestedAmount: numeric("requested_amount", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		reason: text("reason"),
+		status: salaryAdvanceStatusEnum("status").notNull().default("pending"),
+		requestedRecoveryMonths: integer("requested_recovery_months").notNull().default(1),
+		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		approvedAt: timestamp("approved_at", { withTimezone: true }),
+		approvedAmount: numeric("approved_amount", {
+			precision: 14,
+			scale: 2,
+		}),
+		approvedRecoveryMonths: integer("approved_recovery_months"),
+		monthlyRecoveryAmount: numeric("monthly_recovery_amount", {
+			precision: 14,
+			scale: 2,
+		}),
+		disbursementAccountId: integer("disbursement_account_id").references(
+			() => ledgerAccounts.id,
+			{
+				onDelete: "set null",
+			}
+		),
+		disbursementDate: date("disbursement_date"),
+		disbursementJournalEntryId: integer("disbursement_journal_entry_id").references(
+			() => journalEntries.id,
+			{
+				onDelete: "set null",
+			}
+		),
+		recoveryStartMonth: integer("recovery_start_month"),
+		recoveryStartYear: integer("recovery_start_year"),
+		rejectedBy: varchar("rejected_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+		rejectionReason: text("rejection_reason"),
+		cancelledBy: varchar("cancelled_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+		cancellationReason: text("cancellation_reason"),
+		outstandingBalance: numeric("outstanding_balance", {
+			precision: 14,
+			scale: 2,
+		}),
+		totalRecovered: numeric("total_recovered", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		recoveriesProcessed: integer("recoveries_processed").notNull().default(0),
+		notes: text("notes"),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_salary_advances_employee_id").on(table.employeeId),
+		index("idx_salary_advances_employee_status").on(table.employeeId, table.status),
+		index("idx_salary_advances_disbursement_account_id").on(table.disbursementAccountId),
+		index("idx_salary_advances_status").on(table.status),
+		check(
+			"salary_advances_requested_recovery_months_range",
+			sql`${table.requestedRecoveryMonths} >= 1 and ${table.requestedRecoveryMonths} <= 3`
+		),
+		check(
+			"salary_advances_approved_recovery_months_range",
+			sql`${table.approvedRecoveryMonths} is null or (${table.approvedRecoveryMonths} >= 1 and ${table.approvedRecoveryMonths} <= 3)`
+		),
+		check(
+			"salary_advances_recovery_start_month_range",
+			sql`${table.recoveryStartMonth} is null or (${table.recoveryStartMonth} >= 1 and ${table.recoveryStartMonth} <= 12)`
+		),
+		check(
+			"salary_advances_recovery_start_year_range",
+			sql`${table.recoveryStartYear} is null or (${table.recoveryStartYear} >= 2020 and ${table.recoveryStartYear} <= 2100)`
+		),
+	]
+);
+
+export const salaryAdvanceRecoveries = pgTable(
+	"salary_advance_recoveries",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		advanceId: varchar("advance_id", { length: 255 })
+			.notNull()
+			.references(() => salaryAdvances.id, { onDelete: "cascade" }),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		recoveryDate: date("recovery_date").notNull(),
+		periodMonth: integer("period_month").notNull(),
+		periodYear: integer("period_year").notNull(),
+		recoveryAmount: numeric("recovery_amount", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		balanceBefore: numeric("balance_before", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		balanceAfter: numeric("balance_after", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		isLastRecovery: boolean("is_last_recovery").notNull().default(false),
+		// FK to payroll_slips.id — constraint added in payroll calculation engine migration.
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 }),
+		clearingJournalEntryId: integer("clearing_journal_entry_id").references(
+			() => journalEntries.id,
+			{
+				onDelete: "set null",
+			}
+		),
+		notes: text("notes"),
+		createdAt,
+	},
+	(table) => [
+		index("idx_salary_advance_recoveries_advance_id").on(table.advanceId),
+		index("idx_salary_advance_recoveries_employee_period").on(
+			table.employeeId,
+			table.periodYear,
+			table.periodMonth
+		),
+		index("idx_salary_advance_recoveries_payroll_slip_id").on(table.payrollSlipId),
+		uniqueIndex("uq_salary_advance_recoveries_advance_period").on(
+			table.advanceId,
+			table.periodYear,
+			table.periodMonth
+		),
+		check(
+			"salary_advance_recoveries_period_month_range",
+			sql`${table.periodMonth} >= 1 and ${table.periodMonth} <= 12`
+		),
+		check(
+			"salary_advance_recoveries_period_year_range",
+			sql`${table.periodYear} >= 2020 and ${table.periodYear} <= 2100`
+		),
+	]
+);
+
 export const payrollAccountMappings = pgTable(
 	"payroll_account_mappings",
 	{
@@ -535,10 +841,42 @@ export const salaryStructuresRelations = relations(salaryStructures, ({ one }) =
 	}),
 }));
 
+export const payrollPeriodsRelations = relations(payrollPeriods, ({ many, one }) => ({
+	createdByUser: one(users, {
+		fields: [payrollPeriods.createdBy],
+		references: [users.id],
+	}),
+	approvedByUser: one(users, {
+		fields: [payrollPeriods.approvedBy],
+		references: [users.id],
+	}),
+	cancelledByUser: one(users, {
+		fields: [payrollPeriods.cancelledBy],
+		references: [users.id],
+	}),
+	payrollJournalEntry: one(journalEntries, {
+		fields: [payrollPeriods.payrollJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	disbursementJournalEntry: one(journalEntries, {
+		fields: [payrollPeriods.disbursementJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	remittanceJournalEntry: one(journalEntries, {
+		fields: [payrollPeriods.remittanceJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	overtimeRecords: many(overtimeRecords),
+}));
+
 export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => ({
 	employee: one(employees, {
 		fields: [overtimeRecords.employeeId],
 		references: [employees.id],
+	}),
+	payrollPeriod: one(payrollPeriods, {
+		fields: [overtimeRecords.payrollPeriodId],
+		references: [payrollPeriods.id],
 	}),
 	createdByUser: one(users, {
 		fields: [overtimeRecords.createdBy],
@@ -600,6 +938,52 @@ export const loanRepaymentsRelations = relations(loanRepayments, ({ one }) => ({
 		references: [journalEntries.id],
 	}),
 }));
+
+export const salaryAdvancesRelations = relations(salaryAdvances, ({ many, one }) => ({
+	employee: one(employees, {
+		fields: [salaryAdvances.employeeId],
+		references: [employees.id],
+	}),
+	approvedByUser: one(users, {
+		fields: [salaryAdvances.approvedBy],
+		references: [users.id],
+	}),
+	rejectedByUser: one(users, {
+		fields: [salaryAdvances.rejectedBy],
+		references: [users.id],
+	}),
+	cancelledByUser: one(users, {
+		fields: [salaryAdvances.cancelledBy],
+		references: [users.id],
+	}),
+	disbursementAccount: one(ledgerAccounts, {
+		fields: [salaryAdvances.disbursementAccountId],
+		references: [ledgerAccounts.id],
+	}),
+	disbursementJournalEntry: one(journalEntries, {
+		fields: [salaryAdvances.disbursementJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	recoveries: many(salaryAdvanceRecoveries),
+}));
+
+export const salaryAdvanceRecoveriesRelations = relations(
+	salaryAdvanceRecoveries,
+	({ one }) => ({
+		advance: one(salaryAdvances, {
+			fields: [salaryAdvanceRecoveries.advanceId],
+			references: [salaryAdvances.id],
+		}),
+		employee: one(employees, {
+			fields: [salaryAdvanceRecoveries.employeeId],
+			references: [employees.id],
+		}),
+		clearingJournalEntry: one(journalEntries, {
+			fields: [salaryAdvanceRecoveries.clearingJournalEntryId],
+			references: [journalEntries.id],
+		}),
+	})
+);
 
 export const payrollAccountMappingsRelations = relations(payrollAccountMappings, ({ one }) => ({
 	account: one(ledgerAccounts, {
