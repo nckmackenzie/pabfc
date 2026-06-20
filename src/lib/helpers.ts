@@ -4,9 +4,11 @@ import { format } from "date-fns";
 import type z from "zod";
 import type { DiscountType, VatType } from "@/drizzle/schema";
 import type { SchemaValidationFailure, SchemaValidationSuccess } from "@/types/index.types";
+import Big from "big.js";
 
 type DateRangeString = { from: string; to: string };
 type DateRangeDate = { from: Date; to: Date };
+export type NumericValue = string | number | Big | null | undefined;
 
 export const validateSchema = <T>(
 	values: unknown,
@@ -208,10 +210,43 @@ export function percentage(partialValue: number, totalValue: number) {
 	return Number.isFinite(value) ? value : 0;
 }
 
-export const toNumber = (value: unknown) => {
-	const n = Number.parseFloat(String(value ?? "0"));
-	return Number.isFinite(n) ? n : 0;
+export const toNumber = (value: NumericValue) => {
+	return toBig(value).toNumber();
 };
+
+export function toNullableNumber(value: NumericValue): number | null {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    try {
+        return new Big(value).toNumber();
+    } catch {
+        return null;
+    }
+}
+
+export function toDecimalString(value: NumericValue, decimals = 2) {
+  return toBig(value).round(decimals).toFixed(decimals);
+}
+
+export function toDecimalNumber(value: NumericValue, decimals = 2) {
+  return Number(toDecimalString(value, decimals));
+}
+
+
+
+export function toBig(value: NumericValue) {
+  if (value === null || value === undefined || value === "") {
+		return new Big(0);
+	}
+
+  try {
+	  return new Big(value);
+  } catch {
+	  return new Big(0);
+  }
+}
 
 export function normalizeText(value: string | null | undefined): string | null {
 	if (value === null || value === undefined) return null;

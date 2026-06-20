@@ -1,0 +1,3 @@
+ALTER TABLE "loan_repayments" ADD CONSTRAINT "loan_repayments_payroll_slip_id_payroll_slips_id_fk" FOREIGN KEY ("payroll_slip_id") REFERENCES "public"."payroll_slips"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "overtime_records" ADD CONSTRAINT "overtime_records_payroll_slip_id_payroll_slips_id_fk" FOREIGN KEY ("payroll_slip_id") REFERENCES "public"."payroll_slips"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "salary_advance_recoveries" ADD CONSTRAINT "salary_advance_recoveries_payroll_slip_id_payroll_slips_id_fk" FOREIGN KEY ("payroll_slip_id") REFERENCES "public"."payroll_slips"("id") ON DELETE no action ON UPDATE no action;

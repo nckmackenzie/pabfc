@@ -1,17 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	and,
-	asc,
-	desc,
-	eq,
-	gte,
-	inArray,
-	isNull,
-	lte,
-	or,
-	sql,
-	type SQL,
-} from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -19,6 +7,7 @@ import {
 	employees,
 	leaveRequests,
 	overtimeRecords,
+	payrollSlips,
 	payrollPeriods,
 	salaryStructures,
 } from "@/drizzle/schema";
@@ -39,6 +28,7 @@ import {
 	LOAN_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
 	PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES,
+	PAYROLL_JOURNAL_SOURCES,
 	PAYROLL_PERIOD_STATUS,
 	PAYROLL_STATUS_TRANSITIONS,
 	type PayrollAccountRole,
@@ -50,6 +40,13 @@ import {
 	toPayrollDecimalString,
 } from "@/features/payroll/lib/helpers";
 import {
+	// cancelProcessedPayrollPeriodFn,
+	runPayrollCalculationFn,
+	type Transaction,
+	updatePayrollPeriodAggregatesFn,
+} from "@/features/payroll/services/payroll-slips.api";
+
+import {
 	payrollPeriodCreateSchema,
 	payrollPeriodFiltersSchema,
 	payrollPeriodIdSchema,
@@ -57,11 +54,20 @@ import {
 	payrollPeriodTransitionSchema,
 	payrollPeriodYearSchema,
 } from "@/features/payroll/services/payroll-period.schemas";
-import { dateFormat } from "@/lib/helpers";
+import { dateFormat, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
-import { failure, success, type Result } from "@/lib/result";
+import { failure, success, type AppError, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { getAccountMappingsAsMapFn, validateAllMappingsExistFn } from "./account-mappings.api";
+import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
+import {
+	buildPayrollRecognitionJournalLines,
+	getJournalBalanceSummary,
+	sumSlipTotals,
+} from "@/features/payroll/lib/payroll-journal-helpers";
+import { type RecognitionJournalPostResult } from "./payroll-journals.api";
+import { cancelProcessedPayrollPeriod } from "./payroll.server";
 
 type PayrollPeriodRecord = typeof payrollPeriods.$inferSelect;
 type PayrollPeriodCreatePayload = z.infer<typeof payrollPeriodCreateSchema>;
@@ -89,6 +95,10 @@ type PayrollPeriodPreflightSummary = {
 	previousPeriodStatus: string | null;
 	statutoryRatesSource: Record<string, "database" | "constant">;
 };
+type PayrollTransitionAbort = {
+	appError: AppError;
+};
+
 export type PayrollPeriodPreflightReport = {
 	canProceed: boolean;
 	errors: string[];
@@ -119,6 +129,16 @@ export type PayrollPeriodView = {
 	totalOtherDeductions: number | null;
 	totalPensionEmployer: number | null;
 	employeeCount: number | null;
+	processingWarnings: Array<{
+		employeeId: string;
+		employeeName: string;
+		message: string;
+	}>;
+	skippedEmployees: Array<{
+		employeeId: string;
+		employeeName: string;
+		reason: string;
+	}>;
 	processingStartedAt: Date | null;
 	processingCompletedAt: Date | null;
 	approvedBy: string | null;
@@ -191,17 +211,21 @@ const PERIOD_NUMERIC_FIELDS = [
 	"totalPensionEmployer",
 ] as const satisfies ReadonlyArray<keyof PayrollPeriodRecord>;
 
-function toNumber(value: string | number | null | undefined) {
-	if (value === null || value === undefined || value === "") {
-		return null;
-	}
-
-	const parsed = Number.parseFloat(String(value));
-	return Number.isFinite(parsed) ? parsed : null;
-}
 
 function sumNumbers(values: Array<number | null | undefined>) {
 	return roundPayrollAmount(values.reduce<number>((total, value) => total + (value ?? 0), 0));
+}
+
+function parseJsonArray<T>(value: string | null | undefined): T[] {
+	if (!value) {
+		return [];
+	}
+
+	try {
+		return JSON.parse(value) as T[];
+	} catch {
+		return [];
+	}
 }
 
 function toPayrollPeriodView(row: PayrollPeriodRecord): PayrollPeriodView {
@@ -234,6 +258,8 @@ function toPayrollPeriodView(row: PayrollPeriodRecord): PayrollPeriodView {
 		totalOtherDeductions: toNumber(row.totalOtherDeductions),
 		totalPensionEmployer: toNumber(row.totalPensionEmployer),
 		employeeCount: row.employeeCount,
+		processingWarnings: parseJsonArray(row.processingWarnings),
+		skippedEmployees: parseJsonArray(row.skippedEmployees),
 		processingStartedAt: row.processingStartedAt,
 		processingCompletedAt: row.processingCompletedAt,
 		approvedBy: row.approvedBy,
@@ -251,8 +277,7 @@ function toPayrollPeriodView(row: PayrollPeriodRecord): PayrollPeriodView {
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
 		statutoryRemittanceDeadline,
-		daysUntilRemittanceDeadline:
-			getDaysUntilPayrollRemittanceDeadline(statutoryRemittanceDeadline),
+		daysUntilRemittanceDeadline: getDaysUntilPayrollRemittanceDeadline(statutoryRemittanceDeadline),
 		allowedTransitions: PAYROLL_STATUS_TRANSITIONS[row.status],
 	};
 }
@@ -270,7 +295,14 @@ function toPeriodInsertValues(payload: PayrollPeriodCreatePayload, createdBy: st
 	};
 }
 
-function getPeriodTotalValue(row: PayrollPeriodRecord, key: (typeof PERIOD_NUMERIC_FIELDS)[number]) {
+function isPayrollTransitionAbort(error: unknown): error is PayrollTransitionAbort {
+	return Boolean(error && typeof error === "object" && "appError" in error);
+}
+
+function getPeriodTotalValue(
+	row: PayrollPeriodRecord,
+	key: (typeof PERIOD_NUMERIC_FIELDS)[number]
+) {
 	return toNumber(row[key]);
 }
 
@@ -434,6 +466,134 @@ async function getHelbTotalForPeriod(periodDate: string) {
 	);
 }
 
+async function getHelbTotalForProcessedPeriod(periodId: string) {
+	const rows = await db.query.payrollSlips.findMany({
+		columns: {
+			helbDeduction: true,
+		},
+		where: and(eq(payrollSlips.payrollPeriodId, periodId), ne(payrollSlips.status, "cancelled")),
+	});
+
+	if (rows.length === 0) {
+		return null;
+	}
+
+	return sumNumbers(rows.map((row) => toNumber(row.helbDeduction)));
+}
+
+async function postPayrollRecognitionJournal(
+	payrollPeriodId: string,
+	tx: Transaction
+): Promise<Result<RecognitionJournalPostResult>> {
+	const period = await getPayrollPeriodRecordById(payrollPeriodId);
+
+	if (!period) {
+		return failure({
+			type: "NotFoundError",
+			message: "Payroll period not found.",
+		});
+	}
+
+	if (period.payrollJournalEntryId !== null) {
+		return failure({
+			type: "ValidationError",
+			message: "Payroll recognition journal has already been posted for this period.",
+		});
+	}
+
+	const mappingValidation = await validateAllMappingsExistFn();
+
+	if (!mappingValidation.valid) {
+		return failure({
+			type: "ValidationError",
+			message: mappingValidation.issues.join(" "),
+		});
+	}
+
+	const accountMappingsResult = await getAccountMappingsAsMapFn();
+
+	if (!accountMappingsResult.success) {
+		return failure({
+			type: "ValidationError",
+			message: accountMappingsResult.error.message,
+		});
+	}
+
+	const slips = await tx.query.payrollSlips.findMany({
+		where: and(
+			eq(payrollSlips.payrollPeriodId, payrollPeriodId),
+			ne(payrollSlips.status, "cancelled")
+		),
+	});
+
+	if (slips.length === 0) {
+		return failure({
+			type: "ValidationError",
+			message:
+				"Payroll recognition journal cannot be posted because this period has no payroll slips.",
+		});
+	}
+
+	const breakdown = sumSlipTotals(slips);
+	const lines = buildPayrollRecognitionJournalLines(
+		breakdown,
+		accountMappingsResult.data,
+		period.name
+	);
+	const balance = getJournalBalanceSummary(lines);
+
+	if (!balance.isBalanced) {
+		return failure({
+			type: "ValidationError",
+			message: `Payroll recognition journal is not balanced. DR ${balance.totalDebits.toFixed(
+				2
+			)} CR ${balance.totalCredits.toFixed(2)} Difference ${balance.difference.toFixed(2)}.`,
+		});
+	}
+
+	if (
+		!areJournalValuesBalanced(
+			lines.map((line) => ({ ...line, amount: toPayrollDecimalString(line.amount) }))
+		)
+	) {
+		return failure({
+			type: "ApplicationError",
+			message: "Payroll recognition journal is not balanced.",
+		});
+	}
+
+	const journalEntryId = await createJournalEntry({
+		entry: {
+			entryDate: period.payDate,
+			reference: `PAYROLL-REC-${period.name}`,
+			description: `Payroll recognition - ${period.name}`,
+			source: PAYROLL_JOURNAL_SOURCES.PAYROLL_RECOGNITION,
+			sourceId: payrollPeriodId,
+		},
+		lines: lines.map((line) => ({
+			accountId: line.accountId,
+			amount: toPayrollDecimalString(line.amount),
+			dc: line.dc,
+			lineNumber: line.lineNumber,
+			memo: line.memo,
+		})),
+		tx,
+	});
+
+	await tx
+		.update(payrollPeriods)
+		.set({
+			payrollJournalEntryId: journalEntryId,
+			updatedAt: new Date(),
+		})
+		.where(eq(payrollPeriods.id, payrollPeriodId));
+
+	return success({
+		journalEntryId,
+		breakdown,
+	});
+}
+
 async function createPayrollPeriod({
 	payload,
 	createdBy,
@@ -444,7 +604,8 @@ async function createPayrollPeriod({
 	if (!isValidPayrollPeriodParts(payload.periodMonth, payload.periodYear)) {
 		return failure({
 			type: "ValidationError",
-			message: "Payroll month must be between 1 and 12 and payroll year must be between 2020 and 2100.",
+			message:
+				"Payroll month must be between 1 and 12 and payroll year must be between 2020 and 2100.",
 		});
 	}
 
@@ -532,6 +693,7 @@ async function transitionPayrollPeriod({
 	}
 
 	const allowedTransitions = PAYROLL_STATUS_TRANSITIONS[period.status];
+	const isProcessingPeriod = period.status === PAYROLL_PERIOD_STATUS.PROCESSING;
 
 	if (!allowedTransitions.includes(targetStatus)) {
 		return failure({
@@ -549,6 +711,26 @@ async function transitionPayrollPeriod({
 				message: preflight.errors.join(" "),
 			});
 		}
+
+		const runResult = await runPayrollCalculationFn({ data: { periodId: period.id } });
+
+		if (!runResult.success) {
+			return failure({
+				type: "ValidationError",
+				message: runResult.error,
+			});
+		}
+
+		const updatedPeriod = await getPayrollPeriodRecordById(period.id);
+
+		if (!updatedPeriod) {
+			return failure({
+				type: "ApplicationError",
+				message: "Payroll period was processed but could not be reloaded.",
+			});
+		}
+
+		return success(toPayrollPeriodView(updatedPeriod));
 	}
 
 	if (targetStatus === PAYROLL_PERIOD_STATUS.APPROVED) {
@@ -569,6 +751,13 @@ async function transitionPayrollPeriod({
 	}
 
 	if (targetStatus === PAYROLL_PERIOD_STATUS.PAID) {
+		if (period.disbursementJournalEntryId === null) {
+			return failure({
+				type: "ValidationError",
+				message: "Salary disbursement must be recorded before marking this period as paid.",
+			});
+		}
+
 		const today = dateFormat(new Date());
 
 		if (period.payDate > today) {
@@ -606,15 +795,34 @@ async function transitionPayrollPeriod({
 
 	try {
 		const updated = await db.transaction(async (tx) => {
+			if (targetStatus === PAYROLL_PERIOD_STATUS.APPROVED) {
+				const recognitionResult = await postPayrollRecognitionJournal(periodId, tx);
+
+				if (!recognitionResult.success) {
+					throw {
+						appError: recognitionResult.error,
+					} satisfies PayrollTransitionAbort;
+				}
+
+				await tx
+					.update(payrollSlips)
+					.set({
+						status: "approved",
+						updatedAt: new Date(),
+					})
+					.where(
+						and(
+							eq(payrollSlips.payrollPeriodId, periodId),
+							eq(payrollSlips.status, "draft")
+						)
+					);
+			}
+
 			const timestamp = new Date();
 			const updateValues: Partial<typeof payrollPeriods.$inferInsert> = {
 				status: targetStatus,
 				updatedAt: timestamp,
 			};
-
-			if (targetStatus === PAYROLL_PERIOD_STATUS.PROCESSING) {
-				updateValues.processingStartedAt = timestamp;
-			}
 
 			if (targetStatus === PAYROLL_PERIOD_STATUS.APPROVED) {
 				updateValues.approvedBy = performedBy;
@@ -634,7 +842,15 @@ async function transitionPayrollPeriod({
 				updateValues.cancelledAt = timestamp;
 				updateValues.cancellationReason = normalizePayrollText(cancellationReason);
 
-				// TODO: void associated payroll_slips when payroll calculation engine is implemented
+				if (isProcessingPeriod) {
+					// await cancelProcessedPayrollPeriodFn({
+					// 	data: { periodId, reason: cancellationReason ?? "Payroll period cancelled" },
+					// });
+					await cancelProcessedPayrollPeriod(periodId, performedBy, cancellationReason ?? "Payroll period cancelled",tx);
+					updateValues.processingWarnings = JSON.stringify([]);
+					updateValues.skippedEmployees = JSON.stringify([]);
+					updateValues.processingCompletedAt = null;
+				}
 			}
 
 			const [row] = await tx
@@ -648,6 +864,10 @@ async function transitionPayrollPeriod({
 
 		return success(toPayrollPeriodView(updated));
 	} catch (error) {
+		if (isPayrollTransitionAbort(error)) {
+			return failure(error.appError);
+		}
+
 		console.error(error);
 		return failure({
 			type: "ApplicationError",
@@ -666,56 +886,10 @@ async function updatePeriodTotals(periodId: string): Promise<Result<PayrollPerio
 		});
 	}
 
-	// TODO: aggregate non-cancelled payroll_slips for this period when the payroll calculation engine is implemented
-	// TODO: aggregate salary advance recovery deductions from payroll_slips when the payroll calculation engine is implemented
-	// TODO: aggregate employer pension contributions from payroll_slips when the payroll calculation engine is implemented
-	const aggregatedTotals = {
-		totalGrossPay: 0,
-		totalNetPay: 0,
-		totalPaye: 0,
-		totalNssfEmployee: 0,
-		totalNssfEmployer: 0,
-		totalShifEmployee: 0,
-		totalShifEmployer: 0,
-		totalAhlEmployee: 0,
-		totalAhlEmployer: 0,
-		totalNita: 0,
-		totalLoanDeductions: 0,
-		totalAdvanceRecoveries: 0,
-		totalOtherDeductions: 0,
-		totalPensionEmployer: 0,
-		employeeCount: 0,
-	};
-
 	try {
-		const [updated] = await db
-			.update(payrollPeriods)
-			.set({
-				totalGrossPay: toPayrollDecimalString(aggregatedTotals.totalGrossPay),
-				totalNetPay: toPayrollDecimalString(aggregatedTotals.totalNetPay),
-				totalPaye: toPayrollDecimalString(aggregatedTotals.totalPaye),
-				totalNssfEmployee: toPayrollDecimalString(aggregatedTotals.totalNssfEmployee),
-				totalNssfEmployer: toPayrollDecimalString(aggregatedTotals.totalNssfEmployer),
-				totalShifEmployee: toPayrollDecimalString(aggregatedTotals.totalShifEmployee),
-				totalShifEmployer: toPayrollDecimalString(aggregatedTotals.totalShifEmployer),
-				totalAhlEmployee: toPayrollDecimalString(aggregatedTotals.totalAhlEmployee),
-				totalAhlEmployer: toPayrollDecimalString(aggregatedTotals.totalAhlEmployer),
-				totalNita: toPayrollDecimalString(aggregatedTotals.totalNita),
-				totalLoanDeductions: toPayrollDecimalString(aggregatedTotals.totalLoanDeductions),
-				totalAdvanceRecoveries: toPayrollDecimalString(
-					aggregatedTotals.totalAdvanceRecoveries
-				),
-				totalOtherDeductions: toPayrollDecimalString(aggregatedTotals.totalOtherDeductions),
-				totalPensionEmployer: toPayrollDecimalString(
-					aggregatedTotals.totalPensionEmployer
-				),
-				employeeCount: aggregatedTotals.employeeCount,
-				processingCompletedAt: new Date(),
-				updatedAt: new Date(),
-			})
-			.where(eq(payrollPeriods.id, periodId))
-			.returning();
-
+		const { period: updated } = await updatePayrollPeriodAggregatesFn({
+			data: { periodId, processingCompletedAt: period.processingCompletedAt },
+		});
 		return success(toPayrollPeriodView(updated));
 	} catch (error) {
 		console.error(error);
@@ -774,7 +948,9 @@ async function getPayrollPeriodByMonthYear(periodMonth: number, periodYear: numb
 	return row ? toPayrollPeriodView(row) : null;
 }
 
-async function getPeriodRemittanceStatus(periodId: string): Promise<PayrollPeriodRemittanceStatus | null> {
+async function getPeriodRemittanceStatus(
+	periodId: string
+): Promise<PayrollPeriodRemittanceStatus | null> {
 	const period = await getPayrollPeriodRecordById(periodId);
 
 	if (!period) {
@@ -787,7 +963,9 @@ async function getPeriodRemittanceStatus(periodId: string): Promise<PayrollPerio
 	);
 	const daysUntilDeadline = getDaysUntilPayrollRemittanceDeadline(remittanceDeadline);
 	const journalPosted = period.remittanceJournalEntryId !== null;
-	const helbAmount = await getHelbTotalForPeriod(period.periodEnd);
+	const helbAmount =
+		(await getHelbTotalForProcessedPeriod(periodId)) ??
+		(await getHelbTotalForPeriod(period.periodEnd));
 
 	return {
 		periodName: period.name,
@@ -822,10 +1000,7 @@ async function getPeriodRemittanceStatus(periodId: string): Promise<PayrollPerio
 			},
 			{
 				name: "AHL",
-				amount: sumNumbers([
-					toNumber(period.totalAhlEmployee),
-					toNumber(period.totalAhlEmployer),
-				]),
+				amount: sumNumbers([toNumber(period.totalAhlEmployee), toNumber(period.totalAhlEmployer)]),
 				journalPosted,
 				dueDate: remittanceDeadline,
 			},
@@ -889,19 +1064,13 @@ async function getYearToDateTotals(year: number): Promise<PayrollPeriodYearToDat
 		totalPaye: roundPayrollAmount(totals.totalPaye),
 		totalNssfEmployee: roundPayrollAmount(totals.totalNssfEmployee),
 		totalNssfEmployer: roundPayrollAmount(totals.totalNssfEmployer),
-		totalNssfCombined: roundPayrollAmount(
-			totals.totalNssfEmployee + totals.totalNssfEmployer
-		),
+		totalNssfCombined: roundPayrollAmount(totals.totalNssfEmployee + totals.totalNssfEmployer),
 		totalShifEmployee: roundPayrollAmount(totals.totalShifEmployee),
 		totalShifEmployer: roundPayrollAmount(totals.totalShifEmployer),
-		totalShifCombined: roundPayrollAmount(
-			totals.totalShifEmployee + totals.totalShifEmployer
-		),
+		totalShifCombined: roundPayrollAmount(totals.totalShifEmployee + totals.totalShifEmployer),
 		totalAhlEmployee: roundPayrollAmount(totals.totalAhlEmployee),
 		totalAhlEmployer: roundPayrollAmount(totals.totalAhlEmployer),
-		totalAhlCombined: roundPayrollAmount(
-			totals.totalAhlEmployee + totals.totalAhlEmployer
-		),
+		totalAhlCombined: roundPayrollAmount(totals.totalAhlEmployee + totals.totalAhlEmployer),
 		totalNita: roundPayrollAmount(totals.totalNita),
 		totalLoanDeductions: roundPayrollAmount(totals.totalLoanDeductions),
 		totalAdvanceRecoveries: roundPayrollAmount(totals.totalAdvanceRecoveries),
@@ -933,34 +1102,42 @@ async function runPayrollPeriodPreflight(periodId: string): Promise<PayrollPerio
 		};
 	}
 
-	const [activeEmployees, accountDiagnostics, previousPeriod, pendingLeaveSummary, approvedOvertimeRows, draftOvertimeRows, activeLoanRows, resolvedRates] =
-		await Promise.all([
-			getActiveEmployeeDirectory(),
-			getAccountMappingDiagnostics(),
-			getPreviousPeriodStatus(period.periodMonth, period.periodYear),
-			getPendingLeaveSummary(period.periodStart, period.periodEnd),
-			db.query.overtimeRecords.findMany({
-				columns: { id: true },
-				where: and(
-					eq(overtimeRecords.periodMonth, period.periodMonth),
-					eq(overtimeRecords.periodYear, period.periodYear),
-					eq(overtimeRecords.status, "approved")
-				),
-			}),
-			db.query.overtimeRecords.findMany({
-				columns: { id: true },
-				where: and(
-					eq(overtimeRecords.periodMonth, period.periodMonth),
-					eq(overtimeRecords.periodYear, period.periodYear),
-					eq(overtimeRecords.status, "draft")
-				),
-			}),
-			db.query.employeeLoans.findMany({
-				columns: { id: true },
-				where: eq(employeeLoans.status, LOAN_STATUS.ACTIVE),
-			}),
-			resolveStatutoryRates(new Date(`${period.periodEnd}T00:00:00.000Z`), db),
-		]);
+	const [
+		activeEmployees,
+		accountDiagnostics,
+		previousPeriod,
+		pendingLeaveSummary,
+		approvedOvertimeRows,
+		draftOvertimeRows,
+		activeLoanRows,
+		resolvedRates,
+	] = await Promise.all([
+		getActiveEmployeeDirectory(),
+		getAccountMappingDiagnostics(),
+		getPreviousPeriodStatus(period.periodMonth, period.periodYear),
+		getPendingLeaveSummary(period.periodStart, period.periodEnd),
+		db.query.overtimeRecords.findMany({
+			columns: { id: true },
+			where: and(
+				eq(overtimeRecords.periodMonth, period.periodMonth),
+				eq(overtimeRecords.periodYear, period.periodYear),
+				eq(overtimeRecords.status, "approved")
+			),
+		}),
+		db.query.overtimeRecords.findMany({
+			columns: { id: true },
+			where: and(
+				eq(overtimeRecords.periodMonth, period.periodMonth),
+				eq(overtimeRecords.periodYear, period.periodYear),
+				eq(overtimeRecords.status, "draft")
+			),
+		}),
+		db.query.employeeLoans.findMany({
+			columns: { id: true },
+			where: eq(employeeLoans.status, LOAN_STATUS.ACTIVE),
+		}),
+		resolveStatutoryRates(new Date(`${period.periodEnd}T00:00:00.000Z`), db),
+	]);
 
 	const structuresByEmployeeId = await getActiveStructuresByEmployeeId(
 		activeEmployees.map((employee) => employee.id),

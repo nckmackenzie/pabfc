@@ -6,6 +6,8 @@ export const PAYE_BANDS = [
 	{ lowerBound: 800001, upperBound: null, rate: 0.35 },
 ] as const;
 
+export const PAYROLL_SLIP_STATUSES = ["draft", "approved", "cancelled"] as const;
+
 export const NSSF_TIER_1_LOWER_LIMIT = 0;
 export const NSSF_TIER_1_UPPER_LIMIT = 8000;
 export const NSSF_TIER_2_UPPER_LIMIT = 72000;
@@ -213,6 +215,7 @@ export const PAYROLL_STATUTORY_LIMITS = {
 export const OVERTIME_MULTIPLIER_WEEKDAY = 1.5;
 export const OVERTIME_MULTIPLIER_WEEKEND = 2.0;
 export const OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY = 2.0;
+export const PRORATION_MINIMUM_DAYS = 1;
 export const LOAN_MAX_DEDUCTION_RATIO = 2 / 3;
 export const LOAN_DEFAULT_INTEREST_RATE = 0;
 export const LOAN_INTEREST_CALCULATION_METHOD = "reducing_balance" as const;
@@ -234,8 +237,28 @@ export const PAYROLL_PERIOD_STATUS = {
 	CANCELLED: "cancelled",
 } as const;
 
+export const PAYROLL_JOURNAL_SOURCES = {
+	PAYROLL_RECOGNITION: "payroll_recognition",
+	PAYROLL_DISBURSEMENT: "payroll_disbursement",
+	PAYROLL_REMITTANCE: "payroll_remittance",
+} as const;
+
+export const PAYROLL_REMITTANCE_ITEM_TYPES = [
+	"paye",
+	"nssf",
+	"shif",
+	"ahl",
+	"nita",
+	"helb",
+] as const;
+
 export type PayrollPeriodStatus =
 	(typeof PAYROLL_PERIOD_STATUS)[keyof typeof PAYROLL_PERIOD_STATUS];
+
+export type PayrollJournalSource =
+	(typeof PAYROLL_JOURNAL_SOURCES)[keyof typeof PAYROLL_JOURNAL_SOURCES];
+
+export type PayrollRemittanceItemType = (typeof PAYROLL_REMITTANCE_ITEM_TYPES)[number];
 
 export const PAYROLL_PERIOD_STATUS_VALUES = Object.values(PAYROLL_PERIOD_STATUS) as [
 	PayrollPeriodStatus,

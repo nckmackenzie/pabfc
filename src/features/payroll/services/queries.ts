@@ -44,6 +44,19 @@ import {
 	runPayrollPeriodPreflightFn,
 	getYearToDateTotalsFn,
 } from "@/features/payroll/services/payroll-periods.api";
+import {
+	getJournalEntryWithLinesFn,
+	getPayrollJournalPostingOptionsFn,
+	getPayrollJournalSummaryFn,
+} from "@/features/payroll/services/payroll-journals.api";
+import {
+	getEmployeePayrollHistoryFn,
+	getPayrollAdjustmentOptionsFn,
+	getPayrollSlipByIdFn,
+	getPayrollSlipForEmployeeFn,
+	getPayrollSlipsForPeriodFn,
+	getPayrollSummaryByDepartmentFn,
+} from "@/features/payroll/services/payroll-slips.api";
 import type {
 	salaryHistoryParamsSchema,
 	salaryStructureDetailParamsSchema,
@@ -72,6 +85,14 @@ import type {
 	payrollPeriodIdSchema,
 	payrollPeriodYearSchema,
 } from "@/features/payroll/services/payroll-period.schemas";
+import type {
+	employeePayrollHistorySchema,
+	payrollDepartmentSummarySchema,
+	payrollPeriodAdjustmentOptionsSchema,
+	payrollSlipForEmployeeSchema,
+	payrollSlipIdSchema,
+	payrollSlipPeriodSearchSchema,
+} from "@/features/payroll/services/payroll-slips.schemas";
 import type { z } from "zod";
 
 export const salaryStructureQueries = {
@@ -296,6 +317,40 @@ export const payrollPeriodQueries = {
 			queryFn: () => getPayrollPeriodByIdFn({ data: params }),
 			staleTime: 60 * 1000,
 		}),
+	journalSummary: (params: z.infer<typeof payrollPeriodIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "journal-summary", params.periodId] as const,
+			queryFn: async () => {
+				const result = await getPayrollJournalSummaryFn({ data: params });
+
+				if (!result.success) {
+					throw new Error(result.error.message);
+				}
+
+				return result.data;
+			},
+			staleTime: 60 * 1000,
+		}),
+	journalPostingOptions: () =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "journal-posting-options"] as const,
+			queryFn: () => getPayrollJournalPostingOptionsFn(),
+			staleTime: 5 * 60 * 1000,
+		}),
+	journalEntry: (journalEntryId: number) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "journal-entry", journalEntryId] as const,
+			queryFn: async () => {
+				const result = await getJournalEntryWithLinesFn({ data: { journalEntryId } });
+
+				if (!result.success) {
+					throw new Error(result.error.message);
+				}
+
+				return result.data;
+			},
+			staleTime: 60 * 1000,
+		}),
 	active: () =>
 		queryOptions({
 			queryKey: [...payrollPeriodQueries.all, "active"] as const,
@@ -318,6 +373,59 @@ export const payrollPeriodQueries = {
 		queryOptions({
 			queryKey: [...payrollPeriodQueries.all, "ytd", params.year] as const,
 			queryFn: () => getYearToDateTotalsFn({ data: params }),
+			staleTime: 60 * 1000,
+	}),
+};
+
+export const payrollSlipQueries = {
+	all: ["payroll-slips"] as const,
+	period: (params: z.infer<typeof payrollSlipPeriodSearchSchema>) =>
+		queryOptions({
+			queryKey: [...payrollSlipQueries.all, "period", params] as const,
+			queryFn: () => getPayrollSlipsForPeriodFn({ data: params }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	detail: (params: z.infer<typeof payrollSlipIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollSlipQueries.all, "detail", params.slipId] as const,
+			queryFn: () => getPayrollSlipByIdFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	employeePeriod: (params: z.infer<typeof payrollSlipForEmployeeSchema>) =>
+		queryOptions({
+			queryKey: [
+				...payrollSlipQueries.all,
+				"employee-period",
+				params.employeeId,
+				params.payrollPeriodId,
+			] as const,
+			queryFn: () => getPayrollSlipForEmployeeFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	history: (params: z.infer<typeof employeePayrollHistorySchema>) =>
+		queryOptions({
+			queryKey: [
+				...payrollSlipQueries.all,
+				"history",
+				params.employeeId,
+				params.fromYear ?? "all",
+				params.toYear ?? "all",
+			] as const,
+			queryFn: () => getEmployeePayrollHistoryFn({ data: params }),
+			placeholderData: keepPreviousData,
+			staleTime: 60 * 1000,
+		}),
+	departmentSummary: (params: z.infer<typeof payrollDepartmentSummarySchema>) =>
+		queryOptions({
+			queryKey: [...payrollSlipQueries.all, "department-summary", params.payrollPeriodId] as const,
+			queryFn: () => getPayrollSummaryByDepartmentFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	adjustmentOptions: (params: z.infer<typeof payrollPeriodAdjustmentOptionsSchema>) =>
+		queryOptions({
+			queryKey: [...payrollSlipQueries.all, "adjustments", params.payrollPeriodId] as const,
+			queryFn: () => getPayrollAdjustmentOptionsFn({ data: params }),
 			staleTime: 60 * 1000,
 		}),
 };

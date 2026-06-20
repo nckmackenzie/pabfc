@@ -36,11 +36,14 @@ describe("paye engine", () => {
 		expect(result.tier2Employee).toBe(3840);
 	});
 
-	it("enforces the SHIF minimum contribution", () => {
-		const result = computeSHIF(5000, rates);
+	it("keeps SHIF employer contribution at zero while preserving employee computation", () => {
+		const minimumResult = computeSHIF(5000, rates);
+		const uncappedResult = computeSHIF(200000, rates);
 
-		expect(result.employeeContribution).toBe(300);
-		expect(result.employerContribution).toBe(300);
+		expect(minimumResult.employeeContribution).toBe(300);
+		expect(minimumResult.employerContribution).toBe(0);
+		expect(uncappedResult.employeeContribution).toBe(5500);
+		expect(uncappedResult.employerContribution).toBe(0);
 	});
 
 	it("floors net PAYE at zero after reliefs", () => {

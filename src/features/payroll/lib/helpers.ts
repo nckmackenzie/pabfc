@@ -75,6 +75,7 @@ export type SalaryStructureWithComputedComponents = SalaryStructureRecord & {
 	computedComponents: ReturnType<typeof computeGrossPayComponents>;
 };
 
+// TODO: REPLACE WITH toBig
 export function toPayrollBig(value: NumericLike) {
 	if (value === null || value === undefined || value === "") {
 		return new Big(0);

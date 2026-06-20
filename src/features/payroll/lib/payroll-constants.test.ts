@@ -15,7 +15,9 @@ import {
 	PAYROLL_ACCOUNT_ROLES,
 	PAYROLL_DEFAULT_LEDGER_ACCOUNTS,
 	PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES,
+	PAYROLL_JOURNAL_SOURCES,
 	PAYROLL_PARENT_LEDGER_ACCOUNTS,
+	PAYROLL_REMITTANCE_ITEM_TYPES,
 	PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES,
 	SALARY_ADVANCE_MAX_ADVANCE_RATIO,
 	SALARY_ADVANCE_MAX_RECOVERY_MONTHS,
@@ -97,5 +99,21 @@ describe("payroll account constants", () => {
 			REJECTED: "rejected",
 			CANCELLED: "cancelled",
 		});
+	});
+
+	it("defines payroll journal sources and remittance item types", () => {
+		expect(PAYROLL_JOURNAL_SOURCES).toEqual({
+			PAYROLL_RECOGNITION: "payroll_recognition",
+			PAYROLL_DISBURSEMENT: "payroll_disbursement",
+			PAYROLL_REMITTANCE: "payroll_remittance",
+		});
+		expect(PAYROLL_REMITTANCE_ITEM_TYPES).toEqual([
+			"paye",
+			"nssf",
+			"shif",
+			"ahl",
+			"nita",
+			"helb",
+		]);
 	});
 });

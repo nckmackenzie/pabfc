@@ -519,6 +519,20 @@
       "when": 1781766803648,
       "tag": "0073_dry_anita_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1781802059683,
+      "tag": "0074_aberrant_klaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1781810370947,
+      "tag": "0075_strange_micromacro",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { useDeferredValue, useMemo, useState } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
@@ -262,6 +262,11 @@ function PayrollPeriodCard({
 
 			<PermissionGate permissions={["payroll-periods:transition"]}>
 				<div className="flex flex-wrap gap-2">
+					<Button type="button" variant="outline" asChild>
+						<Link to="/app/payroll/periods/$periodId" params={{ periodId: period.id }}>
+							Inspect Results
+						</Link>
+					</Button>
 					{period.status === PAYROLL_PERIOD_STATUS.DRAFT ? (
 						<Button
 							type="button"

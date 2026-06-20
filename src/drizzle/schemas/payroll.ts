@@ -24,6 +24,7 @@ import {
 	type StatutoryRateCategory,
 	type PayrollPeriodStatus,
 	type PayrollAccountRole,
+	PAYROLL_SLIP_STATUSES,
 } from "@/features/payroll/lib/payroll-constants";
 import { users } from "./auth";
 import { journalEntries, ledgerAccounts } from "./chart-of-accounts";
@@ -47,7 +48,21 @@ const statutoryRateCategoryValues = STATUTORY_RATE_CATEGORIES as unknown as [
 	...Array<StatutoryRateCategory>,
 ];
 export const OVERTIME_STATUSES = ["draft", "approved", "paid"] as const;
+
+export const PAYROLL_DEDUCTION_TYPES = [
+	"company_loan",
+	"salary_advance",
+	"sacco",
+	"union_dues",
+	"court_order",
+	"insurance",
+	"welfare",
+	"helb",
+	"other",
+] as const;
 export type OvertimeStatus = (typeof OVERTIME_STATUSES)[number];
+export type PayrollSlipStatus = (typeof PAYROLL_SLIP_STATUSES)[number];
+export type PayrollDeductionType = (typeof PAYROLL_DEDUCTION_TYPES)[number];
 const loanStatusValues = Object.values(LOAN_STATUS) as [string & {}, ...(string & {})[]];
 const salaryAdvanceStatusValues = Object.values(SALARY_ADVANCE_STATUS) as [
 	string & {},
@@ -57,20 +72,16 @@ export type LoanStatus = (typeof loanStatusValues)[number];
 export type SalaryAdvanceStatus = (typeof salaryAdvanceStatusValues)[number];
 
 export const payrollAccountRoleEnum = pgEnum("payroll_account_role", payrollAccountRoleValues);
-export const payrollPeriodStatusEnum = pgEnum(
-	"payroll_period_status",
-	payrollPeriodStatusValues
-);
+export const payrollPeriodStatusEnum = pgEnum("payroll_period_status", payrollPeriodStatusValues);
 export const statutoryRateCategoryEnum = pgEnum(
 	"statutory_rate_category",
 	statutoryRateCategoryValues
 );
 export const overtimeStatusEnum = pgEnum("overtime_status", OVERTIME_STATUSES);
+export const payrollSlipStatusEnum = pgEnum("payroll_slip_status", PAYROLL_SLIP_STATUSES);
+export const payrollDeductionTypeEnum = pgEnum("payroll_deduction_type", PAYROLL_DEDUCTION_TYPES);
 export const loanStatusEnum = pgEnum("loan_status", loanStatusValues);
-export const salaryAdvanceStatusEnum = pgEnum(
-	"salary_advance_status",
-	salaryAdvanceStatusValues
-);
+export const salaryAdvanceStatusEnum = pgEnum("salary_advance_status", salaryAdvanceStatusValues);
 
 export const salaryStructures = pgTable(
 	"salary_structures",
@@ -271,6 +282,8 @@ export const payrollPeriods = pgTable(
 			scale: 2,
 		}),
 		employeeCount: integer("employee_count"),
+		processingWarnings: text("processing_warnings"),
+		skippedEmployees: text("skipped_employees"),
 		processingStartedAt: timestamp("processing_started_at", { withTimezone: true }),
 		processingCompletedAt: timestamp("processing_completed_at", { withTimezone: true }),
 		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
@@ -292,10 +305,9 @@ export const payrollPeriods = pgTable(
 			() => journalEntries.id,
 			{ onDelete: "set null" }
 		),
-		payrollJournalEntryId: integer("payroll_journal_entry_id").references(
-			() => journalEntries.id,
-			{ onDelete: "set null" }
-		),
+		payrollJournalEntryId: integer("payroll_journal_entry_id").references(() => journalEntries.id, {
+			onDelete: "set null",
+		}),
 		notes: text("notes"),
 		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
 			onDelete: "set null",
@@ -318,10 +330,7 @@ export const payrollPeriods = pgTable(
 			"payroll_periods_period_year_range",
 			sql`${table.periodYear} >= 2020 and ${table.periodYear} <= 2100`
 		),
-		check(
-			"payroll_periods_period_dates_order",
-			sql`${table.periodEnd} >= ${table.periodStart}`
-		),
+		check("payroll_periods_period_dates_order", sql`${table.periodEnd} >= ${table.periodStart}`),
 	]
 );
 
@@ -585,8 +594,7 @@ export const loanRepayments = pgTable(
 			scale: 2,
 		}).notNull(),
 		isEarlySettlement: boolean("is_early_settlement").notNull().default(false),
-		// FK to payroll_slips.id — constraint added in payroll calculation engine migration.
-		payrollSlipId: varchar("payroll_slip_id", { length: 255 }),
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 }).references(() => payrollSlips.id),
 		journalEntryId: integer("journal_entry_id").references(() => journalEntries.id, {
 			onDelete: "set null",
 		}),
@@ -644,12 +652,9 @@ export const salaryAdvances = pgTable(
 			precision: 14,
 			scale: 2,
 		}),
-		disbursementAccountId: integer("disbursement_account_id").references(
-			() => ledgerAccounts.id,
-			{
-				onDelete: "set null",
-			}
-		),
+		disbursementAccountId: integer("disbursement_account_id").references(() => ledgerAccounts.id, {
+			onDelete: "set null",
+		}),
 		disbursementDate: date("disbursement_date"),
 		disbursementJournalEntryId: integer("disbursement_journal_entry_id").references(
 			() => journalEntries.id,
@@ -736,8 +741,7 @@ export const salaryAdvanceRecoveries = pgTable(
 			scale: 2,
 		}).notNull(),
 		isLastRecovery: boolean("is_last_recovery").notNull().default(false),
-		// FK to payroll_slips.id — constraint added in payroll calculation engine migration.
-		payrollSlipId: varchar("payroll_slip_id", { length: 255 }),
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 }).references(() => payrollSlips.id),
 		clearingJournalEntryId: integer("clearing_journal_entry_id").references(
 			() => journalEntries.id,
 			{
@@ -768,6 +772,431 @@ export const salaryAdvanceRecoveries = pgTable(
 			"salary_advance_recoveries_period_year_range",
 			sql`${table.periodYear} >= 2020 and ${table.periodYear} <= 2100`
 		),
+	]
+);
+
+export const payrollPeriodBonuses = pgTable(
+	"payroll_period_bonuses",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 })
+			.notNull()
+			.references(() => payrollPeriods.id, { onDelete: "cascade" }),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		amount: numeric("amount", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		description: varchar("description", { length: 255 }).notNull(),
+		notes: text("notes"),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_payroll_period_bonuses_period").on(table.payrollPeriodId),
+		index("idx_payroll_period_bonuses_employee").on(table.employeeId),
+		index("idx_payroll_period_bonuses_period_employee").on(table.payrollPeriodId, table.employeeId),
+	]
+);
+
+export const payrollPeriodOtherDeductions = pgTable(
+	"payroll_period_other_deductions",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 })
+			.notNull()
+			.references(() => payrollPeriods.id, { onDelete: "cascade" }),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		deductionType: payrollDeductionTypeEnum("deduction_type").notNull(),
+		description: varchar("description", { length: 255 }).notNull(),
+		amount: numeric("amount", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		notes: text("notes"),
+		createdBy: varchar("created_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_payroll_period_other_deductions_period").on(table.payrollPeriodId),
+		index("idx_payroll_period_other_deductions_employee").on(table.employeeId),
+		index("idx_payroll_period_other_deductions_type").on(table.deductionType),
+		check(
+			"payroll_period_other_deductions_allowed_types",
+			sql`${table.deductionType} not in ('company_loan', 'salary_advance', 'helb')`
+		),
+	]
+);
+
+export const payrollSlips = pgTable(
+	"payroll_slips",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 })
+			.notNull()
+			.references(() => payrollPeriods.id, { onDelete: "cascade" }),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		salaryStructureId: varchar("salary_structure_id", { length: 255 })
+			.notNull()
+			.references(() => salaryStructures.id, { onDelete: "restrict" }),
+		status: payrollSlipStatusEnum("status").notNull().default("draft"),
+		isProrated: boolean("is_prorated").notNull().default(false),
+		proratedDays: integer("prorated_days"),
+		totalWorkingDaysInPeriod: integer("total_working_days_in_period"),
+		proratedReason: varchar("prorated_reason", { length: 50 }),
+		basicSalary: numeric("basic_salary", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		houseAllowance: numeric("house_allowance", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		transportAllowance: numeric("transport_allowance", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		commuterAllowance: numeric("commuter_allowance", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		mealAllowance: numeric("meal_allowance", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		airtimeAllowance: numeric("airtime_allowance", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		otherAllowances: numeric("other_allowances", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		overtimePay: numeric("overtime_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		bonuses: numeric("bonuses", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		grossPay: numeric("gross_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		fullMonthGrossPay: numeric("full_month_gross_pay", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		overtimeRecordId: varchar("overtime_record_id", { length: 255 }).references(
+			() => overtimeRecords.id,
+			{ onDelete: "set null" }
+		),
+		weekdayOvertimeHours: numeric("weekday_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		}),
+		weekendOvertimeHours: numeric("weekend_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		}),
+		publicHolidayOvertimeHours: numeric("public_holiday_overtime_hours", {
+			precision: 6,
+			scale: 2,
+		}),
+		unpaidLeaveDays: integer("unpaid_leave_days").notNull().default(0),
+		halfPayLeaveDays: integer("half_pay_leave_days").notNull().default(0),
+		leaveDeductionAmount: numeric("leave_deduction_amount", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nssfTier1Employee: numeric("nssf_tier_1_employee", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nssfTier1Employer: numeric("nssf_tier_1_employer", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nssfTier2Employee: numeric("nssf_tier_2_employee", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nssfTier2Employer: numeric("nssf_tier_2_employer", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nssfEmployee: numeric("nssf_employee", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nssfEmployer: numeric("nssf_employer", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		shifEmployee: numeric("shif_employee", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		shifEmployer: numeric("shif_employer", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		ahlEmployee: numeric("ahl_employee", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		ahlEmployer: numeric("ahl_employer", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nitaLevy: numeric("nita_levy", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("50"),
+		pensionAllowableDeduction: numeric("pension_allowable_deduction", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		mortgageAllowableDeduction: numeric("mortgage_allowable_deduction", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		postRetirementAllowableDeduction: numeric("post_retirement_allowable_deduction", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		mealAllowanceExempt: numeric("meal_allowance_exempt", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		nonCashBenefitExempt: numeric("non_cash_benefit_exempt", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		taxableIncome: numeric("taxable_income", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		grossTax: numeric("gross_tax", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		personalRelief: numeric("personal_relief", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		insuranceRelief: numeric("insurance_relief", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		netPaye: numeric("net_paye", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		payeBandBreakdown: text("paye_band_breakdown"),
+		pensionEmployeeDeduction: numeric("pension_employee_deduction", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		pensionEmployerContribution: numeric("pension_employer_contribution", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalEmployerCost: numeric("total_employer_cost", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalLoanDeductions: numeric("total_loan_deductions", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalAdvanceRecoveries: numeric("total_advance_recoveries", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalOtherDeductions: numeric("total_other_deductions", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		helbDeduction: numeric("helb_deduction", {
+			precision: 14,
+			scale: 2,
+		})
+			.notNull()
+			.default("0"),
+		totalStatutoryDeductions: numeric("total_statutory_deductions", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		totalVoluntaryDeductions: numeric("total_voluntary_deductions", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		totalDeductions: numeric("total_deductions", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		netPay: numeric("net_pay", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		twoThirdsCapApplied: boolean("two_thirds_cap_applied").notNull().default(false),
+		twoThirdsCapAmount: numeric("two_thirds_cap_amount", {
+			precision: 14,
+			scale: 2,
+		}),
+		notes: text("notes"),
+		approvedBy: varchar("approved_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		approvedAt: timestamp("approved_at", { withTimezone: true }),
+		cancelledBy: varchar("cancelled_by", { length: 255 }).references(() => users.id, {
+			onDelete: "set null",
+		}),
+		cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+		cancellationReason: text("cancellation_reason"),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		uniqueIndex("uq_payroll_slips_period_employee").on(table.payrollPeriodId, table.employeeId),
+		index("idx_payroll_slips_period").on(table.payrollPeriodId),
+		index("idx_payroll_slips_employee").on(table.employeeId),
+		index("idx_payroll_slips_overtime_record").on(table.overtimeRecordId),
+	]
+);
+
+export const payrollDeductions = pgTable(
+	"payroll_deductions",
+	{
+		id: varchar("id", { length: 255 })
+			.primaryKey()
+			.$defaultFn(() => nanoid()),
+		payrollSlipId: varchar("payroll_slip_id", { length: 255 })
+			.notNull()
+			.references(() => payrollSlips.id, { onDelete: "cascade" }),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 })
+			.notNull()
+			.references(() => payrollPeriods.id, { onDelete: "cascade" }),
+		employeeId: varchar("employee_id", { length: 255 })
+			.notNull()
+			.references(() => employees.id, { onDelete: "cascade" }),
+		deductionType: payrollDeductionTypeEnum("deduction_type").notNull(),
+		description: varchar("description", { length: 255 }).notNull(),
+		amount: numeric("amount", {
+			precision: 14,
+			scale: 2,
+		}).notNull(),
+		loanId: varchar("loan_id", { length: 255 }).references(() => employeeLoans.id, {
+			onDelete: "set null",
+		}),
+		advanceId: varchar("advance_id", { length: 255 }).references(() => salaryAdvances.id, {
+			onDelete: "set null",
+		}),
+		createdAt,
+	},
+	(table) => [
+		index("idx_payroll_deductions_slip").on(table.payrollSlipId),
+		index("idx_payroll_deductions_period_type").on(table.payrollPeriodId, table.deductionType),
+		index("idx_payroll_deductions_loan").on(table.loanId),
+		index("idx_payroll_deductions_advance").on(table.advanceId),
 	]
 );
 
@@ -830,7 +1259,7 @@ export const statutoryRates = pgTable(
 	]
 );
 
-export const salaryStructuresRelations = relations(salaryStructures, ({ one }) => ({
+export const salaryStructuresRelations = relations(salaryStructures, ({ many, one }) => ({
 	employee: one(employees, {
 		fields: [salaryStructures.employeeId],
 		references: [employees.id],
@@ -839,6 +1268,7 @@ export const salaryStructuresRelations = relations(salaryStructures, ({ one }) =
 		fields: [salaryStructures.createdBy],
 		references: [users.id],
 	}),
+	payrollSlips: many(payrollSlips),
 }));
 
 export const payrollPeriodsRelations = relations(payrollPeriods, ({ many, one }) => ({
@@ -867,6 +1297,10 @@ export const payrollPeriodsRelations = relations(payrollPeriods, ({ many, one })
 		references: [journalEntries.id],
 	}),
 	overtimeRecords: many(overtimeRecords),
+	payrollSlips: many(payrollSlips),
+	payrollDeductions: many(payrollDeductions),
+	bonuses: many(payrollPeriodBonuses),
+	otherDeductions: many(payrollPeriodOtherDeductions),
 }));
 
 export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => ({
@@ -885,6 +1319,10 @@ export const overtimeRecordsRelations = relations(overtimeRecords, ({ one }) => 
 	approvedByUser: one(users, {
 		fields: [overtimeRecords.approvedBy],
 		references: [users.id],
+	}),
+	payrollSlip: one(payrollSlips, {
+		fields: [overtimeRecords.payrollSlipId],
+		references: [payrollSlips.id],
 	}),
 }));
 
@@ -922,6 +1360,7 @@ export const employeeLoansRelations = relations(employeeLoans, ({ many, one }) =
 		references: [journalEntries.id],
 	}),
 	repayments: many(loanRepayments),
+	payrollDeductions: many(payrollDeductions),
 }));
 
 export const loanRepaymentsRelations = relations(loanRepayments, ({ one }) => ({
@@ -936,6 +1375,10 @@ export const loanRepaymentsRelations = relations(loanRepayments, ({ one }) => ({
 	journalEntry: one(journalEntries, {
 		fields: [loanRepayments.journalEntryId],
 		references: [journalEntries.id],
+	}),
+	payrollSlip: one(payrollSlips, {
+		fields: [loanRepayments.payrollSlipId],
+		references: [payrollSlips.id],
 	}),
 }));
 
@@ -965,25 +1408,113 @@ export const salaryAdvancesRelations = relations(salaryAdvances, ({ many, one })
 		references: [journalEntries.id],
 	}),
 	recoveries: many(salaryAdvanceRecoveries),
+	payrollDeductions: many(payrollDeductions),
 }));
 
-export const salaryAdvanceRecoveriesRelations = relations(
-	salaryAdvanceRecoveries,
+export const salaryAdvanceRecoveriesRelations = relations(salaryAdvanceRecoveries, ({ one }) => ({
+	advance: one(salaryAdvances, {
+		fields: [salaryAdvanceRecoveries.advanceId],
+		references: [salaryAdvances.id],
+	}),
+	employee: one(employees, {
+		fields: [salaryAdvanceRecoveries.employeeId],
+		references: [employees.id],
+	}),
+	clearingJournalEntry: one(journalEntries, {
+		fields: [salaryAdvanceRecoveries.clearingJournalEntryId],
+		references: [journalEntries.id],
+	}),
+	payrollSlip: one(payrollSlips, {
+		fields: [salaryAdvanceRecoveries.payrollSlipId],
+		references: [payrollSlips.id],
+	}),
+}));
+
+export const payrollPeriodBonusesRelations = relations(payrollPeriodBonuses, ({ one }) => ({
+	payrollPeriod: one(payrollPeriods, {
+		fields: [payrollPeriodBonuses.payrollPeriodId],
+		references: [payrollPeriods.id],
+	}),
+	employee: one(employees, {
+		fields: [payrollPeriodBonuses.employeeId],
+		references: [employees.id],
+	}),
+	createdByUser: one(users, {
+		fields: [payrollPeriodBonuses.createdBy],
+		references: [users.id],
+	}),
+}));
+
+export const payrollPeriodOtherDeductionsRelations = relations(
+	payrollPeriodOtherDeductions,
 	({ one }) => ({
-		advance: one(salaryAdvances, {
-			fields: [salaryAdvanceRecoveries.advanceId],
-			references: [salaryAdvances.id],
+		payrollPeriod: one(payrollPeriods, {
+			fields: [payrollPeriodOtherDeductions.payrollPeriodId],
+			references: [payrollPeriods.id],
 		}),
 		employee: one(employees, {
-			fields: [salaryAdvanceRecoveries.employeeId],
+			fields: [payrollPeriodOtherDeductions.employeeId],
 			references: [employees.id],
 		}),
-		clearingJournalEntry: one(journalEntries, {
-			fields: [salaryAdvanceRecoveries.clearingJournalEntryId],
-			references: [journalEntries.id],
+		createdByUser: one(users, {
+			fields: [payrollPeriodOtherDeductions.createdBy],
+			references: [users.id],
 		}),
 	})
 );
+
+export const payrollSlipsRelations = relations(payrollSlips, ({ many, one }) => ({
+	payrollPeriod: one(payrollPeriods, {
+		fields: [payrollSlips.payrollPeriodId],
+		references: [payrollPeriods.id],
+	}),
+	employee: one(employees, {
+		fields: [payrollSlips.employeeId],
+		references: [employees.id],
+	}),
+	salaryStructure: one(salaryStructures, {
+		fields: [payrollSlips.salaryStructureId],
+		references: [salaryStructures.id],
+	}),
+	overtimeRecord: one(overtimeRecords, {
+		fields: [payrollSlips.overtimeRecordId],
+		references: [overtimeRecords.id],
+	}),
+	approvedByUser: one(users, {
+		fields: [payrollSlips.approvedBy],
+		references: [users.id],
+	}),
+	cancelledByUser: one(users, {
+		fields: [payrollSlips.cancelledBy],
+		references: [users.id],
+	}),
+	deductions: many(payrollDeductions),
+	loanRepayments: many(loanRepayments),
+	advanceRecoveries: many(salaryAdvanceRecoveries),
+}));
+
+export const payrollDeductionsRelations = relations(payrollDeductions, ({ one }) => ({
+	payrollSlip: one(payrollSlips, {
+		fields: [payrollDeductions.payrollSlipId],
+		references: [payrollSlips.id],
+	}),
+	payrollPeriod: one(payrollPeriods, {
+		fields: [payrollDeductions.payrollPeriodId],
+		references: [payrollPeriods.id],
+	}),
+	employee: one(employees, {
+		fields: [payrollDeductions.employeeId],
+		references: [employees.id],
+	}),
+	loan: one(employeeLoans, {
+		fields: [payrollDeductions.loanId],
+		references: [employeeLoans.id],
+	}),
+	advance: one(salaryAdvances, {
+		fields: [payrollDeductions.advanceId],
+		references: [salaryAdvances.id],
+	}),
+}));
 
 export const payrollAccountMappingsRelations = relations(payrollAccountMappings, ({ one }) => ({
 	account: one(ledgerAccounts, {

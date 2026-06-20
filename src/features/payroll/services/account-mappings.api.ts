@@ -180,7 +180,7 @@ async function getAccountMappingsAsMap(): Promise<
 }
 
 async function validateAllMappingsExist(): Promise<PayrollAccountMappingValidation> {
-	const mappings = await getAllAccountMappings();
+	const mappings = await getAllAccountMappingsFn();
 	const issues: string[] = [];
 
 	if (!mappings.isComplete) {
