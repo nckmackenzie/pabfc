@@ -71,7 +71,22 @@ import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { requiredStringNonLowerSchemaEntry } from "@/lib/schema-rules";
-import type { DepartmentPayrollSummaryItem, EmployeePayrollHistoryItem, EmployeeRecord, ManualOtherDeductionType, OvertimeRecord, PayrollAdjustmentOptions, PayrollDeductionRecord, PayrollPeriodRecord, PayrollRunResult, PayrollRunSuccess, PayrollSlipRecord, SalaryStructureRecord, SkippedEmployee, SlipWarning } from "../lib/payroll.types";
+import type {
+	DepartmentPayrollSummaryItem,
+	EmployeePayrollHistoryItem,
+	EmployeeRecord,
+	ManualOtherDeductionType,
+	OvertimeRecord,
+	PayrollAdjustmentOptions,
+	PayrollDeductionRecord,
+	PayrollPeriodRecord,
+	PayrollRunResult,
+	PayrollRunSuccess,
+	PayrollSlipRecord,
+	SalaryStructureRecord,
+	SkippedEmployee,
+	SlipWarning,
+} from "../lib/payroll.types";
 import { reverseSlip, updatePayrollPeriodAggregates } from "./payroll.server";
 import { sumValues } from "../lib/payroll-journal-helpers";
 import { toNullableNumber, toNumber } from "@/lib/helpers";
@@ -96,7 +111,6 @@ type PayrollSlipListItem = ReturnType<typeof mapSlipRecord> & {
 	departmentId: number | null;
 	departmentName: string | null;
 };
-
 
 function mapSlipRecord(record: PayrollSlipRecord) {
 	return {
@@ -416,7 +430,11 @@ async function getAdvanceMapForPeriod(period: PayrollPeriodRecord) {
 		const advancesForEmployee = map.get(row.employeeId) ?? [];
 		advancesForEmployee.push({
 			advanceId: row.id,
-			recoveryAmount: toNumber(row.monthlyRecoveryAmount),
+			// Cap to outstandingBalance so the final (shorter) instalment doesn't over-deduct.
+			recoveryAmount: Math.min(
+				toNumber(row.monthlyRecoveryAmount),
+				toNumber(row.outstandingBalance)
+			),
 			description: `Salary advance recovery ${row.id}`,
 		});
 		map.set(row.employeeId, advancesForEmployee);
@@ -1066,8 +1084,6 @@ async function processAdvanceRecoveryWithAmount(
 	return created;
 }
 
-
-
 // async function reverseAdvanceRecovery(tx: Transaction, recovery: SalaryAdvanceRecoveryRecord) {
 // 	const advance = await tx.query.salaryAdvances.findFirst({
 // 		where: eq(salaryAdvances.id, recovery.advanceId),
@@ -1247,7 +1263,11 @@ async function recomputeExistingSlip(
 	);
 	await tx
 		.update(payrollSlips)
-		.set(toSlipInsertValues(computation.data.slip, slip.payrollPeriodId, slip.employeeId))
+		.set({
+			...toSlipInsertValues(computation.data.slip, slip.payrollPeriodId, slip.employeeId),
+			approvedBy: null,
+			approvedAt: null,
+		})
 		.where(eq(payrollSlips.id, slip.id));
 
 	return computation.data;
@@ -1991,6 +2011,13 @@ async function addPayrollPeriodBonus(
 		});
 	}
 
+	if (period.status !== PAYROLL_PERIOD_STATUS.DRAFT) {
+		return failure({
+			type: "ValidationError",
+			message: "Payroll period must be in draft status.",
+		});
+	}
+
 	await db.insert(payrollPeriodBonuses).values({
 		payrollPeriodId: payload.payrollPeriodId,
 		employeeId: payload.employeeId,
@@ -2118,7 +2145,6 @@ export const getPayrollAdjustmentOptionsFn = createServerFn()
 		return getPayrollPeriodAdjustmentOptions(data);
 	});
 
-
 export const approvePayrollSlipFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(payrollSlipIdSchema)
@@ -2173,6 +2199,7 @@ export const runPayrollCalculationFn = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
+			await requirePayrollProcessAccess();
 			return await runPayrollCalculation(periodId, userId);
 		}
 	);

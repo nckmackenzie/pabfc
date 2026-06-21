@@ -1,7 +1,5 @@
 import type { PayrollDeductionType } from "@/drizzle/schema";
-import {
-	roundPayrollAmount,
-} from "@/features/payroll/lib/helpers";
+import { roundPayrollAmount } from "@/features/payroll/lib/helpers";
 import {
 	computeAHL,
 	computeGrossTax,
@@ -15,10 +13,7 @@ import type { ResolvedStatutoryRates } from "@/features/payroll/lib/payroll-rate
 import { applyProration, type ProrationReason } from "@/features/payroll/lib/proration";
 import { failure, success, type Result } from "@/lib/result";
 
-type OtherDeductionType = Exclude<
-	PayrollDeductionType,
-	"company_loan" | "salary_advance" | "helb"
->;
+type OtherDeductionType = Exclude<PayrollDeductionType, "company_loan" | "salary_advance" | "helb">;
 
 type LoanDeductionInput = {
 	loanId: string;
@@ -215,7 +210,10 @@ function scaleGroupAmounts<T extends { amount: number }>(
 			};
 		}
 
-		const appliedAmount = roundValue((item.amount / requestedTotal) * retainedTotal);
+		// const appliedAmount = roundValue((item.amount / requestedTotal) * retainedTotal);
+		const proportional = roundValue((item.amount / requestedTotal) * retainedTotal);
+		const remaining = roundValue(Math.max(retainedTotal - runningApplied, 0));
+		const appliedAmount = Math.min(proportional, remaining);
 		runningApplied = roundValue(runningApplied + appliedAmount);
 		return {
 			...item,
@@ -318,10 +316,7 @@ export function computeEmployeeSlip(
 		input.salaryStructure.transportAllowance,
 		input
 	);
-	const commuterAllowance = applyProrationIfNeeded(
-		input.salaryStructure.commuterAllowance,
-		input
-	);
+	const commuterAllowance = applyProrationIfNeeded(input.salaryStructure.commuterAllowance, input);
 	const mealAllowance = applyProrationIfNeeded(input.salaryStructure.mealAllowance, input);
 	const airtimeAllowance = applyProrationIfNeeded(input.salaryStructure.airtimeAllowance, input);
 	const otherAllowances = applyProrationIfNeeded(input.salaryStructure.otherAllowances, input);
@@ -360,9 +355,7 @@ export function computeEmployeeSlip(
 	]);
 	const dailyRate = roundValue(basicSalary / input.leaveImpact.workingDaysInMonth);
 	const unpaidLeaveDeduction = roundValue(dailyRate * input.leaveImpact.unpaidLeaveDays);
-	const halfPayLeaveDeduction = roundValue(
-		(dailyRate / 2) * input.leaveImpact.halfPayLeaveDays
-	);
+	const halfPayLeaveDeduction = roundValue((dailyRate / 2) * input.leaveImpact.halfPayLeaveDays);
 	const leaveDeductionAmount = sumAmounts([unpaidLeaveDeduction, halfPayLeaveDeduction]);
 	const adjustedGrossPay = roundValue(grossPayBeforeLeave - leaveDeductionAmount);
 
@@ -390,14 +383,8 @@ export function computeEmployeeSlip(
 		},
 		input.rates
 	);
-	const grossTaxResult = computeGrossTax(
-		taxableIncomeResult.taxableIncome,
-		input.rates
-	);
-	const insuranceReliefResult = computeInsuranceRelief(
-		insurancePremiumsMonthly,
-		input.rates
-	);
+	const grossTaxResult = computeGrossTax(taxableIncomeResult.taxableIncome, input.rates);
+	const insuranceReliefResult = computeInsuranceRelief(insurancePremiumsMonthly, input.rates);
 	const netPayeResult = computeNetPAYE(
 		grossTaxResult.grossTax,
 		input.rates.personalRelief,
@@ -407,9 +394,7 @@ export function computeEmployeeSlip(
 	const helbDeduction = roundValue(
 		input.employee.hasHelbLoan ? input.employee.helbMonthlyDeduction : 0
 	);
-	const requestedLoanDeductions = sumAmounts(
-		input.loans.map((loan) => loan.monthlyInstalment)
-	);
+	const requestedLoanDeductions = sumAmounts(input.loans.map((loan) => loan.monthlyInstalment));
 	const requestedAdvanceRecoveries = sumAmounts(
 		input.advances.map((advance) => advance.recoveryAmount)
 	);
@@ -430,10 +415,7 @@ export function computeEmployeeSlip(
 		requestedAdvanceRecoveries,
 		requestedOtherDeductions,
 	]);
-	const minimumNonReducibleDeductions = sumAmounts([
-		totalStatutoryDeductions,
-		helbDeduction,
-	]);
+	const minimumNonReducibleDeductions = sumAmounts([totalStatutoryDeductions, helbDeduction]);
 	const warnings: string[] = [];
 	let appliedLoanDeductions = input.loans.map((loan) => ({
 		...loan,
@@ -458,17 +440,13 @@ export function computeEmployeeSlip(
 		if (minimumNonReducibleDeductions > twoThirdsCapAmount) {
 			return failure({
 				type: "ValidationError",
-				message:
-					"Statutory deductions and HELB exceed the two-thirds cap for this employee.",
+				message: "Statutory deductions and HELB exceed the two-thirds cap for this employee.",
 			});
 		}
 
 		let remainingReduction = roundValue(totalRequestedDeductions - twoThirdsCapAmount);
 		const otherReduction = Math.min(requestedOtherDeductions, remainingReduction);
-		appliedOtherDeductions = scaleGroupAmounts(
-			appliedOtherDeductions,
-			roundValue(otherReduction)
-		);
+		appliedOtherDeductions = scaleGroupAmounts(appliedOtherDeductions, roundValue(otherReduction));
 		remainingReduction = roundValue(remainingReduction - otherReduction);
 
 		const advanceReduction = Math.min(requestedAdvanceRecoveries, remainingReduction);
@@ -479,17 +457,13 @@ export function computeEmployeeSlip(
 		remainingReduction = roundValue(remainingReduction - advanceReduction);
 
 		const loanReduction = Math.min(requestedLoanDeductions, remainingReduction);
-		appliedLoanDeductions = scaleGroupAmounts(
-			appliedLoanDeductions,
-			roundValue(loanReduction)
-		);
+		appliedLoanDeductions = scaleGroupAmounts(appliedLoanDeductions, roundValue(loanReduction));
 		remainingReduction = roundValue(remainingReduction - loanReduction);
 
 		if (remainingReduction > 0) {
 			return failure({
 				type: "ValidationError",
-				message:
-					"Unable to satisfy the two-thirds cap after reducing voluntary deductions.",
+				message: "Unable to satisfy the two-thirds cap after reducing voluntary deductions.",
 			});
 		}
 
@@ -500,9 +474,7 @@ export function computeEmployeeSlip(
 		);
 	}
 
-	const totalLoanDeductions = sumAmounts(
-		appliedLoanDeductions.map((loan) => loan.appliedAmount)
-	);
+	const totalLoanDeductions = sumAmounts(appliedLoanDeductions.map((loan) => loan.appliedAmount));
 	const totalAdvanceRecoveries = sumAmounts(
 		appliedAdvanceRecoveries.map((advance) => advance.appliedAmount)
 	);
@@ -515,10 +487,7 @@ export function computeEmployeeSlip(
 		totalAdvanceRecoveries,
 		totalOtherDeductions,
 	]);
-	const totalDeductions = sumAmounts([
-		totalStatutoryDeductions,
-		totalVoluntaryDeductions,
-	]);
+	const totalDeductions = sumAmounts([totalStatutoryDeductions, totalVoluntaryDeductions]);
 	const netPay = roundValue(adjustedGrossPay - totalDeductions);
 
 	if (netPay < 0) {
@@ -591,10 +560,8 @@ export function computeEmployeeSlip(
 			ahlEmployee: ahl.employeeContribution,
 			ahlEmployer: ahl.employerContribution,
 			nitaLevy,
-			pensionAllowableDeduction:
-				taxableIncomeResult.deductionBreakdown.pensionAllowable,
-			mortgageAllowableDeduction:
-				taxableIncomeResult.deductionBreakdown.mortgageAllowable,
+			pensionAllowableDeduction: taxableIncomeResult.deductionBreakdown.pensionAllowable,
+			mortgageAllowableDeduction: taxableIncomeResult.deductionBreakdown.mortgageAllowable,
 			postRetirementAllowableDeduction:
 				taxableIncomeResult.deductionBreakdown.postRetirementAllowable,
 			mealAllowanceExempt: taxableIncomeResult.deductionBreakdown.mealExempt,

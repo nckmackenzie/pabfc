@@ -217,7 +217,8 @@ export function parseRemittanceLineMemoType(memo: string | null | undefined) {
 	const normalizedMemo = memo.trim().toLowerCase();
 
 	for (const type of PAYROLL_REMITTANCE_ITEM_TYPES) {
-		if (normalizedMemo.startsWith(`${REMITTANCE_MEMO_PREFIX}${type}`)) {
+		const exactPrefix = `${REMITTANCE_MEMO_PREFIX}${type}`;
+		if (normalizedMemo === exactPrefix || normalizedMemo.startsWith(`${exactPrefix} `)) {
 			return type;
 		}
 	}

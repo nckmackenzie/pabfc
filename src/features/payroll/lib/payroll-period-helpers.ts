@@ -23,7 +23,7 @@ import {
 } from "@/features/payroll/lib/payroll-constants";
 
 function getPayrollPeriodAnchorDate(periodMonth: number, periodYear: number) {
-	return new Date(Date.UTC(periodYear, periodMonth - 1, 1));
+	return new Date(periodYear, periodMonth - 1, 1);
 }
 
 export function isValidPayrollPeriodParts(periodMonth: number, periodYear: number) {

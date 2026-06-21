@@ -9,7 +9,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 const salaryAdvanceDirectorySearchSchema = z.object({
 	view: z.enum(["pending", "active"]).optional().catch("pending"),
 	departmentId: z.coerce.number().int().positive().optional().catch(undefined),
-	employeeId: z.string().trim().optional().catch(undefined),
+	employeeId: z.string().trim().min(1).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/app/payroll/salary-advances/")({

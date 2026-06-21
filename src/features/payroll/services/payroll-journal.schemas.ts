@@ -19,9 +19,7 @@ const optionalNotesSchema = z.string().trim().max(5000).nullable().optional();
 
 export const salaryDisbursementJournalSchema = z.object({
 	periodId: z.string().trim().min(1, "Payroll period is required"),
-	disbursementDate: dateSchema("Disbursement date is required")
-		.optional()
-		.catch(undefined),
+	disbursementDate: dateSchema("Disbursement date is required").optional(),
 	disbursementAccountId: payrollJournalAccountIdSchema,
 	notes: optionalNotesSchema,
 });
@@ -37,7 +35,7 @@ export const statutoryRemittanceItemSchema = z.object({
 
 export const statutoryRemittanceJournalSchema = z.object({
 	periodId: z.string().trim().min(1, "Payroll period is required"),
-	remittanceDate: dateSchema("Remittance date is required").optional().catch(undefined),
+	remittanceDate: dateSchema("Remittance date is required").optional(),
 	remittanceAccountId: payrollJournalAccountIdSchema,
 	remittedItems: z
 		.array(statutoryRemittanceItemSchema)

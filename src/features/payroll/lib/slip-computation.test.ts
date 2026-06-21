@@ -242,6 +242,86 @@ describe("computeEmployeeSlip", () => {
 		).toBe(true);
 	});
 
+	it("uses the outstanding-balance-capped amount for the slip, deduction line, and net pay", () => {
+		// Simulates a final instalment: outstandingBalance=400, monthlyRecoveryAmount=1000.
+		// getAdvanceMapForPeriod caps to 400 before calling computeEmployeeSlip.
+		const noAdvance = computeEmployeeSlip(createInput());
+		const result = computeEmployeeSlip(
+			createInput({
+				advances: [
+					{
+						advanceId: "advance_1",
+						recoveryAmount: 400,
+						description: "Salary advance final instalment",
+					},
+				],
+			})
+		);
+
+		expect(result.success).toBe(true);
+		expect(noAdvance.success).toBe(true);
+		if (!result.success || !noAdvance.success) return;
+
+		expect(result.data.slip.totalAdvanceRecoveries).toBe(400);
+		expect(result.data.advanceRecoveries[0]?.appliedAmount).toBe(400);
+
+		const advanceLine = result.data.deductionLines.find((l) => l.deductionType === "salary_advance");
+		expect(advanceLine?.amount).toBe(400);
+
+		// Net pay is reduced by exactly 400, not by the scheduled 1000.
+		expect(noAdvance.data.slip.netPay - result.data.slip.netPay).toBe(400);
+	});
+
+	it("applies two-thirds cap on top of the outstanding-balance cap, keeping slip totals consistent", () => {
+		// Advance is pre-capped to 400 by outstanding balance (from 1000 scheduled).
+		// A large loan forces the two-thirds cap to reduce the advance further.
+		const result = computeEmployeeSlip(
+			createInput({
+				salaryStructure: {
+					...createInput().salaryStructure,
+					basicSalary: 30000,
+					houseAllowance: 0,
+				},
+				loans: [
+					{
+						loanId: "loan_1",
+						// High enough that statutory + 20000 + 400 > two-thirds cap (20000)
+						// even if statutory deductions are zero, ensuring the cap fires.
+						monthlyInstalment: 20000,
+						description: "Company loan",
+					},
+				],
+				advances: [
+					{
+						advanceId: "advance_1",
+						recoveryAmount: 400,
+						description: "Salary advance final instalment",
+					},
+				],
+			})
+		);
+
+		expect(result.success).toBe(true);
+		if (!result.success) return;
+
+		expect(result.data.slip.twoThirdsCapApplied).toBe(true);
+
+		const appliedAdvance = result.data.advanceRecoveries[0]?.appliedAmount ?? 0;
+
+		// All three representations of the advance amount must agree.
+		expect(result.data.slip.totalAdvanceRecoveries).toBe(appliedAdvance);
+		const advanceLine = result.data.deductionLines.find((l) => l.deductionType === "salary_advance");
+		if (appliedAdvance > 0) {
+			expect(advanceLine?.amount).toBe(appliedAdvance);
+		} else {
+			expect(advanceLine).toBeUndefined();
+		}
+
+		// Two-thirds cap must not push the already-balance-capped figure above 400.
+		expect(appliedAdvance).toBeLessThanOrEqual(400);
+		expect(result.data.slip.netPay).toBeGreaterThan(0);
+	});
+
 	it("fails when deductions drive net pay below zero", () => {
 		const result = computeEmployeeSlip(
 			createInput({

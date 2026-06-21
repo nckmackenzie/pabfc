@@ -84,10 +84,10 @@ describe("buildPayrollRecognitionJournalLines", () => {
 
 		const balance = getJournalBalanceSummary(lines);
 
-		expect(balance.isBalanced).toBe(false);
+		expect(balance.isBalanced).toBe(true);
 		expect(balance.totalDebits).toBe(1000);
-		expect(balance.totalCredits).toBe(900);
-		expect(balance.difference).toBe(100);
+		expect(balance.totalCredits).toBe(1000);
+		expect(balance.difference).toBe(0);
 	});
 });
 

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -400,13 +400,6 @@ async function postSalaryDisbursementJournal(
 		});
 	}
 
-	if (period.disbursementJournalEntryId !== null) {
-		return failure({
-			type: "ValidationError",
-			message: "Disbursement has already been recorded for this period.",
-		});
-	}
-
 	const accountValidation = await validatePostingAssetAccount(
 		payload.disbursementAccountId,
 		"disbursement"
@@ -436,6 +429,19 @@ async function postSalaryDisbursementJournal(
 
 	try {
 		const result = await db.transaction(async (tx) => {
+			const [currentPeriod] = await tx
+				.select({ disbursementJournalEntryId: payrollPeriods.disbursementJournalEntryId })
+				.from(payrollPeriods)
+				.where(eq(payrollPeriods.id, period.id))
+				.for("update");
+
+			if (currentPeriod?.disbursementJournalEntryId !== null) {
+				return failure({
+					type: "ValidationError",
+					message: "Disbursement has already been recorded for this period.",
+				});
+			}
+
 			const journalLinesToInsert = [
 				{
 					accountId: accountMappingsResult.data.net_salaries_payable,
@@ -472,13 +478,25 @@ async function postSalaryDisbursementJournal(
 				tx,
 			});
 
-			await tx
+			const updated = await tx
 				.update(payrollPeriods)
 				.set({
 					disbursementJournalEntryId: journalEntryId,
 					updatedAt: new Date(),
 				})
-				.where(eq(payrollPeriods.id, period.id));
+				.where(
+					and(
+						eq(payrollPeriods.id, period.id),
+						isNull(payrollPeriods.disbursementJournalEntryId)
+					)
+				);
+
+			if (updated.rowCount === 0) {
+				return failure({
+					type: "ValidationError",
+					message: "Disbursement has already been recorded for this period.",
+				});
+			}
 
 			return success({
 				journalEntryId,

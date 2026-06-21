@@ -71,13 +71,7 @@ function slipStatusBadge(status: "draft" | "approved" | "cancelled") {
 	}
 }
 
-function SummaryStat({
-	label,
-	value,
-}: {
-	label: string;
-	value: string;
-}) {
+function SummaryStat({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="rounded-md border bg-card p-4">
 			<p className="text-sm text-muted-foreground">{label}</p>
@@ -133,9 +127,7 @@ export function PayrollPeriodDetailPage() {
 	if (!period) {
 		throw new Error("Payroll period not found.");
 	}
-	const [preflightReport, setPreflightReport] = useState<PayrollPeriodPreflightReport | null>(
-		null
-	);
+	const [preflightReport, setPreflightReport] = useState<PayrollPeriodPreflightReport | null>(null);
 	const [disbursementForm, setDisbursementForm] = useState({
 		disbursementDate: period.payDate,
 		disbursementAccountId: journalPostingOptions.disbursementAccounts[0]?.id.toString() ?? "",
@@ -176,7 +168,9 @@ export function PayrollPeriodDetailPage() {
 		const defaultAccountId = journalPostingOptions.disbursementAccounts[0]?.id.toString() ?? "";
 
 		setDisbursementForm((current) =>
-			current.disbursementAccountId ? current : { ...current, disbursementAccountId: defaultAccountId }
+			current.disbursementAccountId
+				? current
+				: { ...current, disbursementAccountId: defaultAccountId }
 		);
 		setRemittanceAccountId((current) => current || defaultAccountId);
 	}, [journalPostingOptions.disbursementAccounts]);
@@ -198,19 +192,19 @@ export function PayrollPeriodDetailPage() {
 	});
 
 	const transitionMutation = useMutation({
-		mutationFn: async (targetStatus: PayrollPeriodView["status"]) =>
-			transitionPayrollPeriodFn({
+		mutationFn: async (targetStatus: PayrollPeriodView["status"]) => {
+			const result = await transitionPayrollPeriodFn({
 				data: {
 					periodId,
 					targetStatus,
 					cancellationReason: null,
 				},
-			}),
-		onSuccess: (result) => {
-			if (!result.success) {
-				throw new Error(result.error.message);
-			}
+			});
+			if (!result.success) throw new Error(result.error.message);
 
+			return result.data;
+		},
+		onSuccess: () => {
 			invalidatePayroll();
 		},
 		onError: (error) => {
@@ -225,26 +219,26 @@ export function PayrollPeriodDetailPage() {
 	});
 
 	const disbursementMutation = useMutation({
-		mutationFn: async () =>
-			postSalaryDisbursementJournalFn({
+		mutationFn: async () => {
+			const result = await postSalaryDisbursementJournalFn({
 				data: {
 					periodId,
 					disbursementDate: disbursementForm.disbursementDate,
 					disbursementAccountId: Number(disbursementForm.disbursementAccountId),
 					notes: disbursementForm.notes || null,
 				},
-			}),
-		onSuccess: (result) => {
-			if (!result.success) {
-				throw new Error(result.error.message);
-			}
+			});
+			if (!result.success) throw new Error(result.error.message);
 
+			return result.data;
+		},
+		onSuccess: (result) => {
 			invalidatePayroll();
 			toast.success((t) => (
 				<ToastContent
 					t={t}
 					title="Success"
-					message={`Recorded salary disbursement of ${formatAmount(result.data.amountPosted)}.`}
+					message={`Recorded salary disbursement of ${formatAmount(result.amountPosted)}.`}
 				/>
 			));
 		},
@@ -253,9 +247,7 @@ export function PayrollPeriodDetailPage() {
 				<ToastContent
 					t={t}
 					title="Error"
-					message={
-						error instanceof Error ? error.message : "Failed to record salary disbursement"
-					}
+					message={error instanceof Error ? error.message : "Failed to record salary disbursement"}
 				/>
 			));
 		},
@@ -282,7 +274,7 @@ export function PayrollPeriodDetailPage() {
 				throw new Error("Select at least one statutory item to remit.");
 			}
 
-			return postStatutoryRemittanceJournalFn({
+			const result = await postStatutoryRemittanceJournalFn({
 				data: {
 					periodId,
 					remittanceDate,
@@ -291,12 +283,12 @@ export function PayrollPeriodDetailPage() {
 					notes: remittanceNotes || null,
 				},
 			});
+
+			if (!result.success) throw new Error(result.error.message);
+
+			return result.data;
 		},
 		onSuccess: (result) => {
-			if (!result.success) {
-				throw new Error(result.error.message);
-			}
-
 			invalidatePayroll();
 			setRemittanceDate(dateFormat(new Date()));
 			setRemittanceNotes("");
@@ -304,7 +296,7 @@ export function PayrollPeriodDetailPage() {
 				<ToastContent
 					t={t}
 					title="Success"
-					message={`Recorded statutory remittance of ${formatAmount(result.data.amountPosted)}.`}
+					message={`Recorded statutory remittance of ${formatAmount(result.amountPosted)}.`}
 				/>
 			));
 		},
@@ -313,17 +305,15 @@ export function PayrollPeriodDetailPage() {
 				<ToastContent
 					t={t}
 					title="Error"
-					message={
-						error instanceof Error ? error.message : "Failed to record statutory remittance"
-					}
+					message={error instanceof Error ? error.message : "Failed to record statutory remittance"}
 				/>
 			));
 		},
 	});
 
 	const bonusMutation = useMutation({
-		mutationFn: async () =>
-			addPayrollPeriodBonusFn({
+		mutationFn: async () => {
+			const result = await addPayrollPeriodBonusFn({
 				data: {
 					payrollPeriodId: periodId,
 					employeeId: bonusForm.employeeId,
@@ -331,12 +321,13 @@ export function PayrollPeriodDetailPage() {
 					description: bonusForm.description,
 					notes: bonusForm.notes || null,
 				},
-			}),
-		onSuccess: (result) => {
-			if (!result.success) {
-				throw new Error(result.error.message);
-			}
+			});
 
+			if (!result.success) throw new Error(result.error.message);
+
+			return result.data;
+		},
+		onSuccess: () => {
 			invalidatePayroll();
 			setBonusForm((current) => ({
 				...current,
@@ -357,8 +348,8 @@ export function PayrollPeriodDetailPage() {
 	});
 
 	const deductionMutation = useMutation({
-		mutationFn: async () =>
-			addPayrollPeriodOtherDeductionFn({
+		mutationFn: async () => {
+			const result = await addPayrollPeriodOtherDeductionFn({
 				data: {
 					payrollPeriodId: periodId,
 					employeeId: deductionForm.employeeId,
@@ -373,12 +364,13 @@ export function PayrollPeriodDetailPage() {
 					description: deductionForm.description,
 					notes: deductionForm.notes || null,
 				},
-			}),
-		onSuccess: (result) => {
-			if (!result.success) {
-				throw new Error(result.error.message);
-			}
+			});
 
+			if (!result.success) throw new Error(result.error.message);
+
+			return result.data;
+		},
+		onSuccess: () => {
 			invalidatePayroll();
 			setDeductionForm((current) => ({
 				...current,
@@ -399,12 +391,14 @@ export function PayrollPeriodDetailPage() {
 	});
 
 	const approveSlipMutation = useMutation({
-		mutationFn: async (slipId: string) => approvePayrollSlipFn({ data: { slipId } }),
-		onSuccess: (result) => {
-			if (!result.success) {
-				throw new Error(result.error.message);
-			}
+		mutationFn: async (slipId: string) => {
+			const result = await approvePayrollSlipFn({ data: { slipId } });
 
+			if (!result.success) throw new Error(result.error.message);
+
+			return result.data;
+		},
+		onSuccess: () => {
 			invalidatePayroll();
 		},
 		onError: (error) => {
@@ -508,8 +502,7 @@ export function PayrollPeriodDetailPage() {
 								<Button
 									type="button"
 									disabled={
-										transitionMutation.isPending ||
-										journalSummary.disbursementJournal === null
+										transitionMutation.isPending || journalSummary.disbursementJournal === null
 									}
 									onClick={() => transitionMutation.mutate(PAYROLL_PERIOD_STATUS.PAID)}
 								>
@@ -519,9 +512,7 @@ export function PayrollPeriodDetailPage() {
 							{period.status === PAYROLL_PERIOD_STATUS.PAID ? (
 								<Button
 									type="button"
-									disabled={
-										transitionMutation.isPending || !journalSummary.allJournalsComplete
-									}
+									disabled={transitionMutation.isPending || !journalSummary.allJournalsComplete}
 									onClick={() => transitionMutation.mutate(PAYROLL_PERIOD_STATUS.CLOSED)}
 								>
 									Close Period
@@ -611,7 +602,8 @@ export function PayrollPeriodDetailPage() {
 								{journalSummary.disbursementJournal ? (
 									<p className="mt-2 text-sm">
 										{formatAmount(journalSummary.disbursementJournal.amount)} via{" "}
-										{journalSummary.disbursementJournal.disbursementAccount?.name ?? "Unknown account"}
+										{journalSummary.disbursementJournal.disbursementAccount?.name ??
+											"Unknown account"}
 									</p>
 								) : null}
 							</div>
@@ -717,7 +709,8 @@ export function PayrollPeriodDetailPage() {
 										disabled={
 											disbursementMutation.isPending ||
 											period.status !== PAYROLL_PERIOD_STATUS.APPROVED ||
-											journalSummary.disbursementJournal !== null
+											journalSummary.disbursementJournal !== null ||
+											disbursementForm.disbursementAccountId === ""
 										}
 										onClick={() => disbursementMutation.mutate()}
 									>
@@ -810,7 +803,11 @@ export function PayrollPeriodDetailPage() {
 
 									<Button
 										type="button"
-										disabled={remittanceMutation.isPending || period.status !== PAYROLL_PERIOD_STATUS.PAID}
+										disabled={
+											remittanceMutation.isPending ||
+											period.status !== PAYROLL_PERIOD_STATUS.PAID ||
+											remittanceAccountId === ""
+										}
 										onClick={() => remittanceMutation.mutate()}
 									>
 										Record Remittance
@@ -1039,7 +1036,9 @@ export function PayrollPeriodDetailPage() {
 									<tr key={slip.id} className="border-b last:border-b-0">
 										<td className="py-2">
 											<div className="font-medium">{slip.employeeName}</div>
-											<div className="text-muted-foreground">{slip.departmentName ?? "Unassigned"}</div>
+											<div className="text-muted-foreground">
+												{slip.departmentName ?? "Unassigned"}
+											</div>
 										</td>
 										<td className="py-2">{slipStatusBadge(slip.status)}</td>
 										<td className="py-2">{formatAmount(slip.grossPay)}</td>
@@ -1055,10 +1054,7 @@ export function PayrollPeriodDetailPage() {
 										<td className="py-2">
 											<div className="flex flex-wrap gap-2">
 												<Button variant="outline" asChild>
-													<Link
-														to="/app/payroll/slips/$slipId"
-														params={{ slipId: slip.id }}
-													>
+													<Link to="/app/payroll/slips/$slipId" params={{ slipId: slip.id }}>
 														View Slip
 													</Link>
 												</Button>

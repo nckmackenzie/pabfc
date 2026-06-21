@@ -188,7 +188,8 @@ function PayrollPeriodCard({
 						{period.periodStart} to {period.periodEnd} • Pay date {period.payDate}
 					</p>
 					<p className="text-sm text-muted-foreground">
-						Remittance deadline {period.statutoryRemittanceDeadline} ({period.daysUntilRemittanceDeadline} day(s))
+						Remittance deadline {period.statutoryRemittanceDeadline} (
+						{period.daysUntilRemittanceDeadline} day(s))
 					</p>
 				</div>
 
@@ -260,20 +261,15 @@ function PayrollPeriodCard({
 				</div>
 			</div>
 
-			<PermissionGate permissions={["payroll-periods:transition"]}>
-				<div className="flex flex-wrap gap-2">
-					<Button type="button" variant="outline" asChild>
-						<Link to="/app/payroll/periods/$periodId" params={{ periodId: period.id }}>
-							Inspect Results
-						</Link>
-					</Button>
+			<div className="flex flex-wrap gap-2">
+				<Button type="button" variant="outline" asChild>
+					<Link to="/app/payroll/periods/$periodId" params={{ periodId: period.id }}>
+						Inspect Results
+					</Link>
+				</Button>
+				<PermissionGate permissions={["payroll-periods:transition"]}>
 					{period.status === PAYROLL_PERIOD_STATUS.DRAFT ? (
-						<Button
-							type="button"
-							variant="outline"
-							disabled={isBusy}
-							onClick={onRunPreflight}
-						>
+						<Button type="button" variant="outline" disabled={isBusy} onClick={onRunPreflight}>
 							Run Preflight
 						</Button>
 					) : null}
@@ -292,17 +288,12 @@ function PayrollPeriodCard({
 						))}
 
 					{period.allowedTransitions.includes(PAYROLL_PERIOD_STATUS.CANCELLED) ? (
-						<Button
-						type="button"
-						variant="destructive"
-						disabled={isBusy}
-						onClick={onToggleCancel}
-					>
-						{isCancelOpen ? "Hide Cancel" : "Cancel Period"}
-					</Button>
-				) : null}
+						<Button type="button" variant="destructive" disabled={isBusy} onClick={onToggleCancel}>
+							{isCancelOpen ? "Hide Cancel" : "Cancel Period"}
+						</Button>
+					) : null}
+				</PermissionGate>
 			</div>
-			</PermissionGate>
 
 			{isCancelOpen ? (
 				<div className="rounded-md border border-red-200 bg-red-50 p-4 space-y-3">
@@ -321,9 +312,7 @@ function PayrollPeriodCard({
 							type="button"
 							variant="destructive"
 							disabled={isBusy || cancelDraft.trim() === ""}
-							onClick={() =>
-								onTransition(PAYROLL_PERIOD_STATUS.CANCELLED, cancelDraft.trim())
-							}
+							onClick={() => onTransition(PAYROLL_PERIOD_STATUS.CANCELLED, cancelDraft.trim())}
 						>
 							Confirm Cancellation
 						</Button>
@@ -357,11 +346,7 @@ export function PayrollPeriodsPage() {
 	const [cancellationReasons, setCancellationReasons] = useState<Record<string, string>>({});
 
 	const createMutation = useMutation({
-		mutationFn: async (payload: {
-			periodMonth: number;
-			periodYear: number;
-			payDate: string;
-		}) => {
+		mutationFn: async (payload: { periodMonth: number; periodYear: number; payDate: string }) => {
 			const result = await createPayrollPeriodFn({ data: payload });
 
 			if (!result.success) {
@@ -429,7 +414,8 @@ export function PayrollPeriodsPage() {
 			});
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to transition payroll period";
+			const message =
+				error instanceof Error ? error.message : "Failed to transition payroll period";
 			toast.error((t) => <ToastContent t={t} title="Error" message={message} />);
 		},
 	});
@@ -442,7 +428,11 @@ export function PayrollPeriodsPage() {
 				<ToastContent
 					t={t}
 					title="Preflight Complete"
-					message={result.canProceed ? "Payroll period is ready for processing." : "Preflight found blocking issues."}
+					message={
+						result.canProceed
+							? "Payroll period is ready for processing."
+							: "Preflight found blocking issues."
+					}
 				/>
 			));
 		},
@@ -515,7 +505,8 @@ export function PayrollPeriodsPage() {
 							<div>
 								<h2 className="text-lg font-semibold">Create Payroll Period</h2>
 								<p className="text-sm text-muted-foreground">
-									Periods are calendar-month records. Pay date can fall inside the month or within the first five days of the next month.
+									Periods are calendar-month records. Pay date can fall inside the month or within
+									the first five days of the next month.
 								</p>
 							</div>
 							<form
@@ -529,13 +520,7 @@ export function PayrollPeriodsPage() {
 								<div className="grid gap-4 md:grid-cols-3">
 									<createForm.AppField name="periodMonth">
 										{(field) => (
-											<field.Input
-												label="Payroll Month"
-												type="number"
-												min={1}
-												max={12}
-												required
-											/>
+											<field.Input label="Payroll Month" type="number" min={1} max={12} required />
 										)}
 									</createForm.AppField>
 									<createForm.AppField name="periodYear">
@@ -591,7 +576,9 @@ export function PayrollPeriodsPage() {
 							<PayrollPeriodCard
 								key={period.id}
 								period={period}
-								cancelDraft={cancelOpenPeriodId === period.id ? cancellationReasons[period.id] ?? "" : ""}
+								cancelDraft={
+									cancelOpenPeriodId === period.id ? (cancellationReasons[period.id] ?? "") : ""
+								}
 								isCancelOpen={cancelOpenPeriodId === period.id}
 								isBusy={transitionMutation.isPending || preflightMutation.isPending}
 								onCancelReasonChange={(value) =>
