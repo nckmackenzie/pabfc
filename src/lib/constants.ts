@@ -123,6 +123,11 @@ export const collapsibleMenuItems = [
 				permission: "leaves:view",
 			},
 			{
+				title: "Employee Loans",
+				url: "/app/payroll/loans",
+				permission: "employee-loans:view",
+			},
+			{
 				title: "Payroll Account Mappings",
 				url: "/app/payroll/account-mappings",
 				permission: "payroll-account-mappings:view",
@@ -138,14 +143,19 @@ export const collapsibleMenuItems = [
 				permission: "salary-structures:view",
 			},
 			{
+				title: "Salary Advances",
+				url: "/app/payroll/salary-advances",
+				permission: "salary-advances:view",
+			},
+			{
 				title: "Overtime Records",
 				url: "/app/payroll/overtime",
 				permission: "overtime-records:view",
 			},
 			{
-				title: "Employee Loans",
-				url: "/app/payroll/loans",
-				permission: "employee-loans:view",
+				title: "Payroll Periods",
+				url: "/app/payroll/periods",
+				permission: "payroll-periods:view",
 			},
 		],
 		get permissions(): Permission[] {

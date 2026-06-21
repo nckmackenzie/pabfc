@@ -26,7 +26,7 @@ import {
 	statutoryRateHistorySchema,
 	supersedeStatutoryRateSchema,
 } from "@/features/payroll/services/statutory-rates.schemas";
-import { dateFormat, normalizeText } from "@/lib/helpers";
+import { dateFormat, normalizeText, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -72,15 +72,6 @@ type StatutoryRateMutationResponse = {
 type StatutoryRateHistoryItem = StatutoryRateView & {
 	status: StatutoryRateStatus;
 };
-
-function toNumber(value: string | number | null | undefined) {
-	if (value === null || value === undefined || value === "") {
-		return null;
-	}
-
-	const parsed = Number.parseFloat(String(value));
-	return Number.isFinite(parsed) ? parsed : null;
-}
 
 function toStatutoryRateView(row: StatutoryRateRecord): StatutoryRateView {
 	return {

@@ -73,7 +73,7 @@ export function computeSHIF(grossPay: NumericLike, rates: ResolvedStatutoryRates
 
 	return {
 		employeeContribution: contribution,
-		employerContribution: contribution,
+		employerContribution: 0,
 	};
 }
 

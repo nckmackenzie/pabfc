@@ -44,14 +44,35 @@ const EXPLICIT_LOAN_RECEIVABLE_MAPPING = {
 	description: PAYROLL_ACCOUNT_ROLES.loans_receivable.description,
 } as const;
 
+const EXPLICIT_SALARY_ADVANCE_RECEIVABLE_ACCOUNT = {
+	code: "1151",
+	name: "Salary Advance Receivable",
+	description: "Salary advances disbursed to employees pending recovery through payroll",
+	type: "asset",
+	normalBalance: "debit",
+} as const;
+
+const EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING = {
+	role: "salary_advance_receivable",
+	code: "1151",
+	description: PAYROLL_ACCOUNT_ROLES.salary_advance_receivable.description,
+} as const;
+
 function getSeedLedgerAccounts() {
 	const defaultAccounts = [...PAYROLL_DEFAULT_LEDGER_ACCOUNTS];
 	const hasLoanReceivableAccount = defaultAccounts.some(
 		(account) => account.code === EXPLICIT_LOAN_RECEIVABLE_ACCOUNT.code
 	);
+	const hasSalaryAdvanceReceivableAccount = defaultAccounts.some(
+		(account) => account.code === EXPLICIT_SALARY_ADVANCE_RECEIVABLE_ACCOUNT.code
+	);
 
 	if (!hasLoanReceivableAccount) {
 		defaultAccounts.push(EXPLICIT_LOAN_RECEIVABLE_ACCOUNT);
+	}
+
+	if (!hasSalaryAdvanceReceivableAccount) {
+		defaultAccounts.push(EXPLICIT_SALARY_ADVANCE_RECEIVABLE_ACCOUNT);
 	}
 
 	return defaultAccounts;
@@ -62,6 +83,10 @@ function getSeedMappingRoles() {
 
 	if (!roleKeys.includes(EXPLICIT_LOAN_RECEIVABLE_MAPPING.role)) {
 		roleKeys.push(EXPLICIT_LOAN_RECEIVABLE_MAPPING.role);
+	}
+
+	if (!roleKeys.includes(EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING.role)) {
+		roleKeys.push(EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING.role);
 	}
 
 	return roleKeys;
@@ -195,6 +220,8 @@ export async function seedPayrollAccountMappings() {
 				const code =
 					role === EXPLICIT_LOAN_RECEIVABLE_MAPPING.role
 						? EXPLICIT_LOAN_RECEIVABLE_MAPPING.code
+						: role === EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING.role
+							? EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING.code
 						: PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES[role];
 				const accountId = accountsByCode.get(code);
 
@@ -208,6 +235,8 @@ export async function seedPayrollAccountMappings() {
 					description:
 						role === EXPLICIT_LOAN_RECEIVABLE_MAPPING.role
 							? EXPLICIT_LOAN_RECEIVABLE_MAPPING.description
+							: role === EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING.role
+								? EXPLICIT_SALARY_ADVANCE_RECEIVABLE_MAPPING.description
 							: PAYROLL_ACCOUNT_ROLES[role].description,
 				};
 			});

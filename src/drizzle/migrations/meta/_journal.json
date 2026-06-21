@@ -498,6 +498,41 @@
       "when": 1781717517024,
       "tag": "0070_wet_lilith",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1781757200224,
+      "tag": "0071_narrow_marvel_apes",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1781757311229,
+      "tag": "0072_conscious_edwin_jarvis",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1781766803648,
+      "tag": "0073_dry_anita_blake",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1781802059683,
+      "tag": "0074_aberrant_klaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1781810370947,
+      "tag": "0075_strange_micromacro",
+      "breakpoints": true
     }
   ]
 }

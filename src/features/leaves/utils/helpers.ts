@@ -1,4 +1,3 @@
-import Big from "big.js";
 import { getEmployee } from "@/features/employees/services/employees.api";
 import {
   getEffectiveBalanceCheck,
@@ -11,7 +10,7 @@ import {
   type LeaveRequestPayload,
 } from "../services/leave.api";
 import { failure, success } from "@/lib/result";
-import { dateFormat } from "@/lib/helpers";
+import { dateFormat, type NumericValue, toBig, toDecimalString } from "@/lib/helpers";
 import {
   addDays,
   differenceInCalendarDays,
@@ -26,11 +25,6 @@ import {
 } from "date-fns";
 import type { LeaveType } from "@/drizzle/schema";
 
-type NumericValue = string | number | Big | null | undefined;
-
-export function toBig(value: NumericValue) {
-  return new Big(value ?? 0);
-}
 
 export function todayIsoDate() {
   return dateFormat(new Date());
@@ -38,14 +32,6 @@ export function todayIsoDate() {
 
 export function parseDateString(value: string) {
   return startOfDay(parseISO(value));
-}
-
-export function toDecimalString(value: NumericValue, decimals = 2) {
-  return toBig(value).round(decimals).toFixed(decimals);
-}
-
-export function toDecimalNumber(value: NumericValue, decimals = 2) {
-  return Number(toDecimalString(value, decimals));
 }
 
 export function formatLeaveDays(value: NumericValue) {

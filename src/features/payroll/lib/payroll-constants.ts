@@ -6,6 +6,8 @@ export const PAYE_BANDS = [
 	{ lowerBound: 800001, upperBound: null, rate: 0.35 },
 ] as const;
 
+export const PAYROLL_SLIP_STATUSES = ["draft", "approved", "cancelled"] as const;
+
 export const NSSF_TIER_1_LOWER_LIMIT = 0;
 export const NSSF_TIER_1_UPPER_LIMIT = 8000;
 export const NSSF_TIER_2_UPPER_LIMIT = 72000;
@@ -213,9 +215,64 @@ export const PAYROLL_STATUTORY_LIMITS = {
 export const OVERTIME_MULTIPLIER_WEEKDAY = 1.5;
 export const OVERTIME_MULTIPLIER_WEEKEND = 2.0;
 export const OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY = 2.0;
+export const PRORATION_MINIMUM_DAYS = 1;
 export const LOAN_MAX_DEDUCTION_RATIO = 2 / 3;
 export const LOAN_DEFAULT_INTEREST_RATE = 0;
 export const LOAN_INTEREST_CALCULATION_METHOD = "reducing_balance" as const;
+export const SALARY_ADVANCE_MAX_RECOVERY_MONTHS = 3;
+export const SALARY_ADVANCE_MAX_ADVANCE_RATIO = 0.5;
+export const PAYROLL_MONTH_MIN = 1;
+export const PAYROLL_MONTH_MAX = 12;
+export const PAYROLL_PERIOD_YEAR_MIN = 2020;
+export const PAYROLL_PERIOD_YEAR_MAX = 2100;
+export const PAYROLL_PAY_DATE_FOLLOWING_MONTH_GRACE_DAYS = 5;
+export const STATUTORY_REMITTANCE_DAY = 9;
+
+export const PAYROLL_PERIOD_STATUS = {
+	DRAFT: "draft",
+	PROCESSING: "processing",
+	APPROVED: "approved",
+	PAID: "paid",
+	CLOSED: "closed",
+	CANCELLED: "cancelled",
+} as const;
+
+export const PAYROLL_JOURNAL_SOURCES = {
+	PAYROLL_RECOGNITION: "payroll_recognition",
+	PAYROLL_DISBURSEMENT: "payroll_disbursement",
+	PAYROLL_REMITTANCE: "payroll_remittance",
+} as const;
+
+export const PAYROLL_REMITTANCE_ITEM_TYPES = [
+	"paye",
+	"nssf",
+	"shif",
+	"ahl",
+	"nita",
+	"helb",
+] as const;
+
+export type PayrollPeriodStatus =
+	(typeof PAYROLL_PERIOD_STATUS)[keyof typeof PAYROLL_PERIOD_STATUS];
+
+export type PayrollJournalSource =
+	(typeof PAYROLL_JOURNAL_SOURCES)[keyof typeof PAYROLL_JOURNAL_SOURCES];
+
+export type PayrollRemittanceItemType = (typeof PAYROLL_REMITTANCE_ITEM_TYPES)[number];
+
+export const PAYROLL_PERIOD_STATUS_VALUES = Object.values(PAYROLL_PERIOD_STATUS) as [
+	PayrollPeriodStatus,
+	...PayrollPeriodStatus[],
+];
+
+export const PAYROLL_STATUS_TRANSITIONS: Record<PayrollPeriodStatus, PayrollPeriodStatus[]> = {
+	draft: ["processing", "cancelled"],
+	processing: ["approved", "cancelled"],
+	approved: ["paid"],
+	paid: ["closed"],
+	closed: [],
+	cancelled: [],
+};
 
 export const OVERTIME_MAX_HOURS_PER_FORTNIGHT =
 	PAYROLL_STATUTORY_LIMITS.overtimeMaxHoursPerFortnight;
@@ -235,6 +292,16 @@ export const LOAN_STATUS = {
 	FULLY_PAID: "fully_paid",
 	WRITTEN_OFF: "written_off",
 	REJECTED: "rejected",
+} as const;
+
+export const SALARY_ADVANCE_STATUS = {
+	PENDING: "pending",
+	APPROVED: "approved",
+	DISBURSED: "disbursed",
+	RECOVERING: "recovering",
+	FULLY_RECOVERED: "fully_recovered",
+	REJECTED: "rejected",
+	CANCELLED: "cancelled",
 } as const;
 
 export const PAYROLL_ACCOUNT_ROLES = {
@@ -273,6 +340,11 @@ export const PAYROLL_ACCOUNT_ROLES = {
 	loans_receivable: {
 		label: "Employee Loans Receivable",
 		description: "Debited when employee loans are disbursed and credited when they are repaid",
+	},
+	salary_advance_receivable: {
+		label: "Salary Advance Receivable",
+		description:
+			"Debited when a salary advance is disbursed to an employee; credited when the advance is recovered through payroll deductions. This is an asset account.",
 	},
 	paye_payable: {
 		label: "PAYE Payable",
@@ -400,6 +472,7 @@ export const PAYROLL_ROLE_DEFAULT_ACCOUNT_CODES = {
 	nita_expense: "5113",
 	pension_employer_expense: "5114",
 	loans_receivable: "1150",
+	salary_advance_receivable: "1151",
 	paye_payable: "2101",
 	nssf_payable: "2102",
 	shif_payable: "2103",
@@ -477,6 +550,13 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 		normalBalance: "debit",
 	},
 	{
+		code: "1151",
+		name: "Salary Advance Receivable",
+		description: "Salary advances disbursed to employees pending recovery through payroll",
+		type: "asset",
+		normalBalance: "debit",
+	},
+	{
 		code: "2100",
 		name: "Net Salaries Payable",
 		description: "Net pay owed to employees pending disbursement",
@@ -550,6 +630,7 @@ export const PAYROLL_DEFAULT_LEDGER_ACCOUNTS = [
 
 export const PAYROLL_DEFAULT_ACCOUNT_PARENT_CODES = {
 	"1150": "1091",
+	"1151": "1091",
 	"5100": "5091",
 	"5101": "5091",
 	"5102": "5091",
@@ -580,6 +661,7 @@ export const PAYROLL_ACCOUNT_ROLE_REQUIRED_ACCOUNT_TYPES = {
 	nita_expense: "expense",
 	pension_employer_expense: "expense",
 	loans_receivable: "asset",
+	salary_advance_receivable: "asset",
 	paye_payable: "liability",
 	nssf_payable: "liability",
 	shif_payable: "liability",

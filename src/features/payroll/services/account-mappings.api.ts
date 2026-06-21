@@ -117,8 +117,7 @@ function toMappingView(
 
 	return {
 		hasInvalidMappings: items.some(isMappingInvalid),
-		isConfigurationComplete:
-			missingRoles.length === 0 && !items.some(isMappingInvalid),
+		isConfigurationComplete: missingRoles.length === 0 && !items.some(isMappingInvalid),
 		items,
 		isComplete: missingRoles.length === 0,
 		missingRoles,
@@ -181,7 +180,7 @@ async function getAccountMappingsAsMap(): Promise<
 }
 
 async function validateAllMappingsExist(): Promise<PayrollAccountMappingValidation> {
-	const mappings = await getAllAccountMappings();
+	const mappings = await getAllAccountMappingsFn();
 	const issues: string[] = [];
 
 	if (!mappings.isComplete) {
