@@ -15,6 +15,7 @@ type SubmitButtonProps = {
 	withReset?: boolean;
 	onReset?: () => void;
 	buttonSize?: VariantProps<typeof buttonVariants>["size"];
+	buttonVariant?: VariantProps<typeof buttonVariants>["variant"];
 	icon?: React.ReactNode;
 	fieldClassName?: string;
 	cancelButtonText?: string;
@@ -28,6 +29,7 @@ export function SubmitButton({
 	withReset = true,
 	onReset,
 	buttonSize,
+	buttonVariant,
 	icon,
 	fieldClassName,
 	cancelButtonText,
@@ -46,6 +48,7 @@ export function SubmitButton({
 						className="flex"
 						disabled={isSubmitting || disabled || isLoading}
 						size={buttonSize}
+						variant={buttonVariant ?? "default"}
 					>
 						<LoadingSwap isLoading={isSubmitting || !!isLoading}>
 							{icon || <CheckIcon />}
