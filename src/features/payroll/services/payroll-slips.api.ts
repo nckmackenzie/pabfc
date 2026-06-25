@@ -2010,6 +2010,15 @@ async function getPayrollPeriodAdjustmentOptions(
 	} satisfies PayrollAdjustmentOptions;
 }
 
+function isUniqueViolationError(error: unknown) {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		error.code === "23505"
+	);
+}
+
 async function addPayrollPeriodBonus(payload: BonusFormValues, createdBy: string) {
 	const period = await getPayrollPeriodRecord(payload.periodId);
 
@@ -2027,32 +2036,26 @@ async function addPayrollPeriodBonus(payload: BonusFormValues, createdBy: string
 		});
 	}
 
-	const employeeAdded = await db.query.payrollPeriodBonuses.findMany({
-		where: and(
-			eq(payrollPeriodBonuses.payrollPeriodId, payload.periodId),
-			inArray(
-				payrollPeriodBonuses.employeeId,
-				payload.employees.map((e) => e.employeeId)
-			)
-		),
-	});
+	try {
+		await db.insert(payrollPeriodBonuses).values(
+			payload.employees.map((e) => ({
+				payrollPeriodId: payload.periodId,
+				employeeId: e.employeeId,
+				amount: toPayrollDecimalString(e.amount),
+				description: e.description,
+				createdBy,
+			}))
+		);
+	} catch (error) {
+		if (isUniqueViolationError(error)) {
+			return failure({
+				type: "ConflictError",
+				message: "Some bonuses have already been added to this payroll period.",
+			});
+		}
 
-	if (employeeAdded.length > 0) {
-		return failure({
-			type: "ConflictError",
-			message: "Some bonuses have already been added to this payroll period.",
-		});
+		throw error;
 	}
-
-	await db.insert(payrollPeriodBonuses).values(
-		payload.employees.map((e) => ({
-			payrollPeriodId: payload.periodId,
-			employeeId: e.employeeId,
-			amount: toPayrollDecimalString(e.amount),
-			description: e.description,
-			createdBy,
-		}))
-	);
 
 	return success(undefined);
 }
@@ -2074,33 +2077,27 @@ async function addPayrollPeriodOtherDeduction(payload: DeductionFormValues, crea
 		});
 	}
 
-	const employeeAdded = await db.query.payrollPeriodOtherDeductions.findMany({
-		where: and(
-			eq(payrollPeriodOtherDeductions.payrollPeriodId, payload.payrollPeriodId),
-			inArray(
-				payrollPeriodOtherDeductions.employeeId,
-				payload.deductions.map((e) => e.employeeId)
-			)
-		),
-	});
+	try {
+		await db.insert(payrollPeriodOtherDeductions).values(
+			payload.deductions.map((e) => ({
+				payrollPeriodId: payload.payrollPeriodId,
+				employeeId: e.employeeId,
+				deductionType: e.deductionType,
+				amount: toPayrollDecimalString(e.amount),
+				description: e.description,
+				createdBy,
+			}))
+		);
+	} catch (error) {
+		if (isUniqueViolationError(error)) {
+			return failure({
+				type: "ConflictError",
+				message: "Some deductions have already been added to this payroll period.",
+			});
+		}
 
-	if (employeeAdded.length > 0) {
-		return failure({
-			type: "ConflictError",
-			message: "Some deductions have already been added to this payroll period.",
-		});
+		throw error;
 	}
-
-	await db.insert(payrollPeriodOtherDeductions).values(
-		payload.deductions.map((e) => ({
-			payrollPeriodId: payload.payrollPeriodId,
-			employeeId: e.employeeId,
-			deductionType: e.deductionType,
-			amount: toPayrollDecimalString(e.amount),
-			description: e.description,
-			createdBy,
-		}))
-	);
 
 	return success(undefined);
 }
@@ -2189,7 +2186,7 @@ export const getPayrollPeriodBonusesFn = createServerFn()
 	.middleware([authMiddleware])
 	.validator(payrollPeriodIdSchema)
 	.handler(async ({ data }) => {
-		await requirePermission("payroll-periods:create");
+		await requirePermission("payroll-periods:view");
 		const bonuses = await db.query.payrollPeriodBonuses.findMany({
 			columns: { id: true, amount: true, description: true, employeeId: true },
 			where: eq(payrollPeriodBonuses.payrollPeriodId, data.periodId),

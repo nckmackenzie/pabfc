@@ -7,6 +7,7 @@ import {
 	journalLines,
 	ledgerAccounts,
 	payrollPeriods,
+	payrollRemittanceLineItems,
 	payrollSlips,
 	type AccountType,
 } from "@/drizzle/schema";
@@ -14,7 +15,6 @@ import {
 	buildRemittanceCompletionStatus,
 	buildRemittanceLineMemo,
 	getJournalBalanceSummary,
-	parseRemittanceLineMemoType,
 	type PayrollRecognitionTotals,
 	type RemittanceCompletionStatus,
 } from "@/features/payroll/lib/payroll-journal-helpers";
@@ -60,6 +60,7 @@ type PayrollJournalSummaryEntry = {
 export type PayrollRemittanceSummaryItem = {
 	type: PayrollRemittanceItemType;
 	amountRemitted: number;
+	referenceNumber?: string | null;
 };
 
 export type PayrollDisbursementJournalSummary = {
@@ -321,69 +322,22 @@ async function getRemittanceCompletionStatus(
 		});
 	}
 
-	const accountMappingsResult = await getAccountMappingsAsMapFn();
-
-	if (!accountMappingsResult.success) {
-		return failure({
-			type: "ValidationError",
-			message: accountMappingsResult.error.message,
-		});
-	}
-
-	const accountIdToType = new Map(
-		PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [
-			accountMappingsResult.data[PAYROLL_REMITTANCE_ROLE_BY_TYPE[type]],
-			type,
-		])
-	);
-
 	const requiredAmounts = await getRequiredRemittanceAmounts(period, tx);
-	const remittanceEntries = await listPayrollRemittanceEntries(payrollPeriodId, tx);
+	const lineItems = await getConnection(tx).query.payrollRemittanceLineItems.findMany({
+		where: eq(payrollRemittanceLineItems.payrollPeriodId, payrollPeriodId),
+	});
+
 	const remittedAmounts = Object.fromEntries(
 		PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [type, 0])
 	) as Record<PayrollRemittanceItemType, number>;
 
-	for (const entry of remittanceEntries) {
-		for (const line of entry.lines) {
-			if (line.dc !== "debit") {
-				continue;
-			}
-
-			const type = accountIdToType.get(line.accountId);
-
-			if (!type) {
-				continue;
-			}
-
-			remittedAmounts[type] = roundPayrollAmount(remittedAmounts[type] + toNumber(line.amount));
-		}
+	for (const item of lineItems) {
+		remittedAmounts[item.remittanceType] = roundPayrollAmount(
+			remittedAmounts[item.remittanceType] + toNumber(item.amountRemitted)
+		);
 	}
 
 	return success(buildRemittanceCompletionStatus(requiredAmounts, remittedAmounts));
-
-	// const requiredAmounts = await getRequiredRemittanceAmounts(period, tx);
-	// const remittanceEntries = await listPayrollRemittanceEntries(payrollPeriodId, tx);
-	// const remittedAmounts = Object.fromEntries(
-	// 	PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [type, 0])
-	// ) as Record<PayrollRemittanceItemType, number>;
-
-	// for (const entry of remittanceEntries) {
-	// 	for (const line of entry.lines) {
-	// 		if (line.dc !== "debit") {
-	// 			continue;
-	// 		}
-
-	// 		const type = parseRemittanceLineMemoType(line.memo);
-
-	// 		if (!type) {
-	// 			continue;
-	// 		}
-
-	// 		remittedAmounts[type] = roundPayrollAmount(remittedAmounts[type] + toNumber(line.amount));
-	// 	}
-	// }
-
-	// return success(buildRemittanceCompletionStatus(requiredAmounts, remittedAmounts));
 }
 
 async function getJournalEntryWithLines(
@@ -567,8 +521,9 @@ async function postStatutoryRemittanceJournal(
 			message: "Payroll period not found.",
 		});
 	}
+	const remittanceDate = payload.remittanceDate ?? todayIsoDate();
 
-	if (payload.remittanceDate && new Date(payload.remittanceDate) < new Date(period.payDate)) {
+	if (new Date(remittanceDate) < new Date(period.payDate)) {
 		return failure({
 			type: "ValidationError",
 			message: "Remittance date must be on or after the period's pay date.",
@@ -672,7 +627,7 @@ async function postStatutoryRemittanceJournal(
 
 			const journalEntryId = await createJournalEntry({
 				entry: {
-					entryDate: payload.remittanceDate ?? todayIsoDate(),
+					entryDate: remittanceDate,
 					reference: `PAYROLL-REMIT-${period.name}-${sequence}`,
 					description: `Statutory remittance - ${period.name} - ${remittedItems
 						.map((item) => item.type.toUpperCase())
@@ -683,6 +638,16 @@ async function postStatutoryRemittanceJournal(
 				lines: journalLinesToInsert,
 				tx,
 			});
+
+			await tx.insert(payrollRemittanceLineItems).values(
+				remittedItems.map((item) => ({
+					journalEntryId,
+					payrollPeriodId: period.id,
+					remittanceType: item.type,
+					amountRemitted: toPayrollDecimalString(item.amountRemitted),
+					referenceNumber: item.reference ?? null,
+				}))
+			);
 
 			const updatedCompletionStatus = await getRemittanceCompletionStatus(period.id, tx);
 
@@ -750,17 +715,25 @@ async function getPayrollJournalSummary(
 		});
 	}
 
-	const [recognitionJournal, disbursementJournal, remittanceEntries, remittanceCompletionStatus] =
-		await Promise.all([
-			period.payrollJournalEntryId !== null
-				? getJournalEntryWithLines(period.payrollJournalEntryId)
-				: Promise.resolve(success<JournalEntryWithLines | null>(null)),
-			period.disbursementJournalEntryId !== null
-				? getJournalEntryWithLines(period.disbursementJournalEntryId)
-				: Promise.resolve(success<JournalEntryWithLines | null>(null)),
-			listPayrollRemittanceEntries(period.id),
-			getRemittanceCompletionStatus(period.id),
-		]);
+	const [
+		recognitionJournal,
+		disbursementJournal,
+		remittanceEntries,
+		remittanceCompletionStatus,
+		allRemittanceLineItems,
+	] = await Promise.all([
+		period.payrollJournalEntryId !== null
+			? getJournalEntryWithLines(period.payrollJournalEntryId)
+			: Promise.resolve(success<JournalEntryWithLines | null>(null)),
+		period.disbursementJournalEntryId !== null
+			? getJournalEntryWithLines(period.disbursementJournalEntryId)
+			: Promise.resolve(success<JournalEntryWithLines | null>(null)),
+		listPayrollRemittanceEntries(period.id),
+		getRemittanceCompletionStatus(period.id),
+		db.query.payrollRemittanceLineItems.findMany({
+			where: eq(payrollRemittanceLineItems.payrollPeriodId, period.id),
+		}),
+	]);
 
 	if (!recognitionJournal.success) {
 		return recognitionJournal;
@@ -785,29 +758,27 @@ async function getPayrollJournalSummary(
 						disbursementJournal.data.lines.find((line) => line.dc === "credit")?.account ?? null,
 				};
 
+	const lineItemsByJournalEntryId = new Map<
+		number,
+		Array<(typeof allRemittanceLineItems)[number]>
+	>();
+	for (const item of allRemittanceLineItems) {
+		const existing = lineItemsByJournalEntryId.get(item.journalEntryId) ?? [];
+		existing.push(item);
+		lineItemsByJournalEntryId.set(item.journalEntryId, existing);
+	}
+
 	return success({
 		recognitionJournal:
 			recognitionJournal.data === null ? null : toJournalSummary(recognitionJournal.data),
 		disbursementJournal: disbursementSummary,
 		remittanceJournals: remittanceEntries.map((entry) => {
-			const itemsRemitted = entry.lines.flatMap((line) => {
-				if (line.dc !== "debit") {
-					return [];
-				}
-
-				const type = parseRemittanceLineMemoType(line.memo);
-
-				if (!type) {
-					return [];
-				}
-
-				return [
-					{
-						type,
-						amountRemitted: toNumber(line.amount),
-					},
-				];
-			});
+			const entryLineItems = lineItemsByJournalEntryId.get(entry.id) ?? [];
+			const itemsRemitted = entryLineItems.map((item) => ({
+				type: item.remittanceType,
+				amountRemitted: toNumber(item.amountRemitted),
+				referenceNumber: item.referenceNumber,
+			}));
 
 			return {
 				id: entry.id,

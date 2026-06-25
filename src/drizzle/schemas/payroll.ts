@@ -19,11 +19,13 @@ import {
 	LOAN_STATUS,
 	PAYROLL_ACCOUNT_ROLE_KEYS,
 	PAYROLL_PERIOD_STATUS_VALUES,
+	PAYROLL_REMITTANCE_ITEM_TYPES,
 	SALARY_ADVANCE_STATUS,
 	STATUTORY_RATE_CATEGORIES,
 	type StatutoryRateCategory,
 	type PayrollPeriodStatus,
 	type PayrollAccountRole,
+	type PayrollRemittanceItemType,
 	PAYROLL_SLIP_STATUSES,
 } from "@/features/payroll/lib/payroll-constants";
 import { users } from "./auth";
@@ -71,11 +73,20 @@ const salaryAdvanceStatusValues = Object.values(SALARY_ADVANCE_STATUS) as [
 export type LoanStatus = (typeof loanStatusValues)[number];
 export type SalaryAdvanceStatus = (typeof salaryAdvanceStatusValues)[number];
 
+const payrollRemittanceItemTypeValues = PAYROLL_REMITTANCE_ITEM_TYPES as unknown as [
+	PayrollRemittanceItemType,
+	...Array<PayrollRemittanceItemType>,
+];
+
 export const payrollAccountRoleEnum = pgEnum("payroll_account_role", payrollAccountRoleValues);
 export const payrollPeriodStatusEnum = pgEnum("payroll_period_status", payrollPeriodStatusValues);
 export const statutoryRateCategoryEnum = pgEnum(
 	"statutory_rate_category",
 	statutoryRateCategoryValues
+);
+export const payrollRemittanceItemTypeEnum = pgEnum(
+	"payroll_remittance_item_type",
+	payrollRemittanceItemTypeValues
 );
 export const overtimeStatusEnum = pgEnum("overtime_status", OVERTIME_STATUSES);
 export const payrollSlipStatusEnum = pgEnum("payroll_slip_status", PAYROLL_SLIP_STATUSES);
@@ -802,7 +813,10 @@ export const payrollPeriodBonuses = pgTable(
 	(table) => [
 		index("idx_payroll_period_bonuses_period").on(table.payrollPeriodId),
 		index("idx_payroll_period_bonuses_employee").on(table.employeeId),
-		index("idx_payroll_period_bonuses_period_employee").on(table.payrollPeriodId, table.employeeId),
+		uniqueIndex("uq_payroll_period_bonuses_period_employee").on(
+			table.payrollPeriodId,
+			table.employeeId
+		),
 	]
 );
 
@@ -835,6 +849,10 @@ export const payrollPeriodOtherDeductions = pgTable(
 		index("idx_payroll_period_other_deductions_period").on(table.payrollPeriodId),
 		index("idx_payroll_period_other_deductions_employee").on(table.employeeId),
 		index("idx_payroll_period_other_deductions_type").on(table.deductionType),
+		uniqueIndex("uq_payroll_period_other_deductions_period_employee").on(
+			table.payrollPeriodId,
+			table.employeeId
+		),
 		check(
 			"payroll_period_other_deductions_allowed_types",
 			sql`${table.deductionType} not in ('company_loan', 'salary_advance', 'helb')`
@@ -1516,9 +1534,47 @@ export const payrollDeductionsRelations = relations(payrollDeductions, ({ one })
 	}),
 }));
 
+export const payrollRemittanceLineItems = pgTable(
+	"payroll_remittance_line_items",
+	{
+		id: serial("id").primaryKey(),
+		journalEntryId: integer("journal_entry_id")
+			.notNull()
+			.references(() => journalEntries.id, { onDelete: "cascade" }),
+		payrollPeriodId: varchar("payroll_period_id", { length: 255 })
+			.notNull()
+			.references(() => payrollPeriods.id),
+		remittanceType: payrollRemittanceItemTypeEnum("remittance_type").notNull(),
+		amountRemitted: numeric("amount_remitted", { precision: 14, scale: 2 }).notNull(),
+		referenceNumber: varchar("reference_number", { length: 100 }),
+		createdAt,
+	},
+	(table) => [
+		index("idx_payroll_remittance_line_items_period_type").on(
+			table.payrollPeriodId,
+			table.remittanceType
+		),
+		index("idx_payroll_remittance_line_items_journal_entry").on(table.journalEntryId),
+	]
+);
+
 export const payrollAccountMappingsRelations = relations(payrollAccountMappings, ({ one }) => ({
 	account: one(ledgerAccounts, {
 		fields: [payrollAccountMappings.accountId],
 		references: [ledgerAccounts.id],
 	}),
 }));
+
+export const payrollRemittanceLineItemsRelations = relations(
+	payrollRemittanceLineItems,
+	({ one }) => ({
+		journalEntry: one(journalEntries, {
+			fields: [payrollRemittanceLineItems.journalEntryId],
+			references: [journalEntries.id],
+		}),
+		payrollPeriod: one(payrollPeriods, {
+			fields: [payrollRemittanceLineItems.payrollPeriodId],
+			references: [payrollPeriods.id],
+		}),
+	})
+);

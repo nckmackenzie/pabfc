@@ -46,8 +46,6 @@ export type RemittanceCompletionStatus = {
 	isFullyRemitted: boolean;
 };
 
-const REMITTANCE_MEMO_PREFIX = "payroll remittance type:";
-
 function toRoundedAmount(value: number) {
 	return roundPayrollAmount(value);
 }
@@ -212,23 +210,6 @@ export function buildRemittanceLineMemo(
 ) {
 	const base = `Statutory remittance - ${type.toUpperCase()} - ${periodName}`;
 	return reference ? `${base} - Ref ${reference}` : base;
-}
-
-export function parseRemittanceLineMemoType(memo: string | null | undefined) {
-	if (!memo) {
-		return null;
-	}
-
-	const normalizedMemo = memo.trim().toLowerCase();
-
-	for (const type of PAYROLL_REMITTANCE_ITEM_TYPES) {
-		const exactPrefix = `${REMITTANCE_MEMO_PREFIX}${type}`;
-		if (normalizedMemo === exactPrefix || normalizedMemo.startsWith(`${exactPrefix} `)) {
-			return type;
-		}
-	}
-
-	return null;
 }
 
 export function buildRemittanceCompletionStatus(

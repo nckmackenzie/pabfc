@@ -518,11 +518,8 @@ async function createPayrollPeriod({
 			.onConflictDoUpdate({
 				target: [payrollPeriods.id],
 				set: {
-					periodMonth,
-					periodYear: payload.periodYear,
-					payDate: payload.payDate,
+					...toPeriodInsertValues(payload, createdBy),
 					updatedAt: new Date(),
-					createdBy,
 				},
 			})
 			.returning();
@@ -1185,6 +1182,25 @@ export const createPayrollPeriodFn = createServerFn({ method: "POST" })
 	.validator(payrollPeriodCreateFormSchema)
 	.handler(async ({ data, context }) => {
 		await requirePayrollPeriodsCreateAccess();
+
+		if (data.id) {
+			const period = await getPayrollPeriodRecordById(data.id);
+
+			if (!period) {
+				return failure({
+					type: "NotFoundError",
+					message: "Payroll period not found.",
+				});
+			}
+
+			if (period.status !== PAYROLL_PERIOD_STATUS.DRAFT) {
+				return failure({
+					type: "ValidationError",
+					message: "Payroll period is not in draft status.",
+				});
+			}
+		}
+
 		const result = await createPayrollPeriod({
 			payload: data,
 			createdBy: context.user.id,

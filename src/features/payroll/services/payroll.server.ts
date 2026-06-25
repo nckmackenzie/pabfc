@@ -287,7 +287,8 @@ export async function updatePayrollPeriodAggregates(
 				: undefined,
 			status: options?.status,
 			processingStartedAt: options?.processingStartedAt,
-			processingCompletedAt: options?.processingCompletedAt ?? undefined,
+			processingCompletedAt:
+				options?.processingCompletedAt !== undefined ? options.processingCompletedAt : undefined,
 			cancelledBy: options?.cancelledBy !== undefined ? options.cancelledBy : undefined,
 			cancelledAt: options?.cancelledAt !== undefined ? options.cancelledAt : undefined,
 			cancellationReason:

@@ -17,7 +17,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
 	BadgeCheckIcon,
-	CheckCheckIcon,
 	CheckIcon,
 	ClockIcon,
 	ReceiptTextIcon,

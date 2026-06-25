@@ -69,7 +69,7 @@ export function PeriodDeductions({
 			const employeeAdded = employeeEntries.some((entry) => entry.employeeId === value.employeeId);
 			if (employeeAdded) {
 				toast.error((t) => (
-					<ToastContent t={t} message="Employee already added" title="Bonus Error" />
+					<ToastContent t={t} message="Employee already added" title="Deduction Error" />
 				));
 				return;
 			}
@@ -179,7 +179,7 @@ export function PeriodDeductions({
 						<form.SubmitButton
 							buttonVariant="secondary"
 							isLoading={isPending}
-							buttonText="SaveDeduction"
+							buttonText="Save Deduction"
 						/>
 					</form.AppForm>
 				</form>
@@ -191,9 +191,7 @@ export function PeriodDeductions({
 							<ListItem
 								key={deduction.id}
 								amount={toNumber(deduction.amount)}
-								deductionType={
-									formatText(deduction.deductionType) as DeductionEntry["deductionType"]
-								}
+								deductionType={deduction.deductionType as DeductionEntry["deductionType"]}
 								description={deduction.description}
 								employeeName={
 									toTitleCase(deduction.employee?.firstName) +

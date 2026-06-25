@@ -9,14 +9,11 @@ import { Button } from "@/components/ui/button";
 import type { LucideIcon } from "lucide-react";
 import {
 	BadgeCheckIcon,
-	BanknoteIcon,
-	BookOpenIcon,
 	CheckCheckIcon,
 	CirclePercentIcon,
 	CreditCardIcon,
 	HandCoinsIcon,
 	HouseIcon,
-	ListChecksIcon,
 	ReceiptIcon,
 	ScanSearchIcon,
 	SearchXIcon,
@@ -43,7 +40,6 @@ import { BonusForm } from "./bonus-form";
 import { PeriodDeductions } from "./deductions";
 import { cn, toTitleCase } from "@/lib/utils";
 import { useState } from "react";
-import type React from "react";
 import { useStore } from "@tanstack/react-form";
 import { useModal } from "@/integrations/modal-provider";
 import CustomModal from "@/components/ui/custom-modal";
@@ -98,7 +94,6 @@ export function PayrollPeriodDetail() {
 						payDate={data.payDate}
 						periodName={data.name}
 					/>
-					{/* <JournalSummary periodId={periodId} status={data.status} /> */}
 					<StatutoryRemittance periodId={periodId} status={data.status} />
 				</>
 			) : (
@@ -661,144 +656,6 @@ const REMITTANCE_TYPE_META: Record<
 	nita: { name: "NITA", description: "National Industrial Training Authority" },
 	helb: { name: "HELB", description: "Higher Education Loans Board" },
 };
-
-function JournalSummaryCard({
-	icon: Icon,
-	title,
-	children,
-}: {
-	icon: React.ElementType;
-	title: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<div className="rounded-md border bg-card p-4 space-y-2">
-			<div className="flex items-center gap-2">
-				<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-info text-primary">
-					<Icon className="h-4 w-4" />
-				</span>
-				<p className="text-sm font-medium">{title}</p>
-			</div>
-			<div className="text-sm text-muted-foreground pl-9">{children}</div>
-		</div>
-	);
-}
-
-function JournalSummary({ periodId, status }: PeriodIdStatus) {
-	const isActive = status === PAYROLL_PERIOD_STATUS.PAID || status === PAYROLL_PERIOD_STATUS.CLOSED;
-	const { data: journalSummary } = useQuery({
-		...payrollPeriodQueries.journalSummary({ periodId }),
-		enabled: isActive,
-	});
-
-	if (!isActive) return null;
-
-	const recognition = journalSummary?.recognitionJournal ?? null;
-	const disbursement = journalSummary?.disbursementJournal ?? null;
-	const remittanceStatus = journalSummary?.remittanceCompletionStatus;
-	const allComplete = journalSummary?.allJournalsComplete ?? false;
-
-	const eligibleItems = remittanceStatus?.items.filter((i) => i.requiredAmount > 0) ?? [];
-	const completedRemittances = eligibleItems.filter((i) => i.isComplete).length;
-
-	const pendingJournals: string[] = [];
-	if (!recognition) pendingJournals.push("Payroll Recognition");
-	if (!disbursement) pendingJournals.push("Salary Disbursement");
-	if (remittanceStatus && !remittanceStatus.isFullyRemitted)
-		pendingJournals.push("Statutory Remittance");
-
-	return (
-		<section
-			className={cn("border rounded-md p-5 space-y-4", {
-				"bg-toast-success border-toast-success-border": allComplete,
-			})}
-		>
-			<div className="flex items-center gap-2">
-				<h3 className="text-base font-semibold">Journal Summary</h3>
-				{allComplete ? (
-					<Badge variant="success">
-						<BadgeCheckIcon className="size-3" />
-						All journals complete
-					</Badge>
-				) : null}
-			</div>
-			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-				<JournalSummaryCard icon={BookOpenIcon} title="Payroll Recognition">
-					{recognition ? (
-						<>
-							<p className="font-medium text-foreground">
-								{dateFormat(new Date(recognition.postedAt), "long")}
-							</p>
-							<p className="text-xs mt-0.5">
-								DR {currencyFormatter(recognition.totalDebits)} / CR{" "}
-								{currencyFormatter(recognition.totalCredits)}
-							</p>
-						</>
-					) : (
-						<p className="italic">Not yet posted</p>
-					)}
-				</JournalSummaryCard>
-
-				<JournalSummaryCard icon={BanknoteIcon} title="Salary Disbursement">
-					{disbursement ? (
-						<>
-							<p className="font-medium text-foreground">
-								{dateFormat(new Date(disbursement.postedAt), "long")}
-							</p>
-							<p className="text-xs mt-0.5">
-								{currencyFormatter(disbursement.amount)}
-								{disbursement.disbursementAccount
-									? ` via ${toTitleCase(disbursement.disbursementAccount.name)}`
-									: ""}
-							</p>
-						</>
-					) : (
-						<p className="italic">Not yet recorded</p>
-					)}
-				</JournalSummaryCard>
-
-				<JournalSummaryCard icon={ListChecksIcon} title="Statutory Remittance">
-					{remittanceStatus ? (
-						<>
-							<p className="font-medium text-foreground">
-								{completedRemittances} of {eligibleItems.length} items remitted
-							</p>
-							<Progress
-								value={
-									eligibleItems.length > 0
-										? Math.ceil((completedRemittances / eligibleItems.length) * 100)
-										: 0
-								}
-								className="mt-2"
-							/>
-						</>
-					) : (
-						<p className="italic">Loading…</p>
-					)}
-				</JournalSummaryCard>
-
-				<JournalSummaryCard icon={BadgeCheckIcon} title="Overall Status">
-					{allComplete ? (
-						<p className="font-medium text-foreground">All journals complete</p>
-					) : pendingJournals.length > 0 ? (
-						<>
-							<p className="font-medium text-foreground">
-								{pendingJournals.length} journal{pendingJournals.length > 1 ? "s" : ""} pending
-							</p>
-							<ul className="text-xs mt-1 space-y-0.5">
-								{pendingJournals.map((j) => (
-									<li key={j}>· {j}</li>
-								))}
-							</ul>
-						</>
-					) : (
-						<p className="italic">Calculating…</p>
-					)}
-				</JournalSummaryCard>
-			</div>
-		</section>
-	);
-}
 
 type RemittanceFormRow = {
 	type: PayrollRemittanceItemType;
