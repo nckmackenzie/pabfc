@@ -58,7 +58,6 @@ import { Route as AppSuppliersNewRouteImport } from './routes/app/suppliers/new'
 import { Route as AppReceiptsNewRouteImport } from './routes/app/receipts/new'
 import { Route as AppPlansNewRouteImport } from './routes/app/plans/new'
 import { Route as AppPayrollStatutoryRatesRouteImport } from './routes/app/payroll/statutory-rates'
-import { Route as AppPayrollPeriodsRouteImport } from './routes/app/payroll/periods'
 import { Route as AppPayrollAccountMappingsRouteImport } from './routes/app/payroll/account-mappings'
 import { Route as AppPaymentsNewRouteImport } from './routes/app/payments/new'
 import { Route as AppMembersNewRouteImport } from './routes/app/members/new'
@@ -88,6 +87,7 @@ import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports
 import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
 import { Route as AppPayrollSalaryStructuresIndexRouteImport } from './routes/app/payroll/salary-structures/index'
 import { Route as AppPayrollSalaryAdvancesIndexRouteImport } from './routes/app/payroll/salary-advances/index'
+import { Route as AppPayrollPeriodsIndexRouteImport } from './routes/app/payroll/periods/index'
 import { Route as AppPayrollOvertimeIndexRouteImport } from './routes/app/payroll/overtime/index'
 import { Route as AppPayrollLoansIndexRouteImport } from './routes/app/payroll/loans/index'
 import { Route as AppBankingsPostingsIndexRouteImport } from './routes/app/bankings/postings/index'
@@ -104,7 +104,7 @@ import { Route as AppPayrollSlipsSlipIdRouteImport } from './routes/app/payroll/
 import { Route as AppPayrollSalaryStructuresNewRouteImport } from './routes/app/payroll/salary-structures/new'
 import { Route as AppPayrollSalaryAdvancesNewRouteImport } from './routes/app/payroll/salary-advances/new'
 import { Route as AppPayrollSalaryAdvancesAdvanceIdRouteImport } from './routes/app/payroll/salary-advances/$advanceId'
-import { Route as AppPayrollPeriodsPeriodIdRouteImport } from './routes/app/payroll/periods.$periodId'
+import { Route as AppPayrollPeriodsNewRouteImport } from './routes/app/payroll/periods/new'
 import { Route as AppPayrollOvertimeNewRouteImport } from './routes/app/payroll/overtime/new'
 import { Route as AppPayrollOvertimeRecordIdRouteImport } from './routes/app/payroll/overtime/$recordId'
 import { Route as AppPayrollLoansNewRouteImport } from './routes/app/payroll/loans/new'
@@ -128,10 +128,12 @@ import { Route as AppReportsFinanceIncomeStatementIndexRouteImport } from './rou
 import { Route as AppReportsFinanceExpensesIndexRouteImport } from './routes/app/reports/finance/expenses/index'
 import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/reports/finance/banking/index'
 import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes/app/reports/finance/balance-sheet/index'
+import { Route as AppPayrollPeriodsPeriodIdIndexRouteImport } from './routes/app/payroll/periods/$periodId/index'
 import { Route as ApiAccessControlAgentHeartbeatIndexRouteImport } from './routes/api/access-control/agent/heartbeat/index'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
 import { Route as AppPayrollSalaryStructuresStructureStructureIdRouteImport } from './routes/app/payroll/salary-structures/structure.$structureId'
 import { Route as AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport } from './routes/app/payroll/salary-structures/employee.$employeeId'
+import { Route as AppPayrollPeriodsPeriodIdEditRouteImport } from './routes/app/payroll/periods/$periodId/edit'
 import { Route as AppPayrollOvertimeEmployeeEmployeeIdRouteImport } from './routes/app/payroll/overtime/employee/$employeeId'
 import { Route as AppBankingsPostingsPostingIdEditRouteImport } from './routes/app/bankings/postings/$postingId/edit'
 import { Route as ApiPaymentsPabfcStkCallbackRouteImport } from './routes/api/payments/pabfc/stk/callback'
@@ -388,11 +390,6 @@ const AppPayrollStatutoryRatesRoute =
     path: '/statutory-rates',
     getParentRoute: () => AppPayrollRouteRoute,
   } as any)
-const AppPayrollPeriodsRoute = AppPayrollPeriodsRouteImport.update({
-  id: '/periods',
-  path: '/periods',
-  getParentRoute: () => AppPayrollRouteRoute,
-} as any)
 const AppPayrollAccountMappingsRoute =
   AppPayrollAccountMappingsRouteImport.update({
     id: '/account-mappings',
@@ -549,6 +546,11 @@ const AppPayrollSalaryAdvancesIndexRoute =
     path: '/',
     getParentRoute: () => AppPayrollSalaryAdvancesRouteRoute,
   } as any)
+const AppPayrollPeriodsIndexRoute = AppPayrollPeriodsIndexRouteImport.update({
+  id: '/periods/',
+  path: '/periods/',
+  getParentRoute: () => AppPayrollRouteRoute,
+} as any)
 const AppPayrollOvertimeIndexRoute = AppPayrollOvertimeIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -636,12 +638,11 @@ const AppPayrollSalaryAdvancesAdvanceIdRoute =
     path: '/$advanceId',
     getParentRoute: () => AppPayrollSalaryAdvancesRouteRoute,
   } as any)
-const AppPayrollPeriodsPeriodIdRoute =
-  AppPayrollPeriodsPeriodIdRouteImport.update({
-    id: '/$periodId',
-    path: '/$periodId',
-    getParentRoute: () => AppPayrollPeriodsRoute,
-  } as any)
+const AppPayrollPeriodsNewRoute = AppPayrollPeriodsNewRouteImport.update({
+  id: '/periods/new',
+  path: '/periods/new',
+  getParentRoute: () => AppPayrollRouteRoute,
+} as any)
 const AppPayrollOvertimeNewRoute = AppPayrollOvertimeNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -774,6 +775,12 @@ const AppReportsFinanceBalanceSheetIndexRoute =
     path: '/balance-sheet/',
     getParentRoute: () => AppReportsFinanceRouteRoute,
   } as any)
+const AppPayrollPeriodsPeriodIdIndexRoute =
+  AppPayrollPeriodsPeriodIdIndexRouteImport.update({
+    id: '/periods/$periodId/',
+    path: '/periods/$periodId/',
+    getParentRoute: () => AppPayrollRouteRoute,
+  } as any)
 const ApiAccessControlAgentHeartbeatIndexRoute =
   ApiAccessControlAgentHeartbeatIndexRouteImport.update({
     id: '/api/access-control/agent/heartbeat/',
@@ -796,6 +803,12 @@ const AppPayrollSalaryStructuresEmployeeEmployeeIdRoute =
     id: '/employee/$employeeId',
     path: '/employee/$employeeId',
     getParentRoute: () => AppPayrollSalaryStructuresRouteRoute,
+  } as any)
+const AppPayrollPeriodsPeriodIdEditRoute =
+  AppPayrollPeriodsPeriodIdEditRouteImport.update({
+    id: '/periods/$periodId/edit',
+    path: '/periods/$periodId/edit',
+    getParentRoute: () => AppPayrollRouteRoute,
   } as any)
 const AppPayrollOvertimeEmployeeEmployeeIdRoute =
   AppPayrollOvertimeEmployeeEmployeeIdRouteImport.update({
@@ -906,7 +919,6 @@ export interface FileRoutesByFullPath {
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/payroll/account-mappings': typeof AppPayrollAccountMappingsRoute
-  '/app/payroll/periods': typeof AppPayrollPeriodsRouteWithChildren
   '/app/payroll/statutory-rates': typeof AppPayrollStatutoryRatesRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/receipts/new': typeof AppReceiptsNewRoute
@@ -945,7 +957,7 @@ export interface FileRoutesByFullPath {
   '/app/payroll/loans/new': typeof AppPayrollLoansNewRoute
   '/app/payroll/overtime/$recordId': typeof AppPayrollOvertimeRecordIdRoute
   '/app/payroll/overtime/new': typeof AppPayrollOvertimeNewRoute
-  '/app/payroll/periods/$periodId': typeof AppPayrollPeriodsPeriodIdRoute
+  '/app/payroll/periods/new': typeof AppPayrollPeriodsNewRoute
   '/app/payroll/salary-advances/$advanceId': typeof AppPayrollSalaryAdvancesAdvanceIdRoute
   '/app/payroll/salary-advances/new': typeof AppPayrollSalaryAdvancesNewRoute
   '/app/payroll/salary-structures/new': typeof AppPayrollSalaryStructuresNewRoute
@@ -962,6 +974,7 @@ export interface FileRoutesByFullPath {
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
   '/app/payroll/loans/': typeof AppPayrollLoansIndexRoute
   '/app/payroll/overtime/': typeof AppPayrollOvertimeIndexRoute
+  '/app/payroll/periods/': typeof AppPayrollPeriodsIndexRoute
   '/app/payroll/salary-advances/': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
@@ -973,10 +986,12 @@ export interface FileRoutesByFullPath {
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/payroll/overtime/employee/$employeeId': typeof AppPayrollOvertimeEmployeeEmployeeIdRoute
+  '/app/payroll/periods/$periodId/edit': typeof AppPayrollPeriodsPeriodIdEditRoute
   '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
   '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
+  '/app/payroll/periods/$periodId/': typeof AppPayrollPeriodsPeriodIdIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
@@ -1021,7 +1036,6 @@ export interface FileRoutesByTo {
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/payroll/account-mappings': typeof AppPayrollAccountMappingsRoute
-  '/app/payroll/periods': typeof AppPayrollPeriodsRouteWithChildren
   '/app/payroll/statutory-rates': typeof AppPayrollStatutoryRatesRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/receipts/new': typeof AppReceiptsNewRoute
@@ -1060,7 +1074,7 @@ export interface FileRoutesByTo {
   '/app/payroll/loans/new': typeof AppPayrollLoansNewRoute
   '/app/payroll/overtime/$recordId': typeof AppPayrollOvertimeRecordIdRoute
   '/app/payroll/overtime/new': typeof AppPayrollOvertimeNewRoute
-  '/app/payroll/periods/$periodId': typeof AppPayrollPeriodsPeriodIdRoute
+  '/app/payroll/periods/new': typeof AppPayrollPeriodsNewRoute
   '/app/payroll/salary-advances/$advanceId': typeof AppPayrollSalaryAdvancesAdvanceIdRoute
   '/app/payroll/salary-advances/new': typeof AppPayrollSalaryAdvancesNewRoute
   '/app/payroll/salary-structures/new': typeof AppPayrollSalaryStructuresNewRoute
@@ -1077,6 +1091,7 @@ export interface FileRoutesByTo {
   '/app/bankings/postings': typeof AppBankingsPostingsIndexRoute
   '/app/payroll/loans': typeof AppPayrollLoansIndexRoute
   '/app/payroll/overtime': typeof AppPayrollOvertimeIndexRoute
+  '/app/payroll/periods': typeof AppPayrollPeriodsIndexRoute
   '/app/payroll/salary-advances': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
@@ -1088,10 +1103,12 @@ export interface FileRoutesByTo {
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/payroll/overtime/employee/$employeeId': typeof AppPayrollOvertimeEmployeeEmployeeIdRoute
+  '/app/payroll/periods/$periodId/edit': typeof AppPayrollPeriodsPeriodIdEditRoute
   '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
   '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
+  '/app/payroll/periods/$periodId': typeof AppPayrollPeriodsPeriodIdIndexRoute
   '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
@@ -1157,7 +1174,6 @@ export interface FileRoutesById {
   '/app/members/new': typeof AppMembersNewRoute
   '/app/payments/new': typeof AppPaymentsNewRoute
   '/app/payroll/account-mappings': typeof AppPayrollAccountMappingsRoute
-  '/app/payroll/periods': typeof AppPayrollPeriodsRouteWithChildren
   '/app/payroll/statutory-rates': typeof AppPayrollStatutoryRatesRoute
   '/app/plans/new': typeof AppPlansNewRoute
   '/app/receipts/new': typeof AppReceiptsNewRoute
@@ -1196,7 +1212,7 @@ export interface FileRoutesById {
   '/app/payroll/loans/new': typeof AppPayrollLoansNewRoute
   '/app/payroll/overtime/$recordId': typeof AppPayrollOvertimeRecordIdRoute
   '/app/payroll/overtime/new': typeof AppPayrollOvertimeNewRoute
-  '/app/payroll/periods/$periodId': typeof AppPayrollPeriodsPeriodIdRoute
+  '/app/payroll/periods/new': typeof AppPayrollPeriodsNewRoute
   '/app/payroll/salary-advances/$advanceId': typeof AppPayrollSalaryAdvancesAdvanceIdRoute
   '/app/payroll/salary-advances/new': typeof AppPayrollSalaryAdvancesNewRoute
   '/app/payroll/salary-structures/new': typeof AppPayrollSalaryStructuresNewRoute
@@ -1213,6 +1229,7 @@ export interface FileRoutesById {
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
   '/app/payroll/loans/': typeof AppPayrollLoansIndexRoute
   '/app/payroll/overtime/': typeof AppPayrollOvertimeIndexRoute
+  '/app/payroll/periods/': typeof AppPayrollPeriodsIndexRoute
   '/app/payroll/salary-advances/': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
@@ -1224,10 +1241,12 @@ export interface FileRoutesById {
   '/api/payments/pabfc/stk/callback': typeof ApiPaymentsPabfcStkCallbackRoute
   '/app/bankings/postings/$postingId/edit': typeof AppBankingsPostingsPostingIdEditRoute
   '/app/payroll/overtime/employee/$employeeId': typeof AppPayrollOvertimeEmployeeEmployeeIdRoute
+  '/app/payroll/periods/$periodId/edit': typeof AppPayrollPeriodsPeriodIdEditRoute
   '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
   '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
+  '/app/payroll/periods/$periodId/': typeof AppPayrollPeriodsPeriodIdIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
@@ -1293,7 +1312,6 @@ export interface FileRouteTypes {
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/payroll/account-mappings'
-    | '/app/payroll/periods'
     | '/app/payroll/statutory-rates'
     | '/app/plans/new'
     | '/app/receipts/new'
@@ -1332,7 +1350,7 @@ export interface FileRouteTypes {
     | '/app/payroll/loans/new'
     | '/app/payroll/overtime/$recordId'
     | '/app/payroll/overtime/new'
-    | '/app/payroll/periods/$periodId'
+    | '/app/payroll/periods/new'
     | '/app/payroll/salary-advances/$advanceId'
     | '/app/payroll/salary-advances/new'
     | '/app/payroll/salary-structures/new'
@@ -1349,6 +1367,7 @@ export interface FileRouteTypes {
     | '/app/bankings/postings/'
     | '/app/payroll/loans/'
     | '/app/payroll/overtime/'
+    | '/app/payroll/periods/'
     | '/app/payroll/salary-advances/'
     | '/app/payroll/salary-structures/'
     | '/app/reports/attendance/'
@@ -1360,10 +1379,12 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/payroll/overtime/employee/$employeeId'
+    | '/app/payroll/periods/$periodId/edit'
     | '/app/payroll/salary-structures/employee/$employeeId'
     | '/app/payroll/salary-structures/structure/$structureId'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
+    | '/app/payroll/periods/$periodId/'
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
@@ -1408,7 +1429,6 @@ export interface FileRouteTypes {
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/payroll/account-mappings'
-    | '/app/payroll/periods'
     | '/app/payroll/statutory-rates'
     | '/app/plans/new'
     | '/app/receipts/new'
@@ -1447,7 +1467,7 @@ export interface FileRouteTypes {
     | '/app/payroll/loans/new'
     | '/app/payroll/overtime/$recordId'
     | '/app/payroll/overtime/new'
-    | '/app/payroll/periods/$periodId'
+    | '/app/payroll/periods/new'
     | '/app/payroll/salary-advances/$advanceId'
     | '/app/payroll/salary-advances/new'
     | '/app/payroll/salary-structures/new'
@@ -1464,6 +1484,7 @@ export interface FileRouteTypes {
     | '/app/bankings/postings'
     | '/app/payroll/loans'
     | '/app/payroll/overtime'
+    | '/app/payroll/periods'
     | '/app/payroll/salary-advances'
     | '/app/payroll/salary-structures'
     | '/app/reports/attendance'
@@ -1475,10 +1496,12 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/payroll/overtime/employee/$employeeId'
+    | '/app/payroll/periods/$periodId/edit'
     | '/app/payroll/salary-structures/employee/$employeeId'
     | '/app/payroll/salary-structures/structure/$structureId'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat'
+    | '/app/payroll/periods/$periodId'
     | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
@@ -1543,7 +1566,6 @@ export interface FileRouteTypes {
     | '/app/members/new'
     | '/app/payments/new'
     | '/app/payroll/account-mappings'
-    | '/app/payroll/periods'
     | '/app/payroll/statutory-rates'
     | '/app/plans/new'
     | '/app/receipts/new'
@@ -1582,7 +1604,7 @@ export interface FileRouteTypes {
     | '/app/payroll/loans/new'
     | '/app/payroll/overtime/$recordId'
     | '/app/payroll/overtime/new'
-    | '/app/payroll/periods/$periodId'
+    | '/app/payroll/periods/new'
     | '/app/payroll/salary-advances/$advanceId'
     | '/app/payroll/salary-advances/new'
     | '/app/payroll/salary-structures/new'
@@ -1599,6 +1621,7 @@ export interface FileRouteTypes {
     | '/app/bankings/postings/'
     | '/app/payroll/loans/'
     | '/app/payroll/overtime/'
+    | '/app/payroll/periods/'
     | '/app/payroll/salary-advances/'
     | '/app/payroll/salary-structures/'
     | '/app/reports/attendance/'
@@ -1610,10 +1633,12 @@ export interface FileRouteTypes {
     | '/api/payments/pabfc/stk/callback'
     | '/app/bankings/postings/$postingId/edit'
     | '/app/payroll/overtime/employee/$employeeId'
+    | '/app/payroll/periods/$periodId/edit'
     | '/app/payroll/salary-structures/employee/$employeeId'
     | '/app/payroll/salary-structures/structure/$structureId'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
+    | '/app/payroll/periods/$periodId/'
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
@@ -1996,13 +2021,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPayrollStatutoryRatesRouteImport
       parentRoute: typeof AppPayrollRouteRoute
     }
-    '/app/payroll/periods': {
-      id: '/app/payroll/periods'
-      path: '/periods'
-      fullPath: '/app/payroll/periods'
-      preLoaderRoute: typeof AppPayrollPeriodsRouteImport
-      parentRoute: typeof AppPayrollRouteRoute
-    }
     '/app/payroll/account-mappings': {
       id: '/app/payroll/account-mappings'
       path: '/account-mappings'
@@ -2206,6 +2224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPayrollSalaryAdvancesIndexRouteImport
       parentRoute: typeof AppPayrollSalaryAdvancesRouteRoute
     }
+    '/app/payroll/periods/': {
+      id: '/app/payroll/periods/'
+      path: '/periods'
+      fullPath: '/app/payroll/periods/'
+      preLoaderRoute: typeof AppPayrollPeriodsIndexRouteImport
+      parentRoute: typeof AppPayrollRouteRoute
+    }
     '/app/payroll/overtime/': {
       id: '/app/payroll/overtime/'
       path: '/'
@@ -2318,12 +2343,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPayrollSalaryAdvancesAdvanceIdRouteImport
       parentRoute: typeof AppPayrollSalaryAdvancesRouteRoute
     }
-    '/app/payroll/periods/$periodId': {
-      id: '/app/payroll/periods/$periodId'
-      path: '/$periodId'
-      fullPath: '/app/payroll/periods/$periodId'
-      preLoaderRoute: typeof AppPayrollPeriodsPeriodIdRouteImport
-      parentRoute: typeof AppPayrollPeriodsRoute
+    '/app/payroll/periods/new': {
+      id: '/app/payroll/periods/new'
+      path: '/periods/new'
+      fullPath: '/app/payroll/periods/new'
+      preLoaderRoute: typeof AppPayrollPeriodsNewRouteImport
+      parentRoute: typeof AppPayrollRouteRoute
     }
     '/app/payroll/overtime/new': {
       id: '/app/payroll/overtime/new'
@@ -2486,6 +2511,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsFinanceBalanceSheetIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
+    '/app/payroll/periods/$periodId/': {
+      id: '/app/payroll/periods/$periodId/'
+      path: '/periods/$periodId'
+      fullPath: '/app/payroll/periods/$periodId/'
+      preLoaderRoute: typeof AppPayrollPeriodsPeriodIdIndexRouteImport
+      parentRoute: typeof AppPayrollRouteRoute
+    }
     '/api/access-control/agent/heartbeat/': {
       id: '/api/access-control/agent/heartbeat/'
       path: '/api/access-control/agent/heartbeat'
@@ -2513,6 +2545,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/payroll/salary-structures/employee/$employeeId'
       preLoaderRoute: typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport
       parentRoute: typeof AppPayrollSalaryStructuresRouteRoute
+    }
+    '/app/payroll/periods/$periodId/edit': {
+      id: '/app/payroll/periods/$periodId/edit'
+      path: '/periods/$periodId/edit'
+      fullPath: '/app/payroll/periods/$periodId/edit'
+      preLoaderRoute: typeof AppPayrollPeriodsPeriodIdEditRouteImport
+      parentRoute: typeof AppPayrollRouteRoute
     }
     '/app/payroll/overtime/employee/$employeeId': {
       id: '/app/payroll/overtime/employee/$employeeId'
@@ -2862,26 +2901,18 @@ const AppPayrollSalaryStructuresRouteRouteWithChildren =
     AppPayrollSalaryStructuresRouteRouteChildren,
   )
 
-interface AppPayrollPeriodsRouteChildren {
-  AppPayrollPeriodsPeriodIdRoute: typeof AppPayrollPeriodsPeriodIdRoute
-}
-
-const AppPayrollPeriodsRouteChildren: AppPayrollPeriodsRouteChildren = {
-  AppPayrollPeriodsPeriodIdRoute: AppPayrollPeriodsPeriodIdRoute,
-}
-
-const AppPayrollPeriodsRouteWithChildren =
-  AppPayrollPeriodsRoute._addFileChildren(AppPayrollPeriodsRouteChildren)
-
 interface AppPayrollRouteRouteChildren {
   AppPayrollLoansRouteRoute: typeof AppPayrollLoansRouteRouteWithChildren
   AppPayrollOvertimeRouteRoute: typeof AppPayrollOvertimeRouteRouteWithChildren
   AppPayrollSalaryAdvancesRouteRoute: typeof AppPayrollSalaryAdvancesRouteRouteWithChildren
   AppPayrollSalaryStructuresRouteRoute: typeof AppPayrollSalaryStructuresRouteRouteWithChildren
   AppPayrollAccountMappingsRoute: typeof AppPayrollAccountMappingsRoute
-  AppPayrollPeriodsRoute: typeof AppPayrollPeriodsRouteWithChildren
   AppPayrollStatutoryRatesRoute: typeof AppPayrollStatutoryRatesRoute
+  AppPayrollPeriodsNewRoute: typeof AppPayrollPeriodsNewRoute
   AppPayrollSlipsSlipIdRoute: typeof AppPayrollSlipsSlipIdRoute
+  AppPayrollPeriodsIndexRoute: typeof AppPayrollPeriodsIndexRoute
+  AppPayrollPeriodsPeriodIdEditRoute: typeof AppPayrollPeriodsPeriodIdEditRoute
+  AppPayrollPeriodsPeriodIdIndexRoute: typeof AppPayrollPeriodsPeriodIdIndexRoute
 }
 
 const AppPayrollRouteRouteChildren: AppPayrollRouteRouteChildren = {
@@ -2892,9 +2923,12 @@ const AppPayrollRouteRouteChildren: AppPayrollRouteRouteChildren = {
   AppPayrollSalaryStructuresRouteRoute:
     AppPayrollSalaryStructuresRouteRouteWithChildren,
   AppPayrollAccountMappingsRoute: AppPayrollAccountMappingsRoute,
-  AppPayrollPeriodsRoute: AppPayrollPeriodsRouteWithChildren,
   AppPayrollStatutoryRatesRoute: AppPayrollStatutoryRatesRoute,
+  AppPayrollPeriodsNewRoute: AppPayrollPeriodsNewRoute,
   AppPayrollSlipsSlipIdRoute: AppPayrollSlipsSlipIdRoute,
+  AppPayrollPeriodsIndexRoute: AppPayrollPeriodsIndexRoute,
+  AppPayrollPeriodsPeriodIdEditRoute: AppPayrollPeriodsPeriodIdEditRoute,
+  AppPayrollPeriodsPeriodIdIndexRoute: AppPayrollPeriodsPeriodIdIndexRoute,
 }
 
 const AppPayrollRouteRouteWithChildren = AppPayrollRouteRoute._addFileChildren(

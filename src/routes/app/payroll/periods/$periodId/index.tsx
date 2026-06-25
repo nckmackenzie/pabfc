@@ -1,12 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
-import { PayrollPeriodDetailPage } from "@/features/payroll/components/payroll-period-detail-page";
+import { PayrollPeriodDetail } from "@/features/payroll/components/payroll-period/payroll-period-detail";
 import { payrollPeriodQueries, payrollSlipQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/app/payroll/periods/$periodId")({
-	component: PayrollPeriodDetailPage,
+export const Route = createFileRoute("/app/payroll/periods/$periodId/")({
+	component: PayrollPeriodDetail,
 	beforeLoad: async () => {
 		await requirePermission("employees:payroll-information");
 		await requirePermission("payroll-periods:view");
@@ -14,9 +14,7 @@ export const Route = createFileRoute("/app/payroll/periods/$periodId")({
 	loader: async ({ context: { queryClient }, params: { periodId } }) => {
 		await Promise.all([
 			queryClient.ensureQueryData(payrollPeriodQueries.detail({ periodId })),
-			queryClient.ensureQueryData(
-				payrollSlipQueries.period({ payrollPeriodId: periodId })
-			),
+			queryClient.ensureQueryData(payrollSlipQueries.period({ payrollPeriodId: periodId })),
 			queryClient.ensureQueryData(
 				payrollSlipQueries.departmentSummary({ payrollPeriodId: periodId })
 			),

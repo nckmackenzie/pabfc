@@ -4,7 +4,6 @@ import {
 	buildRemittanceCompletionStatus,
 	buildRemittanceLineMemo,
 	getJournalBalanceSummary,
-	parseRemittanceLineMemoType,
 } from "./payroll-journal-helpers";
 
 const accountMappings = {
@@ -92,11 +91,13 @@ describe("buildPayrollRecognitionJournalLines", () => {
 });
 
 describe("remittance memo helpers", () => {
-	it("round-trips statutory item types through line memos", () => {
-		const memo = buildRemittanceLineMemo("paye", "June 2026");
-
-		expect(parseRemittanceLineMemoType(memo)).toBe("paye");
-		expect(parseRemittanceLineMemoType("Payroll June 2026")).toBeNull();
+	it("builds a human-readable memo string", () => {
+		expect(buildRemittanceLineMemo("paye", "June 2026")).toBe(
+			"Statutory remittance - PAYE - June 2026"
+		);
+		expect(buildRemittanceLineMemo("nssf", "June 2026", "REF-123")).toBe(
+			"Statutory remittance - NSSF - June 2026 - Ref REF-123"
+		);
 	});
 });
 

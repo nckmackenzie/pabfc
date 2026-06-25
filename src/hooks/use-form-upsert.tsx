@@ -6,10 +6,7 @@ import { parseErrorMessage } from "@/lib/error-handling/error-handling";
 import type { AppError, Result } from "@/lib/result";
 import type { Route } from "@/types/index.types";
 
-interface UseFormMutationOptions<
-	TData extends { id?: string },
-	TResult = void,
-> {
+interface UseFormMutationOptions<TData, TResult = void> {
 	upsertFn: (data: TData) => Promise<Result<TResult>>;
 	entityName: string;
 	navigateTo?: Route;
@@ -28,7 +25,7 @@ interface UseFormMutationOptions<
 	onReset?: () => void;
 }
 
-export function useFormUpsert<TData extends { id?: string }, TResult = void>({
+export function useFormUpsert<TData, TResult = void>({
 	upsertFn,
 	entityName,
 	navigateTo,
@@ -52,7 +49,7 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 			return result;
 		},
 		onError: (error, variables) => {
-			const isEdit = !!variables.id;
+			const isEdit = !!(variables as { id?: unknown })?.id;
 			if (error && typeof error === "object" && "type" in error) {
 				const appError = error as AppError;
 				onErrorCallback?.(appError, isEdit);
@@ -69,9 +66,7 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 					return;
 				}
 
-				toast.error((t) => (
-					<ToastContent t={t} title="Error" message={appError.message} />
-				));
+				toast.error((t) => <ToastContent t={t} title="Error" message={appError.message} />);
 				return;
 			}
 
@@ -91,12 +86,10 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 				message = parsed.message;
 			}
 
-			toast.error((t) => (
-				<ToastContent t={t} title={title} message={message} />
-			));
+			toast.error((t) => <ToastContent t={t} title={title} message={message} />);
 		},
 		onSuccess: (result, variables) => {
-			const isEdit = !!variables.id;
+			const isEdit = !!(variables as { id?: unknown })?.id;
 			const action = isEdit ? "updated" : "created";
 			const defaultMessage = `${entityName} has been ${action} successfully.`;
 
@@ -105,9 +98,7 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 				: successMessage?.create || defaultMessage;
 
 			if (displaySuccessToast) {
-				toast.success((t) => (
-					<ToastContent t={t} title="Success" message={message} />
-				));
+				toast.success((t) => <ToastContent t={t} title="Success" message={message} />);
 			}
 
 			onReset?.();

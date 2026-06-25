@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { PAYROLL_REMITTANCE_ITEM_TYPES } from "@/features/payroll/lib/payroll-constants";
-import { dateSchema } from "@/lib/schema-rules";
+import { dateSchema, optionalStringSchemaEntry } from "@/lib/schema-rules";
+import { toNumber } from "@/lib/helpers";
 
 export const payrollJournalEntryIdSchema = z.object({
 	journalEntryId: z.coerce.number().int().positive("Journal entry is required"),
@@ -11,9 +12,12 @@ export const payrollJournalPeriodIdSchema = z.object({
 });
 
 export const payrollJournalAccountIdSchema = z.coerce
-	.number()
+	.number<number>({
+		error: (iss) => (iss.input ? "Select a valid account" : "Account selection required"),
+	})
 	.int("Select an account")
-	.positive("Select an account");
+	.positive("Select an account")
+	.transform((val) => toNumber(val));
 
 const optionalNotesSchema = z.string().trim().max(5000).nullable().optional();
 
@@ -31,6 +35,7 @@ export const statutoryRemittanceItemSchema = z.object({
 	amountRemitted: z.coerce.number({ error: "Amount remitted must be a number" }).positive({
 		message: "Amount remitted must be greater than zero",
 	}),
+	reference: optionalStringSchemaEntry(),
 });
 
 export const statutoryRemittanceJournalSchema = z.object({

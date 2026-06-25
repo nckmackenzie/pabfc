@@ -73,18 +73,6 @@ export const payrollSlipBonusSchema = z.object({
 	notes: optionalTextField(5000),
 });
 
-export const payrollPeriodBonusCreateSchema = z.object({
-	payrollPeriodId: z.string().trim().min(1, "Payroll period is required"),
-	employeeId: z.string().trim().min(1, "Employee is required"),
-	amount: positiveAmountField("Bonus amount"),
-	description: z
-		.string()
-		.trim()
-		.min(1, "Description is required")
-		.max(255, "Description must be 255 characters or less"),
-	notes: optionalTextField(5000),
-});
-
 export const PAYROLL_OTHER_DEDUCTION_TYPES = [
 	"sacco",
 	"union_dues",
@@ -93,21 +81,6 @@ export const PAYROLL_OTHER_DEDUCTION_TYPES = [
 	"welfare",
 	"other",
 ] as const;
-
-export const payrollPeriodOtherDeductionTypeSchema = z.enum(PAYROLL_OTHER_DEDUCTION_TYPES);
-
-export const payrollPeriodOtherDeductionCreateSchema = z.object({
-	payrollPeriodId: z.string().trim().min(1, "Payroll period is required"),
-	employeeId: z.string().trim().min(1, "Employee is required"),
-	deductionType: payrollPeriodOtherDeductionTypeSchema,
-	amount: positiveAmountField("Deduction amount"),
-	description: z
-		.string()
-		.trim()
-		.min(1, "Description is required")
-		.max(255, "Description must be 255 characters or less"),
-	notes: optionalTextField(5000),
-});
 
 export const payrollPeriodAdjustmentOptionsSchema = z.object({
 	payrollPeriodId: z.string().trim().min(1, "Payroll period is required"),
