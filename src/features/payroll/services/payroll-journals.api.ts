@@ -25,7 +25,7 @@ import {
 	type PayrollAccountRole,
 	type PayrollRemittanceItemType,
 } from "@/features/payroll/lib/payroll-constants";
-import {  toNumber } from "@/lib/helpers";
+import { toNumber } from "@/lib/helpers";
 import { roundPayrollAmount, toPayrollDecimalString } from "@/features/payroll/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
@@ -139,7 +139,6 @@ const PAYROLL_REMITTANCE_ROLE_BY_TYPE: Record<PayrollRemittanceItemType, Payroll
 	helb: "helb_payable",
 };
 
-
 function getConnection(tx?: Transaction) {
 	return tx ?? db;
 }
@@ -159,16 +158,21 @@ function toJournalSummary(entry: JournalEntryWithLines): PayrollJournalSummaryEn
 	};
 }
 
-
 function aggregateRemittedItems(
 	items: z.infer<typeof statutoryRemittanceJournalSchema>["remittedItems"]
 ) {
 	const amountsByType = Object.fromEntries(
 		PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [type, 0])
 	) as Record<PayrollRemittanceItemType, number>;
+	const referencesByType = Object.fromEntries(
+		PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [type, undefined as string | undefined])
+	) as Record<PayrollRemittanceItemType, string | undefined>;
 
 	for (const item of items) {
 		amountsByType[item.type] = roundPayrollAmount(amountsByType[item.type] + item.amountRemitted);
+		if (!referencesByType[item.type] && item.reference) {
+			referencesByType[item.type] = item.reference;
+		}
 	}
 
 	return PAYROLL_REMITTANCE_ITEM_TYPES.flatMap((type) => {
@@ -178,7 +182,7 @@ function aggregateRemittedItems(
 			return [];
 		}
 
-		return [{ type, amountRemitted }];
+		return [{ type, amountRemitted, reference: referencesByType[type] }];
 	});
 }
 
@@ -317,6 +321,22 @@ async function getRemittanceCompletionStatus(
 		});
 	}
 
+	const accountMappingsResult = await getAccountMappingsAsMapFn();
+
+	if (!accountMappingsResult.success) {
+		return failure({
+			type: "ValidationError",
+			message: accountMappingsResult.error.message,
+		});
+	}
+
+	const accountIdToType = new Map(
+		PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [
+			accountMappingsResult.data[PAYROLL_REMITTANCE_ROLE_BY_TYPE[type]],
+			type,
+		])
+	);
+
 	const requiredAmounts = await getRequiredRemittanceAmounts(period, tx);
 	const remittanceEntries = await listPayrollRemittanceEntries(payrollPeriodId, tx);
 	const remittedAmounts = Object.fromEntries(
@@ -329,7 +349,7 @@ async function getRemittanceCompletionStatus(
 				continue;
 			}
 
-			const type = parseRemittanceLineMemoType(line.memo);
+			const type = accountIdToType.get(line.accountId);
 
 			if (!type) {
 				continue;
@@ -340,6 +360,30 @@ async function getRemittanceCompletionStatus(
 	}
 
 	return success(buildRemittanceCompletionStatus(requiredAmounts, remittedAmounts));
+
+	// const requiredAmounts = await getRequiredRemittanceAmounts(period, tx);
+	// const remittanceEntries = await listPayrollRemittanceEntries(payrollPeriodId, tx);
+	// const remittedAmounts = Object.fromEntries(
+	// 	PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => [type, 0])
+	// ) as Record<PayrollRemittanceItemType, number>;
+
+	// for (const entry of remittanceEntries) {
+	// 	for (const line of entry.lines) {
+	// 		if (line.dc !== "debit") {
+	// 			continue;
+	// 		}
+
+	// 		const type = parseRemittanceLineMemoType(line.memo);
+
+	// 		if (!type) {
+	// 			continue;
+	// 		}
+
+	// 		remittedAmounts[type] = roundPayrollAmount(remittedAmounts[type] + toNumber(line.amount));
+	// 	}
+	// }
+
+	// return success(buildRemittanceCompletionStatus(requiredAmounts, remittedAmounts));
 }
 
 async function getJournalEntryWithLines(
@@ -468,7 +512,8 @@ async function postSalaryDisbursementJournal(
 
 			const journalEntryId = await createJournalEntry({
 				entry: {
-					entryDate: payload.disbursementDate ?? todayIsoDate(),
+					// entryDate: payload.disbursementDate ?? todayIsoDate(),
+					entryDate: period.payDate,
 					reference: `PAYROLL-DISB-${period.name}`,
 					description: `Salary disbursement - ${period.name}`,
 					source: PAYROLL_JOURNAL_SOURCES.PAYROLL_DISBURSEMENT,
@@ -485,10 +530,7 @@ async function postSalaryDisbursementJournal(
 					updatedAt: new Date(),
 				})
 				.where(
-					and(
-						eq(payrollPeriods.id, period.id),
-						isNull(payrollPeriods.disbursementJournalEntryId)
-					)
+					and(eq(payrollPeriods.id, period.id), isNull(payrollPeriods.disbursementJournalEntryId))
 				);
 
 			if (updated.rowCount === 0) {
@@ -523,6 +565,13 @@ async function postStatutoryRemittanceJournal(
 		return failure({
 			type: "NotFoundError",
 			message: "Payroll period not found.",
+		});
+	}
+
+	if (payload.remittanceDate && new Date(payload.remittanceDate) < new Date(period.payDate)) {
+		return failure({
+			type: "ValidationError",
+			message: "Remittance date must be on or after the period's pay date.",
 		});
 	}
 
@@ -603,7 +652,7 @@ async function postStatutoryRemittanceJournal(
 					amount: toPayrollDecimalString(item.amountRemitted),
 					dc: "debit" as const,
 					lineNumber: index + 1,
-					memo: buildRemittanceLineMemo(item.type, period.name),
+					memo: buildRemittanceLineMemo(item.type, period.name, item.reference),
 				})),
 				{
 					accountId: payload.remittanceAccountId,

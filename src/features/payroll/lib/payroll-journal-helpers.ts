@@ -205,8 +205,13 @@ export function getJournalBalanceSummary(
 	};
 }
 
-export function buildRemittanceLineMemo(type: PayrollRemittanceItemType, periodName: string) {
-	return `Payroll remittance type:${type} Payroll ${periodName}`;
+export function buildRemittanceLineMemo(
+	type: PayrollRemittanceItemType,
+	periodName: string,
+	reference?: string
+) {
+	const base = `Statutory remittance - ${type.toUpperCase()} - ${periodName}`;
+	return reference ? `${base} - Ref ${reference}` : base;
 }
 
 export function parseRemittanceLineMemoType(memo: string | null | undefined) {

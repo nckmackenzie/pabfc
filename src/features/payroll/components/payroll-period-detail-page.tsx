@@ -23,7 +23,7 @@ import {
 	runPayrollPeriodPreflightFn,
 	transitionPayrollPeriodFn,
 	type PayrollPeriodPreflightReport,
-	type PayrollPeriodView,
+
 } from "@/features/payroll/services/payroll-periods.api";
 import {
 	PAYROLL_PERIOD_STATUS,
@@ -32,6 +32,7 @@ import {
 } from "@/features/payroll/lib/payroll-constants";
 import { payrollPeriodQueries, payrollSlipQueries } from "@/features/payroll/services/queries";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
+import { PayrollPeriodView } from "../lib/payroll-period/types";
 
 const routeApi = getRouteApi("/app/payroll/periods/$periodId");
 

@@ -1,10 +1,34 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, lte, ne, or } from "drizzle-orm";
 import type { Transaction } from "./payroll-slips.api";
 import { normalizePayrollText, toPayrollDecimalString } from "../lib/helpers";
-import { LOAN_STATUS, PAYROLL_PERIOD_STATUS, SALARY_ADVANCE_STATUS } from "../lib/payroll-constants";
-import { employeeLoans, journalEntries, journalLines, loanRepayments, overtimeRecords, payrollDeductions, payrollPeriods, payrollSlips, salaryAdvanceRecoveries, salaryAdvances } from "@/drizzle/schema";
+import {
+	LOAN_STATUS,
+	PAYROLL_PERIOD_STATUS,
+	SALARY_ADVANCE_STATUS,
+} from "../lib/payroll-constants";
+import {
+	employeeLoans,
+	employees,
+	journalEntries,
+	journalLines,
+	loanRepayments,
+	overtimeRecords,
+	payrollDeductions,
+	payrollPeriods,
+	payrollSlips,
+	salaryAdvanceRecoveries,
+	salaryAdvances,
+} from "@/drizzle/schema";
 import { toNumber } from "@/lib/helpers";
-import type { LoanRepaymentRecord, PayrollPeriodRecord, PayrollPeriodTotals, PayrollSlipRecord, SalaryAdvanceRecoveryRecord, SkippedEmployee, SlipWarning } from "../lib/payroll.types";
+import type {
+	LoanRepaymentRecord,
+	PayrollPeriodRecord,
+	PayrollPeriodTotals,
+	PayrollSlipRecord,
+	SalaryAdvanceRecoveryRecord,
+	SkippedEmployee,
+	SlipWarning,
+} from "../lib/payroll.types";
 import { db } from "@/drizzle/db";
 import type { PayrollDbClient } from "../lib/payroll-rate-resolver";
 import { sumValues } from "../lib/payroll-journal-helpers";
@@ -123,7 +147,6 @@ async function reverseLoanRepayment(tx: Transaction, repayment: LoanRepaymentRec
 		.where(eq(employeeLoans.id, loan.id));
 }
 
-
 async function reverseAdvanceRecovery(tx: Transaction, recovery: SalaryAdvanceRecoveryRecord) {
 	const advance = await tx.query.salaryAdvances.findFirst({
 		where: eq(salaryAdvances.id, recovery.advanceId),
@@ -156,6 +179,20 @@ async function reverseAdvanceRecovery(tx: Transaction, recovery: SalaryAdvanceRe
 					: SALARY_ADVANCE_STATUS.RECOVERING,
 		})
 		.where(eq(salaryAdvances.id, advance.id));
+}
+
+export async function getEligibleEmployeesForPeriod(periodStart: string, periodEnd: string) {
+	return db.query.employees.findMany({
+		where: and(
+			isNull(employees.deletedAt),
+			lte(employees.hireDate, periodEnd),
+			or(
+				eq(employees.status, "active"),
+				and(gte(employees.terminationDate, periodStart), lte(employees.terminationDate, periodEnd))
+			)
+		),
+		orderBy: [asc(employees.firstName), asc(employees.lastName)],
+	});
 }
 
 export async function reverseSlip(
@@ -210,80 +247,85 @@ export async function reverseSlip(
 }
 
 export async function updatePayrollPeriodAggregates(
-    periodId: string,
-    dbClient: PayrollDbClient = db,
-    options?: {
-        processingWarnings?: SlipWarning[];
-        skippedEmployees?: SkippedEmployee[];
-        status?: PayrollPeriodRecord["status"];
-        processingStartedAt?: Date;
-        processingCompletedAt?: Date | null;
-        cancelledBy?: string | null;
-        cancelledAt?: Date | null;
-        cancellationReason?: string | null;
-    }
+	periodId: string,
+	dbClient: PayrollDbClient = db,
+	options?: {
+		processingWarnings?: SlipWarning[];
+		skippedEmployees?: SkippedEmployee[];
+		status?: PayrollPeriodRecord["status"];
+		processingStartedAt?: Date;
+		processingCompletedAt?: Date | null;
+		cancelledBy?: string | null;
+		cancelledAt?: Date | null;
+		cancellationReason?: string | null;
+	}
 ) {
-    const totals = await calculatePayrollPeriodTotals(periodId, dbClient);
-    const [updated] = await dbClient
-        .update(payrollPeriods)
-        .set({
-            totalGrossPay: toPayrollDecimalString(totals.totalGrossPay),
-            totalNetPay: toPayrollDecimalString(totals.totalNetPay),
-            totalPaye: toPayrollDecimalString(totals.totalPaye),
-            totalNssfEmployee: toPayrollDecimalString(totals.totalNssfEmployee),
-            totalNssfEmployer: toPayrollDecimalString(totals.totalNssfEmployer),
-            totalShifEmployee: toPayrollDecimalString(totals.totalShifEmployee),
-            totalShifEmployer: toPayrollDecimalString(totals.totalShifEmployer),
-            totalAhlEmployee: toPayrollDecimalString(totals.totalAhlEmployee),
-            totalAhlEmployer: toPayrollDecimalString(totals.totalAhlEmployer),
-            totalNita: toPayrollDecimalString(totals.totalNita),
-            totalLoanDeductions: toPayrollDecimalString(totals.totalLoanDeductions),
-            totalAdvanceRecoveries: toPayrollDecimalString(totals.totalAdvanceRecoveries),
-            totalOtherDeductions: toPayrollDecimalString(totals.totalOtherDeductions),
-            totalPensionEmployer: toPayrollDecimalString(totals.totalPensionEmployer),
-            employeeCount: totals.employeeCount,
-            processingWarnings: options?.processingWarnings
-                ? JSON.stringify(options.processingWarnings)
-                : undefined,
-            skippedEmployees: options?.skippedEmployees
-                ? JSON.stringify(options.skippedEmployees)
-                : undefined,
-            status: options?.status,
-            processingStartedAt: options?.processingStartedAt,
-            processingCompletedAt: options?.processingCompletedAt ?? undefined,
-            cancelledBy: options?.cancelledBy !== undefined ? options.cancelledBy : undefined,
-            cancelledAt: options?.cancelledAt !== undefined ? options.cancelledAt : undefined,
-            cancellationReason:
-                options?.cancellationReason !== undefined
-                    ? normalizePayrollText(options.cancellationReason)
-                    : undefined,
-            updatedAt: new Date(),
-        })
-        .where(eq(payrollPeriods.id, periodId))
-        .returning();
+	const totals = await calculatePayrollPeriodTotals(periodId, dbClient);
+	const [updated] = await dbClient
+		.update(payrollPeriods)
+		.set({
+			totalGrossPay: toPayrollDecimalString(totals.totalGrossPay),
+			totalNetPay: toPayrollDecimalString(totals.totalNetPay),
+			totalPaye: toPayrollDecimalString(totals.totalPaye),
+			totalNssfEmployee: toPayrollDecimalString(totals.totalNssfEmployee),
+			totalNssfEmployer: toPayrollDecimalString(totals.totalNssfEmployer),
+			totalShifEmployee: toPayrollDecimalString(totals.totalShifEmployee),
+			totalShifEmployer: toPayrollDecimalString(totals.totalShifEmployer),
+			totalAhlEmployee: toPayrollDecimalString(totals.totalAhlEmployee),
+			totalAhlEmployer: toPayrollDecimalString(totals.totalAhlEmployer),
+			totalNita: toPayrollDecimalString(totals.totalNita),
+			totalLoanDeductions: toPayrollDecimalString(totals.totalLoanDeductions),
+			totalAdvanceRecoveries: toPayrollDecimalString(totals.totalAdvanceRecoveries),
+			totalOtherDeductions: toPayrollDecimalString(totals.totalOtherDeductions),
+			totalPensionEmployer: toPayrollDecimalString(totals.totalPensionEmployer),
+			employeeCount: totals.employeeCount,
+			processingWarnings: options?.processingWarnings
+				? JSON.stringify(options.processingWarnings)
+				: undefined,
+			skippedEmployees: options?.skippedEmployees
+				? JSON.stringify(options.skippedEmployees)
+				: undefined,
+			status: options?.status,
+			processingStartedAt: options?.processingStartedAt,
+			processingCompletedAt: options?.processingCompletedAt ?? undefined,
+			cancelledBy: options?.cancelledBy !== undefined ? options.cancelledBy : undefined,
+			cancelledAt: options?.cancelledAt !== undefined ? options.cancelledAt : undefined,
+			cancellationReason:
+				options?.cancellationReason !== undefined
+					? normalizePayrollText(options.cancellationReason)
+					: undefined,
+			updatedAt: new Date(),
+		})
+		.where(eq(payrollPeriods.id, periodId))
+		.returning();
 
-    return { period: updated, totals };
+	return { period: updated, totals };
 }
 
-export async function cancelProcessedPayrollPeriod(periodId: string, cancelledBy: string, reason: string,tx:Transaction) {
-        const slips = await tx.query.payrollSlips.findMany({
-            where: and(eq(payrollSlips.payrollPeriodId, periodId), ne(payrollSlips.status, "cancelled")),
-        });
+export async function cancelProcessedPayrollPeriod(
+	periodId: string,
+	cancelledBy: string,
+	reason: string,
+	tx: Transaction
+) {
+	const slips = await tx.query.payrollSlips.findMany({
+		where: and(eq(payrollSlips.payrollPeriodId, periodId), ne(payrollSlips.status, "cancelled")),
+	});
 
-        for (const slip of slips) {
-            await reverseSlip(tx, slip, {
-                cancelledBy,
-                reason,
-            });
-        }
+	for (const slip of slips) {
+		await reverseSlip(tx, slip, {
+			cancelledBy,
+			reason,
+		});
+	}
 
-        await updatePayrollPeriodAggregates(periodId, tx, {
-            processingWarnings: [],
-            skippedEmployees: [],
-            processingCompletedAt: null,
-            status: PAYROLL_PERIOD_STATUS.CANCELLED,
-            cancelledBy,
-            cancelledAt: new Date(),
-            cancellationReason: reason,
-        });
+	await updatePayrollPeriodAggregates(periodId, tx, {
+		processingWarnings: [],
+		skippedEmployees: [],
+		processingCompletedAt: null,
+		status: PAYROLL_PERIOD_STATUS.CANCELLED,
+		cancelledBy,
+		cancelledAt: new Date(),
+		cancellationReason: reason,
+	});
 }

@@ -52,6 +52,8 @@ import {
 import {
 	getEmployeePayrollHistoryFn,
 	getPayrollAdjustmentOptionsFn,
+	getPayrollPeriodBonusesFn,
+	getPayrollPeriodOtherDeductionsFn,
 	getPayrollSlipByIdFn,
 	getPayrollSlipForEmployeeFn,
 	getPayrollSlipsForPeriodFn,
@@ -252,7 +254,7 @@ export const loanQueries = {
 			queryKey: [...loanQueries.all, "form-options"] as const,
 			queryFn: () => getLoanFormOptionsFn(),
 			staleTime: 5 * 60 * 1000,
-	}),
+		}),
 };
 
 export const salaryAdvanceQueries = {
@@ -374,7 +376,19 @@ export const payrollPeriodQueries = {
 			queryKey: [...payrollPeriodQueries.all, "ytd", params.year] as const,
 			queryFn: () => getYearToDateTotalsFn({ data: params }),
 			staleTime: 60 * 1000,
-	}),
+		}),
+	bonuses: (params: z.infer<typeof payrollPeriodIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "bonuses", params.periodId] as const,
+			queryFn: () => getPayrollPeriodBonusesFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
+	deductions: (params: z.infer<typeof payrollPeriodIdSchema>) =>
+		queryOptions({
+			queryKey: [...payrollPeriodQueries.all, "deductions", params.periodId] as const,
+			queryFn: () => getPayrollPeriodOtherDeductionsFn({ data: params }),
+			staleTime: 60 * 1000,
+		}),
 };
 
 export const payrollSlipQueries = {

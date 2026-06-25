@@ -58,8 +58,6 @@ import {
 	employeePayrollHistorySchema,
 	payrollDepartmentSummarySchema,
 	payrollPeriodAdjustmentOptionsSchema,
-	payrollPeriodBonusCreateSchema,
-	payrollPeriodOtherDeductionCreateSchema,
 	payrollSlipBonusSchema,
 	payrollSlipCancelSchema,
 	payrollSlipForEmployeeSchema,
@@ -87,10 +85,21 @@ import type {
 	SkippedEmployee,
 	SlipWarning,
 } from "../lib/payroll.types";
-import { reverseSlip, updatePayrollPeriodAggregates } from "./payroll.server";
+import {
+	getEligibleEmployeesForPeriod,
+	reverseSlip,
+	updatePayrollPeriodAggregates,
+} from "./payroll.server";
 import { sumValues } from "../lib/payroll-journal-helpers";
 import { toNullableNumber, toNumber } from "@/lib/helpers";
 import { todayIsoDate } from "@/features/leaves/utils/helpers";
+import {
+	bonusFormSchema,
+	payrollPeriodIdSchema,
+	type BonusFormValues,
+	payrollPeriodOtherDeductionCreateSchema,
+	type DeductionFormValues,
+} from "./payroll-period.schemas";
 
 export type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -297,21 +306,21 @@ async function getStructuresForEmployees(
 	return map;
 }
 
-async function getEligibleEmployeesForPeriod(period: PayrollPeriodRecord) {
-	return db.query.employees.findMany({
-		where: and(
-			isNull(employees.deletedAt),
-			or(
-				eq(employees.status, "active"),
-				and(
-					lte(employees.terminationDate, period.periodEnd),
-					gte(employees.terminationDate, period.periodStart)
-				)
-			)
-		),
-		orderBy: [asc(employees.firstName), asc(employees.lastName)],
-	});
-}
+// async function getEligibleEmployeesForPeriod(period: PayrollPeriodRecord) {
+// 	return db.query.employees.findMany({
+// 		where: and(
+// 			isNull(employees.deletedAt),
+// 			or(
+// 				eq(employees.status, "active"),
+// 				and(
+// 					lte(employees.terminationDate, period.periodEnd),
+// 					gte(employees.terminationDate, period.periodStart)
+// 				)
+// 			)
+// 		),
+// 		orderBy: [asc(employees.firstName), asc(employees.lastName)],
+// 	});
+// }
 
 async function getPublicHolidayDates(period: PayrollPeriodRecord) {
 	const rows = await db
@@ -1355,7 +1364,10 @@ async function runPayrollCalculation(
 	}
 
 	const rates = await resolveStatutoryRates(new Date(`${period.periodEnd}T00:00:00.000Z`), db);
-	const employeesForPeriod = await getEligibleEmployeesForPeriod(period);
+	const employeesForPeriod = await getEligibleEmployeesForPeriod(
+		period.periodStart,
+		period.periodEnd
+	);
 
 	if (employeesForPeriod.length === 0) {
 		return {
@@ -1937,7 +1949,7 @@ async function getPayrollPeriodAdjustmentOptions(
 	}
 
 	const [employeesForPeriod, bonusRows, otherDeductionRows] = await Promise.all([
-		getEligibleEmployeesForPeriod(period),
+		getEligibleEmployeesForPeriod(period.periodStart, period.periodEnd),
 		db
 			.select({
 				id: payrollPeriodBonuses.id,
@@ -1998,10 +2010,54 @@ async function getPayrollPeriodAdjustmentOptions(
 	} satisfies PayrollAdjustmentOptions;
 }
 
-async function addPayrollPeriodBonus(
-	payload: z.infer<typeof payrollPeriodBonusCreateSchema>,
-	createdBy: string
-) {
+async function addPayrollPeriodBonus(payload: BonusFormValues, createdBy: string) {
+	const period = await getPayrollPeriodRecord(payload.periodId);
+
+	if (!period) {
+		return failure({
+			type: "NotFoundError",
+			message: "Payroll period not found.",
+		});
+	}
+
+	if (period.status !== PAYROLL_PERIOD_STATUS.DRAFT) {
+		return failure({
+			type: "ValidationError",
+			message: "Payroll period must be in draft status.",
+		});
+	}
+
+	const employeeAdded = await db.query.payrollPeriodBonuses.findMany({
+		where: and(
+			eq(payrollPeriodBonuses.payrollPeriodId, payload.periodId),
+			inArray(
+				payrollPeriodBonuses.employeeId,
+				payload.employees.map((e) => e.employeeId)
+			)
+		),
+	});
+
+	if (employeeAdded.length > 0) {
+		return failure({
+			type: "ConflictError",
+			message: "Some bonuses have already been added to this payroll period.",
+		});
+	}
+
+	await db.insert(payrollPeriodBonuses).values(
+		payload.employees.map((e) => ({
+			payrollPeriodId: payload.periodId,
+			employeeId: e.employeeId,
+			amount: toPayrollDecimalString(e.amount),
+			description: e.description,
+			createdBy,
+		}))
+	);
+
+	return success(undefined);
+}
+
+async function addPayrollPeriodOtherDeduction(payload: DeductionFormValues, createdBy: string) {
 	const period = await getPayrollPeriodRecord(payload.payrollPeriodId);
 
 	if (!period) {
@@ -2018,68 +2074,36 @@ async function addPayrollPeriodBonus(
 		});
 	}
 
-	await db.insert(payrollPeriodBonuses).values({
-		payrollPeriodId: payload.payrollPeriodId,
-		employeeId: payload.employeeId,
-		amount: toPayrollDecimalString(payload.amount),
-		description: payload.description,
-		notes: normalizePayrollText(payload.notes),
-		createdBy,
+	const employeeAdded = await db.query.payrollPeriodOtherDeductions.findMany({
+		where: and(
+			eq(payrollPeriodOtherDeductions.payrollPeriodId, payload.payrollPeriodId),
+			inArray(
+				payrollPeriodOtherDeductions.employeeId,
+				payload.deductions.map((e) => e.employeeId)
+			)
+		),
 	});
 
-	return success(undefined);
-}
-
-async function addPayrollPeriodOtherDeduction(
-	payload: z.infer<typeof payrollPeriodOtherDeductionCreateSchema>,
-	createdBy: string
-) {
-	const period = await getPayrollPeriodRecord(payload.payrollPeriodId);
-
-	if (!period) {
+	if (employeeAdded.length > 0) {
 		return failure({
-			type: "NotFoundError",
-			message: "Payroll period not found.",
+			type: "ConflictError",
+			message: "Some deductions have already been added to this payroll period.",
 		});
 	}
 
-	await db.insert(payrollPeriodOtherDeductions).values({
-		payrollPeriodId: payload.payrollPeriodId,
-		employeeId: payload.employeeId,
-		deductionType: payload.deductionType,
-		amount: toPayrollDecimalString(payload.amount),
-		description: payload.description,
-		notes: normalizePayrollText(payload.notes),
-		createdBy,
-	});
+	await db.insert(payrollPeriodOtherDeductions).values(
+		payload.deductions.map((e) => ({
+			payrollPeriodId: payload.payrollPeriodId,
+			employeeId: e.employeeId,
+			deductionType: e.deductionType,
+			amount: toPayrollDecimalString(e.amount),
+			description: e.description,
+			createdBy,
+		}))
+	);
 
 	return success(undefined);
 }
-
-// async function cancelProcessedPayrollPeriod(periodId: string, cancelledBy: string, reason: string) {
-// 	await db.transaction(async (tx) => {
-// 		const slips = await tx.query.payrollSlips.findMany({
-// 			where: and(eq(payrollSlips.payrollPeriodId, periodId), ne(payrollSlips.status, "cancelled")),
-// 		});
-
-// 		for (const slip of slips) {
-// 			await reverseSlip(tx, slip, {
-// 				cancelledBy,
-// 				reason,
-// 			});
-// 		}
-
-// 		await updatePayrollPeriodAggregates(periodId, tx, {
-// 			processingWarnings: [],
-// 			skippedEmployees: [],
-// 			processingCompletedAt: null,
-// 			status: PAYROLL_PERIOD_STATUS.CANCELLED,
-// 			cancelledBy,
-// 			cancelledAt: new Date(),
-// 			cancellationReason: reason,
-// 		});
-// 	});
-// }
 
 async function requirePayrollSlipViewAccess() {
 	await requirePermission("employees:payroll-information");
@@ -2161,6 +2185,41 @@ export const cancelPayrollSlipFn = createServerFn({ method: "POST" })
 		return cancelPayrollSlip(data.slipId, context.user.id, data.reason);
 	});
 
+export const getPayrollPeriodBonusesFn = createServerFn()
+	.middleware([authMiddleware])
+	.validator(payrollPeriodIdSchema)
+	.handler(async ({ data }) => {
+		await requirePermission("payroll-periods:create");
+		const bonuses = await db.query.payrollPeriodBonuses.findMany({
+			columns: { id: true, amount: true, description: true, employeeId: true },
+			where: eq(payrollPeriodBonuses.payrollPeriodId, data.periodId),
+			with: {
+				employee: { columns: { firstName: true, lastName: true } },
+			},
+		});
+		return bonuses.map((b) => ({
+			id: b.id,
+			employeeId: b.employeeId,
+			description: b.description,
+			amount: toNumber(b.amount),
+			employeeName: `${b.employee.firstName} ${b.employee.lastName}`,
+		}));
+	});
+
+export const getPayrollPeriodOtherDeductionsFn = createServerFn()
+	.middleware([authMiddleware])
+	.validator(payrollPeriodIdSchema)
+	.handler(async ({ data }) => {
+		await requirePermission("payroll-periods:create");
+		const otherDeductions = await db.query.payrollPeriodOtherDeductions.findMany({
+			where: eq(payrollPeriodOtherDeductions.payrollPeriodId, data.periodId),
+			with: {
+				employee: { columns: { firstName: true, lastName: true } },
+			},
+		});
+		return otherDeductions;
+	});
+
 export const addBonusToSlipFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(payrollSlipBonusSchema)
@@ -2171,7 +2230,7 @@ export const addBonusToSlipFn = createServerFn({ method: "POST" })
 
 export const addPayrollPeriodBonusFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.validator(payrollPeriodBonusCreateSchema)
+	.validator(bonusFormSchema)
 	.handler(async ({ data, context }) => {
 		await requirePayrollProcessAccess();
 		return addPayrollPeriodBonus(data, context.user.id);

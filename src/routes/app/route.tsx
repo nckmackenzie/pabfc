@@ -8,11 +8,7 @@ import {
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { RouterBreadcrumb } from "@/components/ui/nav-breadcrumb";
-import {
-	SidebarInset,
-	SidebarProvider,
-	SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Wip } from "@/components/ui/wip";
 import { financialYearQueries } from "@/features/financial-years/services/queries";
@@ -46,7 +42,7 @@ function RouteComponent() {
 					</div>
 				</header>
 				<div className="flex flex-1 flex-col gap-4 bg-muted">
-					<div className="max-w-7xl mx-auto w-full p-4">
+					<div className="max-w-7xl mx-auto w-full p-4 md:px-6 lg:px-8">
 						<Outlet />
 					</div>
 				</div>
