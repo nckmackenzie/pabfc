@@ -26,6 +26,7 @@ export function BalanceSheet() {
 			getBalanceSheetReport({
 				data: { asOfDate: filters.asOfDate ?? "" },
 			}),
+		staleTime: 0,
 	});
 
 	const rows = data;
@@ -34,23 +35,12 @@ export function BalanceSheet() {
 	const liabilityRows = rows.filter((row) => row.type === "liability");
 	const equityRows = rows.filter((row) => row.type === "equity");
 
-	const totalAssets = assetRows.reduce(
-		(sum, row) => sum + Number(row.total),
-		0,
-	);
-	const totalLiabilities = liabilityRows.reduce(
-		(sum, row) => sum + Number(row.total),
-		0,
-	);
-	const totalEquity = equityRows.reduce(
-		(sum, row) => sum + Number(row.total),
-		0,
-	);
+	const totalAssets = assetRows.reduce((sum, row) => sum + Number(row.total), 0);
+	const totalLiabilities = liabilityRows.reduce((sum, row) => sum + Number(row.total), 0);
+	const totalEquity = equityRows.reduce((sum, row) => sum + Number(row.total), 0);
 	const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
 
-	const formattedAsOfDate = filters.asOfDate
-		? dateFormat(filters.asOfDate, "long")
-		: "";
+	const formattedAsOfDate = filters.asOfDate ? dateFormat(filters.asOfDate, "long") : "";
 
 	return (
 		<div>
@@ -76,9 +66,7 @@ export function BalanceSheet() {
 									totalAssets: formatStatementAmount(totalAssets),
 									totalLiabilities: formatStatementAmount(totalLiabilities),
 									totalEquity: formatStatementAmount(totalEquity),
-									totalLiabilitiesAndEquity: formatStatementAmount(
-										totalLiabilitiesAndEquity,
-									),
+									totalLiabilitiesAndEquity: formatStatementAmount(totalLiabilitiesAndEquity),
 								}}
 							/>
 						}
@@ -100,12 +88,8 @@ export function BalanceSheet() {
 
 			<div className="balance-sheet-report">
 				<div className="text-center mb-8">
-					<h2 className="text-xl font-bold tracking-wide uppercase">
-						Balance Sheet
-					</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						As of {formattedAsOfDate}
-					</p>
+					<h2 className="text-xl font-bold tracking-wide uppercase">Balance Sheet</h2>
+					<p className="text-sm text-muted-foreground mt-1">As of {formattedAsOfDate}</p>
 				</div>
 
 				<div className="max-w-2xl mx-auto space-y-6 text-sm">
@@ -164,24 +148,14 @@ function Section({
 				{title}
 			</h3>
 			{rows.map((row) => (
-				<BalanceSheetRowItem
-					key={`${row.type}-${row.name}`}
-					row={row}
-					asOfDate={asOfDate}
-				/>
+				<BalanceSheetRowItem key={`${row.type}-${row.name}`} row={row} asOfDate={asOfDate} />
 			))}
 			<TotalRow label={totalLabel} amount={total} />
 		</section>
 	);
 }
 
-function BalanceSheetRowItem({
-	row,
-	asOfDate,
-}: {
-	row: BalanceSheetRow;
-	asOfDate: string;
-}) {
+function BalanceSheetRowItem({ row, asOfDate }: { row: BalanceSheetRow; asOfDate: string }) {
 	const { setOpen } = useSheet();
 	const canDrillDown = Boolean(row.id) && row.is_computed === 0;
 	const label = reportLabel(row);
@@ -220,9 +194,7 @@ function TotalRow({ label, amount }: { label: string; amount: number }) {
 	return (
 		<div className="flex justify-between items-center py-1.5 mt-1 border-t border-foreground/30 font-semibold">
 			<span className="pl-6">{label}</span>
-			<span className="border-b border-foreground/50">
-				{formatStatementAmount(amount)}
-			</span>
+			<span className="border-b border-foreground/50">{formatStatementAmount(amount)}</span>
 		</div>
 	);
 }
@@ -252,9 +224,7 @@ export function BalanceSheetSkeleton() {
 
 			<div className="balance-sheet-report">
 				<div className="flex flex-col items-center text-center mb-8">
-					<h2 className="text-xl font-bold tracking-wide uppercase">
-						Balance Sheet
-					</h2>
+					<h2 className="text-xl font-bold tracking-wide uppercase">Balance Sheet</h2>
 					<Skeleton className="h-5 w-32 mt-1" />
 				</div>
 

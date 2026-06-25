@@ -26,22 +26,15 @@ export function TrialBalance() {
 			getTrialBalance({
 				data: { asOfDate: filters.asOfDate ?? "" },
 			}),
+		staleTime: 0,
 	});
 
 	const rows = data;
 
-	const totalDebits = rows.reduce(
-		(sum, row) => sum + Number(row.debit_balance),
-		0,
-	);
-	const totalCredits = rows.reduce(
-		(sum, row) => sum + Number(row.credit_balance),
-		0,
-	);
+	const totalDebits = rows.reduce((sum, row) => sum + Number(row.debit_balance), 0);
+	const totalCredits = rows.reduce((sum, row) => sum + Number(row.credit_balance), 0);
 
-	const formattedAsOfDate = filters.asOfDate
-		? dateFormat(filters.asOfDate, "long")
-		: "";
+	const formattedAsOfDate = filters.asOfDate ? dateFormat(filters.asOfDate, "long") : "";
 
 	return (
 		<div>
@@ -84,12 +77,8 @@ export function TrialBalance() {
 
 			<div className="trial-balance-report">
 				<div className="text-center mb-8">
-					<h2 className="text-xl font-bold tracking-wide uppercase">
-						Trial Balance
-					</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						As of {formattedAsOfDate}
-					</p>
+					<h2 className="text-xl font-bold tracking-wide uppercase">Trial Balance</h2>
+					<p className="text-sm text-muted-foreground mt-1">As of {formattedAsOfDate}</p>
 				</div>
 
 				<div className="max-w-4xl mx-auto text-sm">
@@ -101,11 +90,7 @@ export function TrialBalance() {
 
 					<div className="space-y-1">
 						{rows.map((row) => (
-							<TrialBalanceItem
-								key={row.id}
-								row={row}
-								asOfDate={filters.asOfDate ?? ""}
-							/>
+							<TrialBalanceItem key={row.id} row={row} asOfDate={filters.asOfDate ?? ""} />
 						))}
 					</div>
 
@@ -124,13 +109,7 @@ export function TrialBalance() {
 	);
 }
 
-function TrialBalanceItem({
-	row,
-	asOfDate,
-}: {
-	row: TrialBalanceParentRow;
-	asOfDate: string;
-}) {
+function TrialBalanceItem({ row, asOfDate }: { row: TrialBalanceParentRow; asOfDate: string }) {
 	const { setOpen } = useSheet();
 	const hasDebit = Number(row.debit_balance) > 0;
 	const hasCredit = Number(row.credit_balance) > 0;
@@ -182,9 +161,7 @@ export function TrialBalanceSkeleton() {
 
 			<div className="trial-balance-report">
 				<div className="flex flex-col items-center text-center mb-8">
-					<h2 className="text-xl font-bold tracking-wide uppercase">
-						Trial Balance
-					</h2>
+					<h2 className="text-xl font-bold tracking-wide uppercase">Trial Balance</h2>
 					<Skeleton className="h-5 w-32 mt-1" />
 				</div>
 

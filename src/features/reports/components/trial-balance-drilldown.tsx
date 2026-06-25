@@ -12,9 +12,7 @@ import { getTrialBalanceDrillDown } from "@/features/reports/services/trial-bala
 import { currencyFormatter, dateFormat, toNumber } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
-type DrillDownItem = Awaited<
-	ReturnType<typeof getTrialBalanceDrillDown>
->[number];
+type DrillDownItem = Awaited<ReturnType<typeof getTrialBalanceDrillDown>>[number];
 
 const columns: Array<ColumnDef<DrillDownItem>> = [
 	{
@@ -57,9 +55,7 @@ const columns: Array<ColumnDef<DrillDownItem>> = [
 			const amount = toNumber(row.original.amount);
 			return (
 				<div className="text-right">
-					{row.original.dc === "debit"
-						? currencyFormatter(amount, false)
-						: undefined}
+					{row.original.dc === "debit" ? currencyFormatter(amount, false) : undefined}
 				</div>
 			);
 		},
@@ -71,9 +67,7 @@ const columns: Array<ColumnDef<DrillDownItem>> = [
 			const amount = toNumber(row.original.amount);
 			return (
 				<div className="text-right">
-					{row.original.dc === "credit"
-						? currencyFormatter(amount, false)
-						: undefined}
+					{row.original.dc === "credit" ? currencyFormatter(amount, false) : undefined}
 				</div>
 			);
 		},
@@ -89,21 +83,12 @@ const columns: Array<ColumnDef<DrillDownItem>> = [
 	},
 ];
 
-export function TrialBalanceDrillDown({
-	id,
-	asOfDate,
-}: {
-	id: number;
-	asOfDate: string;
-}) {
+export function TrialBalanceDrillDown({ id, asOfDate }: { id: number; asOfDate: string }) {
 	const [search, setSearch] = useState<string>();
 
 	return (
 		<div className="px-4 space-y-4">
-			<Search
-				placeholder="Search transactions..."
-				onHandleSearch={(q: string) => setSearch(q)}
-			/>
+			<Search placeholder="Search transactions..." onHandleSearch={(q: string) => setSearch(q)} />
 			<ErrorBoundaryWithSuspense
 				loader={<DatatableSkeleton />}
 				errorMessage="Error fetching data for the selected account."
@@ -129,6 +114,7 @@ function DrilldownTable({
 			getTrialBalanceDrillDown({
 				data: { id, asOfDate, q: search },
 			}),
+		staleTime: 0,
 	});
 
 	const totalDebit = data
@@ -156,15 +142,9 @@ function DrilldownTable({
 			customFooter={
 				<>
 					<TableCell colSpan={5}>Totals</TableCell>
-					<TableCell className="text-right px-4">
-						{currencyFormatter(totalDebit, false)}
-					</TableCell>
-					<TableCell className="text-right px-4">
-						{currencyFormatter(totalCredit, false)}
-					</TableCell>
-					<TableCell className="text-right px-4">
-						{formatNetAmount(net)}
-					</TableCell>
+					<TableCell className="text-right px-4">{currencyFormatter(totalDebit, false)}</TableCell>
+					<TableCell className="text-right px-4">{currencyFormatter(totalCredit, false)}</TableCell>
+					<TableCell className="text-right px-4">{formatNetAmount(net)}</TableCell>
 				</>
 			}
 		/>
