@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 import { payrollPeriodQueries } from "../../services/queries";
 import { useParams } from "@tanstack/react-router";
 import { PayrollPeriodStatusBadge } from "@/routes/app/payroll/periods";
@@ -14,16 +15,24 @@ import {
 	CreditCardIcon,
 	HandCoinsIcon,
 	HouseIcon,
+	MailIcon,
 	ReceiptIcon,
 	ScanSearchIcon,
 	SearchXIcon,
+	SendIcon,
 	SquarePenIcon,
 	UmbrellaIcon,
 	Users2Icon,
 	Wallet2Icon,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { CheckCircleIcon, CheckIcon, PercentBadgeIcon, XIcon } from "@/components/ui/icons";
+import {
+	CheckCircleIcon,
+	CheckIcon,
+	DownloadIcon,
+	PercentBadgeIcon,
+	XIcon,
+} from "@/components/ui/icons";
 import type { PayrollPeriodView } from "../../lib/payroll-period/types";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +58,18 @@ import type { z } from "zod";
 import { PAYROLL_REMITTANCE_ITEM_TYPES } from "../../lib/payroll-constants";
 import type { PayrollRemittanceItemType } from "../../lib/payroll-constants";
 import { postStatutoryRemittanceJournalFn } from "../../services/payroll-journals.api";
+import { sendPayslipEmailFn, sendAllPayslipsEmailFn } from "../../services/payroll-email.api";
+import { payrollSlipQueries } from "../../services/queries";
+import { PayslipPdf } from "../payslip-pdf";
+import type { PayslipPdfData } from "../payslip-pdf";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { FieldGroup } from "@/components/ui/field";
 import { accountQueries } from "@/features/coa/services/queries";
 import { SelectItem } from "@/components/ui/select";
@@ -95,6 +116,12 @@ export function PayrollPeriodDetail() {
 						periodName={data.name}
 					/>
 					<StatutoryRemittance periodId={periodId} status={data.status} />
+					<PeriodPayslips
+						periodId={periodId}
+						status={data.status}
+						payDate={data.payDate}
+						periodName={data.name}
+					/>
 				</>
 			) : (
 				<div className="rounded-md border border-red-200 bg-red-50 p-4 space-y-3">
@@ -957,6 +984,211 @@ function StatutoryRemittance({ periodId, status }: StatutoryRemittanceProps) {
 						</div>
 					) : null}
 				</form>
+			)}
+		</section>
+	);
+}
+
+type PeriodPayslipsProps = PeriodIdStatus & {
+	payDate: string;
+	periodName: string;
+};
+
+const SLIP_STATUS_BADGE: Record<
+	"draft" | "approved" | "cancelled",
+	"secondary" | "success" | "danger"
+> = {
+	draft: "secondary",
+	approved: "success",
+	cancelled: "danger",
+};
+
+function PeriodPayslips({ periodId, status, payDate, periodName }: PeriodPayslipsProps) {
+	const [sendingSlipId, setSendingSlipId] = useState<string | null>(null);
+
+	const { data: slips = [], isLoading } = useQuery(
+		payrollSlipQueries.period({ payrollPeriodId: periodId })
+	);
+
+	const canSendEmails =
+		status === PAYROLL_PERIOD_STATUS.APPROVED ||
+		status === PAYROLL_PERIOD_STATUS.PAID ||
+		status === PAYROLL_PERIOD_STATUS.CLOSED;
+
+	const sendOneEmailMutation = useMutation({
+		mutationFn: async (slipId: string) => {
+			setSendingSlipId(slipId);
+			const result = await sendPayslipEmailFn({ data: { slipId } });
+			if (!result.success) throw new Error(result.error.message);
+			return result.data;
+		},
+		onSuccess: (data) => {
+			toast.success((t) => (
+				<ToastContent t={t} title="Email Sent" message={`Payslip sent to ${data.sentTo}`} />
+			));
+		},
+		onError: (error) => {
+			const message = error instanceof Error ? error.message : "Failed to send payslip email";
+			toast.error((t) => <ToastContent t={t} title="Error" message={message} />);
+		},
+		onSettled: () => setSendingSlipId(null),
+	});
+
+	const sendAllEmailsMutation = useMutation({
+		mutationFn: async () => {
+			const result = await sendAllPayslipsEmailFn({ data: { periodId } });
+			if (!result.success) throw new Error(result.error.message);
+			return result.data;
+		},
+		onSuccess: (data) => {
+			const skippedNote =
+				data.skipped.length > 0 ? ` ${data.skipped.length} skipped or failed to send.` : "";
+			toast.success((t) => (
+				<ToastContent
+					t={t}
+					title="Payslips Sent"
+					message={`${data.sent.length} of ${data.total} payslips sent.${skippedNote}`}
+				/>
+			));
+		},
+		onError: (error) => {
+			const message = error instanceof Error ? error.message : "Failed to send payslips";
+			toast.error((t) => <ToastContent t={t} title="Error" message={message} />);
+		},
+	});
+	const isSendingEmail = sendAllEmailsMutation.isPending || sendOneEmailMutation.isPending;
+	const formattedPayDate = dateFormat(new Date(payDate), "long");
+
+	return (
+		<section className="border rounded-md overflow-hidden">
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 border-b bg-card">
+				<div className="flex items-center gap-2">
+					<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+						<Users2Icon className="size-4" />
+					</span>
+					<div>
+						<h4 className="text-sm md:text-base font-semibold">Employee Payslips</h4>
+						<p className="text-muted-foreground text-xs">
+							{slips.length} payslip{slips.length !== 1 ? "s" : ""} for this period
+						</p>
+					</div>
+				</div>
+				<PermissionGate permissions={["payroll-periods:transition"]}>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						disabled={!canSendEmails || isSendingEmail || slips.length === 0}
+						onClick={() => sendAllEmailsMutation.mutate()}
+					>
+						<LoadingSwap isLoading={sendAllEmailsMutation.isPending}>
+							<SendIcon className="size-4" />
+							Send All Payslips
+						</LoadingSwap>
+					</Button>
+				</PermissionGate>
+			</div>
+
+			{isLoading ? (
+				<div className="p-8 text-center text-sm text-muted-foreground">Loading payslips…</div>
+			) : slips.length === 0 ? (
+				<div className="p-8 text-center text-sm text-muted-foreground">
+					No payslips have been generated for this period yet.
+				</div>
+			) : (
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Employee</TableHead>
+							<TableHead>Department</TableHead>
+							<TableHead className="text-right">Gross Pay</TableHead>
+							<TableHead className="text-right">Net Pay</TableHead>
+							<TableHead>Status</TableHead>
+							<TableHead className="text-right">Actions</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{slips.map((slip) => {
+							const pdfData: PayslipPdfData = {
+								employeeName: slip.employeeName,
+								employeeNo: slip.employeeNo,
+								departmentName: slip.departmentName,
+								periodName,
+								payDate: formattedPayDate,
+								basicSalary: slip.basicSalary,
+								houseAllowance: slip.houseAllowance,
+								transportAllowance: slip.transportAllowance,
+								commuterAllowance: slip.commuterAllowance,
+								mealAllowance: slip.mealAllowance,
+								airtimeAllowance: slip.airtimeAllowance,
+								otherAllowances: slip.otherAllowances,
+								overtimePay: slip.overtimePay,
+								bonuses: slip.bonuses,
+								grossPay: slip.grossPay,
+								netPaye: slip.netPaye,
+								nssfEmployee: slip.nssfEmployee,
+								shifEmployee: slip.shifEmployee,
+								ahlEmployee: slip.ahlEmployee,
+								pensionEmployeeDeduction: slip.pensionEmployeeDeduction,
+								helbDeduction: slip.helbDeduction,
+								totalLoanDeductions: slip.totalLoanDeductions,
+								totalAdvanceRecoveries: slip.totalAdvanceRecoveries,
+								totalOtherDeductions: slip.totalOtherDeductions,
+								totalDeductions: slip.totalDeductions,
+								netPay: slip.netPay,
+							};
+							const isSending = sendOneEmailMutation.isPending && sendingSlipId === slip.id;
+
+							return (
+								<TableRow key={slip.id}>
+									<TableCell>
+										<p className="font-medium">{slip.employeeName}</p>
+										<p className="text-xs text-muted-foreground">{slip.employeeNo}</p>
+									</TableCell>
+									<TableCell>{slip.departmentName ?? "—"}</TableCell>
+									<TableCell className="text-right">{currencyFormatter(slip.grossPay)}</TableCell>
+									<TableCell className="text-right font-medium">
+										{currencyFormatter(slip.netPay)}
+									</TableCell>
+									<TableCell>
+										<Badge variant={SLIP_STATUS_BADGE[slip.status]}>
+											{toTitleCase(slip.status)}
+										</Badge>
+									</TableCell>
+									<TableCell>
+										<div className="flex justify-end gap-2">
+											<PDFDownloadLink
+												document={<PayslipPdf data={pdfData} />}
+												fileName={`payslip-${slip.employeeNo}-${periodName.replace(/\s+/g, "-")}.pdf`}
+											>
+												{({ loading }) => (
+													<Button type="button" size="sm" variant="outline" disabled={loading}>
+														<DownloadIcon />
+														{loading ? "…" : "PDF"}
+													</Button>
+												)}
+											</PDFDownloadLink>
+											<PermissionGate permissions={["payroll-periods:transition"]}>
+												<Button
+													type="button"
+													size="sm"
+													variant="outline"
+													disabled={!canSendEmails || isSendingEmail || slip.status !== "approved"}
+													onClick={() => sendOneEmailMutation.mutate(slip.id)}
+												>
+													<LoadingSwap isLoading={isSending}>
+														<MailIcon className="size-4" />
+														Send
+													</LoadingSwap>
+												</Button>
+											</PermissionGate>
+										</div>
+									</TableCell>
+								</TableRow>
+							);
+						})}
+					</TableBody>
+				</Table>
 			)}
 		</section>
 	);
