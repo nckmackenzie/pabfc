@@ -96,15 +96,6 @@ export function toPayrollDecimalString(value: NumericLike) {
 	return toPayrollBig(value).round(2, Big.roundHalfUp).toFixed(2);
 }
 
-export function normalizePayrollText(value: string | null | undefined) {
-	if (value === null || value === undefined) {
-		return null;
-	}
-
-	const trimmed = value.trim();
-	return trimmed === "" ? null : trimmed;
-}
-
 export function subtractOneDay(isoDate: string) {
 	const date = new Date(`${isoDate}T00:00:00.000Z`);
 	date.setUTCDate(date.getUTCDate() - 1);
@@ -251,7 +242,11 @@ export function computeGrossPayComponents(structure: SalaryStructureRecord) {
 	};
 }
 
-export function getMonthBoundaryDate(periodYear: number, periodMonth: number, boundary: "start" | "end") {
+export function getMonthBoundaryDate(
+	periodYear: number,
+	periodMonth: number,
+	boundary: "start" | "end"
+) {
 	const date =
 		boundary === "start"
 			? new Date(Date.UTC(periodYear, periodMonth - 1, 1))
@@ -297,14 +292,10 @@ export function computeOvertimePay(
 	const parsedOvertimeHourlyRate = toPayrollBig(overtimeHourlyRate);
 
 	const weekdayOvertimePay = roundPayrollAmount(
-		parsedWeekdayHours
-			.times(parsedOvertimeHourlyRate)
-			.times(OVERTIME_MULTIPLIER_WEEKDAY)
+		parsedWeekdayHours.times(parsedOvertimeHourlyRate).times(OVERTIME_MULTIPLIER_WEEKDAY)
 	);
 	const weekendOvertimePay = roundPayrollAmount(
-		parsedWeekendHours
-			.times(parsedOvertimeHourlyRate)
-			.times(OVERTIME_MULTIPLIER_WEEKEND)
+		parsedWeekendHours.times(parsedOvertimeHourlyRate).times(OVERTIME_MULTIPLIER_WEEKEND)
 	);
 	const publicHolidayOvertimePay = roundPayrollAmount(
 		parsedPublicHolidayHours
@@ -312,9 +303,7 @@ export function computeOvertimePay(
 			.times(OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY)
 	);
 	const totalOvertimePay = roundPayrollAmount(
-		toPayrollBig(weekdayOvertimePay)
-			.plus(weekendOvertimePay)
-			.plus(publicHolidayOvertimePay)
+		toPayrollBig(weekdayOvertimePay).plus(weekendOvertimePay).plus(publicHolidayOvertimePay)
 	);
 
 	return {
