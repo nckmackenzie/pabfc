@@ -14,9 +14,42 @@ import { toNumber } from "@/lib/helpers";
 import { dateFormat } from "@/lib/helpers";
 import { sendPayslipEmailSchema, sendAllPayslipsEmailSchema } from "./payroll-slips.schemas";
 
+function escapeHtml(str: string): string {
+	return str
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#x27;");
+}
+
+function sanitizeFilename(str: string): string {
+	return str.replace(/[^a-zA-Z0-9._-]/g, "-").replace(/-{2,}/g, "-");
+}
+
+function buildEmailContent(
+	employeeName: string,
+	employeeNo: string,
+	periodName: string,
+	payDate: string,
+) {
+	const safeName = escapeHtml(employeeName);
+	const safePeriod = escapeHtml(periodName);
+	const safeDate = escapeHtml(payDate);
+	return {
+		subject: `Your Payslip — ${periodName}`,
+		html: `<p>Dear ${safeName},</p>
+<p>Please find attached your payslip for <strong>${safePeriod}</strong> (Pay Date: ${safeDate}).</p>
+<p>If you have any questions regarding your payslip, please contact HR.</p>
+<p>Regards,<br/>Prime Age Beauty &amp; Fitness Center</p>`,
+		attachmentFilename: `payslip-${sanitizeFilename(employeeNo)}-${sanitizeFilename(periodName)}.pdf`,
+	};
+}
+
 async function requirePayslipEmailAccess() {
 	await requirePermission("employees:payroll-information");
 	await requirePermission("payroll-periods:view");
+	await requirePermission("payroll-periods:transition");
 }
 
 async function getSlipWithEmployeeAndPeriod(slipId: string) {
@@ -34,14 +67,14 @@ async function getSlipWithEmployeeAndPeriod(slipId: string) {
 		.innerJoin(employees, eq(payrollSlips.employeeId, employees.id))
 		.leftJoin(departments, eq(employees.departmentId, departments.id))
 		.innerJoin(payrollPeriods, eq(payrollSlips.payrollPeriodId, payrollPeriods.id))
-		.where(eq(payrollSlips.id, slipId))
+		.where(and(eq(payrollSlips.id, slipId), ne(payrollSlips.status, "cancelled")))
 		.then((rows) => rows[0] ?? null);
 
 	return row;
 }
 
 function buildPdfData(
-	row: Awaited<ReturnType<typeof getSlipWithEmployeeAndPeriod>> & object,
+	row: Awaited<ReturnType<typeof getSlipWithEmployeeAndPeriod>> & object
 ): PayslipPdfData {
 	const s = row.slip;
 	return {
@@ -96,30 +129,31 @@ export const sendPayslipEmailFn = createServerFn()
 				message: `${row.employeeName} does not have an email address on file.`,
 			});
 		}
+		try {
+			const pdfData = buildPdfData(row);
+			const pdfBuffer = await generatePayslipPdf(pdfData);
+			const { subject, html, attachmentFilename } = buildEmailContent(
+				pdfData.employeeName,
+				row.employeeNo,
+				pdfData.periodName,
+				pdfData.payDate,
+			);
 
-		const pdfData = buildPdfData(row);
-		const pdfBuffer = await generatePayslipPdf(pdfData);
+			const { error } = await resend.emails.send({
+				from: FROM_EMAIL,
+				to: email,
+				subject,
+				html,
+				attachments: [{ filename: attachmentFilename, content: pdfBuffer }],
+			});
 
-		const { error } = await resend.emails.send({
-			from: FROM_EMAIL,
-			to: email,
-			subject: `Your Payslip — ${pdfData.periodName}`,
-			html: `<p>Dear ${pdfData.employeeName},</p>
-<p>Please find attached your payslip for <strong>${pdfData.periodName}</strong> (Pay Date: ${pdfData.payDate}).</p>
-<p>If you have any questions regarding your payslip, please contact HR.</p>
-<p>Regards,<br/>Prime Age Beauty &amp; Fitness Center</p>`,
-			attachments: [
-				{
-					filename: `payslip-${row.employeeNo}-${pdfData.periodName.replace(/\s+/g, "-")}.pdf`,
-					content: pdfBuffer,
-				},
-			],
-		});
-
-		if (error) {
-			return failure({ type: "ApplicationError", message: error.message });
+			if (error) {
+				return failure({ type: "ApplicationError", message: error.message });
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "Failed to send payslip";
+			return failure({ type: "ApplicationError", message });
 		}
-
 		return success({ sentTo: email, employeeName: row.employeeName });
 	});
 
@@ -144,10 +178,7 @@ export const sendAllPayslipsEmailFn = createServerFn()
 			.leftJoin(departments, eq(employees.departmentId, departments.id))
 			.innerJoin(payrollPeriods, eq(payrollSlips.payrollPeriodId, payrollPeriods.id))
 			.where(
-				and(
-					eq(payrollSlips.payrollPeriodId, data.periodId),
-					ne(payrollSlips.status, "cancelled"),
-				),
+				and(eq(payrollSlips.payrollPeriodId, data.periodId), ne(payrollSlips.status, "cancelled"))
 			)
 			.orderBy(asc(employees.lastName), asc(employees.firstName));
 
@@ -163,21 +194,19 @@ export const sendAllPayslipsEmailFn = createServerFn()
 			try {
 				const pdfData = buildPdfData(row);
 				const pdfBuffer = await generatePayslipPdf(pdfData);
+				const { subject, html, attachmentFilename } = buildEmailContent(
+					pdfData.employeeName,
+					row.employeeNo,
+					pdfData.periodName,
+					pdfData.payDate,
+				);
 
 				const { error } = await resend.emails.send({
 					from: FROM_EMAIL,
 					to: row.employeeEmail,
-					subject: `Your Payslip — ${pdfData.periodName}`,
-					html: `<p>Dear ${pdfData.employeeName},</p>
-<p>Please find attached your payslip for <strong>${pdfData.periodName}</strong> (Pay Date: ${pdfData.payDate}).</p>
-<p>If you have any questions regarding your payslip, please contact HR.</p>
-<p>Regards,<br/>Prime Age Beauty &amp; Fitness Center</p>`,
-					attachments: [
-						{
-							filename: `payslip-${row.employeeNo}-${pdfData.periodName.replace(/\s+/g, "-")}.pdf`,
-							content: pdfBuffer,
-						},
-					],
+					subject,
+					html,
+					attachments: [{ filename: attachmentFilename, content: pdfBuffer }],
 				});
 
 				if (error) {
