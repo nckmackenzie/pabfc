@@ -89,6 +89,7 @@
     "react-hot-toast": "^2.6.0",
     "react-select": "^5.10.2",
     "recharts": "2.15.4",
+    "resend": "^6.14.0",
     "shadcn-dropzone": "^0.2.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",

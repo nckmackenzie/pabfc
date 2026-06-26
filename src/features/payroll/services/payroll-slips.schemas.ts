@@ -85,3 +85,11 @@ export const PAYROLL_OTHER_DEDUCTION_TYPES = [
 export const payrollPeriodAdjustmentOptionsSchema = z.object({
 	payrollPeriodId: z.string().trim().min(1, "Payroll period is required"),
 });
+
+export const sendPayslipEmailSchema = z.object({
+	slipId: z.string().trim().min(1, "Payroll slip ID is required"),
+});
+
+export const sendAllPayslipsEmailSchema = z.object({
+	periodId: z.string().trim().min(1, "Payroll period ID is required"),
+});
