@@ -24,7 +24,6 @@ import {
 	formatSalaryStructureDateRange,
 	formatSalaryStructureFormValues,
 	getSalaryHistoryStatus,
-	normalizePayrollText,
 	subtractOneDay,
 	toPayrollDecimalString,
 	type SalaryStructureWithComputedComponents,
@@ -115,10 +114,10 @@ function getSalaryStructureInsertValues(payload: SalaryStructureCreatePayload, c
 		mealAllowance: toPayrollDecimalString(payload.mealAllowance),
 		airtimeAllowance: toPayrollDecimalString(payload.airtimeAllowance),
 		otherAllowances: toPayrollDecimalString(payload.otherAllowances),
-		otherAllowancesDescription: normalizePayrollText(payload.otherAllowancesDescription),
+		otherAllowancesDescription: normalizeText(payload.otherAllowancesDescription),
 		pensionEmployeeContribution: toPayrollDecimalString(payload.pensionEmployeeContribution),
 		pensionEmployerContribution: toPayrollDecimalString(payload.pensionEmployerContribution),
-		pensionFundName: normalizePayrollText(payload.pensionFundName),
+		pensionFundName: normalizeText(payload.pensionFundName),
 		mortgageInterestMonthly: toPayrollDecimalString(payload.mortgageInterestMonthly),
 		postRetirementMedicalMonthly: toPayrollDecimalString(payload.postRetirementMedicalMonthly),
 		insurancePremiumsMonthly: toPayrollDecimalString(payload.insurancePremiumsMonthly),
@@ -444,13 +443,11 @@ async function updateSalaryStructure({
 						: existing.notes,
 				pensionFundName:
 					"pensionFundName" in metadataPayload
-						? normalizePayrollText(
-								(metadataPayload.pensionFundName as string | null | undefined) ?? null
-							)
+						? normalizeText((metadataPayload.pensionFundName as string | null | undefined) ?? null)
 						: existing.pensionFundName,
 				otherAllowancesDescription:
 					"otherAllowancesDescription" in metadataPayload
-						? normalizePayrollText(
+						? normalizeText(
 								(metadataPayload.otherAllowancesDescription as string | null | undefined) ?? null
 							)
 						: existing.otherAllowancesDescription,
