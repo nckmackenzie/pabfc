@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
-import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -10,7 +10,6 @@ import {
 	overtimeRecords,
 	payrollSlips,
 	payrollPeriods,
-	salaryStructures,
 	salaryAdvances,
 } from "@/drizzle/schema";
 import {
@@ -38,9 +37,7 @@ import {
 	SALARY_ADVANCE_STATUS,
 	type PayrollAccountRole,
 } from "@/features/payroll/lib/payroll-constants";
-import { roundPayrollAmount, toPayrollDecimalString } from "@/features/payroll/lib/helpers";
 import {
-	// cancelProcessedPayrollPeriodFn,
 	runPayrollCalculationFn,
 	type Transaction,
 	updatePayrollPeriodAggregatesFn,
@@ -54,7 +51,7 @@ import {
 	payrollPeriodTransitionSchema,
 	payrollPeriodYearSchema,
 } from "@/features/payroll/services/payroll-period.schemas";
-import { dateFormat, normalizeText, toNumber } from "@/lib/helpers";
+import { dateFormat, normalizeText, roundDecimal, toDecimalString, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -70,7 +67,11 @@ import {
 	postSalaryDisbursementJournalFn,
 	type RecognitionJournalPostResult,
 } from "./payroll-journals.api";
-import { cancelProcessedPayrollPeriod, getEligibleEmployeesForPeriod } from "./payroll.server";
+import {
+	cancelProcessedPayrollPeriod,
+	getActiveStructuresAsMap,
+	getEligibleEmployeesForPeriod,
+} from "./payroll.server";
 import type {
 	PayrollPeriodCreatePayload,
 	PayrollPeriodView,
@@ -78,6 +79,7 @@ import type {
 } from "../lib/payroll-period/types";
 import { nanoid } from "nanoid";
 import { salaryDisbursementJournalSchema } from "./payroll-journal.schemas";
+import type { SalaryStructureRecord } from "../lib/payroll.types";
 
 type PayrollPeriodRecord = typeof payrollPeriods.$inferSelect;
 
@@ -173,32 +175,8 @@ async function getPayrollPeriodRecordById(periodId: string) {
 }
 
 async function getActiveStructuresByEmployeeId(employeeIds: string[], periodDate: string) {
-	if (!employeeIds.length) {
-		return {};
-	}
-
-	const rows = await db.query.salaryStructures.findMany({
-		where: and(
-			inArray(salaryStructures.employeeId, employeeIds),
-			lte(salaryStructures.effectiveFrom, periodDate),
-			or(isNull(salaryStructures.effectiveTo), gte(salaryStructures.effectiveTo, periodDate))
-		),
-		orderBy: [
-			asc(salaryStructures.employeeId),
-			desc(salaryStructures.effectiveFrom),
-			desc(salaryStructures.id),
-		],
-	});
-
-	const map: Record<string, (typeof rows)[number]> = {};
-
-	for (const row of rows) {
-		if (!map[row.employeeId]) {
-			map[row.employeeId] = row;
-		}
-	}
-
-	return map;
+	const map = await getActiveStructuresAsMap(employeeIds, periodDate);
+	return Object.fromEntries(map) as Record<string, SalaryStructureRecord>;
 }
 
 async function getAccountMappingDiagnostics() {
@@ -270,14 +248,14 @@ async function getPendingLeaveSummary(periodStart: string, periodEnd: string) {
 		const pendingDays = toNumber(row.pendingDays) ?? 0;
 
 		if (existing) {
-			existing.pendingDays = roundPayrollAmount(existing.pendingDays + pendingDays);
+			existing.pendingDays = roundDecimal(existing.pendingDays + pendingDays);
 			continue;
 		}
 
 		grouped.set(row.employeeId, {
 			employeeId: row.employeeId,
 			employeeName: row.employeeName,
-			pendingDays: roundPayrollAmount(pendingDays),
+			pendingDays: roundDecimal(pendingDays),
 		});
 	}
 
@@ -402,7 +380,7 @@ async function postPayrollRecognitionJournal(
 
 	if (
 		!areJournalValuesBalanced(
-			lines.map((line) => ({ ...line, amount: toPayrollDecimalString(line.amount) }))
+			lines.map((line) => ({ ...line, amount: toDecimalString(line.amount) }))
 		)
 	) {
 		return failure({
@@ -421,7 +399,7 @@ async function postPayrollRecognitionJournal(
 		},
 		lines: lines.map((line) => ({
 			accountId: line.accountId,
-			amount: toPayrollDecimalString(line.amount),
+			amount: toDecimalString(line.amount),
 			dc: line.dc,
 			lineNumber: line.lineNumber,
 			memo: line.memo,
@@ -909,22 +887,22 @@ async function getYearToDateTotals(year: number): Promise<PayrollPeriodYearToDat
 
 	return {
 		year,
-		totalGrossPay: roundPayrollAmount(totals.totalGrossPay),
-		totalNetPay: roundPayrollAmount(totals.totalNetPay),
-		totalPaye: roundPayrollAmount(totals.totalPaye),
-		totalNssfEmployee: roundPayrollAmount(totals.totalNssfEmployee),
-		totalNssfEmployer: roundPayrollAmount(totals.totalNssfEmployer),
-		totalNssfCombined: roundPayrollAmount(totals.totalNssfEmployee + totals.totalNssfEmployer),
-		totalShifEmployee: roundPayrollAmount(totals.totalShifEmployee),
-		totalShifEmployer: roundPayrollAmount(totals.totalShifEmployer),
-		totalShifCombined: roundPayrollAmount(totals.totalShifEmployee + totals.totalShifEmployer),
-		totalAhlEmployee: roundPayrollAmount(totals.totalAhlEmployee),
-		totalAhlEmployer: roundPayrollAmount(totals.totalAhlEmployer),
-		totalAhlCombined: roundPayrollAmount(totals.totalAhlEmployee + totals.totalAhlEmployer),
-		totalNita: roundPayrollAmount(totals.totalNita),
-		totalLoanDeductions: roundPayrollAmount(totals.totalLoanDeductions),
-		totalAdvanceRecoveries: roundPayrollAmount(totals.totalAdvanceRecoveries),
-		totalPensionEmployer: roundPayrollAmount(totals.totalPensionEmployer),
+		totalGrossPay: roundDecimal(totals.totalGrossPay),
+		totalNetPay: roundDecimal(totals.totalNetPay),
+		totalPaye: roundDecimal(totals.totalPaye),
+		totalNssfEmployee: roundDecimal(totals.totalNssfEmployee),
+		totalNssfEmployer: roundDecimal(totals.totalNssfEmployer),
+		totalNssfCombined: roundDecimal(totals.totalNssfEmployee + totals.totalNssfEmployer),
+		totalShifEmployee: roundDecimal(totals.totalShifEmployee),
+		totalShifEmployer: roundDecimal(totals.totalShifEmployer),
+		totalShifCombined: roundDecimal(totals.totalShifEmployee + totals.totalShifEmployer),
+		totalAhlEmployee: roundDecimal(totals.totalAhlEmployee),
+		totalAhlEmployer: roundDecimal(totals.totalAhlEmployer),
+		totalAhlCombined: roundDecimal(totals.totalAhlEmployee + totals.totalAhlEmployer),
+		totalNita: roundDecimal(totals.totalNita),
+		totalLoanDeductions: roundDecimal(totals.totalLoanDeductions),
+		totalAdvanceRecoveries: roundDecimal(totals.totalAdvanceRecoveries),
+		totalPensionEmployer: roundDecimal(totals.totalPensionEmployer),
 		totalEmployeeCount: totals.totalEmployeeCount,
 		periodCount: rows.length,
 	};

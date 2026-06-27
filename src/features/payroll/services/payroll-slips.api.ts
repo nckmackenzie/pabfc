@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import type { PgTransaction } from "drizzle-orm/pg-core";
@@ -30,7 +30,6 @@ import {
 	PRORATION_MINIMUM_DAYS,
 	SALARY_ADVANCE_STATUS,
 } from "@/features/payroll/lib/payroll-constants";
-import { roundPayrollAmount, toPayrollDecimalString } from "@/features/payroll/lib/helpers";
 import {
 	resolveStatutoryRates,
 	type PayrollDbClient,
@@ -82,12 +81,19 @@ import type {
 	SlipWarning,
 } from "../lib/payroll.types";
 import {
+	getActiveStructuresAsMap,
 	getEligibleEmployeesForPeriod,
 	reverseSlip,
 	updatePayrollPeriodAggregates,
 } from "./payroll.server";
 import { sumValues } from "../lib/payroll-journal-helpers";
-import { normalizeText, toNullableNumber, toNumber } from "@/lib/helpers";
+import {
+	normalizeText,
+	roundDecimal,
+	toDecimalString,
+	toNullableNumber,
+	toNumber,
+} from "@/lib/helpers";
 import { todayIsoDate } from "@/features/leaves/utils/helpers";
 import {
 	bonusFormSchema,
@@ -207,10 +213,6 @@ function mapDeductionRecord(record: PayrollDeductionRecord) {
 	};
 }
 
-// function sumValues(values: Array<number | null | undefined>) {
-// 	return roundPayrollAmount(values.reduce<number>((total, value) => total + (value ?? 0), 0));
-// }
-
 function parseLeavePayrollImpactNotes(notes: string | null) {
 	if (!notes) {
 		return { unpaidLeaveDays: 0, halfPayLeaveDays: 0 };
@@ -268,55 +270,6 @@ async function getPayrollPeriodRecord(periodId: string, dbClient: PayrollDbClien
 function getRepaymentPeriodIndex(periodMonth: number, periodYear: number) {
 	return periodYear * 100 + periodMonth;
 }
-
-async function getStructuresForEmployees(
-	employeeIds: string[],
-	periodEnd: string,
-	dbClient: PayrollDbClient = db
-) {
-	if (!employeeIds.length) {
-		return new Map<string, SalaryStructureRecord>();
-	}
-
-	const rows = await dbClient.query.salaryStructures.findMany({
-		where: and(
-			inArray(salaryStructures.employeeId, employeeIds),
-			lte(salaryStructures.effectiveFrom, periodEnd),
-			or(isNull(salaryStructures.effectiveTo), gte(salaryStructures.effectiveTo, periodEnd))
-		),
-		orderBy: [
-			asc(salaryStructures.employeeId),
-			desc(salaryStructures.effectiveFrom),
-			desc(salaryStructures.id),
-		],
-	});
-
-	const map = new Map<string, SalaryStructureRecord>();
-
-	for (const row of rows) {
-		if (!map.has(row.employeeId)) {
-			map.set(row.employeeId, row);
-		}
-	}
-
-	return map;
-}
-
-// async function getEligibleEmployeesForPeriod(period: PayrollPeriodRecord) {
-// 	return db.query.employees.findMany({
-// 		where: and(
-// 			isNull(employees.deletedAt),
-// 			or(
-// 				eq(employees.status, "active"),
-// 				and(
-// 					lte(employees.terminationDate, period.periodEnd),
-// 					gte(employees.terminationDate, period.periodStart)
-// 				)
-// 			)
-// 		),
-// 		orderBy: [asc(employees.firstName), asc(employees.lastName)],
-// 	});
-// }
 
 async function getPublicHolidayDates(period: PayrollPeriodRecord) {
 	const rows = await db
@@ -568,73 +521,73 @@ function toSlipInsertValues(
 		proratedDays: computedSlip.proratedDays,
 		totalWorkingDaysInPeriod: computedSlip.totalWorkingDaysInPeriod,
 		proratedReason: computedSlip.proratedReason,
-		basicSalary: toPayrollDecimalString(computedSlip.basicSalary),
-		houseAllowance: toPayrollDecimalString(computedSlip.houseAllowance),
-		transportAllowance: toPayrollDecimalString(computedSlip.transportAllowance),
-		commuterAllowance: toPayrollDecimalString(computedSlip.commuterAllowance),
-		mealAllowance: toPayrollDecimalString(computedSlip.mealAllowance),
-		airtimeAllowance: toPayrollDecimalString(computedSlip.airtimeAllowance),
-		otherAllowances: toPayrollDecimalString(computedSlip.otherAllowances),
-		overtimePay: toPayrollDecimalString(computedSlip.overtimePay),
-		bonuses: toPayrollDecimalString(computedSlip.bonuses),
-		grossPay: toPayrollDecimalString(computedSlip.grossPay),
-		fullMonthGrossPay: toPayrollDecimalString(computedSlip.fullMonthGrossPay),
+		basicSalary: toDecimalString(computedSlip.basicSalary),
+		houseAllowance: toDecimalString(computedSlip.houseAllowance),
+		transportAllowance: toDecimalString(computedSlip.transportAllowance),
+		commuterAllowance: toDecimalString(computedSlip.commuterAllowance),
+		mealAllowance: toDecimalString(computedSlip.mealAllowance),
+		airtimeAllowance: toDecimalString(computedSlip.airtimeAllowance),
+		otherAllowances: toDecimalString(computedSlip.otherAllowances),
+		overtimePay: toDecimalString(computedSlip.overtimePay),
+		bonuses: toDecimalString(computedSlip.bonuses),
+		grossPay: toDecimalString(computedSlip.grossPay),
+		fullMonthGrossPay: toDecimalString(computedSlip.fullMonthGrossPay),
 		overtimeRecordId: computedSlip.overtimeRecordId,
 		weekdayOvertimeHours:
 			computedSlip.weekdayOvertimeHours === null
 				? null
-				: toPayrollDecimalString(computedSlip.weekdayOvertimeHours),
+				: toDecimalString(computedSlip.weekdayOvertimeHours),
 		weekendOvertimeHours:
 			computedSlip.weekendOvertimeHours === null
 				? null
-				: toPayrollDecimalString(computedSlip.weekendOvertimeHours),
+				: toDecimalString(computedSlip.weekendOvertimeHours),
 		publicHolidayOvertimeHours:
 			computedSlip.publicHolidayOvertimeHours === null
 				? null
-				: toPayrollDecimalString(computedSlip.publicHolidayOvertimeHours),
+				: toDecimalString(computedSlip.publicHolidayOvertimeHours),
 		unpaidLeaveDays: computedSlip.unpaidLeaveDays,
 		halfPayLeaveDays: computedSlip.halfPayLeaveDays,
-		leaveDeductionAmount: toPayrollDecimalString(computedSlip.leaveDeductionAmount),
-		nssfTier1Employee: toPayrollDecimalString(computedSlip.nssfTier1Employee),
-		nssfTier1Employer: toPayrollDecimalString(computedSlip.nssfTier1Employer),
-		nssfTier2Employee: toPayrollDecimalString(computedSlip.nssfTier2Employee),
-		nssfTier2Employer: toPayrollDecimalString(computedSlip.nssfTier2Employer),
-		nssfEmployee: toPayrollDecimalString(computedSlip.nssfEmployee),
-		nssfEmployer: toPayrollDecimalString(computedSlip.nssfEmployer),
-		shifEmployee: toPayrollDecimalString(computedSlip.shifEmployee),
-		shifEmployer: toPayrollDecimalString(computedSlip.shifEmployer),
-		ahlEmployee: toPayrollDecimalString(computedSlip.ahlEmployee),
-		ahlEmployer: toPayrollDecimalString(computedSlip.ahlEmployer),
-		nitaLevy: toPayrollDecimalString(computedSlip.nitaLevy),
-		pensionAllowableDeduction: toPayrollDecimalString(computedSlip.pensionAllowableDeduction),
-		mortgageAllowableDeduction: toPayrollDecimalString(computedSlip.mortgageAllowableDeduction),
-		postRetirementAllowableDeduction: toPayrollDecimalString(
+		leaveDeductionAmount: toDecimalString(computedSlip.leaveDeductionAmount),
+		nssfTier1Employee: toDecimalString(computedSlip.nssfTier1Employee),
+		nssfTier1Employer: toDecimalString(computedSlip.nssfTier1Employer),
+		nssfTier2Employee: toDecimalString(computedSlip.nssfTier2Employee),
+		nssfTier2Employer: toDecimalString(computedSlip.nssfTier2Employer),
+		nssfEmployee: toDecimalString(computedSlip.nssfEmployee),
+		nssfEmployer: toDecimalString(computedSlip.nssfEmployer),
+		shifEmployee: toDecimalString(computedSlip.shifEmployee),
+		shifEmployer: toDecimalString(computedSlip.shifEmployer),
+		ahlEmployee: toDecimalString(computedSlip.ahlEmployee),
+		ahlEmployer: toDecimalString(computedSlip.ahlEmployer),
+		nitaLevy: toDecimalString(computedSlip.nitaLevy),
+		pensionAllowableDeduction: toDecimalString(computedSlip.pensionAllowableDeduction),
+		mortgageAllowableDeduction: toDecimalString(computedSlip.mortgageAllowableDeduction),
+		postRetirementAllowableDeduction: toDecimalString(
 			computedSlip.postRetirementAllowableDeduction
 		),
-		mealAllowanceExempt: toPayrollDecimalString(computedSlip.mealAllowanceExempt),
-		nonCashBenefitExempt: toPayrollDecimalString(computedSlip.nonCashBenefitExempt),
-		taxableIncome: toPayrollDecimalString(computedSlip.taxableIncome),
-		grossTax: toPayrollDecimalString(computedSlip.grossTax),
-		personalRelief: toPayrollDecimalString(computedSlip.personalRelief),
-		insuranceRelief: toPayrollDecimalString(computedSlip.insuranceRelief),
-		netPaye: toPayrollDecimalString(computedSlip.netPaye),
+		mealAllowanceExempt: toDecimalString(computedSlip.mealAllowanceExempt),
+		nonCashBenefitExempt: toDecimalString(computedSlip.nonCashBenefitExempt),
+		taxableIncome: toDecimalString(computedSlip.taxableIncome),
+		grossTax: toDecimalString(computedSlip.grossTax),
+		personalRelief: toDecimalString(computedSlip.personalRelief),
+		insuranceRelief: toDecimalString(computedSlip.insuranceRelief),
+		netPaye: toDecimalString(computedSlip.netPaye),
 		payeBandBreakdown: computedSlip.payeBandBreakdown,
-		pensionEmployeeDeduction: toPayrollDecimalString(computedSlip.pensionEmployeeDeduction),
-		pensionEmployerContribution: toPayrollDecimalString(computedSlip.pensionEmployerContribution),
-		totalEmployerCost: toPayrollDecimalString(computedSlip.totalEmployerCost),
-		totalLoanDeductions: toPayrollDecimalString(computedSlip.totalLoanDeductions),
-		totalAdvanceRecoveries: toPayrollDecimalString(computedSlip.totalAdvanceRecoveries),
-		totalOtherDeductions: toPayrollDecimalString(computedSlip.totalOtherDeductions),
-		helbDeduction: toPayrollDecimalString(computedSlip.helbDeduction),
-		totalStatutoryDeductions: toPayrollDecimalString(computedSlip.totalStatutoryDeductions),
-		totalVoluntaryDeductions: toPayrollDecimalString(computedSlip.totalVoluntaryDeductions),
-		totalDeductions: toPayrollDecimalString(computedSlip.totalDeductions),
-		netPay: toPayrollDecimalString(computedSlip.netPay),
+		pensionEmployeeDeduction: toDecimalString(computedSlip.pensionEmployeeDeduction),
+		pensionEmployerContribution: toDecimalString(computedSlip.pensionEmployerContribution),
+		totalEmployerCost: toDecimalString(computedSlip.totalEmployerCost),
+		totalLoanDeductions: toDecimalString(computedSlip.totalLoanDeductions),
+		totalAdvanceRecoveries: toDecimalString(computedSlip.totalAdvanceRecoveries),
+		totalOtherDeductions: toDecimalString(computedSlip.totalOtherDeductions),
+		helbDeduction: toDecimalString(computedSlip.helbDeduction),
+		totalStatutoryDeductions: toDecimalString(computedSlip.totalStatutoryDeductions),
+		totalVoluntaryDeductions: toDecimalString(computedSlip.totalVoluntaryDeductions),
+		totalDeductions: toDecimalString(computedSlip.totalDeductions),
+		netPay: toDecimalString(computedSlip.netPay),
 		twoThirdsCapApplied: computedSlip.twoThirdsCapApplied,
 		twoThirdsCapAmount:
 			computedSlip.twoThirdsCapAmount === null
 				? null
-				: toPayrollDecimalString(computedSlip.twoThirdsCapAmount),
+				: toDecimalString(computedSlip.twoThirdsCapAmount),
 	};
 }
 
@@ -656,7 +609,7 @@ async function insertPayrollDeductions(
 			employeeId,
 			deductionType: line.deductionType,
 			description: line.description,
-			amount: toPayrollDecimalString(line.amount),
+			amount: toDecimalString(line.amount),
 			loanId: line.loanId,
 			advanceId: line.advanceId,
 		}))
@@ -755,14 +708,14 @@ async function processLoanRepaymentWithAmount(
 	const journalLinesForRepayment = [
 		{
 			accountId: accountMappings.loan_deductions_payable,
-			amount: toPayrollDecimalString(breakdown.totalPayment),
+			amount: toDecimalString(breakdown.totalPayment),
 			dc: "debit" as const,
 			lineNumber: 1,
 			memo: `Loan repayment ${loan.id}`,
 		},
 		{
 			accountId: accountMappings.loans_receivable,
-			amount: toPayrollDecimalString(breakdown.totalPayment),
+			amount: toDecimalString(breakdown.totalPayment),
 			dc: "credit" as const,
 			lineNumber: 2,
 			memo: `Loan repayment ${loan.id}`,
@@ -793,11 +746,11 @@ async function processLoanRepaymentWithAmount(
 			repaymentDate,
 			periodMonth: params.periodMonth,
 			periodYear: params.periodYear,
-			principalComponent: toPayrollDecimalString(breakdown.principalComponent),
-			interestComponent: toPayrollDecimalString(breakdown.interestComponent),
-			totalRepayment: toPayrollDecimalString(breakdown.totalPayment),
-			balanceBefore: toPayrollDecimalString(loan.outstandingBalance),
-			balanceAfter: toPayrollDecimalString(breakdown.balanceAfter),
+			principalComponent: toDecimalString(breakdown.principalComponent),
+			interestComponent: toDecimalString(breakdown.interestComponent),
+			totalRepayment: toDecimalString(breakdown.totalPayment),
+			balanceBefore: toDecimalString(loan.outstandingBalance),
+			balanceAfter: toDecimalString(breakdown.balanceAfter),
 			isEarlySettlement: false,
 			payrollSlipId: params.payrollSlipId,
 			journalEntryId,
@@ -807,11 +760,11 @@ async function processLoanRepaymentWithAmount(
 	await tx
 		.update(employeeLoans)
 		.set({
-			outstandingBalance: toPayrollDecimalString(breakdown.balanceAfter),
-			totalPrincipalPaid: toPayrollDecimalString(
+			outstandingBalance: toDecimalString(breakdown.balanceAfter),
+			totalPrincipalPaid: toDecimalString(
 				toNumber(loan.totalPrincipalPaid) + breakdown.principalComponent
 			),
-			totalInterestPaid: toPayrollDecimalString(
+			totalInterestPaid: toDecimalString(
 				toNumber(loan.totalInterestPaid) + breakdown.interestComponent
 			),
 			instalmentsPaid: loan.instalmentsPaid + 1,
@@ -880,22 +833,22 @@ async function processAdvanceRecoveryWithAmount(
 		throw new Error(`Salary advance ${advance.id} already has a recovery for this period.`);
 	}
 
-	const recoveryAmount = roundPayrollAmount(
+	const recoveryAmount = roundDecimal(
 		Math.min(params.amount, toNumber(advance.outstandingBalance))
 	);
-	const balanceAfter = roundPayrollAmount(toNumber(advance.outstandingBalance) - recoveryAmount);
+	const balanceAfter = roundDecimal(toNumber(advance.outstandingBalance) - recoveryAmount);
 	const recoveryDate = todayIsoDate();
 	const journalLines = [
 		{
 			accountId: accountMappings.salary_advance_payable,
-			amount: toPayrollDecimalString(recoveryAmount),
+			amount: toDecimalString(recoveryAmount),
 			dc: "debit" as const,
 			lineNumber: 1,
 			memo: `Salary advance recovery ${advance.id}`,
 		},
 		{
 			accountId: accountMappings.salary_advance_receivable,
-			amount: toPayrollDecimalString(recoveryAmount),
+			amount: toDecimalString(recoveryAmount),
 			dc: "credit" as const,
 			lineNumber: 2,
 			memo: `Salary advance recovery ${advance.id}`,
@@ -926,9 +879,9 @@ async function processAdvanceRecoveryWithAmount(
 			recoveryDate,
 			periodMonth: params.periodMonth,
 			periodYear: params.periodYear,
-			recoveryAmount: toPayrollDecimalString(recoveryAmount),
-			balanceBefore: toPayrollDecimalString(advance.outstandingBalance),
-			balanceAfter: toPayrollDecimalString(balanceAfter),
+			recoveryAmount: toDecimalString(recoveryAmount),
+			balanceBefore: toDecimalString(advance.outstandingBalance),
+			balanceAfter: toDecimalString(balanceAfter),
 			isLastRecovery: balanceAfter <= 0,
 			payrollSlipId: params.payrollSlipId,
 			clearingJournalEntryId: journalEntryId,
@@ -938,9 +891,9 @@ async function processAdvanceRecoveryWithAmount(
 	await tx
 		.update(salaryAdvances)
 		.set({
-			outstandingBalance: toPayrollDecimalString(balanceAfter),
+			outstandingBalance: toDecimalString(balanceAfter),
 			recoveriesProcessed: advance.recoveriesProcessed + 1,
-			totalRecovered: toPayrollDecimalString(toNumber(advance.totalRecovered) + recoveryAmount),
+			totalRecovered: toDecimalString(toNumber(advance.totalRecovered) + recoveryAmount),
 			status:
 				balanceAfter <= 0
 					? SALARY_ADVANCE_STATUS.FULLY_RECOVERED
@@ -1153,7 +1106,7 @@ async function runPayrollCalculation(
 		};
 	}
 
-	const structuresByEmployeeId = await getStructuresForEmployees(
+	const structuresByEmployeeId = await getActiveStructuresAsMap(
 		employeesForPeriod.map((employee) => employee.id),
 		period.periodEnd
 	);
@@ -1685,7 +1638,7 @@ async function addBonusToSlip(
 			await tx.insert(payrollPeriodBonuses).values({
 				payrollPeriodId: slip.payrollPeriodId,
 				employeeId: slip.employeeId,
-				amount: toPayrollDecimalString(params.bonusAmount),
+				amount: toDecimalString(params.bonusAmount),
 				description: params.description,
 				notes: normalizeText(params.notes),
 				createdBy: addedBy,
@@ -1809,7 +1762,7 @@ async function addPayrollPeriodBonus(payload: BonusFormValues, createdBy: string
 			payload.employees.map((e) => ({
 				payrollPeriodId: payload.periodId,
 				employeeId: e.employeeId,
-				amount: toPayrollDecimalString(e.amount),
+				amount: toDecimalString(e.amount),
 				description: e.description,
 				createdBy,
 			}))
@@ -1851,7 +1804,7 @@ async function addPayrollPeriodOtherDeduction(payload: DeductionFormValues, crea
 				payrollPeriodId: payload.payrollPeriodId,
 				employeeId: e.employeeId,
 				deductionType: e.deductionType,
-				amount: toPayrollDecimalString(e.amount),
+				amount: toDecimalString(e.amount),
 				description: e.description,
 				createdBy,
 			}))

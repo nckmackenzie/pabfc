@@ -215,37 +215,39 @@ export const toNumber = (value: NumericValue) => {
 };
 
 export function toNullableNumber(value: NumericValue): number | null {
-    if (value === null || value === undefined || value === "") {
-        return null;
-    }
+	if (value === null || value === undefined || value === "") {
+		return null;
+	}
 
-    try {
-        return new Big(value).toNumber();
-    } catch {
-        return null;
-    }
+	try {
+		return new Big(value).toNumber();
+	} catch {
+		return null;
+	}
 }
 
 export function toDecimalString(value: NumericValue, decimals = 2) {
-  return toBig(value).round(decimals).toFixed(decimals);
+	return toBig(value).round(decimals, Big.roundHalfUp).toFixed(decimals);
 }
 
 export function toDecimalNumber(value: NumericValue, decimals = 2) {
-  return Number(toDecimalString(value, decimals));
+	return Number(toDecimalString(value, decimals));
 }
 
-
-
 export function toBig(value: NumericValue) {
-  if (value === null || value === undefined || value === "") {
+	if (value === null || value === undefined || value === "") {
 		return new Big(0);
 	}
 
-  try {
-	  return new Big(value);
-  } catch {
-	  return new Big(0);
-  }
+	try {
+		return new Big(value);
+	} catch {
+		return new Big(0);
+	}
+}
+
+export function roundDecimal(value: NumericValue, decimals = 2) {
+	return Number(toBig(value).round(decimals, Big.roundHalfUp).toFixed(decimals));
 }
 
 export function normalizeText(value: string | null | undefined): string | null {

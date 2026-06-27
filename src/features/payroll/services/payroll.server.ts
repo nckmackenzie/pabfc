@@ -1,6 +1,5 @@
-import { and, asc, eq, gte, isNull, lte, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from "drizzle-orm";
 import type { Transaction } from "./payroll-slips.api";
-import { toPayrollDecimalString } from "../lib/helpers";
 import {
 	LOAN_STATUS,
 	PAYROLL_PERIOD_STATUS,
@@ -18,14 +17,16 @@ import {
 	payrollSlips,
 	salaryAdvanceRecoveries,
 	salaryAdvances,
+	salaryStructures,
 } from "@/drizzle/schema";
-import { normalizeText, toNumber } from "@/lib/helpers";
+import { normalizeText, toDecimalString, toNumber } from "@/lib/helpers";
 import type {
 	LoanRepaymentRecord,
 	PayrollPeriodRecord,
 	PayrollPeriodTotals,
 	PayrollSlipRecord,
 	SalaryAdvanceRecoveryRecord,
+	SalaryStructureRecord,
 	SkippedEmployee,
 	SlipWarning,
 } from "../lib/payroll.types";
@@ -133,11 +134,11 @@ async function reverseLoanRepayment(tx: Transaction, repayment: LoanRepaymentRec
 	await tx
 		.update(employeeLoans)
 		.set({
-			outstandingBalance: toPayrollDecimalString(repayment.balanceBefore),
-			totalPrincipalPaid: toPayrollDecimalString(
+			outstandingBalance: toDecimalString(repayment.balanceBefore),
+			totalPrincipalPaid: toDecimalString(
 				toNumber(loan.totalPrincipalPaid) - toNumber(repayment.principalComponent)
 			),
-			totalInterestPaid: toPayrollDecimalString(
+			totalInterestPaid: toDecimalString(
 				toNumber(loan.totalInterestPaid) - toNumber(repayment.interestComponent)
 			),
 			instalmentsPaid: Math.max(loan.instalmentsPaid - 1, 0),
@@ -167,9 +168,9 @@ async function reverseAdvanceRecovery(tx: Transaction, recovery: SalaryAdvanceRe
 	await tx
 		.update(salaryAdvances)
 		.set({
-			outstandingBalance: toPayrollDecimalString(recovery.balanceBefore),
+			outstandingBalance: toDecimalString(recovery.balanceBefore),
 			recoveriesProcessed: Math.max(advance.recoveriesProcessed - 1, 0),
-			totalRecovered: toPayrollDecimalString(
+			totalRecovered: toDecimalString(
 				toNumber(advance.totalRecovered) - toNumber(recovery.recoveryAmount)
 			),
 			status:
@@ -264,20 +265,20 @@ export async function updatePayrollPeriodAggregates(
 	const [updated] = await dbClient
 		.update(payrollPeriods)
 		.set({
-			totalGrossPay: toPayrollDecimalString(totals.totalGrossPay),
-			totalNetPay: toPayrollDecimalString(totals.totalNetPay),
-			totalPaye: toPayrollDecimalString(totals.totalPaye),
-			totalNssfEmployee: toPayrollDecimalString(totals.totalNssfEmployee),
-			totalNssfEmployer: toPayrollDecimalString(totals.totalNssfEmployer),
-			totalShifEmployee: toPayrollDecimalString(totals.totalShifEmployee),
-			totalShifEmployer: toPayrollDecimalString(totals.totalShifEmployer),
-			totalAhlEmployee: toPayrollDecimalString(totals.totalAhlEmployee),
-			totalAhlEmployer: toPayrollDecimalString(totals.totalAhlEmployer),
-			totalNita: toPayrollDecimalString(totals.totalNita),
-			totalLoanDeductions: toPayrollDecimalString(totals.totalLoanDeductions),
-			totalAdvanceRecoveries: toPayrollDecimalString(totals.totalAdvanceRecoveries),
-			totalOtherDeductions: toPayrollDecimalString(totals.totalOtherDeductions),
-			totalPensionEmployer: toPayrollDecimalString(totals.totalPensionEmployer),
+			totalGrossPay: toDecimalString(totals.totalGrossPay),
+			totalNetPay: toDecimalString(totals.totalNetPay),
+			totalPaye: toDecimalString(totals.totalPaye),
+			totalNssfEmployee: toDecimalString(totals.totalNssfEmployee),
+			totalNssfEmployer: toDecimalString(totals.totalNssfEmployer),
+			totalShifEmployee: toDecimalString(totals.totalShifEmployee),
+			totalShifEmployer: toDecimalString(totals.totalShifEmployer),
+			totalAhlEmployee: toDecimalString(totals.totalAhlEmployee),
+			totalAhlEmployer: toDecimalString(totals.totalAhlEmployer),
+			totalNita: toDecimalString(totals.totalNita),
+			totalLoanDeductions: toDecimalString(totals.totalLoanDeductions),
+			totalAdvanceRecoveries: toDecimalString(totals.totalAdvanceRecoveries),
+			totalOtherDeductions: toDecimalString(totals.totalOtherDeductions),
+			totalPensionEmployer: toDecimalString(totals.totalPensionEmployer),
 			employeeCount: totals.employeeCount,
 			processingWarnings: options?.processingWarnings
 				? JSON.stringify(options.processingWarnings)
@@ -329,4 +330,31 @@ export async function cancelProcessedPayrollPeriod(
 		cancelledAt: new Date(),
 		cancellationReason: reason,
 	});
+}
+
+export async function getActiveStructuresAsMap(
+	employeeIds: string[],
+	periodDate: string,
+	dbClient: PayrollDbClient = db
+): Promise<Map<string, SalaryStructureRecord>> {
+	if (!employeeIds.length) return new Map();
+
+	const rows = await dbClient.query.salaryStructures.findMany({
+		where: and(
+			inArray(salaryStructures.employeeId, employeeIds),
+			lte(salaryStructures.effectiveFrom, periodDate),
+			or(isNull(salaryStructures.effectiveTo), gte(salaryStructures.effectiveTo, periodDate))
+		),
+		orderBy: [
+			asc(salaryStructures.employeeId),
+			desc(salaryStructures.effectiveFrom),
+			desc(salaryStructures.id),
+		],
+	});
+
+	const map = new Map<string, SalaryStructureRecord>();
+	for (const row of rows) {
+		if (!map.has(row.employeeId)) map.set(row.employeeId, row);
+	}
+	return map;
 }

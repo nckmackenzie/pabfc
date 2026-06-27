@@ -1,42 +1,12 @@
 import { z } from "zod";
 import { OVERTIME_STATUS } from "@/features/payroll/lib/payroll-constants";
+import { nullableTrimmedString, requiredNumberSchemaEntry } from "@/lib/schema-rules";
 
 const overtimeStatusValues = [
 	OVERTIME_STATUS.DRAFT,
 	OVERTIME_STATUS.APPROVED,
 	OVERTIME_STATUS.PAID,
 ] as const;
-
-const notesSchema = z
-	.string()
-	.trim()
-	.max(5000, { message: "Notes must be 5000 characters or less" })
-	.nullish()
-	.transform((value) => {
-		if (value === null || value === undefined) {
-			return null;
-		}
-
-		return value === "" ? null : value;
-	});
-
-const nonNegativeHoursField = (label: string) =>
-	z.coerce
-		.number({
-			error: `${label} must be a number`,
-		})
-		.refine((value) => Number.isFinite(value) && value >= 0, {
-			message: `${label} must be zero or greater`,
-		});
-
-const nonNegativeHoursFormField = (label: string) =>
-	z
-		.number({
-			error: `${label} must be a number`,
-		})
-		.refine((value) => Number.isFinite(value) && value >= 0, {
-			message: `${label} must be zero or greater`,
-		});
 
 export const overtimeRecordIdSchema = z.string().trim().min(1, "Overtime record is required");
 export const overtimeEmployeeIdSchema = z.string().trim().min(1, "Employee is required");
@@ -52,10 +22,10 @@ export const overtimeRecordCreateSchema = z
 		periodYear: z.coerce.number({
 			error: "Period year must be a number",
 		}),
-		weekdayOvertimeHours: nonNegativeHoursField("Weekday overtime hours"),
-		weekendOvertimeHours: nonNegativeHoursField("Weekend overtime hours"),
-		publicHolidayOvertimeHours: nonNegativeHoursField("Public holiday overtime hours"),
-		notes: notesSchema,
+		weekdayOvertimeHours: requiredNumberSchemaEntry(),
+		weekendOvertimeHours: requiredNumberSchemaEntry(),
+		publicHolidayOvertimeHours: requiredNumberSchemaEntry(),
+		notes: nullableTrimmedString,
 	})
 	.superRefine((value, ctx) => {
 		if (!Number.isInteger(value.periodMonth) || value.periodMonth < 1 || value.periodMonth > 12) {
@@ -97,9 +67,9 @@ export const overtimeRecordCreateFormSchema = z
 		periodYear: z.number({
 			error: "Period year must be a number",
 		}),
-		weekdayOvertimeHours: nonNegativeHoursFormField("Weekday overtime hours"),
-		weekendOvertimeHours: nonNegativeHoursFormField("Weekend overtime hours"),
-		publicHolidayOvertimeHours: nonNegativeHoursFormField("Public holiday overtime hours"),
+		weekdayOvertimeHours: requiredNumberSchemaEntry(),
+		weekendOvertimeHours: requiredNumberSchemaEntry(),
+		publicHolidayOvertimeHours: requiredNumberSchemaEntry(),
 		notes: z
 			.string()
 			.trim()
@@ -139,10 +109,10 @@ export const overtimeRecordCreateFormSchema = z
 export const overtimeRecordUpdatePayloadSchema = z
 	.object({
 		id: z.string().optional(),
-		weekdayOvertimeHours: nonNegativeHoursField("Weekday overtime hours"),
-		weekendOvertimeHours: nonNegativeHoursField("Weekend overtime hours"),
-		publicHolidayOvertimeHours: nonNegativeHoursField("Public holiday overtime hours"),
-		notes: notesSchema,
+		weekdayOvertimeHours: requiredNumberSchemaEntry("Weekday overtime hours"),
+		weekendOvertimeHours: requiredNumberSchemaEntry("Weekend overtime hours"),
+		publicHolidayOvertimeHours: requiredNumberSchemaEntry("Public holiday overtime hours"),
+		notes: nullableTrimmedString,
 	})
 	.superRefine((value, ctx) => {
 		if (

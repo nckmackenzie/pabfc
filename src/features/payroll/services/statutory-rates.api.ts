@@ -7,11 +7,7 @@ import {
 	type PayrollPreviewSalaryStructureComponents,
 } from "@/features/payroll/lib/paye-engine";
 import { resolveStatutoryRates } from "@/features/payroll/lib/payroll-rate-resolver";
-import {
-	doSalaryRangesOverlap,
-	getSalaryHistoryStatus,
-	toPayrollDecimalString,
-} from "@/features/payroll/lib/helpers";
+import { doSalaryRangesOverlap, getSalaryHistoryStatus } from "@/features/payroll/lib/helpers";
 import {
 	STATUTORY_RATE_MULTI_ROW_CATEGORIES,
 	STATUTORY_RATE_CATEGORY_KEYS,
@@ -26,7 +22,7 @@ import {
 	statutoryRateHistorySchema,
 	supersedeStatutoryRateSchema,
 } from "@/features/payroll/services/statutory-rates.schemas";
-import { dateFormat, normalizeText, toNumber } from "@/lib/helpers";
+import { dateFormat, normalizeText, toDecimalString, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -97,10 +93,10 @@ function toRateInsertValues(payload: StatutoryRateCreatePayload, createdBy: stri
 		label: payload.label.trim(),
 		effectiveFrom: payload.effectiveFrom,
 		effectiveTo: payload.effectiveTo ?? null,
-		lowerBound: payload.lowerBound === null ? null : toPayrollDecimalString(payload.lowerBound),
-		upperBound: payload.upperBound === null ? null : toPayrollDecimalString(payload.upperBound),
+		lowerBound: payload.lowerBound === null ? null : toDecimalString(payload.lowerBound),
+		upperBound: payload.upperBound === null ? null : toDecimalString(payload.upperBound),
 		rate: payload.rate === null ? null : Number(payload.rate).toFixed(6),
-		fixedAmount: payload.fixedAmount === null ? null : toPayrollDecimalString(payload.fixedAmount),
+		fixedAmount: payload.fixedAmount === null ? null : toDecimalString(payload.fixedAmount),
 		notes: normalizeText(payload.notes),
 		createdBy,
 	};

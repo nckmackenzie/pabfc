@@ -28,8 +28,7 @@ import type {
 	PayrollPeriodView,
 	PayrollTransitionAbort,
 } from "./types";
-import { roundPayrollAmount } from "../helpers";
-import { toNumber } from "@/lib/helpers";
+import { roundDecimal, toNumber } from "@/lib/helpers";
 import type { PayrollPeriodRecord } from "../payroll.types";
 import type { PERIOD_NUMERIC_FIELDS } from "../../services/payroll-periods.api";
 
@@ -101,7 +100,7 @@ export function toPayrollPeriodView(row: PayrollPeriodRecord): PayrollPeriodView
 }
 
 export function sumNumbers(values: Array<number | null | undefined>) {
-	return roundPayrollAmount(values.reduce<number>((total, value) => total + (value ?? 0), 0));
+	return roundDecimal(values.reduce<number>((total, value) => total + (value ?? 0), 0));
 }
 
 export function parseJsonArray<T>(value: string | null | undefined): T[] {

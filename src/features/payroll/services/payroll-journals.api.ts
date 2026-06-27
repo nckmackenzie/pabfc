@@ -25,8 +25,7 @@ import {
 	type PayrollAccountRole,
 	type PayrollRemittanceItemType,
 } from "@/features/payroll/lib/payroll-constants";
-import { toNumber } from "@/lib/helpers";
-import { roundPayrollAmount, toPayrollDecimalString } from "@/features/payroll/lib/helpers";
+import { roundDecimal, toDecimalString, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -170,7 +169,7 @@ function aggregateRemittedItems(
 	) as Record<PayrollRemittanceItemType, string | undefined>;
 
 	for (const item of items) {
-		amountsByType[item.type] = roundPayrollAmount(amountsByType[item.type] + item.amountRemitted);
+		amountsByType[item.type] = roundDecimal(amountsByType[item.type] + item.amountRemitted);
 		if (!referencesByType[item.type] && item.reference) {
 			referencesByType[item.type] = item.reference;
 		}
@@ -261,13 +260,9 @@ async function getRequiredRemittanceAmounts(period: PayrollPeriodRecord, tx?: Tr
 
 	return {
 		paye: toNumber(period.totalPaye),
-		nssf: roundPayrollAmount(
-			toNumber(period.totalNssfEmployee) + toNumber(period.totalNssfEmployer)
-		),
-		shif: roundPayrollAmount(
-			toNumber(period.totalShifEmployee) + toNumber(period.totalShifEmployer)
-		),
-		ahl: roundPayrollAmount(toNumber(period.totalAhlEmployee) + toNumber(period.totalAhlEmployer)),
+		nssf: roundDecimal(toNumber(period.totalNssfEmployee) + toNumber(period.totalNssfEmployer)),
+		shif: roundDecimal(toNumber(period.totalShifEmployee) + toNumber(period.totalShifEmployer)),
+		ahl: roundDecimal(toNumber(period.totalAhlEmployee) + toNumber(period.totalAhlEmployer)),
 		nita: toNumber(period.totalNita),
 		helb: totalHelb,
 	} satisfies Record<PayrollRemittanceItemType, number>;
@@ -281,7 +276,7 @@ async function getProcessedHelbTotal(periodId: string, tx?: Transaction) {
 		where: and(eq(payrollSlips.payrollPeriodId, periodId), ne(payrollSlips.status, "cancelled")),
 	});
 
-	return roundPayrollAmount(rows.reduce((total, row) => total + toNumber(row.helbDeduction), 0));
+	return roundDecimal(rows.reduce((total, row) => total + toNumber(row.helbDeduction), 0));
 }
 
 async function listPayrollRemittanceEntries(periodId: string, tx?: Transaction) {
@@ -332,7 +327,7 @@ async function getRemittanceCompletionStatus(
 	) as Record<PayrollRemittanceItemType, number>;
 
 	for (const item of lineItems) {
-		remittedAmounts[item.remittanceType] = roundPayrollAmount(
+		remittedAmounts[item.remittanceType] = roundDecimal(
 			remittedAmounts[item.remittanceType] + toNumber(item.amountRemitted)
 		);
 	}
@@ -443,14 +438,14 @@ async function postSalaryDisbursementJournal(
 			const journalLinesToInsert = [
 				{
 					accountId: accountMappingsResult.data.net_salaries_payable,
-					amount: toPayrollDecimalString(totalNetPay),
+					amount: toDecimalString(totalNetPay),
 					dc: "debit" as const,
 					lineNumber: 1,
 					memo: `Payroll disbursement ${period.name}`,
 				},
 				{
 					accountId: payload.disbursementAccountId,
-					amount: toPayrollDecimalString(totalNetPay),
+					amount: toDecimalString(totalNetPay),
 					dc: "credit" as const,
 					lineNumber: 2,
 					memo: `Payroll disbursement ${period.name}`,
@@ -598,20 +593,20 @@ async function postStatutoryRemittanceJournal(
 
 			const existingRemittanceEntries = await listPayrollRemittanceEntries(period.id, tx);
 			const sequence = existingRemittanceEntries.length + 1;
-			const totalAmount = roundPayrollAmount(
+			const totalAmount = roundDecimal(
 				remittedItems.reduce((total, item) => total + item.amountRemitted, 0)
 			);
 			const journalLinesToInsert = [
 				...remittedItems.map((item, index) => ({
 					accountId: accountMappingsResult.data[PAYROLL_REMITTANCE_ROLE_BY_TYPE[item.type]],
-					amount: toPayrollDecimalString(item.amountRemitted),
+					amount: toDecimalString(item.amountRemitted),
 					dc: "debit" as const,
 					lineNumber: index + 1,
 					memo: buildRemittanceLineMemo(item.type, period.name, item.reference),
 				})),
 				{
 					accountId: payload.remittanceAccountId,
-					amount: toPayrollDecimalString(totalAmount),
+					amount: toDecimalString(totalAmount),
 					dc: "credit" as const,
 					lineNumber: remittedItems.length + 1,
 					memo: `Payroll remittance ${period.name}`,
@@ -644,7 +639,7 @@ async function postStatutoryRemittanceJournal(
 					journalEntryId,
 					payrollPeriodId: period.id,
 					remittanceType: item.type,
-					amountRemitted: toPayrollDecimalString(item.amountRemitted),
+					amountRemitted: toDecimalString(item.amountRemitted),
 					referenceNumber: item.reference ?? null,
 				}))
 			);
@@ -784,7 +779,7 @@ async function getPayrollJournalSummary(
 				id: entry.id,
 				postedAt: toPostedDate(entry),
 				itemsRemitted,
-				totalAmount: roundPayrollAmount(
+				totalAmount: roundDecimal(
 					itemsRemitted.reduce((total, item) => total + item.amountRemitted, 0)
 				),
 			};

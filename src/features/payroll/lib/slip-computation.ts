@@ -1,5 +1,4 @@
 import type { PayrollDeductionType } from "@/drizzle/schema";
-import { roundPayrollAmount } from "@/features/payroll/lib/helpers";
 import {
 	computeAHL,
 	computeGrossTax,
@@ -11,6 +10,7 @@ import {
 } from "@/features/payroll/lib/paye-engine";
 import type { ResolvedStatutoryRates } from "@/features/payroll/lib/payroll-rate-resolver";
 import { applyProration, type ProrationReason } from "@/features/payroll/lib/proration";
+import { roundDecimal } from "@/lib/helpers";
 import { failure, success, type Result } from "@/lib/result";
 
 type OtherDeductionType = Exclude<PayrollDeductionType, "company_loan" | "salary_advance" | "helb">;
@@ -172,11 +172,11 @@ export type ComputedEmployeeSlipResult = {
 };
 
 function sumAmounts(values: number[]) {
-	return roundPayrollAmount(values.reduce((total, value) => total + value, 0));
+	return roundDecimal(values.reduce((total, value) => total + value, 0));
 }
 
 function roundValue(value: number) {
-	return roundPayrollAmount(value);
+	return roundDecimal(value);
 }
 
 function applyProrationIfNeeded(value: number, input: SlipComputationInput) {

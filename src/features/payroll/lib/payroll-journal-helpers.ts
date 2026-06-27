@@ -3,9 +3,8 @@ import type {
 	PayrollRemittanceItemType,
 } from "@/features/payroll/lib/payroll-constants";
 import { PAYROLL_REMITTANCE_ITEM_TYPES } from "@/features/payroll/lib/payroll-constants";
-import { roundPayrollAmount, toPayrollBig } from "@/features/payroll/lib/helpers";
 import type { payrollSlips } from "@/drizzle/schema";
-import { toNumber } from "@/lib/helpers";
+import { roundDecimal, toBig, toNumber } from "@/lib/helpers";
 
 export type PayrollJournalLineInput = {
 	accountId: number;
@@ -46,21 +45,17 @@ export type RemittanceCompletionStatus = {
 	isFullyRemitted: boolean;
 };
 
-function toRoundedAmount(value: number) {
-	return roundPayrollAmount(value);
-}
-
 function getZeroAmountLineNumbers(lineInputs: Omit<PayrollJournalLineInput, "lineNumber">[]) {
 	let lineNumber = 1;
 
 	return lineInputs.flatMap((line) => {
-		if (toRoundedAmount(line.amount) <= 0) {
+		if (roundDecimal(line.amount) <= 0) {
 			return [];
 		}
 
 		const numberedLine = {
 			...line,
-			amount: toRoundedAmount(line.amount),
+			amount: roundDecimal(line.amount),
 			lineNumber,
 		};
 		lineNumber += 1;
@@ -184,21 +179,21 @@ export function getJournalBalanceSummary(
 			return total;
 		}
 
-		return total.plus(toPayrollBig(line.amount));
-	}, toPayrollBig(0));
+		return total.plus(toBig(line.amount));
+	}, toBig(0));
 	const creditTotal = lines.reduce((total, line) => {
 		if (line.dc !== "credit") {
 			return total;
 		}
 
-		return total.plus(toPayrollBig(line.amount));
-	}, toPayrollBig(0));
+		return total.plus(toBig(line.amount));
+	}, toBig(0));
 	const difference = debitTotal.minus(creditTotal);
 
 	return {
-		totalDebits: toRoundedAmount(Number(debitTotal.toFixed(2))),
-		totalCredits: toRoundedAmount(Number(creditTotal.toFixed(2))),
-		difference: toRoundedAmount(Number(difference.toFixed(2))),
+		totalDebits: roundDecimal(Number(debitTotal.toFixed(2))),
+		totalCredits: roundDecimal(Number(creditTotal.toFixed(2))),
+		difference: roundDecimal(Number(difference.toFixed(2))),
 		isBalanced: difference.eq(0),
 	};
 }
@@ -217,9 +212,9 @@ export function buildRemittanceCompletionStatus(
 	remittedAmounts: Record<PayrollRemittanceItemType, number>
 ): RemittanceCompletionStatus {
 	const items = PAYROLL_REMITTANCE_ITEM_TYPES.map((type) => {
-		const requiredAmount = toRoundedAmount(requiredAmounts[type] ?? 0);
-		const remittedAmount = toRoundedAmount(remittedAmounts[type] ?? 0);
-		const outstandingAmount = toRoundedAmount(Math.max(requiredAmount - remittedAmount, 0));
+		const requiredAmount = roundDecimal(requiredAmounts[type] ?? 0);
+		const remittedAmount = roundDecimal(remittedAmounts[type] ?? 0);
+		const outstandingAmount = roundDecimal(Math.max(requiredAmount - remittedAmount, 0));
 		const isComplete = outstandingAmount <= 0;
 
 		return {
@@ -242,41 +237,29 @@ export function sumSlipTotals(
 ): PayrollRecognitionTotals {
 	return rows.reduce<PayrollRecognitionTotals>(
 		(accumulator, slip) => ({
-			totalGrossPay: roundPayrollAmount(accumulator.totalGrossPay + toNumber(slip.grossPay)),
-			totalNssfEmployer: roundPayrollAmount(
-				accumulator.totalNssfEmployer + toNumber(slip.nssfEmployer)
-			),
-			totalShifEmployer: roundPayrollAmount(
-				accumulator.totalShifEmployer + toNumber(slip.shifEmployer)
-			),
-			totalAhlEmployer: roundPayrollAmount(
-				accumulator.totalAhlEmployer + toNumber(slip.ahlEmployer)
-			),
-			totalNitaLevy: roundPayrollAmount(accumulator.totalNitaLevy + toNumber(slip.nitaLevy)),
-			totalPensionEmployer: roundPayrollAmount(
+			totalGrossPay: roundDecimal(accumulator.totalGrossPay + toNumber(slip.grossPay)),
+			totalNssfEmployer: roundDecimal(accumulator.totalNssfEmployer + toNumber(slip.nssfEmployer)),
+			totalShifEmployer: roundDecimal(accumulator.totalShifEmployer + toNumber(slip.shifEmployer)),
+			totalAhlEmployer: roundDecimal(accumulator.totalAhlEmployer + toNumber(slip.ahlEmployer)),
+			totalNitaLevy: roundDecimal(accumulator.totalNitaLevy + toNumber(slip.nitaLevy)),
+			totalPensionEmployer: roundDecimal(
 				accumulator.totalPensionEmployer + toNumber(slip.pensionEmployerContribution)
 			),
-			totalNetPaye: roundPayrollAmount(accumulator.totalNetPaye + toNumber(slip.netPaye)),
-			totalNssfEmployee: roundPayrollAmount(
-				accumulator.totalNssfEmployee + toNumber(slip.nssfEmployee)
-			),
-			totalShifEmployee: roundPayrollAmount(
-				accumulator.totalShifEmployee + toNumber(slip.shifEmployee)
-			),
-			totalAhlEmployee: roundPayrollAmount(
-				accumulator.totalAhlEmployee + toNumber(slip.ahlEmployee)
-			),
-			totalHelb: roundPayrollAmount(accumulator.totalHelb + toNumber(slip.helbDeduction)),
-			totalLoanDeductions: roundPayrollAmount(
+			totalNetPaye: roundDecimal(accumulator.totalNetPaye + toNumber(slip.netPaye)),
+			totalNssfEmployee: roundDecimal(accumulator.totalNssfEmployee + toNumber(slip.nssfEmployee)),
+			totalShifEmployee: roundDecimal(accumulator.totalShifEmployee + toNumber(slip.shifEmployee)),
+			totalAhlEmployee: roundDecimal(accumulator.totalAhlEmployee + toNumber(slip.ahlEmployee)),
+			totalHelb: roundDecimal(accumulator.totalHelb + toNumber(slip.helbDeduction)),
+			totalLoanDeductions: roundDecimal(
 				accumulator.totalLoanDeductions + toNumber(slip.totalLoanDeductions)
 			),
-			totalAdvanceRecoveries: roundPayrollAmount(
+			totalAdvanceRecoveries: roundDecimal(
 				accumulator.totalAdvanceRecoveries + toNumber(slip.totalAdvanceRecoveries)
 			),
-			totalOtherDeductions: roundPayrollAmount(
+			totalOtherDeductions: roundDecimal(
 				accumulator.totalOtherDeductions + toNumber(slip.totalOtherDeductions)
 			),
-			totalNetPay: roundPayrollAmount(accumulator.totalNetPay + toNumber(slip.netPay)),
+			totalNetPay: roundDecimal(accumulator.totalNetPay + toNumber(slip.netPay)),
 		}),
 		{
 			totalGrossPay: 0,
@@ -299,5 +282,5 @@ export function sumSlipTotals(
 }
 
 export function sumValues(values: Array<number | null | undefined>) {
-	return roundPayrollAmount(values.reduce<number>((total, value) => total + (value ?? 0), 0));
+	return roundDecimal(values.reduce<number>((total, value) => total + (value ?? 0), 0));
 }
