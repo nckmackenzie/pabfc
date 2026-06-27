@@ -38,11 +38,7 @@ import {
 	SALARY_ADVANCE_STATUS,
 	type PayrollAccountRole,
 } from "@/features/payroll/lib/payroll-constants";
-import {
-	normalizePayrollText,
-	roundPayrollAmount,
-	toPayrollDecimalString,
-} from "@/features/payroll/lib/helpers";
+import { roundPayrollAmount, toPayrollDecimalString } from "@/features/payroll/lib/helpers";
 import {
 	// cancelProcessedPayrollPeriodFn,
 	runPayrollCalculationFn,
@@ -58,7 +54,7 @@ import {
 	payrollPeriodTransitionSchema,
 	payrollPeriodYearSchema,
 } from "@/features/payroll/services/payroll-period.schemas";
-import { dateFormat, toNumber } from "@/lib/helpers";
+import { dateFormat, normalizeText, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -697,12 +693,9 @@ async function transitionPayrollPeriod({
 			if (targetStatus === PAYROLL_PERIOD_STATUS.CANCELLED) {
 				updateValues.cancelledBy = performedBy;
 				updateValues.cancelledAt = timestamp;
-				updateValues.cancellationReason = normalizePayrollText(cancellationReason);
+				updateValues.cancellationReason = normalizeText(cancellationReason);
 
 				if (isProcessingPeriod) {
-					// await cancelProcessedPayrollPeriodFn({
-					// 	data: { periodId, reason: cancellationReason ?? "Payroll period cancelled" },
-					// });
 					await cancelProcessedPayrollPeriod(
 						periodId,
 						performedBy,

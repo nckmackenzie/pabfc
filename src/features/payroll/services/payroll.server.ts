@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, isNull, lte, ne, or } from "drizzle-orm";
 import type { Transaction } from "./payroll-slips.api";
-import { normalizePayrollText, toPayrollDecimalString } from "../lib/helpers";
+import { toPayrollDecimalString } from "../lib/helpers";
 import {
 	LOAN_STATUS,
 	PAYROLL_PERIOD_STATUS,
@@ -19,7 +19,7 @@ import {
 	salaryAdvanceRecoveries,
 	salaryAdvances,
 } from "@/drizzle/schema";
-import { toNumber } from "@/lib/helpers";
+import { normalizeText, toNumber } from "@/lib/helpers";
 import type {
 	LoanRepaymentRecord,
 	PayrollPeriodRecord,
@@ -241,7 +241,7 @@ export async function reverseSlip(
 			status: "cancelled",
 			cancelledBy: options?.cancelledBy ?? null,
 			cancelledAt: new Date(),
-			cancellationReason: normalizePayrollText(options?.reason ?? null),
+			cancellationReason: normalizeText(options?.reason ?? null),
 		})
 		.where(eq(payrollSlips.id, slip.id));
 }
@@ -293,7 +293,7 @@ export async function updatePayrollPeriodAggregates(
 			cancelledAt: options?.cancelledAt !== undefined ? options.cancelledAt : undefined,
 			cancellationReason:
 				options?.cancellationReason !== undefined
-					? normalizePayrollText(options.cancellationReason)
+					? normalizeText(options.cancellationReason)
 					: undefined,
 			updatedAt: new Date(),
 		})
