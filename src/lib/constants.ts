@@ -112,7 +112,7 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 			{
 				title: "Journal Entries",
 				url: "/app/journal-entries",
-				permission: "journal-entries:view",
+				permission: "journal-entries:create",
 			},
 			{
 				title: "Bankings",
@@ -121,7 +121,8 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 			},
 		],
 		get permissions(): Permission[] {
-			return this.items.map((item) => item.permission as Permission);
+			// return this.items.map((item) => item.permission as Permission);
+			return this.items.flatMap((item) => item.permission);
 		},
 	},
 	{
@@ -175,7 +176,8 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 			},
 		],
 		get permissions(): Permission[] {
-			return this.items.map((item) => item.permission as Permission);
+			// return this.items.map((item) => item.permission as Permission);
+			return this.items.flatMap((item) => item.permission);
 		},
 	},
 	{
@@ -208,7 +210,8 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 			},
 		],
 		get permissions(): Permission[] {
-			return this.items.map((item) => item.permission as Permission);
+			// return this.items.map((item) => item.permission as Permission);
+			return this.items.flatMap((item) => item.permission);
 		},
 	},
 ];

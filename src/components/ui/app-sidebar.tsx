@@ -82,7 +82,7 @@ export function AppSidebar() {
 									if (visibleSubItems.length === 0) return null;
 
 									return (
-										<Collapsible asChild className="group/collapsible">
+										<Collapsible key={item.title} asChild className="group/collapsible">
 											<SidebarMenuItem>
 												<CollapsibleTrigger asChild>
 													<SidebarMenuButton className="capitalize" tooltip={item.title}>
