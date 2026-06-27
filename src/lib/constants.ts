@@ -31,9 +31,8 @@ interface CollapsibleSubMenuItem {
 
 interface CollapsibleMenuItem {
 	title: string;
-	icon: typeof DollarSignIcon; // or whatever icon component type you use elsewhere
+	icon: typeof DollarSignIcon;
 	items: CollapsibleSubMenuItem[];
-	readonly permissions: Permission[];
 }
 
 export const menuItems: MenuItem[] = [
@@ -120,10 +119,6 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				permission: "banking:view",
 			},
 		],
-		get permissions(): Permission[] {
-			// return this.items.map((item) => item.permission as Permission);
-			return this.items.flatMap((item) => item.permission);
-		},
 	},
 	{
 		title: "HR & Payroll",
@@ -175,10 +170,6 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				permission: "payroll-periods:view",
 			},
 		],
-		get permissions(): Permission[] {
-			// return this.items.map((item) => item.permission as Permission);
-			return this.items.flatMap((item) => item.permission);
-		},
 	},
 	{
 		title: "Reports",
@@ -209,10 +200,6 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				],
 			},
 		],
-		get permissions(): Permission[] {
-			// return this.items.map((item) => item.permission as Permission);
-			return this.items.flatMap((item) => item.permission);
-		},
 	},
 ];
 

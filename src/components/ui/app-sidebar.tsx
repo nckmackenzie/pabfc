@@ -21,7 +21,6 @@ import { useSession } from "@/lib/auth/client";
 import { collapsibleMenuItems, type MenuItem as MenuItemType, menuItems } from "@/lib/constants";
 import type { Route } from "@/types/index.types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";
-import { PermissionGate } from "./permission-gate";
 import { Skeleton } from "./skeleton";
 import { usePermissions } from "@/hooks/use-permissions";
 
@@ -52,19 +51,15 @@ export function AppSidebar() {
 					<SidebarGroupLabel>Navigation</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{menuItems.map((item) => {
-								return data?.user.role === "admin" ? (
-									<MenuItem key={item.title} item={item} />
-								) : (
-									<PermissionGate
-										key={item.title}
-										permission={item.permission}
-										loadingComponent={<Skeleton className="h-4 w-44" />}
-									>
-										<MenuItem item={item} />
-									</PermissionGate>
-								);
-							})}
+							{isLoading ? (
+								menuItems.map((item) => <Skeleton key={item.title} className="h-4 w-44" />)
+							) : (
+								menuItems
+									.filter((item) =>
+										item.permission ? hasPermission(item.permission) : data?.user.role === "admin"
+									)
+									.map((item) => <MenuItem key={item.title} item={item} />)
+							)}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
@@ -72,7 +67,9 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{isLoading ? (
-								<Skeleton className="h-4 w-44" />
+								collapsibleMenuItems.map((item) => (
+									<Skeleton key={item.title} className="h-4 w-44" />
+								))
 							) : (
 								collapsibleMenuItems.map((item) => {
 									const visibleSubItems = item.items.filter((subItem) =>
