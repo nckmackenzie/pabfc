@@ -24,23 +24,22 @@ export function usePermissions() {
 		return userPermissions.roles;
 	}, [userPermissions]);
 
-	const hasPermission = (permission: Permission): boolean => {
+	const hasPermission = (permission: Permission | Permission[]): boolean => {
 		if (session?.user.role === "admin") return true;
+		if (Array.isArray(permission)) {
+			return hasAnyPermission(permission);
+		}
 		return permissions.includes(permission);
 	};
 
 	const hasAnyPermission = (permissionList: Array<Permission>): boolean => {
 		if (session?.user.role === "admin") return true;
-		return permissionList.some((permission) =>
-			permissions.includes(permission),
-		);
+		return permissionList.some((permission) => permissions.includes(permission));
 	};
 
 	const hasAllPermissions = (permissionList: Array<Permission>): boolean => {
 		if (session?.user.role === "admin") return true;
-		return permissionList.every((permission) =>
-			permissions.includes(permission),
-		);
+		return permissionList.every((permission) => permissions.includes(permission));
 	};
 
 	const hasRole = (roleName: string): boolean => {

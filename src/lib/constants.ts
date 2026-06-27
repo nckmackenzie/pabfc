@@ -10,6 +10,7 @@ import {
 	UserKeyIcon,
 } from "@/components/ui/icons";
 import type { Permission } from "@/lib/permissions/constants";
+import type { Route } from "@/types/index.types";
 
 export const DEFAULT_PAGE_INDEX = 0;
 export const DEFAULT_PAGE_SIZE = 10;
@@ -22,11 +23,25 @@ export type MenuItem = {
 	wip?: boolean;
 };
 
+interface CollapsibleSubMenuItem {
+	title: string;
+	url: Route;
+	permission: Permission | Permission[];
+}
+
+interface CollapsibleMenuItem {
+	title: string;
+	icon: typeof DollarSignIcon; // or whatever icon component type you use elsewhere
+	items: CollapsibleSubMenuItem[];
+	readonly permissions: Permission[];
+}
+
 export const menuItems: MenuItem[] = [
 	{
 		title: "Dashboard",
 		url: "/app/dashboard",
 		icon: ChartPieIcon,
+		permission: "dashboard:view",
 	},
 	{
 		title: "User Management",
@@ -43,6 +58,7 @@ export const menuItems: MenuItem[] = [
 		title: "Plans & Packages",
 		url: "/app/plans",
 		icon: PercentBadgeIcon,
+		permission: "plans:view",
 	},
 	{
 		title: "Attendance",
@@ -58,7 +74,7 @@ export const menuItems: MenuItem[] = [
 	},
 ];
 
-export const collapsibleMenuItems = [
+export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 	{
 		title: "Finance",
 		icon: DollarSignIcon,
@@ -86,7 +102,7 @@ export const collapsibleMenuItems = [
 			{
 				title: "Expenses",
 				url: "/app/expenses",
-				permission: "chart-of-accounts",
+				permission: "expenses:view",
 			},
 			{
 				title: "Payments",
@@ -96,7 +112,7 @@ export const collapsibleMenuItems = [
 			{
 				title: "Journal Entries",
 				url: "/app/journal-entries",
-				permission: "chart-of-accounts",
+				permission: "journal-entries:view",
 			},
 			{
 				title: "Bankings",
@@ -179,7 +195,16 @@ export const collapsibleMenuItems = [
 			{
 				title: "Finance Reports",
 				url: "/app/reports/finance",
-				permission: "finance:view",
+				permission: [
+					"reports:receipts-report",
+					"reports:expenses-report",
+					"reports:invoices-report",
+					"reports:bankings-report",
+					"reports:payments-report",
+					"reports:income-statement",
+					"reports:trial-balance",
+					"reports:balance-sheet",
+				],
 			},
 		],
 		get permissions(): Permission[] {
