@@ -112,3 +112,13 @@ export const REPORT_CARDS = linkOptions([
 		permission: "reports:balance-sheet",
 	},
 ]);
+
+export const PAYROLL_REPORT_CARDS = linkOptions([
+	{
+		to: "/app/reports/payroll/p9",
+		title: "P9 Tax Certificate",
+		description: "Annual payroll tax certificate by employee and year.",
+		icon: FileTextIcon,
+		permission: "reports:payroll-p9",
+	},
+]);

@@ -199,6 +199,11 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 					"reports:balance-sheet",
 				],
 			},
+			{
+				title: "Payroll Reports",
+				url: "/app/reports/payroll",
+				permission: "reports:payroll-p9",
+			},
 		],
 	},
 ];
