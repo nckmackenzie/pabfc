@@ -154,7 +154,7 @@ function parseLoanRecord(record: LoanRecord): LoanView {
 	return {
 		...record,
 		principalAmount: roundDecimal(record.principalAmount),
-		annualInterestRate: roundDecimal(record.annualInterestRate),
+		annualInterestRate: roundDecimal(record.annualInterestRate, 4),
 		approvedAmount: record.approvedAmount === null ? null : roundDecimal(record.approvedAmount),
 		monthlyInstalment:
 			record.monthlyInstalment === null ? null : roundDecimal(record.monthlyInstalment),
@@ -807,10 +807,10 @@ async function settleEarly({
 		currentOutstandingBalance,
 		loan.annualInterestRate
 	);
-	const expectedSettlementAmount = settlementBreakdown.totalPayment;
-	const tolerance = 1;
 
-	if (Math.abs(roundDecimal(settlementAmount) - expectedSettlementAmount) > tolerance) {
+	const expectedSettlementAmount = roundDecimal(settlementBreakdown.totalPayment);
+	const submittedSettlementAmount = roundDecimal(settlementAmount);
+	if (submittedSettlementAmount !== expectedSettlementAmount) {
 		return failure({
 			type: "ValidationError",
 			message: `Settlement amount must match the expected settlement amount of KES ${expectedSettlementAmount.toFixed(2)}.`,

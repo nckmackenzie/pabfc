@@ -394,7 +394,9 @@ async function createOvertimeRecord({
 	payload: OvertimeCreatePayload;
 	createdBy: string;
 }): Promise<Result<OvertimeMutationResponse>> {
-	await getEligibleEmployee(payload.employeeId);
+	const result = await getEligibleEmployee(payload.employeeId);
+
+	if (!result.success) return result;
 
 	const periodMonth = Number(payload.periodMonth);
 	const periodYear = Number(payload.periodYear);
@@ -818,7 +820,9 @@ async function getApprovedOvertimeForPayrollPeriod(periodMonth: number, periodYe
 async function getOvertimeSummaryForEmployee(
 	params: z.infer<typeof overtimeSummaryRangeSchema>
 ): Promise<Result<OvertimeSummaryResponse>> {
-	await getEligibleEmployee(params.employeeId);
+	const result = await getEligibleEmployee(params.employeeId);
+
+	if (!result.success) return result;
 
 	const rows = await db.query.overtimeRecords.findMany({
 		where: and(eq(overtimeRecords.employeeId, params.employeeId), getPeriodRangeConditions(params)),

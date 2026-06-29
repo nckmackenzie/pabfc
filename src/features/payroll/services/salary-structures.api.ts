@@ -220,7 +220,8 @@ async function createSalaryStructure({
 	payload: SalaryStructureCreatePayload;
 	createdBy: string;
 }): Promise<Result<SalaryStructureCreateResponse>> {
-	await getEligibleEmployee(payload.employeeId);
+	const employeeResult = await getEligibleEmployee(payload.employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const warnings: string[] = [];
 	const normalizedEffectiveTo = payload.effectiveTo ?? null;

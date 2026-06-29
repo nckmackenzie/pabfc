@@ -189,12 +189,13 @@ export function getJournalBalanceSummary(
 		return total.plus(toBig(line.amount));
 	}, toBig(0));
 	const difference = debitTotal.minus(creditTotal);
+	const roundedDifference = roundDecimal(difference);
 
 	return {
 		totalDebits: roundDecimal(Number(debitTotal.toFixed(2))),
 		totalCredits: roundDecimal(Number(creditTotal.toFixed(2))),
-		difference: roundDecimal(Number(difference.toFixed(2))),
-		isBalanced: difference.eq(0),
+		difference: roundedDifference,
+		isBalanced: roundedDifference === 0,
 	};
 }
 

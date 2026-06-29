@@ -2,6 +2,7 @@ import {
 	LOAN_DEFAULT_INTEREST_RATE,
 	LOAN_INTEREST_CALCULATION_METHOD,
 } from "@/features/payroll/lib/payroll-constants";
+import type Big from "big.js";
 import { roundDecimal, toBig } from "@/lib/helpers";
 
 type NumericLike = number | string | Big | null | undefined;

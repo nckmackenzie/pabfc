@@ -332,7 +332,8 @@ async function applyForSalaryAdvance({
 	payload: ApplyForSalaryAdvancePayload;
 	createdBy: string;
 }): Promise<Result<SalaryAdvanceApplicationResponse>> {
-	await getEligibleEmployee(payload.employeeId);
+	const employeeResult = await getEligibleEmployee(payload.employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	if (
 		payload.requestedRecoveryMonths < 1 ||
@@ -658,7 +659,8 @@ async function cancelSalaryAdvance({
 async function getActiveAdvancesForEmployee(
 	employeeId: string
 ): Promise<Result<SalaryAdvanceView[]>> {
-	await getEligibleEmployee(employeeId);
+	const employeeResult = await getEligibleEmployee(employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const currentPeriodStart = getCurrentPeriodStartDate();
 	const currentMonth = currentPeriodStart.getMonth() + 1;
@@ -690,7 +692,8 @@ async function getTotalMonthlyAdvanceRecoveries(
 	periodMonth: number,
 	periodYear: number
 ): Promise<Result<TotalMonthlyAdvanceRecoveriesResponse>> {
-	await getEligibleEmployee(employeeId);
+	const employeeResult = await getEligibleEmployee(employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const rows = await db.query.salaryAdvances.findMany({
 		where: and(
@@ -1011,7 +1014,8 @@ async function getAdvancesByEmployee(
 	employeeId: string,
 	statusFilter?: SalaryAdvanceStatus | "all"
 ): Promise<Result<SalaryAdvanceView[]>> {
-	await getEligibleEmployee(employeeId);
+	const employeeResult = await getEligibleEmployee(employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const rows = await db.query.salaryAdvances.findMany({
 		where: and(

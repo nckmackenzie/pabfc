@@ -1,12 +1,22 @@
 import { z } from "zod";
 import { OVERTIME_STATUS } from "@/features/payroll/lib/payroll-constants";
-import { nullableTrimmedString, requiredNumberSchemaEntry } from "@/lib/schema-rules";
+import { nullableTrimmedString } from "@/lib/schema-rules";
 
 const overtimeStatusValues = [
 	OVERTIME_STATUS.DRAFT,
 	OVERTIME_STATUS.APPROVED,
 	OVERTIME_STATUS.PAID,
 ] as const;
+
+const overtimeHoursSchema = (label: string) =>
+	z.number({ error: `${label} must be a number` }).refine((value) => value >= 0, {
+		message: `${label} must be zero or greater`,
+	});
+
+const coercedOvertimeHoursSchema = (label: string) =>
+	z.coerce.number({ error: `${label} must be a number` }).refine((value) => value >= 0, {
+		message: `${label} must be zero or greater`,
+	});
 
 export const overtimeRecordIdSchema = z.string().trim().min(1, "Overtime record is required");
 export const overtimeEmployeeIdSchema = z.string().trim().min(1, "Employee is required");
@@ -22,9 +32,9 @@ export const overtimeRecordCreateSchema = z
 		periodYear: z.coerce.number({
 			error: "Period year must be a number",
 		}),
-		weekdayOvertimeHours: requiredNumberSchemaEntry(),
-		weekendOvertimeHours: requiredNumberSchemaEntry(),
-		publicHolidayOvertimeHours: requiredNumberSchemaEntry(),
+		weekdayOvertimeHours: coercedOvertimeHoursSchema("Weekday overtime hours"),
+		weekendOvertimeHours: coercedOvertimeHoursSchema("Weekend overtime hours"),
+		publicHolidayOvertimeHours: coercedOvertimeHoursSchema("Public holiday overtime hours"),
 		notes: nullableTrimmedString,
 	})
 	.superRefine((value, ctx) => {
@@ -67,9 +77,9 @@ export const overtimeRecordCreateFormSchema = z
 		periodYear: z.number({
 			error: "Period year must be a number",
 		}),
-		weekdayOvertimeHours: requiredNumberSchemaEntry(),
-		weekendOvertimeHours: requiredNumberSchemaEntry(),
-		publicHolidayOvertimeHours: requiredNumberSchemaEntry(),
+		weekdayOvertimeHours: overtimeHoursSchema("Weekday overtime hours"),
+		weekendOvertimeHours: overtimeHoursSchema("Weekend overtime hours"),
+		publicHolidayOvertimeHours: overtimeHoursSchema("Public holiday overtime hours"),
 		notes: z
 			.string()
 			.trim()
@@ -109,9 +119,9 @@ export const overtimeRecordCreateFormSchema = z
 export const overtimeRecordUpdatePayloadSchema = z
 	.object({
 		id: z.string().optional(),
-		weekdayOvertimeHours: requiredNumberSchemaEntry("Weekday overtime hours"),
-		weekendOvertimeHours: requiredNumberSchemaEntry("Weekend overtime hours"),
-		publicHolidayOvertimeHours: requiredNumberSchemaEntry("Public holiday overtime hours"),
+		weekdayOvertimeHours: coercedOvertimeHoursSchema("Weekday overtime hours"),
+		weekendOvertimeHours: coercedOvertimeHoursSchema("Weekend overtime hours"),
+		publicHolidayOvertimeHours: coercedOvertimeHoursSchema("Public holiday overtime hours"),
 		notes: nullableTrimmedString,
 	})
 	.superRefine((value, ctx) => {

@@ -36,7 +36,7 @@ export const optionalStringSchemaEntry = () =>
 export const nullableTrimmedString = z
 	.string()
 	.trim()
-	.transform((value) => (value === "" ? null : value))
+	.transform((value) => (value === "" || value === undefined ? null : value))
 	.nullable();
 
 export const optionalNumberSchemaEntry = () => z.number().optional();
