@@ -244,7 +244,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 		await logActivity({
 			data: {
 				action: data.id ? "Update Settings" : "Create Settings",
-				description: data.id ? "Updated security settings" : "Created security settings",
+				description: data.id ? "Updated billing settings" : "Created billing settings",
 				userId: user.id,
 			},
 		});

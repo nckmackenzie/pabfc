@@ -73,22 +73,72 @@ export async function finalizeMembershipPayment({
 		return failure({ type: "ApplicationError", message: "Plan revenue account is not configured" });
 	}
 
-	let hasSettlementAccount = false;
-	let bankAccount: number;
-
-	const getSettlementAccountId = await tx.query.settings.findFirst({
+	// Fetch settings once — used for both bank account resolution and VAT below.
+	const settings = await tx.query.settings.findFirst({
 		columns: { billing: true },
 	});
 
-	if (getSettlementAccountId?.billing?.mpesaSettlementAccountId) {
+	let hasSettlementAccount = false;
+	let bankAccount: number;
+
+	if (settings?.billing?.mpesaSettlementAccountId) {
 		hasSettlementAccount = true;
-		bankAccount = getSettlementAccountId.billing.mpesaSettlementAccountId;
+		bankAccount = settings.billing.mpesaSettlementAccountId;
 	} else {
 		const fetchedAccount = await tx.query.ledgerAccounts.findFirst({
 			columns: { id: true },
 			where: eq(sql`lower(${ledgerAccounts.name})`, "cash at bank"),
 		});
-		bankAccount = fetchedAccount?.id as number;
+		if (!fetchedAccount) {
+			return failure({ type: "ApplicationError", message: "No bank account configured for payments" });
+		}
+		bankAccount = fetchedAccount.id;
+	}
+
+	// Validate and build journal lines before any writes so that a validation
+	// failure doesn't leave the transaction in a partial state.
+	const hasTax = parseFloat(payment.taxAmount) > 0;
+	if (hasTax && !settings?.billing?.vatAccountId) {
+		return failure({ type: "ApplicationError", message: "VAT account is not configured" });
+	}
+
+	const description = `Payment for receipt # ${payment.paymentNo} - ${reference ?? payment.reference ?? ""}`;
+	const lines: Array<{
+		lineNumber: number;
+		accountId: number;
+		amount: string;
+		dc: "credit" | "debit";
+		memo: string;
+	}> = [
+		{
+			lineNumber: 1,
+			accountId: plan.revenueAccountId,
+			amount: payment.lineTotal,
+			dc: "credit" as const,
+			memo: description,
+		},
+	];
+
+	if (hasTax) {
+		lines.push({
+			lineNumber: 2,
+			accountId: settings!.billing!.vatAccountId!,
+			amount: payment.taxAmount,
+			dc: "credit" as const,
+			memo: description,
+		});
+	}
+
+	lines.push({
+		lineNumber: lines.length + 1,
+		accountId: bankAccount,
+		amount: payment.totalAmount,
+		dc: "debit" as const,
+		memo: description,
+	});
+
+	if (!areJournalValuesBalanced(lines)) {
+		return failure({ type: "ApplicationError", message: "Journal values are not balanced" });
 	}
 
 	const activeMembership = await tx.query.memberMemberships.findFirst({
@@ -134,8 +184,7 @@ export async function finalizeMembershipPayment({
 			paymentId: payment.id,
 			previousMembershipPlanId: activeMembership?.membershipPlanId,
 			priceCharged: payment.totalAmount,
-		})
-		.returning({ id: memberMemberships.id });
+		});
 
 	if (updatePendingPayment) {
 		const [updatedPayment] = await tx
@@ -148,56 +197,8 @@ export async function finalizeMembershipPayment({
 			.returning({ id: payments.id });
 
 		if (!updatedPayment) {
-			return failure({
-				type: "ApplicationError",
-				message: "Payment is already processed or not pending",
-			});
+			throw new Error("Payment is already processed or not pending");
 		}
-	}
-
-	const description = `Payment for receipt # ${payment.paymentNo} - ${reference ?? payment.reference ?? ""}`;
-	const lines: Array<{
-		lineNumber: number;
-		accountId: number;
-		amount: string;
-		dc: "credit" | "debit";
-		memo: string;
-	}> = [
-		{
-			lineNumber: 1,
-			accountId: plan.revenueAccountId,
-			amount: payment.lineTotal,
-			dc: "credit" as const,
-			memo: description,
-		},
-	];
-
-	if (parseFloat(payment.taxAmount) > 0) {
-		const settings = await tx.query.settings.findFirst({
-			columns: { billing: true },
-		});
-		if (!settings?.billing?.vatAccountId) {
-			return failure({ type: "ApplicationError", message: "VAT account is not configured" });
-		}
-		lines.push({
-			lineNumber: 2,
-			accountId: settings.billing.vatAccountId,
-			amount: payment.taxAmount,
-			dc: "credit" as const,
-			memo: description,
-		});
-	}
-
-	lines.push({
-		lineNumber: lines.length + 1,
-		accountId: bankAccount ?? 2,
-		amount: payment.totalAmount,
-		dc: "debit" as const,
-		memo: description,
-	});
-
-	if (!areJournalValuesBalanced(lines)) {
-		return failure({ type: "ApplicationError", message: "Journal values are not balanced" });
 	}
 
 	await createJournalEntry({

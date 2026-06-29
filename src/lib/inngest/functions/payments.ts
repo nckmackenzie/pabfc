@@ -50,8 +50,8 @@ export const createPayment = inngest.createFunction(
 					});
 				});
 
-				if (!result.paymentId) {
-					return { success: false, error: "Something went wrong" };
+				if (!result.success) {
+					return { success: false, error: result.error.message };
 				}
 
 				return { success: true, error: null };

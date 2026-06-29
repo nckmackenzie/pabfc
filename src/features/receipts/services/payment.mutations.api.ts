@@ -165,7 +165,7 @@ export const createManualMembershipPaymentFn = createServerFn({
 				: "none";
 			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(amount, taxType);
 
-			await db.transaction(async (tx) => {
+			const result = await db.transaction(async (tx) => {
 				const [payment] = await tx
 					.insert(payments)
 					.values({
@@ -201,6 +201,10 @@ export const createManualMembershipPaymentFn = createServerFn({
 					},
 				});
 			});
+
+			if (!result.success) {
+				return result;
+			}
 
 			return success(undefined);
 		}
