@@ -1,4 +1,3 @@
-import Big from "big.js";
 import type { salaryStructures } from "@/drizzle/schema";
 import {
 	OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY,
@@ -8,6 +7,7 @@ import {
 	PAYROLL_STATUS,
 } from "@/features/payroll/lib/payroll-constants";
 import type { SalaryStructureCreateFormInput } from "../services/schemas";
+import { roundDecimal, toBig } from "@/lib/helpers";
 
 type SalaryStructureRecord = typeof salaryStructures.$inferSelect;
 type NumericLike = number | string | Big | null | undefined;
@@ -75,27 +75,6 @@ export type SalaryStructureWithComputedComponents = SalaryStructureRecord & {
 	computedComponents: ReturnType<typeof computeGrossPayComponents>;
 };
 
-// TODO: REPLACE WITH toBig
-export function toPayrollBig(value: NumericLike) {
-	if (value === null || value === undefined || value === "") {
-		return new Big(0);
-	}
-
-	try {
-		return new Big(value);
-	} catch {
-		return new Big(0);
-	}
-}
-
-export function roundPayrollAmount(value: NumericLike) {
-	return Number(toPayrollBig(value).round(2, Big.roundHalfUp).toFixed(2));
-}
-
-export function toPayrollDecimalString(value: NumericLike) {
-	return toPayrollBig(value).round(2, Big.roundHalfUp).toFixed(2);
-}
-
 export function subtractOneDay(isoDate: string) {
 	const date = new Date(`${isoDate}T00:00:00.000Z`);
 	date.setUTCDate(date.getUTCDate() - 1);
@@ -161,24 +140,24 @@ export function doSalaryRangesOverlap({
 }
 
 export function computeGrossPayComponents(structure: SalaryStructureRecord) {
-	const basicSalary = roundPayrollAmount(structure.basicSalary);
-	const houseAllowance = roundPayrollAmount(structure.houseAllowance);
-	const transportAllowance = roundPayrollAmount(structure.transportAllowance);
-	const commuterAllowance = roundPayrollAmount(structure.commuterAllowance);
-	const mealAllowance = roundPayrollAmount(structure.mealAllowance);
-	const airtimeAllowance = roundPayrollAmount(structure.airtimeAllowance);
-	const otherAllowances = roundPayrollAmount(structure.otherAllowances);
-	const pensionEmployeeContribution = roundPayrollAmount(structure.pensionEmployeeContribution);
-	const mortgageInterestMonthly = roundPayrollAmount(structure.mortgageInterestMonthly);
-	const postRetirementMedicalMonthly = roundPayrollAmount(structure.postRetirementMedicalMonthly);
-	const insurancePremiumsMonthly = roundPayrollAmount(structure.insurancePremiumsMonthly);
-	const helbMonthlyDeduction = roundPayrollAmount(
+	const basicSalary = roundDecimal(structure.basicSalary);
+	const houseAllowance = roundDecimal(structure.houseAllowance);
+	const transportAllowance = roundDecimal(structure.transportAllowance);
+	const commuterAllowance = roundDecimal(structure.commuterAllowance);
+	const mealAllowance = roundDecimal(structure.mealAllowance);
+	const airtimeAllowance = roundDecimal(structure.airtimeAllowance);
+	const otherAllowances = roundDecimal(structure.otherAllowances);
+	const pensionEmployeeContribution = roundDecimal(structure.pensionEmployeeContribution);
+	const mortgageInterestMonthly = roundDecimal(structure.mortgageInterestMonthly);
+	const postRetirementMedicalMonthly = roundDecimal(structure.postRetirementMedicalMonthly);
+	const insurancePremiumsMonthly = roundDecimal(structure.insurancePremiumsMonthly);
+	const helbMonthlyDeduction = roundDecimal(
 		structure.hasHelbLoan ? structure.helbMonthlyDeduction : 0
 	);
 	const overtimeHourlyRateDivisor = structure.overtimeHourlyRateDivisor || 1;
 
-	const grossPay = roundPayrollAmount(
-		toPayrollBig(basicSalary)
+	const grossPay = roundDecimal(
+		toBig(basicSalary)
 			.plus(houseAllowance)
 			.plus(transportAllowance)
 			.plus(commuterAllowance)
@@ -187,37 +166,33 @@ export function computeGrossPayComponents(structure: SalaryStructureRecord) {
 			.plus(otherAllowances)
 	);
 
-	const mealAllowanceExempt = roundPayrollAmount(
+	const mealAllowanceExempt = roundDecimal(
 		Math.min(mealAllowance, PAYROLL_STATUTORY_LIMITS.mealAllowanceExemptMonthly)
 	);
-	const mealAllowanceTaxable = roundPayrollAmount(
-		toPayrollBig(mealAllowance).minus(mealAllowanceExempt)
-	);
-	const airtimeAllowanceExempt = roundPayrollAmount(
+	const mealAllowanceTaxable = roundDecimal(toBig(mealAllowance).minus(mealAllowanceExempt));
+	const airtimeAllowanceExempt = roundDecimal(
 		Math.min(airtimeAllowance, PAYROLL_STATUTORY_LIMITS.airtimeAllowanceExemptMonthly)
 	);
-	const airtimeAllowanceTaxable = roundPayrollAmount(
-		toPayrollBig(airtimeAllowance).minus(airtimeAllowanceExempt)
+	const airtimeAllowanceTaxable = roundDecimal(
+		toBig(airtimeAllowance).minus(airtimeAllowanceExempt)
 	);
 
-	const pensionAllowableDeduction = roundPayrollAmount(
+	const pensionAllowableDeduction = roundDecimal(
 		Math.min(pensionEmployeeContribution, PAYROLL_STATUTORY_LIMITS.pensionAllowableMonthly)
 	);
-	const mortgageAllowableDeduction = roundPayrollAmount(
+	const mortgageAllowableDeduction = roundDecimal(
 		Math.min(mortgageInterestMonthly, PAYROLL_STATUTORY_LIMITS.mortgageInterestAllowableMonthly)
 	);
-	const postRetirementAllowableDeduction = roundPayrollAmount(
+	const postRetirementAllowableDeduction = roundDecimal(
 		Math.min(
 			postRetirementMedicalMonthly,
 			PAYROLL_STATUTORY_LIMITS.postRetirementMedicalAllowableMonthly
 		)
 	);
-	const insurancePremiumsForRelief = roundPayrollAmount(
+	const insurancePremiumsForRelief = roundDecimal(
 		Math.min(insurancePremiumsMonthly, PAYROLL_STATUTORY_LIMITS.insurancePremiumsReliefInputMonthly)
 	);
-	const overtimeHourlyRate = roundPayrollAmount(
-		toPayrollBig(basicSalary).div(overtimeHourlyRateDivisor)
-	);
+	const overtimeHourlyRate = roundDecimal(toBig(basicSalary).div(overtimeHourlyRateDivisor));
 
 	return {
 		basicSalary,
@@ -286,24 +261,24 @@ export function computeOvertimePay(
 	publicHolidayHours: NumericLike,
 	overtimeHourlyRate: NumericLike
 ) {
-	const parsedWeekdayHours = toPayrollBig(weekdayHours);
-	const parsedWeekendHours = toPayrollBig(weekendHours);
-	const parsedPublicHolidayHours = toPayrollBig(publicHolidayHours);
-	const parsedOvertimeHourlyRate = toPayrollBig(overtimeHourlyRate);
+	const parsedWeekdayHours = toBig(weekdayHours);
+	const parsedWeekendHours = toBig(weekendHours);
+	const parsedPublicHolidayHours = toBig(publicHolidayHours);
+	const parsedOvertimeHourlyRate = toBig(overtimeHourlyRate);
 
-	const weekdayOvertimePay = roundPayrollAmount(
+	const weekdayOvertimePay = roundDecimal(
 		parsedWeekdayHours.times(parsedOvertimeHourlyRate).times(OVERTIME_MULTIPLIER_WEEKDAY)
 	);
-	const weekendOvertimePay = roundPayrollAmount(
+	const weekendOvertimePay = roundDecimal(
 		parsedWeekendHours.times(parsedOvertimeHourlyRate).times(OVERTIME_MULTIPLIER_WEEKEND)
 	);
-	const publicHolidayOvertimePay = roundPayrollAmount(
+	const publicHolidayOvertimePay = roundDecimal(
 		parsedPublicHolidayHours
 			.times(parsedOvertimeHourlyRate)
 			.times(OVERTIME_MULTIPLIER_PUBLIC_HOLIDAY)
 	);
-	const totalOvertimePay = roundPayrollAmount(
-		toPayrollBig(weekdayOvertimePay).plus(weekendOvertimePay).plus(publicHolidayOvertimePay)
+	const totalOvertimePay = roundDecimal(
+		toBig(weekdayOvertimePay).plus(weekendOvertimePay).plus(publicHolidayOvertimePay)
 	);
 
 	return {
@@ -311,6 +286,6 @@ export function computeOvertimePay(
 		weekendOvertimePay,
 		publicHolidayOvertimePay,
 		totalOvertimePay,
-		overtimeHourlyRate: roundPayrollAmount(parsedOvertimeHourlyRate),
+		overtimeHourlyRate: roundDecimal(parsedOvertimeHourlyRate),
 	};
 }

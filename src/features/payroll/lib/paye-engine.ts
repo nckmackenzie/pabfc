@@ -1,5 +1,5 @@
-import { roundPayrollAmount, toPayrollBig } from "@/features/payroll/lib/helpers";
 import type { ResolvedStatutoryRates } from "@/features/payroll/lib/payroll-rate-resolver";
+import { roundDecimal, toBig } from "@/lib/helpers";
 
 type NumericLike = number | string | null | undefined;
 
@@ -38,20 +38,20 @@ export type PayeBandBreakdown = {
 };
 
 export function computeNSSF(grossPay: NumericLike, rates: ResolvedStatutoryRates) {
-	const parsedGrossPay = roundPayrollAmount(grossPay);
+	const parsedGrossPay = roundDecimal(grossPay);
 	const tier1Pensionable = Math.min(parsedGrossPay, rates.nssfTier1UpperLimit);
 	const tier2Pensionable = Math.min(
 		Math.max(parsedGrossPay - rates.nssfTier1UpperLimit, 0),
 		Math.max(rates.nssfTier2UpperLimit - rates.nssfTier1UpperLimit, 0)
 	);
-	const tier1Employee = roundPayrollAmount(tier1Pensionable * rates.nssfContributionRate);
-	const tier1Employer = roundPayrollAmount(tier1Pensionable * rates.nssfContributionRate);
-	const tier2Employee = roundPayrollAmount(tier2Pensionable * rates.nssfContributionRate);
-	const tier2Employer = roundPayrollAmount(tier2Pensionable * rates.nssfContributionRate);
-	const employeeContribution = roundPayrollAmount(
+	const tier1Employee = roundDecimal(tier1Pensionable * rates.nssfContributionRate);
+	const tier1Employer = roundDecimal(tier1Pensionable * rates.nssfContributionRate);
+	const tier2Employee = roundDecimal(tier2Pensionable * rates.nssfContributionRate);
+	const tier2Employer = roundDecimal(tier2Pensionable * rates.nssfContributionRate);
+	const employeeContribution = roundDecimal(
 		Math.min(tier1Employee + tier2Employee, rates.nssfMaxEmployee)
 	);
-	const employerContribution = roundPayrollAmount(
+	const employerContribution = roundDecimal(
 		Math.min(tier1Employer + tier2Employer, rates.nssfMaxEmployer)
 	);
 
@@ -66,10 +66,8 @@ export function computeNSSF(grossPay: NumericLike, rates: ResolvedStatutoryRates
 }
 
 export function computeSHIF(grossPay: NumericLike, rates: ResolvedStatutoryRates) {
-	const parsedGrossPay = roundPayrollAmount(grossPay);
-	const contribution = roundPayrollAmount(
-		Math.max(parsedGrossPay * rates.shifRate, rates.shifMinimum)
-	);
+	const parsedGrossPay = roundDecimal(grossPay);
+	const contribution = roundDecimal(Math.max(parsedGrossPay * rates.shifRate, rates.shifMinimum));
 
 	return {
 		employeeContribution: contribution,
@@ -78,11 +76,11 @@ export function computeSHIF(grossPay: NumericLike, rates: ResolvedStatutoryRates
 }
 
 export function computeAHL(grossPay: NumericLike, rates: ResolvedStatutoryRates) {
-	const parsedGrossPay = roundPayrollAmount(grossPay);
+	const parsedGrossPay = roundDecimal(grossPay);
 
 	return {
-		employeeContribution: roundPayrollAmount(parsedGrossPay * rates.ahlEmployeeRate),
-		employerContribution: roundPayrollAmount(parsedGrossPay * rates.ahlEmployerRate),
+		employeeContribution: roundDecimal(parsedGrossPay * rates.ahlEmployeeRate),
+		employerContribution: roundDecimal(parsedGrossPay * rates.ahlEmployerRate),
 	};
 }
 
@@ -94,34 +92,31 @@ export function computeTaxableIncome(
 	allowableDeductions: TaxableIncomeInputs,
 	rates: ResolvedStatutoryRates
 ) {
-	const pensionAllowable = roundPayrollAmount(
-		Math.min(roundPayrollAmount(allowableDeductions.pensionContribution), rates.pensionAllowableMax)
+	const pensionAllowable = roundDecimal(
+		Math.min(roundDecimal(allowableDeductions.pensionContribution), rates.pensionAllowableMax)
 	);
-	const mortgageAllowable = roundPayrollAmount(
-		Math.min(roundPayrollAmount(allowableDeductions.mortgageInterest), rates.mortgageAllowableMax)
+	const mortgageAllowable = roundDecimal(
+		Math.min(roundDecimal(allowableDeductions.mortgageInterest), rates.mortgageAllowableMax)
 	);
-	const postRetirementAllowable = roundPayrollAmount(
+	const postRetirementAllowable = roundDecimal(
 		Math.min(
-			roundPayrollAmount(allowableDeductions.postRetirementMedical),
+			roundDecimal(allowableDeductions.postRetirementMedical),
 			rates.postRetirementMedicalMax
 		)
 	);
-	const mealExempt = roundPayrollAmount(
-		Math.min(roundPayrollAmount(allowableDeductions.mealAllowanceActual), rates.mealAllowanceExempt)
+	const mealExempt = roundDecimal(
+		Math.min(roundDecimal(allowableDeductions.mealAllowanceActual), rates.mealAllowanceExempt)
 	);
-	const nonCashExempt = roundPayrollAmount(
-		Math.min(
-			roundPayrollAmount(allowableDeductions.nonCashBenefitActual),
-			rates.nonCashBenefitExempt
-		)
+	const nonCashExempt = roundDecimal(
+		Math.min(roundDecimal(allowableDeductions.nonCashBenefitActual), rates.nonCashBenefitExempt)
 	);
 
-	const taxableIncome = roundPayrollAmount(
+	const taxableIncome = roundDecimal(
 		Math.max(
-			roundPayrollAmount(grossPay) -
-				roundPayrollAmount(nssfEmployee) -
-				roundPayrollAmount(shifEmployee) -
-				roundPayrollAmount(ahlEmployee) -
+			roundDecimal(grossPay) -
+				roundDecimal(nssfEmployee) -
+				roundDecimal(shifEmployee) -
+				roundDecimal(ahlEmployee) -
 				pensionAllowable -
 				mortgageAllowable -
 				postRetirementAllowable -
@@ -144,13 +139,13 @@ export function computeTaxableIncome(
 }
 
 export function computeGrossTax(taxableIncome: NumericLike, rates: ResolvedStatutoryRates) {
-	const parsedTaxableIncome = roundPayrollAmount(taxableIncome);
+	const parsedTaxableIncome = roundDecimal(taxableIncome);
 	const bandBreakdown: PayeBandBreakdown[] = [];
 
 	for (const band of rates.payeBands) {
 		const floorExclusive = band.lowerBound <= 0 ? 0 : band.lowerBound - 1;
 		const bandCap = band.upperBound ?? parsedTaxableIncome;
-		const taxableAmount = roundPayrollAmount(
+		const taxableAmount = roundDecimal(
 			Math.max(Math.min(parsedTaxableIncome, bandCap) - floorExclusive, 0)
 		);
 
@@ -163,13 +158,11 @@ export function computeGrossTax(taxableIncome: NumericLike, rates: ResolvedStatu
 			upperBound: band.upperBound,
 			rate: band.rate,
 			taxableAmount,
-			taxAmount: roundPayrollAmount(taxableAmount * band.rate),
+			taxAmount: roundDecimal(taxableAmount * band.rate),
 		});
 	}
 
-	const grossTax = roundPayrollAmount(
-		bandBreakdown.reduce((total, band) => total + band.taxAmount, 0)
-	);
+	const grossTax = roundDecimal(bandBreakdown.reduce((total, band) => total + band.taxAmount, 0));
 
 	return {
 		grossTax,
@@ -182,9 +175,9 @@ export function computeInsuranceRelief(
 	rates: ResolvedStatutoryRates
 ) {
 	return {
-		reliefAmount: roundPayrollAmount(
+		reliefAmount: roundDecimal(
 			Math.min(
-				roundPayrollAmount(insurancePremiums) * rates.insuranceReliefRate,
+				roundDecimal(insurancePremiums) * rates.insuranceReliefRate,
 				rates.insuranceReliefMax
 			)
 		),
@@ -197,11 +190,9 @@ export function computeNetPAYE(
 	insuranceRelief: NumericLike
 ) {
 	return {
-		netPAYE: roundPayrollAmount(
+		netPAYE: roundDecimal(
 			Math.max(
-				roundPayrollAmount(grossTax) -
-					roundPayrollAmount(personalRelief) -
-					roundPayrollAmount(insuranceRelief),
+				roundDecimal(grossTax) - roundDecimal(personalRelief) - roundDecimal(insuranceRelief),
 				0
 			)
 		),
@@ -213,8 +204,8 @@ export function computeFullPayrollDeductions(
 	salaryStructureComponents: PayrollPreviewSalaryStructureComponents,
 	rates: ResolvedStatutoryRates
 ) {
-	const normalizedGrossPay = roundPayrollAmount(grossPay);
-	const pensionEmployer = roundPayrollAmount(salaryStructureComponents.pensionEmployerContribution);
+	const normalizedGrossPay = roundDecimal(grossPay);
+	const pensionEmployer = roundDecimal(salaryStructureComponents.pensionEmployerContribution);
 
 	const nssf = computeNSSF(normalizedGrossPay, rates);
 	const shif = computeSHIF(normalizedGrossPay, rates);
@@ -239,23 +230,23 @@ export function computeFullPayrollDeductions(
 		rates
 	);
 	const { netPAYE } = computeNetPAYE(grossTax, rates.personalRelief, reliefAmount);
-	const nitaLevy = roundPayrollAmount(rates.nitaLevyPerEmployee);
-	const totalStatutoryDeductions = roundPayrollAmount(
-		toPayrollBig(nssf.employeeContribution)
+	const nitaLevy = roundDecimal(rates.nitaLevyPerEmployee);
+	const totalStatutoryDeductions = roundDecimal(
+		toBig(nssf.employeeContribution)
 			.plus(shif.employeeContribution)
 			.plus(ahl.employeeContribution)
 			.plus(netPAYE)
 	);
-	const totalEmployerCost = roundPayrollAmount(
-		toPayrollBig(normalizedGrossPay)
+	const totalEmployerCost = roundDecimal(
+		toBig(normalizedGrossPay)
 			.plus(nssf.employerContribution)
 			.plus(shif.employerContribution)
 			.plus(ahl.employerContribution)
 			.plus(nitaLevy)
 			.plus(pensionEmployer)
 	);
-	const netPayBeforeVoluntary = roundPayrollAmount(
-		toPayrollBig(normalizedGrossPay).minus(totalStatutoryDeductions)
+	const netPayBeforeVoluntary = roundDecimal(
+		toBig(normalizedGrossPay).minus(totalStatutoryDeductions)
 	);
 
 	return {
@@ -275,7 +266,7 @@ export function computeFullPayrollDeductions(
 		deductionBreakdown,
 		grossTax,
 		bandBreakdown,
-		personalRelief: roundPayrollAmount(rates.personalRelief),
+		personalRelief: roundDecimal(rates.personalRelief),
 		insuranceRelief: reliefAmount,
 		netPAYE,
 		totalEmployerCost,

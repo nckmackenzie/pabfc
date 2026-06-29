@@ -17,3 +17,7 @@ export const LOAN_STATUS_VARIANTS = {
 	written_off: "destructive",
 	rejected: "destructive",
 } as const;
+
+export function getLoanStatusVariant(status: string) {
+	return LOAN_STATUS_VARIANTS[status as keyof typeof LOAN_STATUS_VARIANTS];
+}

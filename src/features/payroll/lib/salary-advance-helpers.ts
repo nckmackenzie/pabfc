@@ -1,10 +1,10 @@
-import { roundPayrollAmount } from "@/features/payroll/lib/helpers";
+import { roundDecimal } from "@/lib/helpers";
 
 export function computeSalaryAdvanceMonthlyRecoveryAmount(
 	approvedAmount: number,
 	approvedRecoveryMonths: number
 ) {
-	return roundPayrollAmount(approvedAmount / approvedRecoveryMonths);
+	return roundDecimal(approvedAmount / approvedRecoveryMonths);
 }
 
 export function computeSalaryAdvanceRecoveryStep({
@@ -22,7 +22,7 @@ export function computeSalaryAdvanceRecoveryStep({
 		recoveriesProcessed + 1 >= approvedRecoveryMonths ||
 		outstandingBalance <= monthlyRecoveryAmount;
 	const recoveryAmount = isLastRecovery ? outstandingBalance : monthlyRecoveryAmount;
-	const balanceAfter = roundPayrollAmount(outstandingBalance - recoveryAmount);
+	const balanceAfter = roundDecimal(outstandingBalance - recoveryAmount);
 
 	return {
 		balanceAfter: balanceAfter <= 0 ? 0 : balanceAfter,

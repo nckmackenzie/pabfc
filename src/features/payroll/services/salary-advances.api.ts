@@ -13,11 +13,7 @@ import {
 	users,
 } from "@/drizzle/schema";
 import { getAccountMappingsAsMapFn } from "@/features/payroll/services/account-mappings.api";
-import {
-	computeGrossPayComponents,
-	roundPayrollAmount,
-	toPayrollDecimalString,
-} from "@/features/payroll/lib/helpers";
+import { computeGrossPayComponents } from "@/features/payroll/lib/helpers";
 import {
 	computeSalaryAdvanceMonthlyRecoveryAmount,
 	computeSalaryAdvanceRecoveryStep,
@@ -43,12 +39,13 @@ import {
 	salaryAdvancesByEmployeeSchema,
 	totalMonthlyAdvanceRecoveriesSchema,
 } from "@/features/payroll/services/salary-advance.schemas";
-import { normalizeText } from "@/lib/helpers";
+import { normalizeText, roundDecimal, toDecimalString } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
+import { getEligibleEmployee } from "@/features/employees/services/employee.server";
 
 type SalaryAdvanceRecord = typeof salaryAdvances.$inferSelect;
 type SalaryAdvanceRecoveryRecord = typeof salaryAdvanceRecoveries.$inferSelect;
@@ -181,16 +178,13 @@ function parseSalaryAdvanceRecord(record: SalaryAdvanceRecord): SalaryAdvanceVie
 
 	return {
 		...record,
-		requestedAmount: roundPayrollAmount(record.requestedAmount),
-		approvedAmount:
-			record.approvedAmount === null ? null : roundPayrollAmount(record.approvedAmount),
+		requestedAmount: roundDecimal(record.requestedAmount),
+		approvedAmount: record.approvedAmount === null ? null : roundDecimal(record.approvedAmount),
 		monthlyRecoveryAmount:
-			record.monthlyRecoveryAmount === null
-				? null
-				: roundPayrollAmount(record.monthlyRecoveryAmount),
+			record.monthlyRecoveryAmount === null ? null : roundDecimal(record.monthlyRecoveryAmount),
 		outstandingBalance:
-			record.outstandingBalance === null ? null : roundPayrollAmount(record.outstandingBalance),
-		totalRecovered: roundPayrollAmount(record.totalRecovered),
+			record.outstandingBalance === null ? null : roundDecimal(record.outstandingBalance),
+		totalRecovered: roundDecimal(record.totalRecovered),
 		remainingRecoveries: Math.max(approvedRecoveryMonths - record.recoveriesProcessed, 0),
 	};
 }
@@ -200,9 +194,9 @@ function parseSalaryAdvanceRecoveryRecord(
 ): SalaryAdvanceRecoveryView {
 	return {
 		...record,
-		recoveryAmount: roundPayrollAmount(record.recoveryAmount),
-		balanceBefore: roundPayrollAmount(record.balanceBefore),
-		balanceAfter: roundPayrollAmount(record.balanceAfter),
+		recoveryAmount: roundDecimal(record.recoveryAmount),
+		balanceBefore: roundDecimal(record.balanceBefore),
+		balanceAfter: roundDecimal(record.balanceAfter),
 	};
 }
 
@@ -212,22 +206,6 @@ function ensureResult<T>(result: Result<T>): T {
 	}
 
 	return result.data;
-}
-
-async function getEmployeeForSalaryAdvance(employeeId: string) {
-	return db.query.employees.findFirst({
-		columns: {
-			id: true,
-			departmentId: true,
-			deletedAt: true,
-			employeeNo: true,
-			firstName: true,
-			jobTitle: true,
-			lastName: true,
-			status: true,
-		},
-		where: and(eq(employees.id, employeeId), isNull(employees.deletedAt)),
-	});
 }
 
 async function getSalaryAdvanceRecord(advanceId: string) {
@@ -354,28 +332,8 @@ async function applyForSalaryAdvance({
 	payload: ApplyForSalaryAdvancePayload;
 	createdBy: string;
 }): Promise<Result<SalaryAdvanceApplicationResponse>> {
-	const employee = await getEmployeeForSalaryAdvance(payload.employeeId);
-
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found",
-		});
-	}
-
-	if (employee.status !== "active") {
-		return failure({
-			type: "ValidationError",
-			message: "Salary advances can only be applied for active employees.",
-		});
-	}
-
-	if (payload.requestedAmount <= 0) {
-		return failure({
-			type: "ValidationError",
-			message: "Requested amount must be greater than zero.",
-		});
-	}
+	const employeeResult = await getEligibleEmployee(payload.employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	if (
 		payload.requestedRecoveryMonths < 1 ||
@@ -390,7 +348,7 @@ async function applyForSalaryAdvance({
 	const outstandingAdvance = await findOutstandingAdvanceForEmployee(payload.employeeId);
 
 	if (outstandingAdvance) {
-		const outstandingBalance = roundPayrollAmount(outstandingAdvance.outstandingBalance ?? 0);
+		const outstandingBalance = roundDecimal(outstandingAdvance.outstandingBalance ?? 0);
 
 		return failure({
 			type: "ValidationError",
@@ -405,7 +363,7 @@ async function applyForSalaryAdvance({
 		warning = "No active salary structure found. HR must verify advance amount manually.";
 	} else {
 		const grossPay = computeGrossPayComponents(currentStructure).grossPay;
-		const maxAdvisoryAmount = roundPayrollAmount(grossPay * SALARY_ADVANCE_MAX_ADVANCE_RATIO);
+		const maxAdvisoryAmount = roundDecimal(grossPay * SALARY_ADVANCE_MAX_ADVANCE_RATIO);
 
 		if (payload.requestedAmount > maxAdvisoryAmount) {
 			warning = `Requested amount exceeds ${SALARY_ADVANCE_MAX_ADVANCE_RATIO * 100}% of gross pay (KES ${formatKesAmount(grossPay)}). HR may wish to approve a lesser amount.`;
@@ -418,7 +376,7 @@ async function applyForSalaryAdvance({
 			.values({
 				employeeId: payload.employeeId,
 				reason: normalizeText(payload.reason),
-				requestedAmount: toPayrollDecimalString(payload.requestedAmount),
+				requestedAmount: toDecimalString(payload.requestedAmount),
 				requestedRecoveryMonths: payload.requestedRecoveryMonths,
 				status: SALARY_ADVANCE_STATUS.PENDING,
 			})
@@ -470,21 +428,12 @@ async function approveSalaryAdvance({
 		});
 	}
 
-	const employee = await getEmployeeForSalaryAdvance(advance.employeeId);
+	const employeeResult = await getEligibleEmployee(advance.employeeId);
 
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found.",
-		});
+	if (!employeeResult.success) {
+		return employeeResult;
 	}
-
-	if (payload.approvedAmount <= 0) {
-		return failure({
-			type: "ValidationError",
-			message: "Approved amount must be greater than zero.",
-		});
-	}
+	const employee = employeeResult.data;
 
 	if (
 		payload.approvedRecoveryMonths < 1 ||
@@ -544,14 +493,14 @@ async function approveSalaryAdvance({
 	const journalLines = [
 		{
 			accountId: accountMappingsResult.data.salary_advance_receivable,
-			amount: toPayrollDecimalString(payload.approvedAmount),
+			amount: toDecimalString(payload.approvedAmount),
 			dc: "debit" as const,
 			lineNumber: 1,
 			memo: `Salary advance disbursement ${advanceId}`,
 		},
 		{
 			accountId: payload.disbursementAccountId,
-			amount: toPayrollDecimalString(payload.approvedAmount),
+			amount: toDecimalString(payload.approvedAmount),
 			dc: "credit" as const,
 			lineNumber: 2,
 			memo: `Salary advance disbursement ${advanceId}`,
@@ -582,16 +531,16 @@ async function approveSalaryAdvance({
 			const [updated] = await tx
 				.update(salaryAdvances)
 				.set({
-					approvedAmount: toPayrollDecimalString(payload.approvedAmount),
+					approvedAmount: toDecimalString(payload.approvedAmount),
 					approvedAt: new Date(),
 					approvedBy: approverId,
 					approvedRecoveryMonths: payload.approvedRecoveryMonths,
 					disbursementAccountId: payload.disbursementAccountId,
 					disbursementDate: today,
 					disbursementJournalEntryId: journalEntryId,
-					monthlyRecoveryAmount: toPayrollDecimalString(monthlyRecoveryAmount),
+					monthlyRecoveryAmount: toDecimalString(monthlyRecoveryAmount),
 					notes: normalizeText(payload.notes),
-					outstandingBalance: toPayrollDecimalString(payload.approvedAmount),
+					outstandingBalance: toDecimalString(payload.approvedAmount),
 					recoveryStartMonth: payload.recoveryStartMonth,
 					recoveryStartYear: payload.recoveryStartYear,
 					status: SALARY_ADVANCE_STATUS.DISBURSED,
@@ -710,14 +659,8 @@ async function cancelSalaryAdvance({
 async function getActiveAdvancesForEmployee(
 	employeeId: string
 ): Promise<Result<SalaryAdvanceView[]>> {
-	const employee = await getEmployeeForSalaryAdvance(employeeId);
-
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found.",
-		});
-	}
+	const employeeResult = await getEligibleEmployee(employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const currentPeriodStart = getCurrentPeriodStartDate();
 	const currentMonth = currentPeriodStart.getMonth() + 1;
@@ -749,14 +692,8 @@ async function getTotalMonthlyAdvanceRecoveries(
 	periodMonth: number,
 	periodYear: number
 ): Promise<Result<TotalMonthlyAdvanceRecoveriesResponse>> {
-	const employee = await getEmployeeForSalaryAdvance(employeeId);
-
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found.",
-		});
-	}
+	const employeeResult = await getEligibleEmployee(employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const rows = await db.query.salaryAdvances.findMany({
 		where: and(
@@ -792,7 +729,7 @@ async function getTotalMonthlyAdvanceRecoveries(
 	return success({
 		employeeId,
 		items,
-		totalRecoveryAmount: roundPayrollAmount(
+		totalRecoveryAmount: roundDecimal(
 			items.reduce((total, item) => total + item.monthlyRecoveryAmount, 0)
 		),
 	});
@@ -881,17 +818,16 @@ async function processPayrollAdvanceRecovery({
 		return accountMappingsResult;
 	}
 
-	const employee = await getEmployeeForSalaryAdvance(advance.employeeId);
+	const employeeResult = await getEligibleEmployee(advance.employeeId);
 
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found.",
-		});
+	if (!employeeResult.success) {
+		return employeeResult;
 	}
 
-	const balanceBefore = roundPayrollAmount(advance.outstandingBalance);
-	const monthlyRecoveryAmount = roundPayrollAmount(advance.monthlyRecoveryAmount);
+	const employee = employeeResult.data;
+
+	const balanceBefore = roundDecimal(advance.outstandingBalance);
+	const monthlyRecoveryAmount = roundDecimal(advance.monthlyRecoveryAmount);
 	const { balanceAfter, isLastRecovery, recoveryAmount } = computeSalaryAdvanceRecoveryStep({
 		approvedRecoveryMonths: advance.approvedRecoveryMonths,
 		monthlyRecoveryAmount,
@@ -903,14 +839,14 @@ async function processPayrollAdvanceRecovery({
 	const journalLines = [
 		{
 			accountId: accountMappingsResult.data.salary_advance_payable,
-			amount: toPayrollDecimalString(recoveryAmount),
+			amount: toDecimalString(recoveryAmount),
 			dc: "debit" as const,
 			lineNumber: 1,
 			memo: `Salary advance recovery ${advanceId}`,
 		},
 		{
 			accountId: accountMappingsResult.data.salary_advance_receivable,
-			amount: toPayrollDecimalString(recoveryAmount),
+			amount: toDecimalString(recoveryAmount),
 			dc: "credit" as const,
 			lineNumber: 2,
 			memo: `Salary advance recovery ${advanceId}`,
@@ -942,15 +878,15 @@ async function processPayrollAdvanceRecovery({
 				.insert(salaryAdvanceRecoveries)
 				.values({
 					advanceId,
-					balanceAfter: toPayrollDecimalString(balanceAfter),
-					balanceBefore: toPayrollDecimalString(balanceBefore),
+					balanceAfter: toDecimalString(balanceAfter),
+					balanceBefore: toDecimalString(balanceBefore),
 					clearingJournalEntryId: journalEntryId,
 					employeeId: advance.employeeId,
 					isLastRecovery,
 					payrollSlipId,
 					periodMonth,
 					periodYear,
-					recoveryAmount: toPayrollDecimalString(recoveryAmount),
+					recoveryAmount: toDecimalString(recoveryAmount),
 					recoveryDate,
 				})
 				.returning();
@@ -958,15 +894,13 @@ async function processPayrollAdvanceRecovery({
 			await tx
 				.update(salaryAdvances)
 				.set({
-					outstandingBalance: toPayrollDecimalString(balanceAfter),
+					outstandingBalance: toDecimalString(balanceAfter),
 					recoveriesProcessed: advance.recoveriesProcessed + 1,
 					status:
 						balanceAfter <= 0
 							? SALARY_ADVANCE_STATUS.FULLY_RECOVERED
 							: SALARY_ADVANCE_STATUS.RECOVERING,
-					totalRecovered: toPayrollDecimalString(
-						roundPayrollAmount(advance.totalRecovered) + recoveryAmount
-					),
+					totalRecovered: toDecimalString(roundDecimal(advance.totalRecovered) + recoveryAmount),
 				})
 				.where(eq(salaryAdvances.id, advanceId));
 
@@ -1080,14 +1014,8 @@ async function getAdvancesByEmployee(
 	employeeId: string,
 	statusFilter?: SalaryAdvanceStatus | "all"
 ): Promise<Result<SalaryAdvanceView[]>> {
-	const employee = await getEmployeeForSalaryAdvance(employeeId);
-
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found.",
-		});
-	}
+	const employeeResult = await getEligibleEmployee(employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const rows = await db.query.salaryAdvances.findMany({
 		where: and(
@@ -1251,15 +1179,15 @@ async function getAdvanceRecoveryStatement(
 
 	return success({
 		advanceId,
-		closingOutstandingBalance: roundPayrollAmount(advance.outstandingBalance ?? 0),
+		closingOutstandingBalance: roundDecimal(advance.outstandingBalance ?? 0),
 		entries: recoveries.map((recovery) => ({
-			amount: roundPayrollAmount(recovery.recoveryAmount),
-			balanceAfter: roundPayrollAmount(recovery.balanceAfter),
-			balanceBefore: roundPayrollAmount(recovery.balanceBefore),
+			amount: roundDecimal(recovery.recoveryAmount),
+			balanceAfter: roundDecimal(recovery.balanceAfter),
+			balanceBefore: roundDecimal(recovery.balanceBefore),
 			date: recovery.recoveryDate,
 			isLastRecovery: recovery.isLastRecovery,
 		})),
-		openingBalance: roundPayrollAmount(advance.approvedAmount ?? advance.requestedAmount),
+		openingBalance: roundDecimal(advance.approvedAmount ?? advance.requestedAmount),
 	});
 }
 

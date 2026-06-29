@@ -24,3 +24,9 @@ export const SALARY_ADVANCE_STATUS_VARIANTS = {
 	rejected: "destructive",
 	cancelled: "secondary",
 } as const;
+
+export function getSalaryAdvanceStatusVariant(status: string) {
+	return SALARY_ADVANCE_STATUS_VARIANTS[
+		status as keyof typeof SALARY_ADVANCE_STATUS_VARIANTS
+	];
+}

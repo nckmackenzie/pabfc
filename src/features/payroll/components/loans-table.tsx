@@ -10,16 +10,12 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty";
 import { FileSpreadsheetIcon } from "@/components/ui/icons";
 import { PermissionGate } from "@/components/ui/permission-gate";
-import { LOAN_STATUS_VARIANTS } from "@/features/payroll/lib/loan-options";
+import { getLoanStatusVariant } from "@/features/payroll/lib/loan-options";
 import { formatPayrollPeriod } from "@/features/payroll/lib/overtime-options";
 import type { LoanListItemView } from "@/features/payroll/services/loans.api";
 import { loanQueries } from "@/features/payroll/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter } from "@/lib/helpers";
-
-function getLoanStatusVariant(status: string) {
-	return LOAN_STATUS_VARIANTS[status as keyof typeof LOAN_STATUS_VARIANTS];
-}
 
 function LoanActions({ loan }: { loan: LoanListItemView }) {
 	return (

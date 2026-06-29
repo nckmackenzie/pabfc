@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -13,13 +13,7 @@ import {
 } from "@/drizzle/schema";
 import { computeLoanSchedule, computeSingleInstalment } from "@/features/payroll/lib/loan-helpers";
 import { LOAN_DEFAULT_INTEREST_RATE, LOAN_STATUS } from "@/features/payroll/lib/payroll-constants";
-import {
-	getCurrentPeriodParts,
-	getPeriodIndex,
-	roundPayrollAmount,
-	toPayrollBig,
-	toPayrollDecimalString,
-} from "@/features/payroll/lib/helpers";
+import { getCurrentPeriodParts, getPeriodIndex } from "@/features/payroll/lib/helpers";
 import {
 	activeLoansForEmployeeSchema,
 	allActiveLoansFilterSchema,
@@ -34,12 +28,13 @@ import {
 	settleEarlySchema,
 	totalMonthlyLoanObligationsSchema,
 } from "@/features/payroll/services/loan.schemas";
-import { normalizeText } from "@/lib/helpers";
+import { normalizeText, roundDecimal, toBig, toDecimalString } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
+import { employeeSearchCondition } from "@/features/employees/services/employee.server";
 
 type LoanRecord = typeof employeeLoans.$inferSelect;
 type LoanRepaymentRecord = typeof loanRepayments.$inferSelect;
@@ -154,21 +149,20 @@ function getTodayDateString() {
 
 function parseLoanRecord(record: LoanRecord): LoanView {
 	const approvedInstalments = record.approvedInstalments ?? record.requestedInstalments;
-	const totalPrincipalPaid = roundPayrollAmount(record.totalPrincipalPaid);
-	const totalInterestPaid = roundPayrollAmount(record.totalInterestPaid);
+	const totalPrincipalPaid = roundDecimal(record.totalPrincipalPaid);
+	const totalInterestPaid = roundDecimal(record.totalInterestPaid);
 	return {
 		...record,
-		principalAmount: roundPayrollAmount(record.principalAmount),
-		annualInterestRate: roundPayrollAmount(record.annualInterestRate),
-		approvedAmount:
-			record.approvedAmount === null ? null : roundPayrollAmount(record.approvedAmount),
+		principalAmount: roundDecimal(record.principalAmount),
+		annualInterestRate: roundDecimal(record.annualInterestRate, 4),
+		approvedAmount: record.approvedAmount === null ? null : roundDecimal(record.approvedAmount),
 		monthlyInstalment:
-			record.monthlyInstalment === null ? null : roundPayrollAmount(record.monthlyInstalment),
+			record.monthlyInstalment === null ? null : roundDecimal(record.monthlyInstalment),
 		outstandingBalance:
-			record.outstandingBalance === null ? null : roundPayrollAmount(record.outstandingBalance),
+			record.outstandingBalance === null ? null : roundDecimal(record.outstandingBalance),
 		totalPrincipalPaid,
 		totalInterestPaid,
-		totalPaid: roundPayrollAmount(totalPrincipalPaid + totalInterestPaid),
+		totalPaid: roundDecimal(totalPrincipalPaid + totalInterestPaid),
 		remainingInstalments: Math.max(approvedInstalments - record.instalmentsPaid, 0),
 	};
 }
@@ -176,11 +170,11 @@ function parseLoanRecord(record: LoanRecord): LoanView {
 function parseLoanRepaymentRecord(record: LoanRepaymentRecord): LoanRepaymentView {
 	return {
 		...record,
-		principalComponent: roundPayrollAmount(record.principalComponent),
-		interestComponent: roundPayrollAmount(record.interestComponent),
-		totalRepayment: roundPayrollAmount(record.totalRepayment),
-		balanceBefore: roundPayrollAmount(record.balanceBefore),
-		balanceAfter: roundPayrollAmount(record.balanceAfter),
+		principalComponent: roundDecimal(record.principalComponent),
+		interestComponent: roundDecimal(record.interestComponent),
+		totalRepayment: roundDecimal(record.totalRepayment),
+		balanceBefore: roundDecimal(record.balanceBefore),
+		balanceAfter: roundDecimal(record.balanceAfter),
 	};
 }
 
@@ -412,10 +406,10 @@ async function applyForLoan({
 			.insert(employeeLoans)
 			.values({
 				employeeId: payload.employeeId,
-				principalAmount: toPayrollDecimalString(payload.principalAmount),
-				annualInterestRate: toPayrollBig(
-					payload.annualInterestRate ?? LOAN_DEFAULT_INTEREST_RATE
-				).toFixed(4),
+				principalAmount: toDecimalString(payload.principalAmount),
+				annualInterestRate: toBig(payload.annualInterestRate ?? LOAN_DEFAULT_INTEREST_RATE).toFixed(
+					4
+				),
 				requestedInstalments: payload.requestedInstalments,
 				purpose: normalizeText(payload.purpose),
 				status: LOAN_STATUS.PENDING,
@@ -524,14 +518,14 @@ async function approveLoan({
 	const journalLines = [
 		{
 			accountId: receivableAccountResult.data,
-			amount: toPayrollDecimalString(payload.approvedAmount),
+			amount: toDecimalString(payload.approvedAmount),
 			dc: "debit" as const,
 			lineNumber: 1,
 			memo: `Loan disbursement ${loan.id}`,
 		},
 		{
 			accountId: payload.disbursementAccountId,
-			amount: toPayrollDecimalString(payload.approvedAmount),
+			amount: toDecimalString(payload.approvedAmount),
 			dc: "credit" as const,
 			lineNumber: 2,
 			memo: `Loan disbursement ${loan.id}`,
@@ -565,14 +559,14 @@ async function approveLoan({
 					status: LOAN_STATUS.ACTIVE,
 					approvedBy: approverId,
 					approvedAt: new Date(),
-					approvedAmount: toPayrollDecimalString(payload.approvedAmount),
+					approvedAmount: toDecimalString(payload.approvedAmount),
 					approvedInstalments: payload.approvedInstalments,
 					disbursementAccountId: payload.disbursementAccountId,
 					disbursementDate: today,
 					repaymentStartMonth: payload.repaymentStartMonth,
 					repaymentStartYear: payload.repaymentStartYear,
-					monthlyInstalment: toPayrollDecimalString(monthlyInstalment),
-					outstandingBalance: toPayrollDecimalString(payload.approvedAmount),
+					monthlyInstalment: toDecimalString(monthlyInstalment),
+					outstandingBalance: toDecimalString(payload.approvedAmount),
 					disbursementJournalEntryId: journalEntryId,
 					notes: normalizeText(payload.notes),
 				})
@@ -808,15 +802,15 @@ async function settleEarly({
 		return receivableAccountResult;
 	}
 
-	const currentOutstandingBalance = roundPayrollAmount(loan.outstandingBalance);
+	const currentOutstandingBalance = roundDecimal(loan.outstandingBalance);
 	const settlementBreakdown = computeSingleInstalment(
 		currentOutstandingBalance,
 		loan.annualInterestRate
 	);
-	const expectedSettlementAmount = settlementBreakdown.totalPayment;
-	const tolerance = 1;
 
-	if (Math.abs(roundPayrollAmount(settlementAmount) - expectedSettlementAmount) > tolerance) {
+	const expectedSettlementAmount = roundDecimal(settlementBreakdown.totalPayment);
+	const submittedSettlementAmount = roundDecimal(settlementAmount);
+	if (submittedSettlementAmount !== expectedSettlementAmount) {
 		return failure({
 			type: "ValidationError",
 			message: `Settlement amount must match the expected settlement amount of KES ${expectedSettlementAmount.toFixed(2)}.`,
@@ -828,14 +822,14 @@ async function settleEarly({
 	const journalLines = [
 		{
 			accountId: disbursementAccountId,
-			amount: toPayrollDecimalString(expectedSettlementAmount),
+			amount: toDecimalString(expectedSettlementAmount),
 			dc: "debit" as const,
 			lineNumber: 1,
 			memo: `Early settlement ${loanId}`,
 		},
 		{
 			accountId: receivableAccountResult.data,
-			amount: toPayrollDecimalString(expectedSettlementAmount),
+			amount: toDecimalString(expectedSettlementAmount),
 			dc: "credit" as const,
 			lineNumber: 2,
 			memo: `Early settlement ${loanId}`,
@@ -871,10 +865,10 @@ async function settleEarly({
 					repaymentDate: today,
 					periodMonth: currentPeriod.periodMonth,
 					periodYear: currentPeriod.periodYear,
-					principalComponent: toPayrollDecimalString(settlementBreakdown.principalComponent),
-					interestComponent: toPayrollDecimalString(settlementBreakdown.interestComponent),
-					totalRepayment: toPayrollDecimalString(settlementBreakdown.totalPayment),
-					balanceBefore: toPayrollDecimalString(currentOutstandingBalance),
+					principalComponent: toDecimalString(settlementBreakdown.principalComponent),
+					interestComponent: toDecimalString(settlementBreakdown.interestComponent),
+					totalRepayment: toDecimalString(settlementBreakdown.totalPayment),
+					balanceBefore: toDecimalString(currentOutstandingBalance),
 					balanceAfter: "0.00",
 					isEarlySettlement: true,
 					journalEntryId,
@@ -888,11 +882,11 @@ async function settleEarly({
 					status: LOAN_STATUS.FULLY_PAID,
 					outstandingBalance: "0.00",
 					settledDate: today,
-					totalPrincipalPaid: toPayrollDecimalString(
-						roundPayrollAmount(loan.totalPrincipalPaid) + settlementBreakdown.principalComponent
+					totalPrincipalPaid: toDecimalString(
+						roundDecimal(loan.totalPrincipalPaid) + settlementBreakdown.principalComponent
 					),
-					totalInterestPaid: toPayrollDecimalString(
-						roundPayrollAmount(loan.totalInterestPaid) + settlementBreakdown.interestComponent
+					totalInterestPaid: toDecimalString(
+						roundDecimal(loan.totalInterestPaid) + settlementBreakdown.interestComponent
 					),
 					instalmentsPaid: loan.instalmentsPaid + 1,
 					settlementJournalEntryId: journalEntryId,
@@ -974,7 +968,7 @@ async function getTotalMonthlyLoanObligations(
 	return success({
 		employeeId,
 		items,
-		totalMonthlyInstalment: roundPayrollAmount(
+		totalMonthlyInstalment: roundDecimal(
 			items.reduce((sum, item) => sum + item.monthlyInstalment, 0)
 		),
 	});
@@ -1052,7 +1046,7 @@ async function processPayrollLoanRepayment({
 		});
 	}
 
-	const balanceBefore = roundPayrollAmount(loan.outstandingBalance);
+	const balanceBefore = roundDecimal(loan.outstandingBalance);
 	const breakdown = computeSingleInstalment(
 		balanceBefore,
 		loan.annualInterestRate,
@@ -1070,11 +1064,11 @@ async function processPayrollLoanRepayment({
 					repaymentDate,
 					periodMonth,
 					periodYear,
-					principalComponent: toPayrollDecimalString(breakdown.principalComponent),
-					interestComponent: toPayrollDecimalString(breakdown.interestComponent),
-					totalRepayment: toPayrollDecimalString(breakdown.totalPayment),
-					balanceBefore: toPayrollDecimalString(balanceBefore),
-					balanceAfter: toPayrollDecimalString(breakdown.balanceAfter),
+					principalComponent: toDecimalString(breakdown.principalComponent),
+					interestComponent: toDecimalString(breakdown.interestComponent),
+					totalRepayment: toDecimalString(breakdown.totalPayment),
+					balanceBefore: toDecimalString(balanceBefore),
+					balanceAfter: toDecimalString(breakdown.balanceAfter),
 					isEarlySettlement: false,
 					payrollSlipId,
 				})
@@ -1083,14 +1077,14 @@ async function processPayrollLoanRepayment({
 			await tx
 				.update(employeeLoans)
 				.set({
-					outstandingBalance: toPayrollDecimalString(
+					outstandingBalance: toDecimalString(
 						breakdown.balanceAfter <= 0 ? 0 : breakdown.balanceAfter
 					),
-					totalPrincipalPaid: toPayrollDecimalString(
-						roundPayrollAmount(loan.totalPrincipalPaid) + breakdown.principalComponent
+					totalPrincipalPaid: toDecimalString(
+						roundDecimal(loan.totalPrincipalPaid) + breakdown.principalComponent
 					),
-					totalInterestPaid: toPayrollDecimalString(
-						roundPayrollAmount(loan.totalInterestPaid) + breakdown.interestComponent
+					totalInterestPaid: toDecimalString(
+						roundDecimal(loan.totalInterestPaid) + breakdown.interestComponent
 					),
 					instalmentsPaid: loan.instalmentsPaid + 1,
 					status: breakdown.balanceAfter <= 0 ? LOAN_STATUS.FULLY_PAID : LOAN_STATUS.ACTIVE,
@@ -1251,15 +1245,15 @@ async function getLoanLedger(loanId: string): Promise<Result<LoanLedgerView>> {
 
 	return success({
 		loanId,
-		openingBalance: roundPayrollAmount(loan.approvedAmount ?? loan.principalAmount),
-		closingOutstandingBalance: roundPayrollAmount(loan.outstandingBalance ?? 0),
+		openingBalance: roundDecimal(loan.approvedAmount ?? loan.principalAmount),
+		closingOutstandingBalance: roundDecimal(loan.outstandingBalance ?? 0),
 		entries: repayments.map((repayment) => ({
 			date: repayment.repaymentDate,
-			principal: roundPayrollAmount(repayment.principalComponent),
-			interest: roundPayrollAmount(repayment.interestComponent),
-			total: roundPayrollAmount(repayment.totalRepayment),
-			balanceBefore: roundPayrollAmount(repayment.balanceBefore),
-			balanceAfter: roundPayrollAmount(repayment.balanceAfter),
+			principal: roundDecimal(repayment.principalComponent),
+			interest: roundDecimal(repayment.interestComponent),
+			total: roundDecimal(repayment.totalRepayment),
+			balanceBefore: roundDecimal(repayment.balanceBefore),
+			balanceAfter: roundDecimal(repayment.balanceAfter),
 			isEarlySettlement: repayment.isEarlySettlement,
 		})),
 	});
@@ -1267,7 +1261,6 @@ async function getLoanLedger(loanId: string): Promise<Result<LoanLedgerView>> {
 
 function buildLoanListConditions(filters: AllActiveLoansFilters) {
 	const conditions: Array<SQL | undefined> = [isNull(employees.deletedAt)];
-	const query = filters.q?.trim();
 	const status = filters.status;
 
 	if (status && status !== "all") {
@@ -1282,17 +1275,8 @@ function buildLoanListConditions(filters: AllActiveLoansFilters) {
 		conditions.push(eq(employeeLoans.employeeId, filters.employeeId));
 	}
 
-	if (query) {
-		const searchQuery = `%${query}%`;
-		conditions.push(
-			or(
-				ilike(employees.employeeNo, searchQuery),
-				ilike(employees.firstName, searchQuery),
-				ilike(employees.lastName, searchQuery),
-				ilike(sql`concat_ws(' ', ${employees.firstName}, ${employees.lastName})`, searchQuery)
-			)
-		);
-	}
+	const searchCondition = employeeSearchCondition(filters.q);
+	if (searchCondition) conditions.push(searchCondition);
 
 	return conditions;
 }

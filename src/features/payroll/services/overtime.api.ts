@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/drizzle/db";
 import { departments, employees, overtimeRecords, users } from "@/drizzle/schema";
@@ -9,9 +9,6 @@ import {
 	getMonthBoundaryDate,
 	getPeriodIndex,
 	isFuturePayrollPeriod,
-	roundPayrollAmount,
-	toPayrollBig,
-	toPayrollDecimalString,
 } from "@/features/payroll/lib/helpers";
 import {
 	OVERTIME_MAX_HOURS_PER_FORTNIGHT,
@@ -37,6 +34,11 @@ import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { toTitleCase } from "@/lib/utils";
+import { roundDecimal, toBig, toDecimalString } from "@/lib/helpers";
+import {
+	employeeSearchCondition,
+	getEligibleEmployee,
+} from "@/features/employees/services/employee.server";
 
 type OvertimeRecordRow = typeof overtimeRecords.$inferSelect;
 type OvertimeCreatePayload = z.infer<typeof overtimeRecordCreateRequestSchema>;
@@ -104,14 +106,14 @@ const OVERTIME_WARNING_MESSAGE =
 function mapOvertimeRecord(record: OvertimeRecordRow): OvertimeRecordView {
 	return {
 		...record,
-		weekdayOvertimeHours: roundPayrollAmount(record.weekdayOvertimeHours),
-		weekendOvertimeHours: roundPayrollAmount(record.weekendOvertimeHours),
-		publicHolidayOvertimeHours: roundPayrollAmount(record.publicHolidayOvertimeHours),
-		overtimeHourlyRate: roundPayrollAmount(record.overtimeHourlyRate),
-		weekdayOvertimePay: roundPayrollAmount(record.weekdayOvertimePay),
-		weekendOvertimePay: roundPayrollAmount(record.weekendOvertimePay),
-		publicHolidayOvertimePay: roundPayrollAmount(record.publicHolidayOvertimePay),
-		totalOvertimePay: roundPayrollAmount(record.totalOvertimePay),
+		weekdayOvertimeHours: roundDecimal(record.weekdayOvertimeHours),
+		weekendOvertimeHours: roundDecimal(record.weekendOvertimeHours),
+		publicHolidayOvertimeHours: roundDecimal(record.publicHolidayOvertimeHours),
+		overtimeHourlyRate: roundDecimal(record.overtimeHourlyRate),
+		weekdayOvertimePay: roundDecimal(record.weekdayOvertimePay),
+		weekendOvertimePay: roundDecimal(record.weekendOvertimePay),
+		publicHolidayOvertimePay: roundDecimal(record.publicHolidayOvertimePay),
+		totalOvertimePay: roundDecimal(record.totalOvertimePay),
 	};
 }
 
@@ -150,14 +152,14 @@ function mapOvertimeListRow(row: {
 		payrollPeriodId: row.payrollPeriodId,
 		periodMonth: row.periodMonth,
 		periodYear: row.periodYear,
-		weekdayOvertimeHours: roundPayrollAmount(row.weekdayOvertimeHours),
-		weekendOvertimeHours: roundPayrollAmount(row.weekendOvertimeHours),
-		publicHolidayOvertimeHours: roundPayrollAmount(row.publicHolidayOvertimeHours),
-		overtimeHourlyRate: roundPayrollAmount(row.overtimeHourlyRate),
-		weekdayOvertimePay: roundPayrollAmount(row.weekdayOvertimePay),
-		weekendOvertimePay: roundPayrollAmount(row.weekendOvertimePay),
-		publicHolidayOvertimePay: roundPayrollAmount(row.publicHolidayOvertimePay),
-		totalOvertimePay: roundPayrollAmount(row.totalOvertimePay),
+		weekdayOvertimeHours: roundDecimal(row.weekdayOvertimeHours),
+		weekendOvertimeHours: roundDecimal(row.weekendOvertimeHours),
+		publicHolidayOvertimeHours: roundDecimal(row.publicHolidayOvertimeHours),
+		overtimeHourlyRate: roundDecimal(row.overtimeHourlyRate),
+		weekdayOvertimePay: roundDecimal(row.weekdayOvertimePay),
+		weekendOvertimePay: roundDecimal(row.weekendOvertimePay),
+		publicHolidayOvertimePay: roundDecimal(row.publicHolidayOvertimePay),
+		totalOvertimePay: roundDecimal(row.totalOvertimePay),
 		status: row.status,
 		approvedBy: row.approvedBy,
 		approvedAt: row.approvedAt,
@@ -181,9 +183,9 @@ function parseHourValues(payload: {
 	publicHolidayOvertimeHours: number | string;
 }) {
 	return {
-		weekdayOvertimeHours: roundPayrollAmount(payload.weekdayOvertimeHours),
-		weekendOvertimeHours: roundPayrollAmount(payload.weekendOvertimeHours),
-		publicHolidayOvertimeHours: roundPayrollAmount(payload.publicHolidayOvertimeHours),
+		weekdayOvertimeHours: roundDecimal(payload.weekdayOvertimeHours),
+		weekendOvertimeHours: roundDecimal(payload.weekendOvertimeHours),
+		publicHolidayOvertimeHours: roundDecimal(payload.publicHolidayOvertimeHours),
 	};
 }
 
@@ -209,8 +211,8 @@ function validateHourValues(payload: {
 		});
 	}
 
-	const totalOvertimeHours = roundPayrollAmount(
-		toPayrollBig(payload.weekdayOvertimeHours)
+	const totalOvertimeHours = roundDecimal(
+		toBig(payload.weekdayOvertimeHours)
 			.plus(payload.weekendOvertimeHours)
 			.plus(payload.publicHolidayOvertimeHours)
 	);
@@ -232,21 +234,6 @@ function validateHourValues(payload: {
 		...payload,
 		totalOvertimeHours,
 		warnings,
-	});
-}
-
-async function getEligibleEmployee(employeeId: string) {
-	return db.query.employees.findFirst({
-		columns: {
-			id: true,
-			employeeNo: true,
-			firstName: true,
-			lastName: true,
-			status: true,
-			departmentId: true,
-			deletedAt: true,
-		},
-		where: and(eq(employees.id, employeeId), isNull(employees.deletedAt)),
 	});
 }
 
@@ -314,8 +301,8 @@ async function resolveOvertimeComputation({
 		});
 	}
 
-	const overtimeHourlyRate = roundPayrollAmount(
-		toPayrollBig(salaryStructureResult.data.basicSalary).div(overtimeHourlyRateDivisor)
+	const overtimeHourlyRate = roundDecimal(
+		toBig(salaryStructureResult.data.basicSalary).div(overtimeHourlyRateDivisor)
 	);
 
 	return success(
@@ -347,12 +334,11 @@ function hasOvertimeSnapshotChanged(
 	}
 ) {
 	return (
-		roundPayrollAmount(record.overtimeHourlyRate) !== computedValues.overtimeHourlyRate ||
-		roundPayrollAmount(record.weekdayOvertimePay) !== computedValues.weekdayOvertimePay ||
-		roundPayrollAmount(record.weekendOvertimePay) !== computedValues.weekendOvertimePay ||
-		roundPayrollAmount(record.publicHolidayOvertimePay) !==
-			computedValues.publicHolidayOvertimePay ||
-		roundPayrollAmount(record.totalOvertimePay) !== computedValues.totalOvertimePay
+		roundDecimal(record.overtimeHourlyRate) !== computedValues.overtimeHourlyRate ||
+		roundDecimal(record.weekdayOvertimePay) !== computedValues.weekdayOvertimePay ||
+		roundDecimal(record.weekendOvertimePay) !== computedValues.weekendOvertimePay ||
+		roundDecimal(record.publicHolidayOvertimePay) !== computedValues.publicHolidayOvertimePay ||
+		roundDecimal(record.totalOvertimePay) !== computedValues.totalOvertimePay
 	);
 }
 
@@ -379,14 +365,14 @@ function toOvertimePersistedValues(values: {
 	totalOvertimePay: number;
 }) {
 	return {
-		weekdayOvertimeHours: toPayrollDecimalString(values.weekdayOvertimeHours),
-		weekendOvertimeHours: toPayrollDecimalString(values.weekendOvertimeHours),
-		publicHolidayOvertimeHours: toPayrollDecimalString(values.publicHolidayOvertimeHours),
-		overtimeHourlyRate: toPayrollDecimalString(values.overtimeHourlyRate),
-		weekdayOvertimePay: toPayrollDecimalString(values.weekdayOvertimePay),
-		weekendOvertimePay: toPayrollDecimalString(values.weekendOvertimePay),
-		publicHolidayOvertimePay: toPayrollDecimalString(values.publicHolidayOvertimePay),
-		totalOvertimePay: toPayrollDecimalString(values.totalOvertimePay),
+		weekdayOvertimeHours: toDecimalString(values.weekdayOvertimeHours),
+		weekendOvertimeHours: toDecimalString(values.weekendOvertimeHours),
+		publicHolidayOvertimeHours: toDecimalString(values.publicHolidayOvertimeHours),
+		overtimeHourlyRate: toDecimalString(values.overtimeHourlyRate),
+		weekdayOvertimePay: toDecimalString(values.weekdayOvertimePay),
+		weekendOvertimePay: toDecimalString(values.weekendOvertimePay),
+		publicHolidayOvertimePay: toDecimalString(values.publicHolidayOvertimePay),
+		totalOvertimePay: toDecimalString(values.totalOvertimePay),
 	};
 }
 
@@ -408,21 +394,9 @@ async function createOvertimeRecord({
 	payload: OvertimeCreatePayload;
 	createdBy: string;
 }): Promise<Result<OvertimeMutationResponse>> {
-	const employee = await getEligibleEmployee(payload.employeeId);
+	const result = await getEligibleEmployee(payload.employeeId);
 
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found",
-		});
-	}
-
-	if (employee.status !== "active") {
-		return failure({
-			type: "ValidationError",
-			message: "Overtime records can only be created for active employees",
-		});
-	}
+	if (!result.success) return result;
 
 	const periodMonth = Number(payload.periodMonth);
 	const periodYear = Number(payload.periodYear);
@@ -760,17 +734,8 @@ async function getOvertimeRecordsByPeriod(
 		conditions.push(eq(employees.departmentId, filters.departmentId));
 	}
 
-	if (filters?.q?.trim()) {
-		const query = `%${filters.q.trim()}%`;
-		conditions.push(
-			or(
-				ilike(employees.employeeNo, query),
-				ilike(employees.firstName, query),
-				ilike(employees.lastName, query),
-				ilike(sql`concat_ws(' ', ${employees.firstName}, ${employees.lastName})`, query)
-			)
-		);
-	}
+	const searchCondiotions = employeeSearchCondition(filters?.q);
+	if (searchCondiotions) conditions.push(searchCondiotions);
 
 	const rows = await db
 		.select({
@@ -844,25 +809,20 @@ async function getApprovedOvertimeForPayrollPeriod(periodMonth: number, periodYe
 	return rows.map((row) => ({
 		recordId: row.recordId,
 		employeeId: row.employeeId,
-		totalOvertimePay: roundPayrollAmount(row.totalOvertimePay),
-		overtimeHourlyRate: roundPayrollAmount(row.overtimeHourlyRate),
-		weekdayOvertimeHours: roundPayrollAmount(row.weekdayOvertimeHours),
-		weekendOvertimeHours: roundPayrollAmount(row.weekendOvertimeHours),
-		publicHolidayOvertimeHours: roundPayrollAmount(row.publicHolidayOvertimeHours),
+		totalOvertimePay: roundDecimal(row.totalOvertimePay),
+		overtimeHourlyRate: roundDecimal(row.overtimeHourlyRate),
+		weekdayOvertimeHours: roundDecimal(row.weekdayOvertimeHours),
+		weekendOvertimeHours: roundDecimal(row.weekendOvertimeHours),
+		publicHolidayOvertimeHours: roundDecimal(row.publicHolidayOvertimeHours),
 	}));
 }
 
 async function getOvertimeSummaryForEmployee(
 	params: z.infer<typeof overtimeSummaryRangeSchema>
 ): Promise<Result<OvertimeSummaryResponse>> {
-	const employee = await getEligibleEmployee(params.employeeId);
+	const result = await getEligibleEmployee(params.employeeId);
 
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found",
-		});
-	}
+	if (!result.success) return result;
 
 	const rows = await db.query.overtimeRecords.findMany({
 		where: and(eq(overtimeRecords.employeeId, params.employeeId), getPeriodRangeConditions(params)),
@@ -872,20 +832,20 @@ async function getOvertimeSummaryForEmployee(
 	const records = rows.map(mapOvertimeRecord);
 	const totals = records.reduce(
 		(accumulator, record) => {
-			accumulator.weekdayOvertimeHours = roundPayrollAmount(
-				toPayrollBig(accumulator.weekdayOvertimeHours).plus(record.weekdayOvertimeHours)
+			accumulator.weekdayOvertimeHours = roundDecimal(
+				toBig(accumulator.weekdayOvertimeHours).plus(record.weekdayOvertimeHours)
 			);
-			accumulator.weekendOvertimeHours = roundPayrollAmount(
-				toPayrollBig(accumulator.weekendOvertimeHours).plus(record.weekendOvertimeHours)
+			accumulator.weekendOvertimeHours = roundDecimal(
+				toBig(accumulator.weekendOvertimeHours).plus(record.weekendOvertimeHours)
 			);
-			accumulator.publicHolidayOvertimeHours = roundPayrollAmount(
-				toPayrollBig(accumulator.publicHolidayOvertimeHours).plus(record.publicHolidayOvertimeHours)
+			accumulator.publicHolidayOvertimeHours = roundDecimal(
+				toBig(accumulator.publicHolidayOvertimeHours).plus(record.publicHolidayOvertimeHours)
 			);
-			accumulator.totalOvertimePay = roundPayrollAmount(
-				toPayrollBig(accumulator.totalOvertimePay).plus(record.totalOvertimePay)
+			accumulator.totalOvertimePay = roundDecimal(
+				toBig(accumulator.totalOvertimePay).plus(record.totalOvertimePay)
 			);
-			accumulator.totalOvertimeHours = roundPayrollAmount(
-				toPayrollBig(accumulator.totalOvertimeHours)
+			accumulator.totalOvertimeHours = roundDecimal(
+				toBig(accumulator.totalOvertimeHours)
 					.plus(record.weekdayOvertimeHours)
 					.plus(record.weekendOvertimeHours)
 					.plus(record.publicHolidayOvertimeHours)

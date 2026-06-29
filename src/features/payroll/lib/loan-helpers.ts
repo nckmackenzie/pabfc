@@ -1,8 +1,9 @@
-import Big from "big.js";
 import {
 	LOAN_DEFAULT_INTEREST_RATE,
 	LOAN_INTEREST_CALCULATION_METHOD,
 } from "@/features/payroll/lib/payroll-constants";
+import type Big from "big.js";
+import { roundDecimal, toBig } from "@/lib/helpers";
 
 type NumericLike = number | string | Big | null | undefined;
 
@@ -28,23 +29,11 @@ export type LoanInstalmentBreakdown = {
 	balanceAfter: number;
 };
 
-function toLoanBig(value: NumericLike) {
-	if (value === null || value === undefined || value === "") {
-		return new Big(0);
-	}
-
-	try {
-		return new Big(value);
-	} catch {
-		return new Big(0);
-	}
-}
-
-function roundLoanAmount(value: NumericLike) {
-	return Number(toLoanBig(value).round(2, Big.roundHalfUp).toFixed(2));
-}
-
-function assertValidLoanArguments(principal: number, annualInterestRate: number, instalments: number) {
+function assertValidLoanArguments(
+	principal: number,
+	annualInterestRate: number,
+	instalments: number
+) {
 	if (!Number.isFinite(principal) || principal <= 0) {
 		throw new Error("Principal must be greater than zero");
 	}
@@ -71,25 +60,25 @@ export function computeLoanSchedule(
 	annualInterestRate: NumericLike,
 	numberOfInstalments: number
 ): LoanScheduleComputation {
-	const parsedPrincipal = roundLoanAmount(principal);
+	const parsedPrincipal = roundDecimal(principal);
 	const parsedAnnualInterestRate = Number(
-		toLoanBig(annualInterestRate ?? LOAN_DEFAULT_INTEREST_RATE).toString()
+		toBig(annualInterestRate ?? LOAN_DEFAULT_INTEREST_RATE).toString()
 	);
 	const instalments = Number(numberOfInstalments);
 
 	assertValidLoanArguments(parsedPrincipal, parsedAnnualInterestRate, instalments);
 
 	if (parsedAnnualInterestRate === 0) {
-		const roundedMonthlyInstalment = roundLoanAmount(parsedPrincipal / instalments);
+		const roundedMonthlyInstalment = roundDecimal(parsedPrincipal / instalments);
 		let outstandingBalance = parsedPrincipal;
 		const schedule: LoanScheduleItem[] = [];
 
 		for (let instalmentNumber = 1; instalmentNumber <= instalments; instalmentNumber += 1) {
 			const isLastInstalment = instalmentNumber === instalments;
 			const principalComponent = isLastInstalment
-				? roundLoanAmount(outstandingBalance)
-				: roundLoanAmount(roundedMonthlyInstalment);
-			const balanceAfter = roundLoanAmount(outstandingBalance - principalComponent);
+				? roundDecimal(outstandingBalance)
+				: roundDecimal(roundedMonthlyInstalment);
+			const balanceAfter = roundDecimal(outstandingBalance - principalComponent);
 
 			schedule.push({
 				instalmentNumber,
@@ -104,7 +93,7 @@ export function computeLoanSchedule(
 
 		return {
 			monthlyInstalment: roundedMonthlyInstalment,
-			totalRepayable: roundLoanAmount(parsedPrincipal),
+			totalRepayable: roundDecimal(parsedPrincipal),
 			totalInterest: 0,
 			schedule,
 		};
@@ -112,11 +101,13 @@ export function computeLoanSchedule(
 
 	assertReducingBalanceInterestMethod();
 
-	const principalBig = toLoanBig(parsedPrincipal);
-	const monthlyRate = toLoanBig(parsedAnnualInterestRate).div(12);
+	const principalBig = toBig(parsedPrincipal);
+	const monthlyRate = toBig(parsedAnnualInterestRate).div(12);
 	const growthFactor = monthlyRate.plus(1).pow(instalments);
-	const rawInstalment = principalBig.times(monthlyRate.times(growthFactor)).div(growthFactor.minus(1));
-	const roundedMonthlyInstalment = roundLoanAmount(rawInstalment);
+	const rawInstalment = principalBig
+		.times(monthlyRate.times(growthFactor))
+		.div(growthFactor.minus(1));
+	const roundedMonthlyInstalment = roundDecimal(rawInstalment);
 	let outstandingBalance = parsedPrincipal;
 	let totalInterest = 0;
 	let totalRepayable = 0;
@@ -124,19 +115,16 @@ export function computeLoanSchedule(
 
 	for (let instalmentNumber = 1; instalmentNumber <= instalments; instalmentNumber += 1) {
 		const isLastInstalment = instalmentNumber === instalments;
-		const interestComponent = roundLoanAmount(toLoanBig(outstandingBalance).times(monthlyRate));
+		const interestComponent = roundDecimal(toBig(outstandingBalance).times(monthlyRate));
 		const principalComponent = isLastInstalment
-			? roundLoanAmount(outstandingBalance)
-			: roundLoanAmount(
-					Math.min(
-						outstandingBalance,
-						roundLoanAmount(roundedMonthlyInstalment - interestComponent)
-					)
+			? roundDecimal(outstandingBalance)
+			: roundDecimal(
+					Math.min(outstandingBalance, roundDecimal(roundedMonthlyInstalment - interestComponent))
 				);
-		const totalPayment = roundLoanAmount(principalComponent + interestComponent);
+		const totalPayment = roundDecimal(principalComponent + interestComponent);
 		const balanceAfter = isLastInstalment
 			? 0
-			: roundLoanAmount(outstandingBalance - principalComponent);
+			: roundDecimal(outstandingBalance - principalComponent);
 
 		schedule.push({
 			instalmentNumber,
@@ -146,8 +134,8 @@ export function computeLoanSchedule(
 			balanceAfter,
 		});
 
-		totalInterest = roundLoanAmount(totalInterest + interestComponent);
-		totalRepayable = roundLoanAmount(totalRepayable + totalPayment);
+		totalInterest = roundDecimal(totalInterest + interestComponent);
+		totalRepayable = roundDecimal(totalRepayable + totalPayment);
 		outstandingBalance = balanceAfter;
 	}
 
@@ -164,53 +152,56 @@ export function computeSingleInstalment(
 	annualInterestRate: NumericLike,
 	scheduledMonthlyInstalment?: NumericLike
 ): LoanInstalmentBreakdown {
-	const parsedOutstandingBalance = roundLoanAmount(outstandingBalance);
+	const parsedOutstandingBalance = roundDecimal(outstandingBalance);
 	const parsedAnnualInterestRate = Number(
-		toLoanBig(annualInterestRate ?? LOAN_DEFAULT_INTEREST_RATE).toString()
+		toBig(annualInterestRate ?? LOAN_DEFAULT_INTEREST_RATE).toString()
 	);
 
 	if (!Number.isFinite(parsedOutstandingBalance) || parsedOutstandingBalance <= 0) {
 		throw new Error("Outstanding balance must be greater than zero");
 	}
 
-	if (!Number.isFinite(parsedAnnualInterestRate) || parsedAnnualInterestRate < 0 || parsedAnnualInterestRate > 1) {
+	if (
+		!Number.isFinite(parsedAnnualInterestRate) ||
+		parsedAnnualInterestRate < 0 ||
+		parsedAnnualInterestRate > 1
+	) {
 		throw new Error("Interest rate must be between 0 and 1");
 	}
 
 	if (parsedAnnualInterestRate === 0) {
-		const totalPayment = roundLoanAmount(
-			scheduledMonthlyInstalment ?? parsedOutstandingBalance
-		);
-		const principalComponent = roundLoanAmount(
-			Math.min(parsedOutstandingBalance, totalPayment)
-		);
+		const totalPayment = roundDecimal(scheduledMonthlyInstalment ?? parsedOutstandingBalance);
+		const principalComponent = roundDecimal(Math.min(parsedOutstandingBalance, totalPayment));
 		return {
 			principalComponent,
 			interestComponent: 0,
 			totalPayment: principalComponent,
-			balanceAfter: roundLoanAmount(parsedOutstandingBalance - principalComponent),
+			balanceAfter: roundDecimal(parsedOutstandingBalance - principalComponent),
 		};
 	}
 
 	assertReducingBalanceInterestMethod();
 
-	const monthlyRate = toLoanBig(parsedAnnualInterestRate).div(12);
-	const interestComponent = roundLoanAmount(toLoanBig(parsedOutstandingBalance).times(monthlyRate));
-	const scheduledTotalPayment = roundLoanAmount(
+	const monthlyRate = toBig(parsedAnnualInterestRate).div(12);
+	const interestComponent = roundDecimal(toBig(parsedOutstandingBalance).times(monthlyRate));
+	const scheduledTotalPayment = roundDecimal(
 		scheduledMonthlyInstalment ?? parsedOutstandingBalance + interestComponent
 	);
-	const cappedTotalPayment = roundLoanAmount(
-		Math.max(interestComponent, Math.min(scheduledTotalPayment, parsedOutstandingBalance + interestComponent))
+	const cappedTotalPayment = roundDecimal(
+		Math.max(
+			interestComponent,
+			Math.min(scheduledTotalPayment, parsedOutstandingBalance + interestComponent)
+		)
 	);
-	const principalComponent = roundLoanAmount(
+	const principalComponent = roundDecimal(
 		Math.min(parsedOutstandingBalance, cappedTotalPayment - interestComponent)
 	);
-	const balanceAfter = roundLoanAmount(parsedOutstandingBalance - principalComponent);
+	const balanceAfter = roundDecimal(parsedOutstandingBalance - principalComponent);
 
 	return {
 		principalComponent,
 		interestComponent,
-		totalPayment: roundLoanAmount(principalComponent + interestComponent),
+		totalPayment: roundDecimal(principalComponent + interestComponent),
 		balanceAfter: balanceAfter < 0 ? 0 : balanceAfter,
 	};
 }

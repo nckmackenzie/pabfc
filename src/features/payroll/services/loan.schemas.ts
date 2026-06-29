@@ -1,34 +1,14 @@
 import { z } from "zod";
 import { LOAN_DEFAULT_INTEREST_RATE, LOAN_STATUS } from "@/features/payroll/lib/payroll-constants";
-import { dateSchema } from "@/lib/schema-rules";
+import {
+	dateSchema,
+	monthFieldSchemaEntry,
+	nullableTrimmedString,
+	requiredNumberSchemaEntry,
+	yearFieldSchemaEntry,
+} from "@/lib/schema-rules";
 
 const loanStatusValues = Object.values(LOAN_STATUS) as [string & {}, ...(string & {})[]];
-
-const optionalTextField = (max: number) =>
-	z
-		.string()
-		.trim()
-		.max(max, { message: `Must be ${max} characters or less` })
-		.nullable();
-
-const requiredPositiveAmountField = (label: string) =>
-	z
-		.number({ error: `${label} must be a number` })
-		.refine((value) => Number.isFinite(value) && value > 0, {
-			message: `${label} must be greater than zero`,
-		});
-
-const yearField = z
-	.number({ error: "Year must be a number" })
-	.int("Year must be a whole number")
-	.min(2000, "Year must be between 2000 and 2100")
-	.max(2100, "Year must be between 2000 and 2100");
-
-const monthField = z
-	.number({ error: "Month must be a number" })
-	.int("Month must be a whole number")
-	.min(1, "Month must be between 1 and 12")
-	.max(12, "Month must be between 1 and 12");
 
 const instalmentsField = z
 	.number({ error: "Instalments must be a number" })
@@ -49,24 +29,24 @@ export const employeeLoanEmployeeIdSchema = z.string().trim().min(1, "Employee i
 export const applyForLoanSchema = z.object({
 	id: z.undefined().optional(),
 	employeeId: employeeLoanEmployeeIdSchema,
-	principalAmount: requiredPositiveAmountField("Principal amount"),
+	principalAmount: requiredNumberSchemaEntry(),
 	requestedInstalments: instalmentsField,
-	purpose: optionalTextField(5000),
+	purpose: nullableTrimmedString,
 	annualInterestRate: annualInterestRateField.default(LOAN_DEFAULT_INTEREST_RATE),
 });
 
 export const approveLoanSchema = z.object({
 	loanId: loanIdSchema,
 	payload: z.object({
-		approvedAmount: requiredPositiveAmountField("Approved amount"),
+		approvedAmount: requiredNumberSchemaEntry(),
 		approvedInstalments: instalmentsField,
 		disbursementAccountId: z
 			.number({ error: "Disbursement account is required" })
 			.int("Disbursement account is invalid")
 			.positive("Disbursement account is invalid"),
-		repaymentStartMonth: monthField,
-		repaymentStartYear: yearField,
-		notes: optionalTextField(5000),
+		repaymentStartMonth: monthFieldSchemaEntry,
+		repaymentStartYear: yearFieldSchemaEntry(),
+		notes: nullableTrimmedString,
 	}),
 });
 
@@ -81,30 +61,30 @@ export const rejectLoanSchema = z.object({
 
 export const pauseLoanSchema = z.object({
 	loanId: loanIdSchema,
-	notes: optionalTextField(5000),
+	notes: nullableTrimmedString,
 });
 
 export const resumeLoanSchema = z.object({
 	loanId: loanIdSchema,
-	repaymentStartMonth: monthField,
-	repaymentStartYear: yearField,
-	notes: optionalTextField(5000),
+	repaymentStartMonth: monthFieldSchemaEntry,
+	repaymentStartYear: yearFieldSchemaEntry(),
+	notes: nullableTrimmedString,
 });
 
 export const settleEarlySchema = z.object({
 	loanId: loanIdSchema,
-	settlementAmount: requiredPositiveAmountField("Settlement amount"),
+	settlementAmount: requiredNumberSchemaEntry(),
 	disbursementAccountId: z
 		.number({ error: "Receiving account is required" })
 		.int("Receiving account is invalid")
 		.positive("Receiving account is invalid"),
-	notes: optionalTextField(5000),
+	notes: nullableTrimmedString,
 });
 
 export const payrollLoanRepaymentSchema = z.object({
 	loanId: loanIdSchema,
-	periodMonth: monthField,
-	periodYear: yearField,
+	periodMonth: monthFieldSchemaEntry,
+	periodYear: yearFieldSchemaEntry(),
 	payrollSlipId: z.string().trim().min(1, "Payroll slip is required"),
 });
 
@@ -123,8 +103,8 @@ export const activeLoansForEmployeeSchema = z.object({
 
 export const totalMonthlyLoanObligationsSchema = z.object({
 	employeeId: employeeLoanEmployeeIdSchema,
-	periodMonth: monthField,
-	periodYear: yearField,
+	periodMonth: monthFieldSchemaEntry,
+	periodYear: yearFieldSchemaEntry(),
 });
 
 export const allActiveLoansFilterSchema = z.object({
@@ -137,20 +117,20 @@ export const allActiveLoansFilterSchema = z.object({
 export const loanCreateFormSchema = z.object({
 	id: z.undefined().optional(),
 	employeeId: employeeLoanEmployeeIdSchema,
-	principalAmount: requiredPositiveAmountField("Principal amount"),
+	principalAmount: requiredNumberSchemaEntry(),
 	requestedInstalments: instalmentsField,
-	purpose: optionalTextField(5000),
+	purpose: nullableTrimmedString,
 	annualInterestRate: annualInterestRateField,
 });
 
 export const loanApproveFormSchema = z.object({
 	id: z.string(),
-	approvedAmount: requiredPositiveAmountField("Approved amount"),
+	approvedAmount: requiredNumberSchemaEntry(),
 	approvedInstalments: instalmentsField,
 	disbursementAccountId: z.string().trim().min(1, "Disbursement account is required"),
-	repaymentStartMonth: monthField,
-	repaymentStartYear: yearField,
-	notes: optionalTextField(5000),
+	repaymentStartMonth: monthFieldSchemaEntry,
+	repaymentStartYear: yearFieldSchemaEntry(),
+	notes: nullableTrimmedString,
 });
 
 export const loanRejectFormSchema = z.object({
@@ -166,23 +146,23 @@ export const loanRejectFormSchema = z.object({
 export const loanPauseFormSchema = z.object({
 	id: z.string(),
 	loanId: loanIdSchema,
-	notes: optionalTextField(5000),
+	notes: nullableTrimmedString,
 });
 
 export const loanResumeFormSchema = z.object({
 	id: z.string(),
 	loanId: loanIdSchema,
-	repaymentStartMonth: monthField,
-	repaymentStartYear: yearField,
-	notes: optionalTextField(5000),
+	repaymentStartMonth: monthFieldSchemaEntry,
+	repaymentStartYear: yearFieldSchemaEntry(),
+	notes: nullableTrimmedString,
 });
 
 export const loanSettlementFormSchema = z.object({
 	id: z.string(),
 	loanId: loanIdSchema,
-	settlementAmount: requiredPositiveAmountField("Settlement amount"),
+	settlementAmount: requiredNumberSchemaEntry(),
 	disbursementAccountId: z.string().trim().min(1, "Receiving account is required"),
-	notes: optionalTextField(5000),
+	notes: nullableTrimmedString,
 });
 
 export const loanDetailParamsSchema = z.object({

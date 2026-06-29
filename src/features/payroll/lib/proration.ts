@@ -1,3 +1,4 @@
+import { roundDecimal } from "@/lib/helpers";
 import {
 	eachDayOfInterval,
 	endOfMonth,
@@ -8,7 +9,6 @@ import {
 	min as minDate,
 	parseISO,
 } from "date-fns";
-import { roundPayrollAmount } from "@/features/payroll/lib/helpers";
 
 export type ProrationReason = "new_hire" | "termination" | null;
 
@@ -117,5 +117,5 @@ export function computeEmployeeProratedDays(
 }
 
 export function applyProration(fullMonthGross: number, proratedFactor: number) {
-	return roundPayrollAmount(fullMonthGross * proratedFactor);
+	return roundDecimal(fullMonthGross * proratedFactor);
 }

@@ -4,22 +4,12 @@ import {
 	SALARY_STRUCTURE_FINANCIAL_FIELDS,
 	SALARY_STRUCTURE_METADATA_FIELDS,
 } from "@/features/payroll/lib/payroll-constants";
-import { dateSchema, searchValidateSchema } from "@/lib/schema-rules";
-
-const nonNegativeNumberField = (label: string) =>
-	z
-		.number({ error: `${label} must be a number` })
-		.nullable()
-		.refine((value) => !value || (Number.isFinite(value) && value >= 0), {
-			message: `${label} must be zero or greater`,
-		});
-
-const optionalTextField = (max: number) =>
-	z
-		.string()
-		.trim()
-		.max(max, { message: `Must be ${max} characters or less` })
-		.nullable();
+import {
+	dateSchema,
+	nullableNonNegativeNumberField,
+	nullableTrimmedString,
+	searchValidateSchema,
+} from "@/lib/schema-rules";
 
 export const salaryStructureIdSchema = z.string().refine((value) => value.length > 0, {
 	error: "Salary structure is required",
@@ -37,21 +27,23 @@ export const salaryStructureCreateSchema = z
 			error: "Select pay frequency",
 		}),
 		basicSalary: z.number({ error: "Basic salary must be a number" }),
-		houseAllowance: nonNegativeNumberField("House allowance"),
-		transportAllowance: nonNegativeNumberField("Transport allowance"),
-		commuterAllowance: nonNegativeNumberField("Commuter allowance"),
-		mealAllowance: nonNegativeNumberField("Meal allowance"),
-		airtimeAllowance: nonNegativeNumberField("Airtime allowance"),
-		otherAllowances: nonNegativeNumberField("Other allowances"),
-		otherAllowancesDescription: optionalTextField(255),
-		pensionEmployeeContribution: nonNegativeNumberField("Employee pension contribution"),
-		pensionEmployerContribution: nonNegativeNumberField("Employer pension contribution"),
-		pensionFundName: optionalTextField(100),
-		mortgageInterestMonthly: nonNegativeNumberField("Mortgage interest"),
-		postRetirementMedicalMonthly: nonNegativeNumberField("Post-retirement medical contribution"),
-		insurancePremiumsMonthly: nonNegativeNumberField("Insurance premiums"),
+		houseAllowance: nullableNonNegativeNumberField("House allowance"),
+		transportAllowance: nullableNonNegativeNumberField("Transport allowance"),
+		commuterAllowance: nullableNonNegativeNumberField("Commuter allowance"),
+		mealAllowance: nullableNonNegativeNumberField("Meal allowance"),
+		airtimeAllowance: nullableNonNegativeNumberField("Airtime allowance"),
+		otherAllowances: nullableNonNegativeNumberField("Other allowances"),
+		otherAllowancesDescription: nullableTrimmedString,
+		pensionEmployeeContribution: nullableNonNegativeNumberField("Employee pension contribution"),
+		pensionEmployerContribution: nullableNonNegativeNumberField("Employer pension contribution"),
+		pensionFundName: nullableTrimmedString,
+		mortgageInterestMonthly: nullableNonNegativeNumberField("Mortgage interest"),
+		postRetirementMedicalMonthly: nullableNonNegativeNumberField(
+			"Post-retirement medical contribution"
+		),
+		insurancePremiumsMonthly: nullableNonNegativeNumberField("Insurance premiums"),
 		hasHelbLoan: z.boolean(),
-		helbMonthlyDeduction: nonNegativeNumberField("HELB deduction"),
+		helbMonthlyDeduction: nullableNonNegativeNumberField("HELB deduction"),
 		normalHoursPerDay: z
 			.number({ error: "Normal hours per day must be a number" })
 			.refine((value) => Number.isFinite(value) && value > 0, {
@@ -68,7 +60,7 @@ export const salaryStructureCreateSchema = z
 			.refine((value) => Number.isFinite(value) && value > 0, {
 				message: "Overtime divisor must be greater than zero",
 			}),
-		notes: optionalTextField(5000),
+		notes: nullableTrimmedString,
 	})
 	.superRefine((data, ctx) => {
 		if (data.basicSalary <= 0) {
@@ -100,9 +92,9 @@ export const salaryStructureCreateRequestSchema = salaryStructureCreateSchema;
 
 export const salaryStructureMetadataUpdateSchema = z
 	.object({
-		notes: optionalTextField(5000),
-		pensionFundName: optionalTextField(100),
-		otherAllowancesDescription: optionalTextField(255),
+		notes: nullableTrimmedString,
+		pensionFundName: nullableTrimmedString,
+		otherAllowancesDescription: nullableTrimmedString,
 	})
 	.passthrough();
 

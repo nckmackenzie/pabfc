@@ -51,71 +51,67 @@ export function AppSidebar() {
 					<SidebarGroupLabel>Navigation</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{isLoading ? (
-								menuItems.map((item) => <Skeleton key={item.title} className="h-4 w-44" />)
-							) : (
-								menuItems
-									.filter((item) =>
-										item.permission ? hasPermission(item.permission) : data?.user.role === "admin"
-									)
-									.map((item) => <MenuItem key={item.title} item={item} />)
-							)}
+							{isLoading
+								? menuItems.map((item) => <Skeleton key={item.title} className="h-4 w-44" />)
+								: menuItems
+										.filter((item) =>
+											item.permission ? hasPermission(item.permission) : data?.user.role === "admin"
+										)
+										.map((item) => <MenuItem key={item.title} item={item} />)}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
 				<SidebarGroup className="pt-0">
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{isLoading ? (
-								collapsibleMenuItems.map((item) => (
-									<Skeleton key={item.title} className="h-4 w-44" />
-								))
-							) : (
-								collapsibleMenuItems.map((item) => {
-									const visibleSubItems = item.items.filter((subItem) =>
-										hasPermission(subItem.permission)
-									);
+							{isLoading
+								? collapsibleMenuItems.map((item) => (
+										<Skeleton key={item.title} className="h-4 w-44" />
+									))
+								: collapsibleMenuItems.map((item) => {
+										const visibleSubItems = item.items.filter((subItem) =>
+											hasPermission(subItem.permission)
+										);
 
-									if (visibleSubItems.length === 0) return null;
+										if (visibleSubItems.length === 0) return null;
 
-									return (
-										<Collapsible key={item.title} asChild className="group/collapsible">
-											<SidebarMenuItem>
-												<CollapsibleTrigger asChild>
-													<SidebarMenuButton className="capitalize" tooltip={item.title}>
-														{<item.icon className="text-muted-foreground size-5!" />}
-														<span>{item.title}</span>
-														<PlusIcon className="ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:hidden" />
-														<MinusIcon className="hidden ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:block" />
-													</SidebarMenuButton>
-												</CollapsibleTrigger>
-												<CollapsibleContent>
-													<SidebarMenuSub>
-														{visibleSubItems.map((subItem) => (
-															<SidebarMenuSubItem key={subItem.title}>
-																<SidebarMenuSubButton
-																	asChild
-																	className="text-xs font-medium text-muted-foreground"
-																	onClick={() => setOpenMobile(!openMobile)}
-																>
-																	<Link
-																		to={`${subItem.url}` as Route}
-																		className="capitalize"
-																		activeProps={{ "data-active": true }}
-																		activeOptions={{ exact: false }}
+										return (
+											<Collapsible key={item.title} asChild className="group/collapsible">
+												<SidebarMenuItem>
+													<CollapsibleTrigger asChild>
+														<SidebarMenuButton className="capitalize" tooltip={item.title}>
+															{<item.icon className="text-muted-foreground size-5!" />}
+															<span>{item.title}</span>
+															<PlusIcon className="ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:hidden" />
+															<MinusIcon className="hidden ml-auto icon text-muted-foreground group-data-[state=open]/collapsible:block" />
+														</SidebarMenuButton>
+													</CollapsibleTrigger>
+													<CollapsibleContent>
+														<SidebarMenuSub>
+															{visibleSubItems.map((subItem) => (
+																<SidebarMenuSubItem key={subItem.title}>
+																	<SidebarMenuSubButton
+																		asChild
+																		className="text-xs font-medium text-muted-foreground"
+																		onClick={() => setOpenMobile(!openMobile)}
 																	>
-																		{subItem.title}
-																	</Link>
-																</SidebarMenuSubButton>
-															</SidebarMenuSubItem>
-														))}
-													</SidebarMenuSub>
-												</CollapsibleContent>
-											</SidebarMenuItem>
-										</Collapsible>
-									);
-								})
-							)}
+																		<Link
+																			to={`${subItem.url}` as Route}
+																			className="capitalize"
+																			activeProps={{ "data-active": true }}
+																			activeOptions={{ exact: false }}
+																		>
+																			{subItem.title}
+																		</Link>
+																	</SidebarMenuSubButton>
+																</SidebarMenuSubItem>
+															))}
+														</SidebarMenuSub>
+													</CollapsibleContent>
+												</SidebarMenuItem>
+											</Collapsible>
+										);
+									})}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

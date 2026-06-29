@@ -1,19 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	and,
-	asc,
-	desc,
-	eq,
-	gte,
-	ilike,
-	inArray,
-	isNull,
-	lte,
-	ne,
-	or,
-	sql,
-	type SQL,
-} from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { employees, salaryStructures } from "@/drizzle/schema";
@@ -25,7 +11,6 @@ import {
 	formatSalaryStructureFormValues,
 	getSalaryHistoryStatus,
 	subtractOneDay,
-	toPayrollDecimalString,
 	type SalaryStructureWithComputedComponents,
 } from "@/features/payroll/lib/helpers";
 import { PAYROLL_STATUTORY_LIMITS } from "@/features/payroll/lib/payroll-constants";
@@ -44,12 +29,14 @@ import {
 	salaryStructurePeriodLookupSchema,
 	salaryStructureUpdateRequestSchema,
 } from "@/features/payroll/services/schemas";
-import { normalizeText } from "@/lib/helpers";
+import { normalizeText, toDecimalString } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { dateSchema } from "@/lib/schema-rules";
+import { getActiveStructuresAsMap } from "./payroll.server";
+import { getEligibleEmployee } from "@/features/employees/services/employee.server";
 
 type SalaryStructureRecord = typeof salaryStructures.$inferSelect;
 type SalaryStructureCreatePayload = z.infer<typeof salaryStructureCreateRequestSchema>;
@@ -107,46 +94,29 @@ function getSalaryStructureInsertValues(payload: SalaryStructureCreatePayload, c
 		effectiveFrom: payload.effectiveFrom,
 		effectiveTo: payload.effectiveTo ?? null,
 		payFrequency: payload.payFrequency,
-		basicSalary: toPayrollDecimalString(payload.basicSalary),
-		houseAllowance: toPayrollDecimalString(payload.houseAllowance),
-		transportAllowance: toPayrollDecimalString(payload.transportAllowance),
-		commuterAllowance: toPayrollDecimalString(payload.commuterAllowance),
-		mealAllowance: toPayrollDecimalString(payload.mealAllowance),
-		airtimeAllowance: toPayrollDecimalString(payload.airtimeAllowance),
-		otherAllowances: toPayrollDecimalString(payload.otherAllowances),
+		basicSalary: toDecimalString(payload.basicSalary),
+		houseAllowance: toDecimalString(payload.houseAllowance),
+		transportAllowance: toDecimalString(payload.transportAllowance),
+		commuterAllowance: toDecimalString(payload.commuterAllowance),
+		mealAllowance: toDecimalString(payload.mealAllowance),
+		airtimeAllowance: toDecimalString(payload.airtimeAllowance),
+		otherAllowances: toDecimalString(payload.otherAllowances),
 		otherAllowancesDescription: normalizeText(payload.otherAllowancesDescription),
-		pensionEmployeeContribution: toPayrollDecimalString(payload.pensionEmployeeContribution),
-		pensionEmployerContribution: toPayrollDecimalString(payload.pensionEmployerContribution),
+		pensionEmployeeContribution: toDecimalString(payload.pensionEmployeeContribution),
+		pensionEmployerContribution: toDecimalString(payload.pensionEmployerContribution),
 		pensionFundName: normalizeText(payload.pensionFundName),
-		mortgageInterestMonthly: toPayrollDecimalString(payload.mortgageInterestMonthly),
-		postRetirementMedicalMonthly: toPayrollDecimalString(payload.postRetirementMedicalMonthly),
-		insurancePremiumsMonthly: toPayrollDecimalString(payload.insurancePremiumsMonthly),
+		mortgageInterestMonthly: toDecimalString(payload.mortgageInterestMonthly),
+		postRetirementMedicalMonthly: toDecimalString(payload.postRetirementMedicalMonthly),
+		insurancePremiumsMonthly: toDecimalString(payload.insurancePremiumsMonthly),
 		hasHelbLoan: payload.hasHelbLoan,
-		helbMonthlyDeduction: toPayrollDecimalString(
-			payload.hasHelbLoan ? payload.helbMonthlyDeduction : 0
-		),
-		normalHoursPerDay: toPayrollDecimalString(payload.normalHoursPerDay),
-		normalDaysPerWeek: toPayrollDecimalString(payload.normalDaysPerWeek),
+		helbMonthlyDeduction: toDecimalString(payload.hasHelbLoan ? payload.helbMonthlyDeduction : 0),
+		normalHoursPerDay: toDecimalString(payload.normalHoursPerDay),
+		normalDaysPerWeek: toDecimalString(payload.normalDaysPerWeek),
 		overtimeHourlyRateDivisor: payload.overtimeHourlyRateDivisor,
 		isActive: true,
 		notes: normalizeText(payload.notes),
 		createdBy,
 	};
-}
-
-async function getEligibleEmployee(employeeId: string) {
-	return db.query.employees.findFirst({
-		columns: {
-			id: true,
-			employeeNo: true,
-			firstName: true,
-			lastName: true,
-			status: true,
-			jobTitle: true,
-			deletedAt: true,
-		},
-		where: and(eq(employees.id, employeeId), isNull(employees.deletedAt)),
-	});
 }
 
 async function getOverlappingStructures({
@@ -235,35 +205,12 @@ async function getCurrentActiveStructure(
 }
 
 async function getActiveStructuresForEmployeesForPeriod(employeeIds: string[], periodDate: string) {
-	if (!employeeIds.length) {
-		return {};
+	const map = await getActiveStructuresAsMap(employeeIds, periodDate);
+	const result: Record<string, SalaryStructureWithComputedComponents> = {};
+	for (const [id, structure] of map) {
+		result[id] = { ...structure, computedComponents: computeGrossPayComponents(structure) };
 	}
-
-	const structures = await db.query.salaryStructures.findMany({
-		where: and(
-			inArray(salaryStructures.employeeId, employeeIds),
-			lte(salaryStructures.effectiveFrom, periodDate),
-			or(isNull(salaryStructures.effectiveTo), gte(salaryStructures.effectiveTo, periodDate))
-		),
-		orderBy: [
-			asc(salaryStructures.employeeId),
-			desc(salaryStructures.effectiveFrom),
-			desc(salaryStructures.id),
-		],
-	});
-
-	const structuresByEmployeeId: Record<string, SalaryStructureWithComputedComponents> = {};
-
-	for (const structure of structures) {
-		if (!structuresByEmployeeId[structure.employeeId]) {
-			structuresByEmployeeId[structure.employeeId] = {
-				...structure,
-				computedComponents: computeGrossPayComponents(structure),
-			};
-		}
-	}
-
-	return structuresByEmployeeId;
+	return result;
 }
 
 async function createSalaryStructure({
@@ -273,21 +220,8 @@ async function createSalaryStructure({
 	payload: SalaryStructureCreatePayload;
 	createdBy: string;
 }): Promise<Result<SalaryStructureCreateResponse>> {
-	const employee = await getEligibleEmployee(payload.employeeId);
-
-	if (!employee) {
-		return failure({
-			type: "NotFoundError",
-			message: "Employee not found",
-		});
-	}
-
-	if (employee.status !== "active") {
-		return failure({
-			type: "ValidationError",
-			message: "Salary structures can only be created for active employees",
-		});
-	}
+	const employeeResult = await getEligibleEmployee(payload.employeeId);
+	if (!employeeResult.success) return employeeResult;
 
 	const warnings: string[] = [];
 	const normalizedEffectiveTo = payload.effectiveTo ?? null;

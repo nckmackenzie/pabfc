@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { dateFormat } from "./helpers";
+import {
+	PAYROLL_PERIOD_YEAR_MAX,
+	PAYROLL_PERIOD_YEAR_MIN,
+} from "@/features/payroll/lib/payroll-constants";
 
 export const paymentMethodSchemaEntry = () =>
 	z.enum(["cash", "mpesa", "cheque", "bank"], {
@@ -28,7 +32,12 @@ export const optionalStringSchemaEntry = () =>
 		.trim()
 		.transform((v) => v || undefined)
 		.optional();
-// .transform(val => val?.trim().toLowerCase());
+
+export const nullableTrimmedString = z
+	.string()
+	.trim()
+	.transform((value) => (value === "" || value === undefined ? null : value))
+	.nullable();
 
 export const optionalNumberSchemaEntry = () => z.number().optional();
 export const requiredDateSchemaEntry = () =>
@@ -36,11 +45,35 @@ export const requiredDateSchemaEntry = () =>
 
 export const requiredNumberSchemaEntry = (message?: string) =>
 	z.coerce
-		.number({ error: "This field must be a valid number" })
+		.number<number>({ error: "This field must be a valid number" })
 		.min(1, { message: message || "Field is required" })
 		.refine((value) => !Number.isNaN(value) && value > 0, {
 			message: "This field must be a valid number greater than 0",
 		});
+
+export const nullableNonNegativeNumberField = (label: string) =>
+	z
+		.number({ error: `${label} must be a number` })
+		.nullable()
+		.refine((value) => !value || (Number.isFinite(value) && value >= 0), {
+			message: `${label} must be zero or greater`,
+		});
+
+export const yearFieldSchemaEntry = (
+	min: number = PAYROLL_PERIOD_YEAR_MIN,
+	max: number = PAYROLL_PERIOD_YEAR_MAX
+) =>
+	z
+		.number({ error: "Year must be a number" })
+		.int("Year must be a whole number")
+		.min(min, `Year must be between ${min} and ${max}`)
+		.max(max, `Year must be between ${min} and ${max}`);
+
+export const monthFieldSchemaEntry = z
+	.number({ error: "Month must be a number" })
+	.int("Month must be a whole number")
+	.min(1, "Month must be between 1 and 12")
+	.max(12, "Month must be between 1 and 12");
 
 export const searchValidateSchema = z.object({
 	q: z.string().optional().catch(""),
