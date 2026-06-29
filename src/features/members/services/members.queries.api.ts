@@ -1,19 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	and,
-	desc,
-	eq,
-	ilike,
-	isNull,
-	ne,
-	or,
-	type SQL,
-	sql,
-} from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { memberMemberships, members, membersOverview } from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { authMiddleware } from "@/middlewares/auth-middleware";
+import { requirePermission } from "@/lib/permissions/permissions";
+import { toTitleCase } from "@/lib/utils";
 
 export const getMembers = createServerFn()
 	.validator(memberValidateSearch)
@@ -28,7 +20,7 @@ export const getMembers = createServerFn()
 				ilike(membersOverview.contact, `%${q}%`),
 				ilike(sql`CAST(${membersOverview.memberNo} AS TEXT)`, `%${q}%`),
 				ilike(sql`CAST(${membersOverview.gender} AS TEXT)`, `%${q}%`),
-				ilike(sql`CAST(${membersOverview.memberStatus} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${membersOverview.memberStatus} AS TEXT)`, `%${q}%`)
 			);
 			if (searchFilters) {
 				filters.push(searchFilters);
@@ -61,22 +53,33 @@ export const getMembers = createServerFn()
 			.orderBy(desc(membersOverview.memberNo));
 	});
 
+export const getActiveMembers = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("members:view");
+		return db.query.members
+			.findMany({
+				columns: { id: true, firstName: true, lastName: true },
+				where: and(eq(members.memberStatus, "active"), isNull(members.deletedAt)),
+			})
+			.then((m) =>
+				m.map(({ id, firstName, lastName }) => ({
+					value: id,
+					label: toTitleCase(`${firstName} ${lastName}`),
+				}))
+			);
+	});
+
 export const getMemberProfileData = createServerFn()
 	.middleware([authMiddleware])
 	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
-		const member = await db
-			.select()
-			.from(membersOverview)
-			.where(eq(membersOverview.id, memberId));
+		const member = await db.select().from(membersOverview).where(eq(membersOverview.id, memberId));
 		return member[0];
 	});
 
 export const checkColumnExists = createServerFn()
-	.validator(
-		(data: { column: "contact" | "idNo"; value: string; memberId?: string }) =>
-			data,
-	)
+	.validator((data: { column: "contact" | "idNo"; value: string; memberId?: string }) => data)
 	.handler(async ({ data }) => {
 		const filter: Array<SQL> = [];
 		if (data.column === "contact") {

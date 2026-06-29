@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
+	getActiveMembers,
 	getMember,
 	getMemberProfileData,
 	getMembers,
@@ -25,6 +26,7 @@ export const memberQueries = {
 	activeMembers: () =>
 		queryOptions({
 			queryKey: [...memberQueries.all, "activeMembers"],
-			queryFn: () => getMembers({ data: { status: "active" } }),
+			// queryFn: () => getMembers({ data: { status: "active" } }),
+			queryFn: () => getActiveMembers(),
 		}),
 };

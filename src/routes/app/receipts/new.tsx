@@ -22,10 +22,7 @@ export const Route = createFileRoute("/app/receipts/new")({
 			queryClient.ensureQueryData(planQueries.list()),
 		]);
 		return {
-			members: members.map(({ id, fullName }) => ({
-				value: id,
-				label: toTitleCase(fullName),
-			})),
+			members,
 			plans: plans
 				.filter(({ active }) => active)
 				.map((plan) => ({ ...plan, name: toTitleCase(plan.name) })),
