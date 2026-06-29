@@ -89,6 +89,7 @@ export const getPayrollP9Report = createServerFn()
 
 		const closedMonths = await db
 			.select({
+				slipId: payrollSlips.id,
 				periodMonth: payrollPeriods.periodMonth,
 				basicSalary: payrollSlips.basicSalary,
 				grossPay: payrollSlips.grossPay,
@@ -113,6 +114,12 @@ export const getPayrollP9Report = createServerFn()
 			)
 			.where(and(eq(payrollPeriods.periodYear, data.taxYear), eq(payrollPeriods.status, "closed")))
 			.orderBy(asc(payrollPeriods.periodMonth));
+
+		if (!closedMonths.some((month) => month.slipId !== null)) {
+			throw new ApplicationError(
+				"No closed payroll slips found for the selected employee and tax year"
+			);
+		}
 
 		return buildPayrollP9Report({
 			employee,

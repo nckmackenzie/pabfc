@@ -202,6 +202,8 @@ export function buildPayrollP9Report(params: {
 			if (!isPopulatedRow(row)) return acc;
 
 			acc.basicSalary += row.basicSalary ?? 0;
+			acc.benefitsNonCash += row.benefitsNonCash ?? 0;
+			acc.valueOfQuarters += row.valueOfQuarters ?? 0;
 			acc.totalGrossPay += row.totalGrossPay ?? 0;
 			acc.e1ThirtyPctBasic += row.e1ThirtyPctBasic ?? 0;
 			acc.e2ActualPension += row.e2ActualPension ?? 0;
