@@ -36,10 +36,34 @@ export function getNextRootAccountCode(params: {
 			.filter((value): value is number => value !== null),
 	);
 
-	let candidate = ROOT_ACCOUNT_CODE_BASE[params.type];
+const ROOT_ACCOUNT_CODE_BASE: Record<AccountType, number> = {
+	asset: 1000,
+	liability: 2000,
+	equity: 3000,
+	revenue: 4000,
+	expense: 5000,
+};
 
-	while (existingNumbers.has(candidate) || allAssignedNumbers.has(candidate)) {
+const ROOT_ACCOUNT_CODE_LIMIT: Record<AccountType, number> = {
+	asset: 2000,
+	liability: 3000,
+	equity: 4000,
+	revenue: 5000,
+	expense: 6000,
+};
+
+	let candidate = ROOT_ACCOUNT_CODE_BASE[params.type];
+	const limit = ROOT_ACCOUNT_CODE_LIMIT[params.type];
+
+	while (
+		candidate < limit &&
+		(existingNumbers.has(candidate) || allAssignedNumbers.has(candidate))
+	) {
 		candidate += 100;
+	}
+
+	if (candidate >= limit) {
+		throw new Error(`No available root account codes remain for type "${params.type}".`);
 	}
 
 	return candidate.toString();
