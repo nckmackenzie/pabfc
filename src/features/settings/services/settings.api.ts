@@ -36,9 +36,7 @@ export const getSettings = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 		return await db.query.settings.findFirst({
 			columns: {
@@ -54,9 +52,7 @@ export const getBiotimeSettings = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 		const biotimeSettings = await db.query.biotimeSettings.findFirst({
 			columns: {
@@ -84,9 +80,7 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 	.validator(settingsDataSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 
 		await db
@@ -96,13 +90,9 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 				data: {
 					logRetentionDays: data.logRetentionDays,
 					inactiveMemberDays: nullifyZeroValues(data.inactiveMemberDays),
-					inactiveMemberDeleteDays: nullifyZeroValues(
-						data.inactiveMemberDeleteDays,
-					),
+					inactiveMemberDeleteDays: nullifyZeroValues(data.inactiveMemberDeleteDays),
 					inactiveUserDays: nullifyZeroValues(data.inactiveUserDays),
-					inactiveUserDeleteDays: nullifyZeroValues(
-						data.inactiveUserDeleteDays,
-					),
+					inactiveUserDeleteDays: nullifyZeroValues(data.inactiveUserDeleteDays),
 				},
 				createdBy: user.id,
 			})
@@ -111,13 +101,9 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 				set: {
 					data: {
 						inactiveMemberDays: nullifyZeroValues(data.inactiveMemberDays),
-						inactiveMemberDeleteDays: nullifyZeroValues(
-							data.inactiveMemberDeleteDays,
-						),
+						inactiveMemberDeleteDays: nullifyZeroValues(data.inactiveMemberDeleteDays),
 						inactiveUserDays: nullifyZeroValues(data.inactiveUserDays),
-						inactiveUserDeleteDays: nullifyZeroValues(
-							data.inactiveUserDeleteDays,
-						),
+						inactiveUserDeleteDays: nullifyZeroValues(data.inactiveUserDeleteDays),
 						logRetentionDays: data.logRetentionDays,
 					},
 					updatedBy: user.id,
@@ -127,9 +113,7 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 		await logActivity({
 			data: {
 				action: data.id ? "Update Settings" : "Create Settings",
-				description: data.id
-					? "Updated data settings"
-					: "Created data settings",
+				description: data.id ? "Updated data settings" : "Created data settings",
 				userId: user.id,
 			},
 		});
@@ -141,9 +125,7 @@ export const upsertNotificationSettings = createServerFn({ method: "POST" })
 	.validator(settingsNotificationSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 
 		await db
@@ -152,11 +134,8 @@ export const upsertNotificationSettings = createServerFn({ method: "POST" })
 				id: data.id ?? nanoid(),
 				notification: {
 					enableSmsNotifications: data.enableSmsNotifications ?? false,
-					daysBeforeRenewalReminder: nullifyZeroValues(
-						data.daysBeforeRenewalReminder,
-					),
-					sendPaymentReceiptByEmail:
-						data.sendPaymentReceiptViaEmail ?? undefined,
+					daysBeforeRenewalReminder: nullifyZeroValues(data.daysBeforeRenewalReminder),
+					sendPaymentReceiptByEmail: data.sendPaymentReceiptViaEmail ?? undefined,
 				},
 				createdBy: user.id,
 			})
@@ -165,11 +144,8 @@ export const upsertNotificationSettings = createServerFn({ method: "POST" })
 				set: {
 					notification: {
 						enableSmsNotifications: data.enableSmsNotifications ?? false,
-						daysBeforeRenewalReminder: nullifyZeroValues(
-							data.daysBeforeRenewalReminder,
-						),
-						sendPaymentReceiptByEmail:
-							data.sendPaymentReceiptViaEmail ?? undefined,
+						daysBeforeRenewalReminder: nullifyZeroValues(data.daysBeforeRenewalReminder),
+						sendPaymentReceiptByEmail: data.sendPaymentReceiptViaEmail ?? undefined,
 					},
 					updatedBy: user.id,
 				},
@@ -178,9 +154,7 @@ export const upsertNotificationSettings = createServerFn({ method: "POST" })
 		await logActivity({
 			data: {
 				action: data.id ? "Update Settings" : "Create Settings",
-				description: data.id
-					? "Updated notification settings"
-					: "Created notification settings",
+				description: data.id ? "Updated notification settings" : "Created notification settings",
 				userId: user.id,
 			},
 		});
@@ -192,9 +166,7 @@ export const upsertSecuritySettings = createServerFn({ method: "POST" })
 	.validator(securitySchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 
 		await db
@@ -223,9 +195,7 @@ export const upsertSecuritySettings = createServerFn({ method: "POST" })
 		await logActivity({
 			data: {
 				action: data.id ? "Update Settings" : "Create Settings",
-				description: data.id
-					? "Updated security settings"
-					: "Created security settings",
+				description: data.id ? "Updated security settings" : "Created security settings",
 				userId: user.id,
 			},
 		});
@@ -237,9 +207,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 	.validator(billingSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 
 		await db
@@ -251,10 +219,9 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 					invoiceNumberPadding: data.invoiceNumberPadding ?? undefined,
 					applyTaxToMembership: data.applyTaxToMembership ?? false,
 					vatType: data.vatType ?? undefined,
-					vatAccountId: data.vatAccountId
-						? Number(data.vatAccountId)
-						: undefined,
+					vatAccountId: data.vatAccountId ? Number(data.vatAccountId) : undefined,
 					autoCreateFinancialYear: data.autoCreateFinancialYear ?? false,
+					mpesaSettlementAccountId: data.mpesaSettlementAccountId ?? undefined,
 				},
 				createdBy: user.id,
 			})
@@ -266,10 +233,9 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 						invoiceNumberPadding: data.invoiceNumberPadding ?? undefined,
 						applyTaxToMembership: data.applyTaxToMembership ?? false,
 						vatType: data.vatType ?? undefined,
-						vatAccountId: data.vatAccountId
-							? Number(data.vatAccountId)
-							: undefined,
+						vatAccountId: data.vatAccountId ? Number(data.vatAccountId) : undefined,
 						autoCreateFinancialYear: data.autoCreateFinancialYear ?? false,
+						mpesaSettlementAccountId: data.mpesaSettlementAccountId ?? undefined,
 					},
 					updatedBy: user.id,
 				},
@@ -278,9 +244,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 		await logActivity({
 			data: {
 				action: data.id ? "Update Settings" : "Create Settings",
-				description: data.id
-					? "Updated security settings"
-					: "Created security settings",
+				description: data.id ? "Updated security settings" : "Created security settings",
 				userId: user.id,
 			},
 		});
@@ -292,9 +256,7 @@ export const upsertBiotimeSettings = createServerFn({ method: "POST" })
 	.validator(biometricSettingsSchema)
 	.handler(async ({ data, context: { user } }) => {
 		if (user.role !== "admin") {
-			throw new AuthorizationError(
-				"You do not have permission to perform this action",
-			);
+			throw new AuthorizationError("You do not have permission to perform this action");
 		}
 
 		const existingSettings = await db.query.biotimeSettings.findFirst({
@@ -335,9 +297,7 @@ export const upsertBiotimeSettings = createServerFn({ method: "POST" })
 
 		await logActivity({
 			data: {
-				action: existingSettings?.id
-					? "Update BioTime Settings"
-					: "Create BioTime Settings",
+				action: existingSettings?.id ? "Update BioTime Settings" : "Create BioTime Settings",
 				description: existingSettings?.id
 					? "Updated biometric integration settings"
 					: "Created biometric integration settings",

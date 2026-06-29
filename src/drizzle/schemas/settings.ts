@@ -37,6 +37,7 @@ export const settings = pgTable("settings", {
 		vatType?: VatType;
 		vatAccountId?: number;
 		autoCreateFinancialYear?: boolean;
+		mpesaSettlementAccountId?: number;
 	}>(),
 	createdAt,
 	updatedAt,
