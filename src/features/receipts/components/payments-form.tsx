@@ -189,7 +189,7 @@ export function PaymentForm() {
 				</form.AppField>
 				<ReadonlyFields
 					label="Plan Price"
-					value={plans.find((plan) => plan.id === planId)?.price.toFixed(2) ?? ""}
+					value={plans.find((plan) => plan.id === planId)?.price?.toFixed(2) ?? ""}
 					id={generateRandomId("amount")}
 				/>
 			</FieldGroup>
