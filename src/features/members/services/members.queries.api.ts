@@ -58,7 +58,6 @@ export const getActiveMembers = createServerFn()
 	.handler(async () => {
 		await requirePermission("members:view");
 		await requirePermission("receipts:create");
-		await requirePermission("receipts:update");
 		return db.query.members
 			.findMany({
 				columns: { id: true, firstName: true, lastName: true },
