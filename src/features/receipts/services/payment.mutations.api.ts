@@ -5,14 +5,11 @@ import { mpesaStkRequests, payments } from "@/drizzle/schema";
 import { finalizeMembershipPayment } from "@/features/receipts/services/membership-payment-finalizer";
 import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
 import { paymentSchema } from "@/features/receipts/services/schemas";
-import {
-	discountCalculator,
-	generateFullPaymentInvoiceNo,
-	taxCalculator,
-} from "@/lib/helpers";
+import { discountCalculator, generateFullPaymentInvoiceNo, taxCalculator } from "@/lib/helpers";
 import { initiateMpesaStkPush, registerUrlCallacks } from "@/lib/mpesa";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
+import { failure, success } from "@/lib/result";
 
 const stkPaymentSchema = paymentSchema.extend({
 	phoneNumber: z
@@ -33,14 +30,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("receipts:create");
 
-			const {
-				phoneNumber,
-				memberId,
-				planId,
-				paymentDate,
-				discountType,
-				discount,
-			} = data;
+			const { phoneNumber, memberId, planId, paymentDate, discountType, discount } = data;
 			const paymentNo = await getPaymentNo();
 			const settings = await db.query.settings.findFirst({
 				columns: { billing: true },
@@ -54,18 +44,14 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				throw new Error("Plan not found");
 			}
 
-			const discountedAmount = discountCalculator(
-				discountType,
-				discount ?? 0,
-				plan.price,
-			);
+			const discountedAmount = discountCalculator(discountType, discount ?? 0, plan.price);
 
 			const amount = plan.price - discountedAmount;
 
 			const accountReference = generateFullPaymentInvoiceNo(
 				paymentNo,
 				settings?.billing?.invoicePrefix,
-				settings?.billing?.invoiceNumberPadding,
+				settings?.billing?.invoiceNumberPadding
 			);
 
 			const mpesaRes = await initiateMpesaStkPush({
@@ -81,10 +67,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 			const taxType = settings?.billing?.applyTaxToMembership
 				? (settings.billing?.vatType ?? "inclusive")
 				: "none";
-			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(
-				amount,
-				taxType,
-			);
+			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(amount, taxType);
 
 			const paymentId = await db.transaction(async (tx) => {
 				await tx.insert(mpesaStkRequests).values({
@@ -130,7 +113,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				responseDescription: mpesaRes.ResponseDescription,
 				paymentId,
 			};
-		},
+		}
 	);
 
 export const registerUrlCallacksFn = createServerFn({ method: "POST" })
@@ -154,14 +137,7 @@ export const createManualMembershipPaymentFn = createServerFn({
 		}) => {
 			await requirePermission("receipts:create");
 
-			const {
-				memberId,
-				planId,
-				paymentDate,
-				discountType,
-				discount,
-				reference,
-			} = data;
+			const { memberId, planId, paymentDate, discountType, discount, reference } = data;
 			const paymentNo = await getPaymentNo();
 			const settings = await db.query.settings.findFirst({
 				columns: { billing: true },
@@ -171,29 +147,25 @@ export const createManualMembershipPaymentFn = createServerFn({
 			});
 
 			if (!plan) {
-				throw new Error("Plan not found");
+				return failure({ type: "NotFoundError", message: "Plan not found" });
 			}
 
-			const discountedAmount = discountCalculator(
-				discountType,
-				discount ?? 0,
-				plan.price,
-			);
+			const discountedAmount = discountCalculator(discountType, discount ?? 0, plan.price);
 			const amount = Math.max(0, plan.price - discountedAmount);
 
 			if (amount <= 0) {
-				throw new Error("Payment amount must be greater than zero");
+				return failure({
+					type: "ApplicationError",
+					message: "Payment amount must be greater than zero",
+				});
 			}
 
 			const taxType = settings?.billing?.applyTaxToMembership
 				? (settings.billing?.vatType ?? "inclusive")
 				: "none";
-			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(
-				amount,
-				taxType,
-			);
+			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(amount, taxType);
 
-			const result = await db.transaction(async (tx) => {
+			await db.transaction(async (tx) => {
 				const [payment] = await tx
 					.insert(payments)
 					.values({
@@ -230,10 +202,6 @@ export const createManualMembershipPaymentFn = createServerFn({
 				});
 			});
 
-			return {
-				success: true,
-				paymentId: result.paymentId,
-				membershipId: result.membershipId,
-			};
-		},
+			return success(undefined);
+		}
 	);

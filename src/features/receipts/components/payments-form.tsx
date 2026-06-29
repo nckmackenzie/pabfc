@@ -55,7 +55,7 @@ export function PaymentForm() {
 		},
 		onSubmit: ({ value }) => {
 			manualPaymentMutation.mutate(value, {
-				onSuccess: (data) => {
+				onSuccess: () => {
 					form.reset();
 					queryClient.invalidateQueries({ queryKey: ["receipts"] });
 					queryClient.invalidateQueries({ queryKey: ["members"] });
@@ -68,7 +68,6 @@ export function PaymentForm() {
 					));
 					navigate({
 						to: "/app/receipts",
-						search: { payment: data.paymentId },
 					});
 				},
 			});

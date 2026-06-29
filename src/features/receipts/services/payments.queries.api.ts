@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, ilike, or, sql } from "drizzle-orm";
+import { desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	memberMemberships,
@@ -35,7 +35,7 @@ export const getPaymentNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		const { rows } = await db.execute<{ maxno: number }>(
-			sql`SELECT coalesce(MAX(CAST(payment_no AS integer)), 0) as maxno FROM payments`,
+			sql`SELECT coalesce(MAX(CAST(payment_no AS integer)), 0) as maxno FROM payments`
 		);
 		return +rows[0].maxno + 1;
 	});
@@ -69,10 +69,11 @@ export const getPayments = createServerFn()
 							ilike(payments.paymentNo, `%${q}%`),
 							ilike(payments.reference, `%${q}%`),
 							ilike(sql`CAST(${payments.lineTotal} AS TEXT)`, `%${q}%`),
-							ilike(sql`CAST(${payments.paymentDate} AS TEXT)`, `%${q}%`),
+							ilike(sql`CAST(${payments.paymentDate} AS TEXT)`, `%${q}%`)
 						)
-					: undefined,
-			);
+					: undefined
+			)
+			.orderBy(desc(payments.createdAt));
 	});
 
 export const getPayment = createServerFn()

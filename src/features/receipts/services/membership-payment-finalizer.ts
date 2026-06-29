@@ -10,12 +10,12 @@ import {
 	ledgerAccounts,
 	memberMemberships,
 	payments,
+	bankAccounts,
 } from "@/drizzle/schema";
 import { dateFormat } from "@/lib/helpers";
-import {
-	areJournalValuesBalanced,
-	createJournalEntry,
-} from "@/services/journal";
+import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
+import { failure, success } from "@/lib/result";
+import { createBankingEntry } from "@/services/banking";
 
 type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -57,30 +57,43 @@ export async function finalizeMembershipPayment({
 	activityLog,
 }: FinalizeMembershipPaymentParams) {
 	if (!payment.planId) {
-		throw new Error("Payment is not linked to a membership plan");
+		return failure({
+			type: "ApplicationError",
+			message: "Payment is not linked to a membership plan",
+		});
 	}
 
 	const plan = await tx.query.membershipPlans.findFirst({
 		where: (plans, { eq }) => eq(plans.id, payment.planId as string),
 	});
 	if (!plan) {
-		throw new Error("Plan not found");
+		return failure({ type: "NotFoundError", message: "Plan not found" });
 	}
 	if (!plan.revenueAccountId) {
-		throw new Error("Plan revenue account is not configured");
+		return failure({ type: "ApplicationError", message: "Plan revenue account is not configured" });
 	}
 
-	const bankAccount = await tx.query.ledgerAccounts.findFirst({
-		columns: { id: true },
-		where: eq(sql`lower(${ledgerAccounts.name})`, "cash at bank"),
+	let hasSettlementAccount = false;
+	let bankAccount: number;
+
+	const getSettlementAccountId = await tx.query.settings.findFirst({
+		columns: { billing: true },
 	});
+
+	if (getSettlementAccountId?.billing?.mpesaSettlementAccountId) {
+		hasSettlementAccount = true;
+		bankAccount = getSettlementAccountId.billing.mpesaSettlementAccountId;
+	} else {
+		const fetchedAccount = await tx.query.ledgerAccounts.findFirst({
+			columns: { id: true },
+			where: eq(sql`lower(${ledgerAccounts.name})`, "cash at bank"),
+		});
+		bankAccount = fetchedAccount?.id as number;
+	}
 
 	const activeMembership = await tx.query.memberMemberships.findFirst({
 		where: (memberships, { and, eq }) =>
-			and(
-				eq(memberships.memberId, payment.memberId),
-				eq(memberships.status, "active"),
-			),
+			and(eq(memberships.memberId, payment.memberId), eq(memberships.status, "active")),
 		orderBy: (memberships, { desc }) => [desc(memberships.endDate)],
 	});
 
@@ -105,11 +118,11 @@ export async function finalizeMembershipPayment({
 			and(
 				eq(memberMemberships.memberId, payment.memberId),
 				eq(memberMemberships.status, "active"),
-				lt(memberMemberships.endDate, dateFormat(paymentDate)),
-			),
+				lt(memberMemberships.endDate, dateFormat(paymentDate))
+			)
 		);
 
-	const [membership] = await tx
+	await tx
 		.insert(memberMemberships)
 		.values({
 			memberId: payment.memberId,
@@ -135,11 +148,14 @@ export async function finalizeMembershipPayment({
 			.returning({ id: payments.id });
 
 		if (!updatedPayment) {
-			throw new Error("Payment is already processed or not pending");
+			return failure({
+				type: "ApplicationError",
+				message: "Payment is already processed or not pending",
+			});
 		}
 	}
 
-	const description = `Payment for ${payment.paymentNo} - ${reference ?? payment.reference ?? ""}`;
+	const description = `Payment for receipt # ${payment.paymentNo} - ${reference ?? payment.reference ?? ""}`;
 	const lines: Array<{
 		lineNumber: number;
 		accountId: number;
@@ -161,7 +177,7 @@ export async function finalizeMembershipPayment({
 			columns: { billing: true },
 		});
 		if (!settings?.billing?.vatAccountId) {
-			throw new Error("VAT account is not configured");
+			return failure({ type: "ApplicationError", message: "VAT account is not configured" });
 		}
 		lines.push({
 			lineNumber: 2,
@@ -174,14 +190,14 @@ export async function finalizeMembershipPayment({
 
 	lines.push({
 		lineNumber: lines.length + 1,
-		accountId: bankAccount?.id ?? 2,
+		accountId: bankAccount ?? 2,
 		amount: payment.totalAmount,
 		dc: "debit" as const,
 		memo: description,
 	});
 
 	if (!areJournalValuesBalanced(lines)) {
-		throw new Error("Journal values are not balanced");
+		return failure({ type: "ApplicationError", message: "Journal values are not balanced" });
 	}
 
 	await createJournalEntry({
@@ -196,19 +212,35 @@ export async function finalizeMembershipPayment({
 		tx,
 	});
 
+	if (hasSettlementAccount) {
+		const bankAccountId = await tx.query.bankAccounts.findFirst({
+			columns: { id: true },
+			where: eq(bankAccounts.accountId, bankAccount),
+		});
+		if (bankAccountId?.id) {
+			await createBankingEntry({
+				tx,
+				entry: {
+					bankId: bankAccountId.id,
+					dc: "debit",
+					amount: payment.totalAmount,
+					reference: payment.reference ?? payment.paymentNo,
+					transactionDate: dateFormat(payment.paymentDate),
+					source: "plan payment",
+					sourceId: payment.id,
+					narration: description,
+				},
+			});
+		}
+	}
+
 	if (activityLog) {
 		await tx.insert(activityLogs).values(activityLog);
 	}
 
 	// await refreshMembersOverview(tx);
 
-	return {
-		paymentId: payment.id,
-		membershipId: membership.id,
-		membershipStatus,
-		startDate: dateFormat(startDate),
-		endDate: dateFormat(endDate),
-	};
+	return success(undefined);
 }
 
 export async function runMembershipMaintenance() {
@@ -218,22 +250,12 @@ export async function runMembershipMaintenance() {
 		await tx
 			.update(memberMemberships)
 			.set({ status: "expired" })
-			.where(
-				and(
-					eq(memberMemberships.status, "active"),
-					lt(memberMemberships.endDate, today),
-				),
-			);
+			.where(and(eq(memberMemberships.status, "active"), lt(memberMemberships.endDate, today)));
 
 		await tx
 			.update(memberMemberships)
 			.set({ status: "active" })
-			.where(
-				and(
-					eq(memberMemberships.status, "pending"),
-					lte(memberMemberships.startDate, today),
-				),
-			);
+			.where(and(eq(memberMemberships.status, "pending"), lte(memberMemberships.startDate, today)));
 
 		await refreshMembersOverview(tx);
 	});
