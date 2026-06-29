@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { SelectItem } from "@/components/ui/select";
-import { LOAN_STATUS_VARIANTS } from "@/features/payroll/lib/loan-options";
+import { getLoanStatusVariant } from "@/features/payroll/lib/loan-options";
 import { formatPayrollPeriod } from "@/features/payroll/lib/overtime-options";
 import {
 	approveLoanFn,
@@ -25,10 +25,6 @@ import { loanQueries } from "@/features/payroll/services/queries";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { useAppForm } from "@/lib/form";
-
-function getLoanStatusVariant(status: string) {
-	return LOAN_STATUS_VARIANTS[status as keyof typeof LOAN_STATUS_VARIANTS];
-}
 
 function LoanStatusBadge({ status }: { status: LoanDetailResponse["status"] }) {
 	return (

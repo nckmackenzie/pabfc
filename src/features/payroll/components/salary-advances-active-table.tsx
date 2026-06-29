@@ -11,17 +11,11 @@ import { EmptyState } from "@/components/ui/empty";
 import { FileSpreadsheetIcon } from "@/components/ui/icons";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { formatPayrollPeriod } from "@/features/payroll/lib/overtime-options";
-import { SALARY_ADVANCE_STATUS_VARIANTS } from "@/features/payroll/lib/salary-advance-options";
+import { getSalaryAdvanceStatusVariant } from "@/features/payroll/lib/salary-advance-options";
 import type { SalaryAdvanceActiveListItem } from "@/features/payroll/services/salary-advances.api";
 import { salaryAdvanceQueries } from "@/features/payroll/services/queries";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter } from "@/lib/helpers";
-
-function getSalaryAdvanceStatusVariant(status: string) {
-	return SALARY_ADVANCE_STATUS_VARIANTS[
-		status as keyof typeof SALARY_ADVANCE_STATUS_VARIANTS
-	];
-}
 
 function ActiveAdvanceActions({ advance }: { advance: SalaryAdvanceActiveListItem }) {
 	return (

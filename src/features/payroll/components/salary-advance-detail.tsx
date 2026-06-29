@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { SelectItem } from "@/components/ui/select";
 import { formatPayrollPeriod } from "@/features/payroll/lib/overtime-options";
-import { SALARY_ADVANCE_STATUS_VARIANTS } from "@/features/payroll/lib/salary-advance-options";
+import { getSalaryAdvanceStatusVariant } from "@/features/payroll/lib/salary-advance-options";
 import { salaryAdvanceQueries } from "@/features/payroll/services/queries";
 import {
 	approveSalaryAdvanceFn,
@@ -22,10 +22,6 @@ import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
-
-function getSalaryAdvanceStatusVariant(status: string) {
-	return SALARY_ADVANCE_STATUS_VARIANTS[status as keyof typeof SALARY_ADVANCE_STATUS_VARIANTS];
-}
 
 function SalaryAdvanceStatusBadge({ status }: { status: SalaryAdvanceDetailResponse["status"] }) {
 	return (

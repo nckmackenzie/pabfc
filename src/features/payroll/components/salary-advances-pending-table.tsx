@@ -10,16 +10,10 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty";
 import { FileSpreadsheetIcon } from "@/components/ui/icons";
 import { PermissionGate } from "@/components/ui/permission-gate";
-import { SALARY_ADVANCE_STATUS_VARIANTS } from "@/features/payroll/lib/salary-advance-options";
+import { getSalaryAdvanceStatusVariant } from "@/features/payroll/lib/salary-advance-options";
 import type { SalaryAdvancePendingListItem } from "@/features/payroll/services/salary-advances.api";
 import { salaryAdvanceQueries } from "@/features/payroll/services/queries";
 import { currencyFormatter } from "@/lib/helpers";
-
-function getSalaryAdvanceStatusVariant(status: string) {
-	return SALARY_ADVANCE_STATUS_VARIANTS[
-		status as keyof typeof SALARY_ADVANCE_STATUS_VARIANTS
-	];
-}
 
 function PendingAdvanceActions({ advance }: { advance: SalaryAdvancePendingListItem }) {
 	return (
