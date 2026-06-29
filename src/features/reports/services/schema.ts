@@ -257,9 +257,33 @@ export const attendanceReportFormSchema = z
 		}
 	});
 
+const payrollP9TaxYearSchema = z
+	.string({
+		error: (iss) => (!iss.input ? "Select tax year" : "Invalid tax year"),
+	})
+	.regex(/^\d{4}$/, "Invalid tax year")
+	.refine((year) => Number(year) >= 2020 && Number(year) <= 2100, {
+		error: "Invalid tax year",
+	});
+
+export const payrollP9ValidateSearchSchema = z.object({
+	employeeId: z.string().optional(),
+	taxYear: payrollP9TaxYearSchema.optional(),
+});
+
+export const payrollP9ReportFormSchema = z.object({
+	employeeId: z
+		.string({
+			error: (iss) => (!iss.input ? "Select employee" : "Invalid employee"),
+		})
+		.min(1, "Select employee"),
+	taxYear: payrollP9TaxYearSchema,
+});
+
 export type BankingValidateSchema = z.infer<typeof bankingReportFormSchema>;
 export type PaymentsReportFormSchema = z.infer<typeof paymentsReportFormSchema>;
 export type MembersReportFormSchema = z.infer<typeof membersReportFormSchema>;
 export type AttendanceReportFormSchema = z.infer<
 	typeof attendanceReportFormSchema
 >;
+export type PayrollP9ReportFormSchema = z.infer<typeof payrollP9ReportFormSchema>;
