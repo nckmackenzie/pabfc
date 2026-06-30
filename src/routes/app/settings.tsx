@@ -34,9 +34,10 @@ export const Route = createFileRoute("/app/settings")({
 		return {
 			settings,
 			accounts: accounts
-				.filter(
-					(acc) => acc.type === "liability" && acc.isActive && acc.isPosting,
-				)
+				.filter((acc) => acc.type === "liability" && acc.isActive && acc.isPosting)
+				.map((acc) => ({ id: acc.id, name: acc.name })),
+			assets: accounts
+				.filter((acc) => acc.type === "asset" && acc.isActive && acc.isPosting)
 				.map((acc) => ({ id: acc.id, name: acc.name })),
 		};
 	},
@@ -45,10 +46,7 @@ export const Route = createFileRoute("/app/settings")({
 function RouteComponent() {
 	return (
 		<Wrapper size="full">
-			<PageHeader
-				title="Settings"
-				description="Define application settings and preferences"
-			/>
+			<PageHeader title="Settings" description="Define application settings and preferences" />
 			<SettingsForm />
 		</Wrapper>
 	);
@@ -57,10 +55,7 @@ function RouteComponent() {
 export function SettingsSkeleton() {
 	return (
 		<div className="space-y-6">
-			<PageHeader
-				title="Settings"
-				description="Define application settings and preferences"
-			/>
+			<PageHeader title="Settings" description="Define application settings and preferences" />
 			<Skeleton className="h-9 w-full rounded-lg" />
 
 			<div className="grid lg:grid-cols-2 gap-4">

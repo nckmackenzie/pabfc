@@ -3,19 +3,12 @@ import { getRouteApi } from "@tanstack/react-router";
 import { FieldGroup } from "@/components/ui/field";
 import { SelectItem } from "@/components/ui/select";
 import { useSettingsMutation } from "@/features/settings/hooks/useSettingsMutation";
-import {
-	type BillingSchema,
-	billingSchema,
-} from "@/features/settings/services/schemas";
+import { type BillingSchema, billingSchema } from "@/features/settings/services/schemas";
 import { upsertBillingSettings } from "@/features/settings/services/settings.api";
 import { useAppForm } from "@/lib/form";
 
-export function BillingForm({
-	billingSettings,
-}: {
-	billingSettings?: BillingSchema;
-}) {
-	const { accounts } = getRouteApi("/app/settings").useLoaderData();
+export function BillingForm({ billingSettings }: { billingSettings?: BillingSchema }) {
+	const { accounts, assets } = getRouteApi("/app/settings").useLoaderData();
 	const dataMutation = useSettingsMutation({
 		actionFn: upsertBillingSettings,
 		queryKey: ["settings"],
@@ -32,6 +25,7 @@ export function BillingForm({
 				vatType: null,
 				vatAccountId: null,
 				autoCreateFinancialYear: false,
+				mpesaSettlementAccountId: null,
 			} as BillingSchema),
 		validators: {
 			onSubmit: billingSchema,
@@ -41,10 +35,10 @@ export function BillingForm({
 		},
 	});
 
-	const [applyTaxToMembership, invoicePrefix] = useStore(
-		form.store,
-		(state) => [state.values.applyTaxToMembership, state.values.invoicePrefix],
-	);
+	const [applyTaxToMembership, invoicePrefix] = useStore(form.store, (state) => [
+		state.values.applyTaxToMembership,
+		state.values.invoicePrefix,
+	]);
 
 	return (
 		<form
@@ -53,7 +47,7 @@ export function BillingForm({
 				form.handleSubmit();
 			}}
 		>
-			<FieldGroup className="grid lg:grid-cols-2 gap-4">
+			<FieldGroup className="grid lg:grid-cols-3 gap-4">
 				<form.AppField name="invoicePrefix">
 					{(field) => (
 						<field.Input
@@ -74,6 +68,22 @@ export function BillingForm({
 						/>
 					)}
 				</form.AppField>
+				<form.AppField name="mpesaSettlementAccountId">
+					{(field) => (
+						<field.Select
+							label="Mpesa Settlement Account"
+							placeholder="Select Mpesa settlement account"
+						>
+							{assets.map((acc) => (
+								<SelectItem key={acc.id} value={acc.id.toString()}>
+									{acc.name}
+								</SelectItem>
+							))}
+						</field.Select>
+					)}
+				</form.AppField>
+			</FieldGroup>
+			<FieldGroup className="grid lg:grid-cols-2 gap-4">
 				<div className="self-center">
 					<form.AppField name="applyTaxToMembership">
 						{(field) => (
@@ -99,10 +109,7 @@ export function BillingForm({
 					</form.AppField>
 					<form.AppField name="vatAccountId">
 						{(field) => (
-							<field.Select
-								label="VAT Account"
-								helperText="VAT account for invoices."
-							>
+							<field.Select label="VAT Account" helperText="VAT account for invoices.">
 								{accounts.map((acc) => (
 									<SelectItem key={acc.id} value={acc.id.toString()}>
 										{acc.name}

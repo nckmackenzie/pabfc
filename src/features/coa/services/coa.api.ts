@@ -20,6 +20,10 @@ import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { createJournalEntry, createOrGetAccountId } from "@/services/journal";
+import {
+	getNextChildAccountCode,
+	getNextRootAccountCode,
+} from "./account-code-generator";
 import { buildTreeWithRollup, calcNormalBalance } from "./helpers";
 
 type Totals = { debits: string; credits: string };
@@ -48,13 +52,52 @@ const createAccount = async ({
 	await requirePermission("chart-of-accounts:create");
 	try {
 		await db.transaction(async (tx) => {
+			const parentId = data.isSubcategory ? Number(data.parentId) : null;
+			const existingAccounts = await tx.query.ledgerAccounts.findMany({
+				columns: { code: true },
+			});
+			const allAssignedCodes = existingAccounts.map((account) => account.code);
+
+			let code: string;
+
+			if (parentId !== null) {
+				const [parentAccount, siblingAccounts] = await Promise.all([
+					tx.query.ledgerAccounts.findFirst({
+						columns: { code: true },
+						where: eq(ledgerAccounts.id, parentId),
+					}),
+					tx.query.ledgerAccounts.findMany({
+						columns: { code: true },
+						where: eq(ledgerAccounts.parentId, parentId),
+					}),
+				]);
+
+				code = getNextChildAccountCode({
+					parentCode: parentAccount?.code ?? null,
+					siblingCodes: siblingAccounts.map((account) => account.code),
+					allAssignedCodes,
+				});
+			} else {
+				const rootAccounts = await tx.query.ledgerAccounts.findMany({
+					columns: { code: true },
+					where: and(eq(ledgerAccounts.type, data.type), sql`${ledgerAccounts.parentId} is null`),
+				});
+
+				code = getNextRootAccountCode({
+					type: data.type,
+					existingCodes: rootAccounts.map((account) => account.code),
+					allAssignedCodes,
+				});
+			}
+
 			const [{ id }] = await tx
 				.insert(ledgerAccounts)
 				.values({
+					code,
 					name: toTitleCase(data.name),
 					type: data.type,
 					normalBalance: defaultNormalBalanceForType(data.type),
-					parentId: data.isSubcategory ? Number(data.parentId) : null,
+					parentId,
 					isActive: data.isActive,
 					description: data.description,
 					isPosting: data.isSubcategory,
