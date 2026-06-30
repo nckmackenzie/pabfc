@@ -1,6 +1,4 @@
-function r2(n: number): number {
-	return Math.round(n * 100) / 100;
-}
+import { isReportablePeriodStatus, r2 } from "./report-utils";
 
 export type StatutoryPeriod = {
 	id: string;
@@ -80,7 +78,7 @@ export type StatutorySchedulesReport = {
 };
 
 export function isValidStatutoryScheduleStatus(status: string): boolean {
-	return status === "paid" || status === "closed";
+	return isReportablePeriodStatus(status);
 }
 
 export function buildStatutorySchedulesReport(params: {

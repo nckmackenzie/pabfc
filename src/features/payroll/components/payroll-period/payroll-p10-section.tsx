@@ -14,6 +14,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { ErrorComponent } from "@/components/ui/error-component";
+import { isValidP10Status } from "@/features/reports/lib/payroll-p10";
 
 type Props = {
 	periodId: string;
@@ -42,14 +44,14 @@ const NUM_COLS = [
 type NumColKey = (typeof NUM_COLS)[number]["key"];
 
 function fmt(value: number | null): string {
-	if (value === null || value === 0) return "—";
+	if (value === null) return "—";
 	return currencyFormatter(value);
 }
 
 export function PayrollP10Section({ periodId, status, periodName }: Props) {
-	const isAvailable = status === "paid" || status === "closed";
+	const isAvailable = isValidP10Status(status);
 
-	const { data, isLoading } = useQuery({
+	const { data, isLoading, isError } = useQuery({
 		queryKey: ["payroll-periods", "p10", periodId],
 		queryFn: () => getPayrollP10Report({ data: { payrollPeriodId: periodId } }),
 		enabled: isAvailable,
@@ -69,7 +71,6 @@ export function PayrollP10Section({ periodId, status, periodName }: Props) {
 				</div>
 			) : (
 				<div className="p-5 space-y-5">
-					{/* Section header */}
 					<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 						<div className="flex items-center gap-2 flex-1">
 							<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -99,13 +100,14 @@ export function PayrollP10Section({ periodId, status, periodName }: Props) {
 
 					{isLoading ? (
 						<p className="text-sm text-muted-foreground text-center py-4">Loading…</p>
+					) : isError ? (
+						<ErrorComponent message="Failed to load the P10 report. Try again later." />
 					) : data && data.rows.length === 0 ? (
 						<p className="text-sm text-muted-foreground text-center py-4">
 							No active payslips found for this period.
 						</p>
 					) : data ? (
 						<>
-							{/* Reconciliation notice */}
 							{data.periodTotalPaye !== null && (
 								<div
 									className={cn(
@@ -117,17 +119,15 @@ export function PayrollP10Section({ periodId, status, periodName }: Props) {
 								>
 									{Math.abs(data.totals.payeTax - data.periodTotalPaye) < 0.01 ? (
 										<>
-											P10 PAYE total{" "}
-											<strong>{currencyFormatter(data.totals.payeTax)}</strong> reconciles
-											with the period total.
+											P10 PAYE total <strong>{currencyFormatter(data.totals.payeTax)}</strong>{" "}
+											reconciles with the period total.
 										</>
 									) : (
 										<>
 											<strong>Discrepancy:</strong> P10 PAYE total{" "}
-											<strong>{currencyFormatter(data.totals.payeTax)}</strong> does not
-											match the period total{" "}
-											<strong>{currencyFormatter(data.periodTotalPaye)}</strong>. Review
-											payslip data before filing.
+											<strong>{currencyFormatter(data.totals.payeTax)}</strong> does not match the
+											period total <strong>{currencyFormatter(data.periodTotalPaye)}</strong>.
+											Review payslip data before filing.
 										</>
 									)}
 								</div>
@@ -160,7 +160,10 @@ export function PayrollP10Section({ periodId, status, periodName }: Props) {
 													{row.kraPin ?? "—"}
 												</TableCell>
 												{NUM_COLS.map((col) => (
-													<TableCell key={col.key} className="text-right whitespace-nowrap tabular-nums">
+													<TableCell
+														key={col.key}
+														className="text-right whitespace-nowrap tabular-nums"
+													>
 														{fmt(row[col.key as NumColKey] as number | null)}
 													</TableCell>
 												))}
@@ -194,9 +197,7 @@ export function PayrollP10Section({ periodId, status, periodName }: Props) {
 									<div>
 										<p className="text-xs text-muted-foreground">Total Relief</p>
 										<p className="font-semibold tabular-nums">
-											{currencyFormatter(
-												data.totals.personalRelief + data.totals.insuranceRelief
-											)}
+											{currencyFormatter(data.totals.personalRelief + data.totals.insuranceRelief)}
 										</p>
 									</div>
 									<div>

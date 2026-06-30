@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, ne, isNull } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { employees, payrollPeriods, payrollSlips } from "@/drizzle/schema";
@@ -14,6 +14,7 @@ export const getPayrollP10Report = createServerFn()
 	.validator(z.object({ payrollPeriodId: z.string().min(1) }))
 	.handler(async ({ data }) => {
 		await requirePermission("payroll-periods:view");
+		await requirePermission("employees:payroll-information");
 
 		const period = await db.query.payrollPeriods.findFirst({
 			columns: {
@@ -62,8 +63,7 @@ export const getPayrollP10Report = createServerFn()
 			.where(
 				and(
 					eq(payrollSlips.payrollPeriodId, data.payrollPeriodId),
-					ne(payrollSlips.status, "cancelled"),
-					isNull(employees.deletedAt)
+					ne(payrollSlips.status, "cancelled")
 				)
 			)
 			.orderBy(asc(employees.lastName), asc(employees.firstName));

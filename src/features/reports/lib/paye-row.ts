@@ -1,10 +1,7 @@
 import { PAYE_PENSION_ALLOWABLE_MAX } from "@/features/payroll/lib/payroll-constants";
+import { r2 } from "./report-utils";
 
 export const PAYE_E3_FIXED = PAYE_PENSION_ALLOWABLE_MAX; // 30,000 p.m.
-
-function r2(value: number): number {
-	return Math.round(value * 100) / 100;
-}
 
 export type PayeSlipSource = {
 	basicSalary: number | null;

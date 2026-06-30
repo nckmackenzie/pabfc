@@ -1,4 +1,5 @@
 import { computePayeRowValues, type PayeSlipSource } from "./paye-row";
+import { isReportablePeriodStatus } from "./report-utils";
 
 const EMPLOYER_NAME = "Prime Age Beauty & Fitness Center";
 const EMPLOYER_PIN = "P051457619H";
@@ -65,7 +66,7 @@ export type P10Report = {
 };
 
 export function isValidP10Status(status: string): boolean {
-	return status === "paid" || status === "closed";
+	return isReportablePeriodStatus(status);
 }
 
 export function buildPayrollP10Report(params: {
@@ -81,6 +82,7 @@ export function buildPayrollP10Report(params: {
 
 	const totals = rows.reduce<P10Totals>(
 		(acc, row) => {
+			if (row.totalGrossPay === null) return acc;
 			acc.basicSalary += row.basicSalary ?? 0;
 			acc.totalGrossPay += row.totalGrossPay ?? 0;
 			acc.e1ThirtyPctBasic += row.e1ThirtyPctBasic ?? 0;

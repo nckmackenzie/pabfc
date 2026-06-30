@@ -9,6 +9,7 @@ export const getEligiblePayrollPeriods = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("payroll-periods:view");
+		await requirePermission("employees:payroll-information");
 
 		const rows = await db.query.payrollPeriods.findMany({
 			columns: { id: true, name: true, periodMonth: true, periodYear: true, status: true },

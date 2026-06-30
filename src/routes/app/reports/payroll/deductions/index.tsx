@@ -20,6 +20,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 export const Route = createFileRoute("/app/reports/payroll/deductions/")({
 	beforeLoad: async () => {
 		await requirePermission("payroll-periods:view");
+		await requirePermission("employees:payroll-information");
 	},
 	component: RouteComponent,
 	validateSearch: payrollPeriodReportValidateSearchSchema,

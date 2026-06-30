@@ -18,29 +18,19 @@ export const getDeductionsReportForPeriod = createServerFn()
 	.validator(z.object({ payrollPeriodId: z.string().min(1) }))
 	.handler(async ({ data }) => {
 		await requirePermission("payroll-periods:view");
+		await requirePermission("employees:payroll-information");
 
-		const period = await db.query.payrollPeriods.findFirst({
-			columns: {
-				id: true,
-				name: true,
-				periodMonth: true,
-				periodYear: true,
-				status: true,
-			},
-			where: eq(payrollPeriods.id, data.payrollPeriodId),
-		});
-
-		if (!period) {
-			throw new ApplicationError("Payroll period not found");
-		}
-
-		if (!isValidDeductionsReportStatus(period.status)) {
-			throw new ApplicationError(
-				`Deductions report can only be generated for paid or closed periods. This period is currently "${period.status}".`
-			);
-		}
-
-		const [slipRows, voluntaryRows] = await Promise.all([
+		const [period, slipRows, voluntaryRows] = await Promise.all([
+			db.query.payrollPeriods.findFirst({
+				columns: {
+					id: true,
+					name: true,
+					periodMonth: true,
+					periodYear: true,
+					status: true,
+				},
+				where: eq(payrollPeriods.id, data.payrollPeriodId),
+			}),
 			db
 				.select({
 					employeeNo: employees.employeeNo,
@@ -62,7 +52,6 @@ export const getDeductionsReportForPeriod = createServerFn()
 					)
 				)
 				.orderBy(asc(employees.lastName), asc(employees.firstName)),
-
 			db
 				.select({
 					employeeNo: employees.employeeNo,
@@ -74,14 +63,27 @@ export const getDeductionsReportForPeriod = createServerFn()
 				})
 				.from(payrollDeductions)
 				.innerJoin(employees, eq(payrollDeductions.employeeId, employees.id))
+				.innerJoin(payrollSlips, eq(payrollDeductions.payrollSlipId, payrollSlips.id))
 				.where(
 					and(
 						eq(payrollDeductions.payrollPeriodId, data.payrollPeriodId),
+						ne(payrollDeductions.deductionType, "helb"),
+						ne(payrollSlips.status, "cancelled"),
 						isNull(employees.deletedAt)
 					)
 				)
 				.orderBy(asc(payrollDeductions.deductionType), asc(employees.lastName), asc(employees.firstName)),
 		]);
+
+		if (!period) {
+			throw new ApplicationError("Payroll period not found");
+		}
+
+		if (!isValidDeductionsReportStatus(period.status)) {
+			throw new ApplicationError(
+				`Deductions report can only be generated for paid or closed periods. This period is currently "${period.status}".`
+			);
+		}
 
 		const n = (v: string | null) => (v === null ? 0 : toNumber(v));
 

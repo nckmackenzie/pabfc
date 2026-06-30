@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, isNull, ne } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { employees, payrollPeriods, payrollSlips } from "@/drizzle/schema";
@@ -17,24 +17,51 @@ export const getStatutorySchedulesForPeriod = createServerFn()
 	.validator(z.object({ payrollPeriodId: z.string().min(1) }))
 	.handler(async ({ data }) => {
 		await requirePermission("payroll-periods:view");
+		await requirePermission("employees:payroll-information");
 
-		const period = await db.query.payrollPeriods.findFirst({
-			columns: {
-				id: true,
-				name: true,
-				periodMonth: true,
-				periodYear: true,
-				payDate: true,
-				status: true,
-				totalNssfEmployee: true,
-				totalNssfEmployer: true,
-				totalShifEmployee: true,
-				totalAhlEmployee: true,
-				totalAhlEmployer: true,
-				totalNita: true,
-			},
-			where: eq(payrollPeriods.id, data.payrollPeriodId),
-		});
+		const [period, rows] = await Promise.all([
+			db.query.payrollPeriods.findFirst({
+				columns: {
+					id: true,
+					name: true,
+					periodMonth: true,
+					periodYear: true,
+					payDate: true,
+					status: true,
+					totalNssfEmployee: true,
+					totalNssfEmployer: true,
+					totalShifEmployee: true,
+					totalAhlEmployee: true,
+					totalAhlEmployer: true,
+					totalNita: true,
+				},
+				where: eq(payrollPeriods.id, data.payrollPeriodId),
+			}),
+			db
+				.select({
+					employeeNo: employees.employeeNo,
+					firstName: employees.firstName,
+					lastName: employees.lastName,
+					nssfNo: employees.nssfNo,
+					shifNo: employees.shifNo,
+					kraPin: employees.kraPin,
+					nssfEmployee: payrollSlips.nssfEmployee,
+					nssfEmployer: payrollSlips.nssfEmployer,
+					shifEmployee: payrollSlips.shifEmployee,
+					ahlEmployee: payrollSlips.ahlEmployee,
+					ahlEmployer: payrollSlips.ahlEmployer,
+					nitaLevy: payrollSlips.nitaLevy,
+				})
+				.from(payrollSlips)
+				.innerJoin(employees, eq(payrollSlips.employeeId, employees.id))
+				.where(
+					and(
+						eq(payrollSlips.payrollPeriodId, data.payrollPeriodId),
+						ne(payrollSlips.status, "cancelled")
+					)
+				)
+				.orderBy(asc(employees.lastName), asc(employees.firstName)),
+		]);
 
 		if (!period) {
 			throw new ApplicationError("Payroll period not found");
@@ -45,32 +72,6 @@ export const getStatutorySchedulesForPeriod = createServerFn()
 				`Statutory schedules can only be generated for paid or closed periods. This period is currently "${period.status}".`
 			);
 		}
-
-		const rows = await db
-			.select({
-				employeeNo: employees.employeeNo,
-				firstName: employees.firstName,
-				lastName: employees.lastName,
-				nssfNo: employees.nssfNo,
-				shifNo: employees.shifNo,
-				kraPin: employees.kraPin,
-				nssfEmployee: payrollSlips.nssfEmployee,
-				nssfEmployer: payrollSlips.nssfEmployer,
-				shifEmployee: payrollSlips.shifEmployee,
-				ahlEmployee: payrollSlips.ahlEmployee,
-				ahlEmployer: payrollSlips.ahlEmployer,
-				nitaLevy: payrollSlips.nitaLevy,
-			})
-			.from(payrollSlips)
-			.innerJoin(employees, eq(payrollSlips.employeeId, employees.id))
-			.where(
-				and(
-					eq(payrollSlips.payrollPeriodId, data.payrollPeriodId),
-					ne(payrollSlips.status, "cancelled"),
-					isNull(employees.deletedAt)
-				)
-			)
-			.orderBy(asc(employees.lastName), asc(employees.firstName));
 
 		const n = (v: string | null) => (v === null ? 0 : toNumber(v));
 

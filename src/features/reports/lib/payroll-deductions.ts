@@ -50,7 +50,6 @@ export type VoluntaryDeductionRow = {
 	employeeName: string;
 	employeeNo: string;
 	deductionType: VoluntaryDeductionType;
-	deductionLabel: string;
 	description: string;
 	amount: number;
 };
@@ -87,12 +86,10 @@ export type VoluntaryDeductionSource = {
 	amount: number;
 };
 
-function r2(n: number): number {
-	return Math.round(n * 100) / 100;
-}
+import { isReportablePeriodStatus, r2 } from "./report-utils";
 
 export function isValidDeductionsReportStatus(status: string): boolean {
-	return status === "paid" || status === "closed";
+	return isReportablePeriodStatus(status);
 }
 
 export function buildDeductionsReport(params: {
@@ -142,7 +139,6 @@ export function buildDeductionsReport(params: {
 			employeeName: d.employeeName,
 			employeeNo: d.employeeNo,
 			deductionType: d.deductionType,
-			deductionLabel: VOLUNTARY_DEDUCTION_LABELS[d.deductionType] ?? d.deductionType,
 			description: d.description,
 			amount: d.amount,
 		});
