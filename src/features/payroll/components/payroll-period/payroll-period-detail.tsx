@@ -60,6 +60,7 @@ import type { PayrollRemittanceItemType } from "../../lib/payroll-constants";
 import { postStatutoryRemittanceJournalFn } from "../../services/payroll-journals.api";
 import { sendPayslipEmailFn, sendAllPayslipsEmailFn } from "../../services/payroll-email.api";
 import { payrollSlipQueries } from "../../services/queries";
+import { PayrollP10Section } from "./payroll-p10-section";
 import { PayslipPdf } from "../payslip-pdf";
 import type { PayslipPdfData } from "../payslip-pdf";
 import {
@@ -116,6 +117,11 @@ export function PayrollPeriodDetail() {
 						periodName={data.name}
 					/>
 					<StatutoryRemittance periodId={periodId} status={data.status} />
+					<PayrollP10Section
+						periodId={periodId}
+						status={data.status}
+						periodName={data.name}
+					/>
 					<PeriodPayslips
 						periodId={periodId}
 						status={data.status}

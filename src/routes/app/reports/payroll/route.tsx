@@ -5,7 +5,6 @@ import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/payroll")({
 	beforeLoad: async () => {
-		await requirePermission("reports:payroll-p9");
 		await requirePermission("employees:payroll-information");
 		await requirePermission("payroll-periods:view");
 	},
