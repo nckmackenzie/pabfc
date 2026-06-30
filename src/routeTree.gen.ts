@@ -122,7 +122,9 @@ import { Route as AppEmployeesEmployeeIdEditRouteImport } from './routes/app/emp
 import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
 import { Route as AppBillsBillIdEditRouteImport } from './routes/app/bills/$billId/edit'
 import { Route as AppBankingsPostingsNewRouteImport } from './routes/app/bankings/postings/new'
+import { Route as AppReportsPayrollStatutorySchedulesIndexRouteImport } from './routes/app/reports/payroll/statutory-schedules/index'
 import { Route as AppReportsPayrollP9IndexRouteImport } from './routes/app/reports/payroll/p9/index'
+import { Route as AppReportsPayrollDeductionsIndexRouteImport } from './routes/app/reports/payroll/deductions/index'
 import { Route as AppReportsFinanceTrialBalanceIndexRouteImport } from './routes/app/reports/finance/trial-balance/index'
 import { Route as AppReportsFinanceReceiptsIndexRouteImport } from './routes/app/reports/finance/receipts/index'
 import { Route as AppReportsFinancePaymentsIndexRouteImport } from './routes/app/reports/finance/payments/index'
@@ -740,10 +742,22 @@ const AppBankingsPostingsNewRoute = AppBankingsPostingsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppBankingsPostingsRouteRoute,
 } as any)
+const AppReportsPayrollStatutorySchedulesIndexRoute =
+  AppReportsPayrollStatutorySchedulesIndexRouteImport.update({
+    id: '/statutory-schedules/',
+    path: '/statutory-schedules/',
+    getParentRoute: () => AppReportsPayrollRouteRoute,
+  } as any)
 const AppReportsPayrollP9IndexRoute =
   AppReportsPayrollP9IndexRouteImport.update({
     id: '/p9/',
     path: '/p9/',
+    getParentRoute: () => AppReportsPayrollRouteRoute,
+  } as any)
+const AppReportsPayrollDeductionsIndexRoute =
+  AppReportsPayrollDeductionsIndexRouteImport.update({
+    id: '/deductions/',
+    path: '/deductions/',
     getParentRoute: () => AppReportsPayrollRouteRoute,
   } as any)
 const AppReportsFinanceTrialBalanceIndexRoute =
@@ -1021,7 +1035,9 @@ export interface FileRoutesByFullPath {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/payroll/deductions/': typeof AppReportsPayrollDeductionsIndexRoute
   '/app/reports/payroll/p9/': typeof AppReportsPayrollP9IndexRoute
+  '/app/reports/payroll/statutory-schedules/': typeof AppReportsPayrollStatutorySchedulesIndexRoute
   '/api/access-control/agent/attendance-sync/state/': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
   '/api/access-control/agent/attendance-sync/upload/': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   '/api/access-control/agent/jobs/claim/': typeof ApiAccessControlAgentJobsClaimIndexRoute
@@ -1140,7 +1156,9 @@ export interface FileRoutesByTo {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/payroll/deductions': typeof AppReportsPayrollDeductionsIndexRoute
   '/app/reports/payroll/p9': typeof AppReportsPayrollP9IndexRoute
+  '/app/reports/payroll/statutory-schedules': typeof AppReportsPayrollStatutorySchedulesIndexRoute
   '/api/access-control/agent/attendance-sync/state': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
   '/api/access-control/agent/attendance-sync/upload': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   '/api/access-control/agent/jobs/claim': typeof ApiAccessControlAgentJobsClaimIndexRoute
@@ -1281,7 +1299,9 @@ export interface FileRoutesById {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/payroll/deductions/': typeof AppReportsPayrollDeductionsIndexRoute
   '/app/reports/payroll/p9/': typeof AppReportsPayrollP9IndexRoute
+  '/app/reports/payroll/statutory-schedules/': typeof AppReportsPayrollStatutorySchedulesIndexRoute
   '/api/access-control/agent/attendance-sync/state/': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
   '/api/access-control/agent/attendance-sync/upload/': typeof ApiAccessControlAgentAttendanceSyncUploadIndexRoute
   '/api/access-control/agent/jobs/claim/': typeof ApiAccessControlAgentJobsClaimIndexRoute
@@ -1422,7 +1442,9 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/app/reports/payroll/deductions/'
     | '/app/reports/payroll/p9/'
+    | '/app/reports/payroll/statutory-schedules/'
     | '/api/access-control/agent/attendance-sync/state/'
     | '/api/access-control/agent/attendance-sync/upload/'
     | '/api/access-control/agent/jobs/claim/'
@@ -1541,7 +1563,9 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/app/reports/payroll/deductions'
     | '/app/reports/payroll/p9'
+    | '/app/reports/payroll/statutory-schedules'
     | '/api/access-control/agent/attendance-sync/state'
     | '/api/access-control/agent/attendance-sync/upload'
     | '/api/access-control/agent/jobs/claim'
@@ -1681,7 +1705,9 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/app/reports/payroll/deductions/'
     | '/app/reports/payroll/p9/'
+    | '/app/reports/payroll/statutory-schedules/'
     | '/api/access-control/agent/attendance-sync/state/'
     | '/api/access-control/agent/attendance-sync/upload/'
     | '/api/access-control/agent/jobs/claim/'
@@ -2504,11 +2530,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBankingsPostingsNewRouteImport
       parentRoute: typeof AppBankingsPostingsRouteRoute
     }
+    '/app/reports/payroll/statutory-schedules/': {
+      id: '/app/reports/payroll/statutory-schedules/'
+      path: '/statutory-schedules'
+      fullPath: '/app/reports/payroll/statutory-schedules/'
+      preLoaderRoute: typeof AppReportsPayrollStatutorySchedulesIndexRouteImport
+      parentRoute: typeof AppReportsPayrollRouteRoute
+    }
     '/app/reports/payroll/p9/': {
       id: '/app/reports/payroll/p9/'
       path: '/p9'
       fullPath: '/app/reports/payroll/p9/'
       preLoaderRoute: typeof AppReportsPayrollP9IndexRouteImport
+      parentRoute: typeof AppReportsPayrollRouteRoute
+    }
+    '/app/reports/payroll/deductions/': {
+      id: '/app/reports/payroll/deductions/'
+      path: '/deductions'
+      fullPath: '/app/reports/payroll/deductions/'
+      preLoaderRoute: typeof AppReportsPayrollDeductionsIndexRouteImport
       parentRoute: typeof AppReportsPayrollRouteRoute
     }
     '/app/reports/finance/trial-balance/': {
@@ -3111,13 +3151,19 @@ const AppReportsFinanceRouteRouteWithChildren =
 
 interface AppReportsPayrollRouteRouteChildren {
   AppReportsPayrollIndexRoute: typeof AppReportsPayrollIndexRoute
+  AppReportsPayrollDeductionsIndexRoute: typeof AppReportsPayrollDeductionsIndexRoute
   AppReportsPayrollP9IndexRoute: typeof AppReportsPayrollP9IndexRoute
+  AppReportsPayrollStatutorySchedulesIndexRoute: typeof AppReportsPayrollStatutorySchedulesIndexRoute
 }
 
 const AppReportsPayrollRouteRouteChildren: AppReportsPayrollRouteRouteChildren =
   {
     AppReportsPayrollIndexRoute: AppReportsPayrollIndexRoute,
+    AppReportsPayrollDeductionsIndexRoute:
+      AppReportsPayrollDeductionsIndexRoute,
     AppReportsPayrollP9IndexRoute: AppReportsPayrollP9IndexRoute,
+    AppReportsPayrollStatutorySchedulesIndexRoute:
+      AppReportsPayrollStatutorySchedulesIndexRoute,
   }
 
 const AppReportsPayrollRouteRouteWithChildren =

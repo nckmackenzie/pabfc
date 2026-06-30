@@ -121,4 +121,18 @@ export const PAYROLL_REPORT_CARDS = linkOptions([
 		icon: FileTextIcon,
 		permission: "reports:payroll-p9",
 	},
+	{
+		to: "/app/reports/payroll/statutory-schedules",
+		title: "Statutory Schedules",
+		description: "Per-period NSSF, SHIF, AHL and NITA schedules for statutory filing.",
+		icon: ListIcon,
+		permission: "payroll-periods:view",
+	},
+	{
+		to: "/app/reports/payroll/deductions",
+		title: "Payroll Deductions Report",
+		description: "Statutory and voluntary deductions grouped by type for a given period.",
+		icon: BanknoteArrowDownIcon,
+		permission: "payroll-periods:view",
+	},
 ]);

@@ -1,4 +1,4 @@
-import { PAYE_PENSION_ALLOWABLE_MAX } from "@/features/payroll/lib/payroll-constants";
+import { computePayeRowValues, PAYE_E3_FIXED } from "./paye-row";
 
 export const PAYROLL_P9_MONTHS = [
 	"January",
@@ -16,7 +16,7 @@ export const PAYROLL_P9_MONTHS = [
 ] as const;
 
 // E3: statutory fixed monthly cap for Defined Contribution Retirement Scheme
-export const P9_E3_FIXED = PAYE_PENSION_ALLOWABLE_MAX; // 30,000
+export const P9_E3_FIXED = PAYE_E3_FIXED; // 30,000
 
 export type PayrollP9EmployeeSummary = {
 	employeeNo: string;
@@ -103,10 +103,6 @@ export type PayrollP9Report = {
 	monthsWithPayrollActivity: number;
 };
 
-function r2(value: number): number {
-	return Math.round(value * 100) / 100;
-}
-
 function createBlankRow(monthNumber: number): PayrollP9Row {
 	return {
 		month: PAYROLL_P9_MONTHS[monthNumber - 1],
@@ -136,46 +132,16 @@ function isPopulatedRow(row: PayrollP9Row): boolean {
 }
 
 function buildRow(monthNumber: number, source: PayrollP9SourceMonth): PayrollP9Row {
-	if (source.grossPay === null || source.basicSalary === null) {
+	const computed = computePayeRowValues(source);
+	if (computed.basicSalary === null) {
 		return createBlankRow(monthNumber);
 	}
-
-	const basicSalary = source.basicSalary;
-	const totalGrossPay = source.grossPay;
-
-	const e1ThirtyPctBasic = r2(basicSalary * 0.3);
-	const e2ActualPension = r2((source.nssfEmployee ?? 0) + (source.pensionEmployeeDeduction ?? 0));
-	const e3Fixed = P9_E3_FIXED;
-	const eEffective = Math.min(e1ThirtyPctBasic, e2ActualPension, e3Fixed);
-
-	const ahlEmployee = source.ahlEmployee ?? 0;
-	const shifEmployee = source.shifEmployee ?? 0;
-	const prmf = source.postRetirementAllowableDeduction ?? 0;
-	const ownerOccupiedInterest = source.mortgageAllowableDeduction ?? 0;
-
-	const totalDeductions = r2(eEffective + ahlEmployee + shifEmployee + prmf + ownerOccupiedInterest);
-	const chargeablePay = r2(Math.max(totalGrossPay - totalDeductions, 0));
-
 	return {
 		month: PAYROLL_P9_MONTHS[monthNumber - 1],
 		monthNumber,
-		basicSalary,
 		benefitsNonCash: null,
 		valueOfQuarters: null,
-		totalGrossPay,
-		e1ThirtyPctBasic,
-		e2ActualPension,
-		e3Fixed,
-		ahlEmployee,
-		shifEmployee,
-		prmf,
-		ownerOccupiedInterest,
-		totalDeductions,
-		chargeablePay,
-		taxCharged: source.grossTax,
-		personalRelief: source.personalRelief,
-		insuranceRelief: source.insuranceRelief,
-		payeTax: source.netPaye,
+		...computed,
 	};
 }
 

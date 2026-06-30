@@ -280,6 +280,18 @@ export const payrollP9ReportFormSchema = z.object({
 	taxYear: payrollP9TaxYearSchema,
 });
 
+export const payrollPeriodReportValidateSearchSchema = z.object({
+	payrollPeriodId: z.string().optional(),
+});
+
+export const payrollPeriodReportFormSchema = z.object({
+	payrollPeriodId: z
+		.string({
+			error: (iss) => (!iss.input ? "Select a period" : "Invalid period"),
+		})
+		.min(1, "Select a period"),
+});
+
 export type BankingValidateSchema = z.infer<typeof bankingReportFormSchema>;
 export type PaymentsReportFormSchema = z.infer<typeof paymentsReportFormSchema>;
 export type MembersReportFormSchema = z.infer<typeof membersReportFormSchema>;
@@ -287,3 +299,4 @@ export type AttendanceReportFormSchema = z.infer<
 	typeof attendanceReportFormSchema
 >;
 export type PayrollP9ReportFormSchema = z.infer<typeof payrollP9ReportFormSchema>;
+export type PayrollPeriodReportFormSchema = z.infer<typeof payrollPeriodReportFormSchema>;
