@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, ilike, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { memberMemberships, members, membersOverview } from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
@@ -57,11 +57,11 @@ export const getActiveMembers = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("members:view");
-		await requirePermission("receipts:create");
 		return db.query.members
 			.findMany({
 				columns: { id: true, firstName: true, lastName: true },
 				where: and(eq(members.memberStatus, "active"), isNull(members.deletedAt)),
+				orderBy: asc(sql`lower(${members.firstName})`),
 			})
 			.then((m) =>
 				m.map(({ id, firstName, lastName }) => ({
