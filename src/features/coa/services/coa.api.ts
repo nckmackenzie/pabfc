@@ -1,6 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	eq,
+	ilike,
+	inArray,
+	lte,
+	or,
+	sql,
+	type ExtractTablesWithRelations,
+} from "drizzle-orm";
+import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
+import type { PgTransaction } from "drizzle-orm/pg-core";
 import { db } from "@/drizzle/db";
+import type * as schema from "@/drizzle/schema";
 import {
 	type AccountType,
 	bankAccounts,
@@ -27,14 +40,24 @@ import { getNextChildAccountCode, getNextRootAccountCode } from "./account-code-
 import { buildTreeWithRollup, calcNormalBalance, isAccountTypeMismatch } from "./helpers";
 
 type Totals = { debits: string; credits: string };
+type Transaction = PgTransaction<
+	NodePgQueryResultHKT,
+	typeof schema,
+	ExtractTablesWithRelations<typeof schema>
+>;
+type DbConnection = typeof db | Transaction;
 
-async function validateParentAccountForAttach(parentId: number, childType: AccountType) {
+async function validateParentAccountForAttach(
+	connection: DbConnection,
+	parentId: number,
+	childType: AccountType
+) {
 	const [parent, directJournalLine] = await Promise.all([
-		db.query.ledgerAccounts.findFirst({
+		connection.query.ledgerAccounts.findFirst({
 			columns: { type: true, isActive: true },
 			where: eq(ledgerAccounts.id, parentId),
 		}),
-		db.query.journalLines.findFirst({
+		connection.query.journalLines.findFirst({
 			columns: { id: true },
 			where: eq(journalLines.accountId, parentId),
 		}),
@@ -71,6 +94,25 @@ async function validateParentAccountForAttach(parentId: number, childType: Accou
 	return null;
 }
 
+async function lockLedgerAccountTopology(tx: Transaction) {
+	await tx.execute(sql`LOCK TABLE ledger_accounts IN SHARE ROW EXCLUSIVE MODE`);
+}
+
+/**
+ * When an account is detached from or deleted under a parent, that parent
+ * becomes a posting leaf again once it has no remaining children. Shared by the
+ * update/detach path and the delete path.
+ */
+async function restoreParentPostingStatusIfNoChildren(parentId: number, tx: Transaction) {
+	const [{ remaining }] = await tx
+		.select({ remaining: sql<number>`count(*)::int` })
+		.from(ledgerAccounts)
+		.where(eq(ledgerAccounts.parentId, parentId));
+	if (shouldRestoreParentPosting(remaining)) {
+		await tx.update(ledgerAccounts).set({ isPosting: true }).where(eq(ledgerAccounts.id, parentId));
+	}
+}
+
 export function defaultNormalBalanceForType(type: AccountType): "debit" | "credit" {
 	switch (type) {
 		case "asset":
@@ -88,13 +130,19 @@ const createAccount = async ({ data, userId }: { data: AccountsFormSchema; userI
 
 	const parentId = data.isSubcategory ? Number(data.parentId) : null;
 
-	if (parentId !== null) {
-		const parentValidationFailure = await validateParentAccountForAttach(parentId, data.type);
-		if (parentValidationFailure) return parentValidationFailure;
-	}
-
 	try {
-		await db.transaction(async (tx) => {
+		return await db.transaction(async (tx) => {
+			await lockLedgerAccountTopology(tx);
+
+			if (parentId !== null) {
+				const parentValidationFailure = await validateParentAccountForAttach(
+					tx,
+					parentId,
+					data.type
+				);
+				if (parentValidationFailure) return parentValidationFailure;
+			}
+
 			const existingAccounts = await tx.query.ledgerAccounts.findMany({
 				columns: { code: true },
 			});
@@ -213,8 +261,9 @@ const createAccount = async ({ data, userId }: { data: AccountsFormSchema; userI
 					description: `Created account ${data.name}`,
 				},
 			});
+
+			return success(undefined);
 		});
-		return success(undefined);
 	} catch (error) {
 		console.error(error);
 		return failure({
@@ -241,50 +290,60 @@ const updateAccount = async ({ data, userId }: { data: AccountsFormSchema; userI
 	try {
 		await requirePermission("chart-of-accounts:update");
 
-		const account = await getAccount({ data: accountId });
-
-		if (!account) {
-			return failure({ type: "NotFoundError", message: "Account not found" });
-		}
-
 		const newParentId = data.isSubcategory ? Number(data.parentId) : null;
-		const oldParentId = account.parentId;
 
-		// Snapshot of the full tree for cycle detection and descendant type
-		// propagation.
-		const allAccounts = await db
-			.select({ id: ledgerAccounts.id, parentId: ledgerAccounts.parentId })
-			.from(ledgerAccounts);
+		return await db.transaction(async (tx) => {
+			await lockLedgerAccountTopology(tx);
 
-		if (newParentId !== null) {
-			if (newParentId === accountId) {
-				return failure({
-					type: "ApplicationError",
-					message: "An account cannot be its own parent",
-				});
+			const account = await tx.query.ledgerAccounts.findFirst({
+				columns: { id: true, name: true, type: true, parentId: true },
+				where: eq(ledgerAccounts.id, accountId),
+			});
+
+			if (!account) {
+				return failure({ type: "NotFoundError", message: "Account not found" });
 			}
 
-			const descendantIds = collectDescendantIds(allAccounts, accountId);
-			if (descendantIds.has(newParentId)) {
-				return failure({
-					type: "ApplicationError",
-					message: "Cannot set one of the account's descendants as its parent",
-				});
+			const oldParentId = account.parentId;
+
+			// Snapshot of the locked tree for cycle detection and descendant type
+			// propagation.
+			const allAccounts = await tx
+				.select({ id: ledgerAccounts.id, parentId: ledgerAccounts.parentId })
+				.from(ledgerAccounts);
+
+			if (newParentId !== null) {
+				if (newParentId === accountId) {
+					return failure({
+						type: "ApplicationError",
+						message: "An account cannot be its own parent",
+					});
+				}
+
+				const descendantIds = collectDescendantIds(allAccounts, accountId);
+				if (descendantIds.has(newParentId)) {
+					return failure({
+						type: "ApplicationError",
+						message: "Cannot set one of the account's descendants as its parent",
+					});
+				}
+
+				const parentValidationFailure = await validateParentAccountForAttach(
+					tx,
+					newParentId,
+					data.type
+				);
+				if (parentValidationFailure) return parentValidationFailure;
 			}
 
-			const parentValidationFailure = await validateParentAccountForAttach(newParentId, data.type);
-			if (parentValidationFailure) return parentValidationFailure;
-		}
+			// An account is a leaf (posting) unless it already has children of its own,
+			// in which case it must remain non-posting regardless of the form input.
+			const [{ childCount }] = await tx
+				.select({ childCount: sql<number>`count(*)::int` })
+				.from(ledgerAccounts)
+				.where(eq(ledgerAccounts.parentId, accountId));
+			const selfIsPosting = childIsPosting(childCount > 0);
 
-		// An account is a leaf (posting) unless it already has children of its own,
-		// in which case it must remain non-posting regardless of the form input.
-		const [{ childCount }] = await db
-			.select({ childCount: sql<number>`count(*)::int` })
-			.from(ledgerAccounts)
-			.where(eq(ledgerAccounts.parentId, accountId));
-		const selfIsPosting = childIsPosting(childCount > 0);
-
-		await db.transaction(async (tx) => {
 			await tx
 				.update(ledgerAccounts)
 				.set({
@@ -310,16 +369,7 @@ const updateAccount = async ({ data, userId }: { data: AccountsFormSchema; userI
 			// If this account was detached from a previous parent, that parent
 			// becomes a posting leaf again once it has no remaining children.
 			if (oldParentId !== null && oldParentId !== newParentId) {
-				const [{ remaining }] = await tx
-					.select({ remaining: sql<number>`count(*)::int` })
-					.from(ledgerAccounts)
-					.where(eq(ledgerAccounts.parentId, oldParentId));
-				if (shouldRestoreParentPosting(remaining)) {
-					await tx
-						.update(ledgerAccounts)
-						.set({ isPosting: true })
-						.where(eq(ledgerAccounts.id, oldParentId));
-				}
+				await restoreParentPostingStatusIfNoChildren(oldParentId, tx);
 			}
 
 			if (account.type !== data.type) {
@@ -377,9 +427,9 @@ const updateAccount = async ({ data, userId }: { data: AccountsFormSchema; userI
 					description: `Updated account ${account.name} details`,
 				},
 			});
-		});
 
-		return success(undefined);
+			return success(undefined);
+		});
 	} catch (error) {
 		console.error(error);
 		return failure({
@@ -567,35 +617,62 @@ export const deleteAccount = createServerFn({ method: "POST" })
 	.handler(async ({ data: accountId, context }) => {
 		await requirePermission("chart-of-accounts:delete");
 
-		const account = await getAccount({ data: Number(accountId) });
-
-		if (!account) {
-			return failure({ type: "NotFoundError", message: "Account not found" });
-		}
+		const id = Number(accountId);
 
 		try {
-			const hasChildAccounts = await db.query.ledgerAccounts.findFirst({
-				where: eq(ledgerAccounts.parentId, Number(accountId)),
-			});
+			return await db.transaction(async (tx) => {
+				await lockLedgerAccountTopology(tx);
 
-			if (hasChildAccounts) {
-				return failure({
-					type: "ApplicationError",
-					message: "Account has child accounts",
+				const account = await tx.query.ledgerAccounts.findFirst({
+					columns: { id: true, name: true, parentId: true },
+					where: eq(ledgerAccounts.id, id),
 				});
-			}
 
-			const isBankAccount = await db.query.bankAccounts.findFirst({
-				columns: { id: true },
-				where: eq(bankAccounts.accountId, account.id),
-			});
-
-			await db.transaction(async (tx) => {
-				if (isBankAccount) {
-					await tx.delete(bankAccounts).where(eq(bankAccounts.id, isBankAccount.id));
+				if (!account) {
+					return failure({ type: "NotFoundError", message: "Account not found" });
 				}
 
-				await tx.delete(ledgerAccounts).where(eq(ledgerAccounts.id, Number(accountId)));
+				// Guard: an account with children must not be deleted — orphaning
+				// its children would corrupt the hierarchy.
+				const [{ childCount }] = await tx
+					.select({ childCount: sql<number>`count(*)::int` })
+					.from(ledgerAccounts)
+					.where(eq(ledgerAccounts.parentId, id));
+				if (childCount > 0) {
+					return failure({
+						type: "ApplicationError",
+						message: "Account has child accounts",
+					});
+				}
+
+				// Guard: an account used in journal lines must not be deleted —
+				// removing it would corrupt the accounting records.
+				const [{ journalLineCount }] = await tx
+					.select({ journalLineCount: sql<number>`count(*)::int` })
+					.from(journalLines)
+					.where(eq(journalLines.accountId, id));
+				if (journalLineCount > 0) {
+					return failure({
+						type: "ApplicationError",
+						message: "Account has journal entries and cannot be deleted",
+					});
+				}
+
+				const bank = await tx.query.bankAccounts.findFirst({
+					columns: { id: true },
+					where: eq(bankAccounts.accountId, id),
+				});
+				if (bank) {
+					await tx.delete(bankAccounts).where(eq(bankAccounts.id, bank.id));
+				}
+
+				await tx.delete(ledgerAccounts).where(eq(ledgerAccounts.id, id));
+
+				// A deleted leaf's former parent becomes a posting leaf again once
+				// it has no remaining children.
+				if (account.parentId !== null) {
+					await restoreParentPostingStatusIfNoChildren(account.parentId, tx);
+				}
 
 				await logActivity({
 					data: {
@@ -604,9 +681,9 @@ export const deleteAccount = createServerFn({ method: "POST" })
 						description: `Deleted account ${account.name}`,
 					},
 				});
-			});
 
-			return success(undefined);
+				return success(undefined);
+			});
 		} catch (error) {
 			console.error(error);
 			return failure({

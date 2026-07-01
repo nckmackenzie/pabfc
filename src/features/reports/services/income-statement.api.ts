@@ -36,7 +36,7 @@ export const getIncomeStatement = createServerFn()
             a.id AS node_id
           FROM ledger_accounts a
           WHERE a.type IN ('revenue', 'expense')
-            AND a.is_posting = false
+            AND a.parent_id IS NULL
 
         UNION ALL
 
@@ -97,7 +97,7 @@ export const getIncomeStatement = createServerFn()
     LEFT JOIN rolled_up ru
       ON ru.reporting_id = r.id
     WHERE r.type IN ('revenue', 'expense')
-      AND r.is_posting = false
+      AND r.parent_id IS NULL
       AND COALESCE(ru.total, 0) <> 0
     ORDER BY r.type, r.code NULLS LAST, r.name;
     `);
@@ -113,7 +113,7 @@ export const getIncomeStatementDrillDown = createServerFn()
 			dateFrom: z.string(),
 			dateTo: z.string(),
 			q: z.string().optional(),
-		}),
+		})
 	)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:income-statement");
@@ -121,10 +121,7 @@ export const getIncomeStatementDrillDown = createServerFn()
 
 		const parentAccountId = await db.query.ledgerAccounts.findFirst({
 			columns: { id: true },
-			where: and(
-				eq(ledgerAccounts.id, id),
-				inArray(ledgerAccounts.type, ["revenue", "expense"]),
-			),
+			where: and(eq(ledgerAccounts.id, id), inArray(ledgerAccounts.type, ["revenue", "expense"])),
 		});
 
 		if (!parentAccountId) throw new ApplicationError("Account not found");
@@ -175,10 +172,7 @@ export const getIncomeStatementDrillDown = createServerFn()
 			})
 			.from(journalLines)
 			.innerJoin(ledgerAccounts, eq(journalLines.accountId, ledgerAccounts.id))
-			.innerJoin(
-				journalEntries,
-				eq(journalLines.journalEntryId, journalEntries.id),
-			)
+			.innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
 			.where(
 				and(
 					inArray(journalLines.accountId, accountIds),
@@ -190,14 +184,11 @@ export const getIncomeStatementDrillDown = createServerFn()
 								ilike(journalEntries.reference, `%${q}%`),
 								ilike(ledgerAccounts.name, `%${q}%`),
 								ilike(journalEntries.source, `%${q}%`),
-								ilike(
-									sql`TO_CHAR(${journalEntries.entryDate}, 'dd/MM/yyyy')`,
-									`%${q}%`,
-								),
-								ilike(sql`${journalLines.amount}::numeric::text`, `%${q}%`),
+								ilike(sql`TO_CHAR(${journalEntries.entryDate}, 'dd/MM/yyyy')`, `%${q}%`),
+								ilike(sql`${journalLines.amount}::numeric::text`, `%${q}%`)
 							)
-						: undefined,
-				),
+						: undefined
+				)
 			)
 			.orderBy(asc(journalEntries.entryDate), asc(journalLines.id));
 	});
