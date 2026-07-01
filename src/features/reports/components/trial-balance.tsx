@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrialBalancePdf } from "@/features/reports/components/downloadable-trial-balance";
 import { TrialBalanceDrillDown } from "@/features/reports/components/trial-balance-drilldown";
+// import { isTrialBalanced } from "@/features/reports/lib/report-balance-checks";
 import {
 	getTrialBalance,
 	type TrialBalanceParentRow,
@@ -33,6 +34,7 @@ export function TrialBalance() {
 
 	const totalDebits = rows.reduce((sum, row) => sum + Number(row.debit_balance), 0);
 	const totalCredits = rows.reduce((sum, row) => sum + Number(row.credit_balance), 0);
+	// const balanced = isTrialBalanced(rows);
 
 	const formattedAsOfDate = filters.asOfDate ? dateFormat(filters.asOfDate, "long") : "";
 
@@ -103,6 +105,18 @@ export function TrialBalance() {
 							{currencyFormatter(totalCredits, false)}
 						</div>
 					</div>
+
+					{/* <div
+						className={`mt-4 rounded-md border px-3 py-2 text-sm font-medium ${
+							balanced
+								? "border-green-200 bg-green-50 text-green-700"
+								: "border-red-200 bg-red-50 text-red-700"
+						}`}
+					>
+						{balanced
+							? "In balance — total debits equal total credits."
+							: `Out of balance by ${currencyFormatter(Math.abs(totalDebits - totalCredits), false)} — total debits do not equal total credits.`}
+					</div> */}
 				</div>
 			</div>
 		</div>

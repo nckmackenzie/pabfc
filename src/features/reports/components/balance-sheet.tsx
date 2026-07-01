@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BalanceSheetDrillDown } from "@/features/reports/components/balance-sheet-drilldown";
 import { BalanceSheetPdf } from "@/features/reports/components/downloadable-balance-sheet";
+// import { isBalanceSheetBalanced } from "@/features/reports/lib/report-balance-checks";
 import {
 	type BalanceSheetRow,
 	getBalanceSheetReport,
@@ -39,6 +40,7 @@ export function BalanceSheet() {
 	const totalLiabilities = liabilityRows.reduce((sum, row) => sum + Number(row.total), 0);
 	const totalEquity = equityRows.reduce((sum, row) => sum + Number(row.total), 0);
 	const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
+	// const balanced = isBalanceSheetBalanced(rows);
 
 	const formattedAsOfDate = filters.asOfDate ? dateFormat(filters.asOfDate, "long") : "";
 

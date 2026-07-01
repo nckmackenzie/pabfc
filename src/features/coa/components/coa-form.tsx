@@ -7,10 +7,7 @@ import { SelectItem } from "@/components/ui/select";
 import { ACCOUNT_TYPES } from "@/features/coa/lib/constants";
 import { upsertAccount } from "@/features/coa/services/coa.api";
 import { accountQueries } from "@/features/coa/services/queries";
-import {
-	type AccountsFormSchema,
-	accountsFormSchema,
-} from "@/features/coa/services/schemas";
+import { type AccountsFormSchema, accountsFormSchema } from "@/features/coa/services/schemas";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { toTitleCase } from "@/lib/utils";
@@ -28,17 +25,13 @@ const defaultValues = {
 	openingBalanceDate: null,
 } as AccountsFormSchema;
 
-export function ChartOfAccountsForm({
-	account,
-}: {
-	account?: AccountsFormSchema;
-}) {
+export function ChartOfAccountsForm({ account }: { account?: AccountsFormSchema }) {
 	const loaderParentAccounts = useRouteContext({
 		from: "/app/chart-of-accounts",
 		select: (context) => context.parentAccounts,
 	});
 	const { data: parentAccountsFreshData } = useQuery(
-		accountQueries.parentAccounts(),
+		accountQueries.parentAccounts(account?.id ? Number(account.id) : undefined)
 	);
 	const parentAccounts = parentAccountsFreshData || loaderParentAccounts;
 	const accountMutation = useFormUpsert({
@@ -71,9 +64,7 @@ export function ChartOfAccountsForm({
 			<PageHeader
 				title={account ? "Edit Account" : "New Account"}
 				description={
-					account
-						? `Editing ${toTitleCase(account.name)} details`
-						: "Create a new account"
+					account ? `Editing ${toTitleCase(account.name)} details` : "Create a new account"
 				}
 			/>
 			<form
@@ -84,13 +75,7 @@ export function ChartOfAccountsForm({
 			>
 				<FieldGroup>
 					<form.AppField name="name">
-						{(field) => (
-							<field.Input
-								placeholder="Account Name"
-								required
-								label="Account Name"
-							/>
-						)}
+						{(field) => <field.Input placeholder="Account Name" required label="Account Name" />}
 					</form.AppField>
 					<form.AppField name="type">
 						{(field) => (
@@ -136,9 +121,7 @@ export function ChartOfAccountsForm({
 										)}
 									</form.AppField>
 									<form.AppField name="openingBalanceDate">
-										{(field) => (
-											<field.Input type="date" label="Opening Balance Date" />
-										)}
+										{(field) => <field.Input type="date" label="Opening Balance Date" />}
 									</form.AppField>
 								</>
 							)}
@@ -154,10 +137,7 @@ export function ChartOfAccountsForm({
 								{parentAccounts
 									.filter((acc) => acc.type === type)
 									.map((account) => (
-										<SelectItem
-											key={account.value}
-											value={account.value.toString()}
-										>
+										<SelectItem key={account.value} value={account.value.toString()}>
 											{account.label}
 										</SelectItem>
 									))}
@@ -165,9 +145,7 @@ export function ChartOfAccountsForm({
 						)}
 					</form.AppField>
 					<form.AppField name="description">
-						{(field) => (
-							<field.Input placeholder="Description" label="Description" />
-						)}
+						{(field) => <field.Input placeholder="Description" label="Description" />}
 					</form.AppField>
 					<form.AppForm>
 						<form.SubmitButton
