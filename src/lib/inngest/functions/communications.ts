@@ -274,10 +274,16 @@ export const sendMembershipReminder = inngest.createFunction(
 				? `Dear ${firstName}, your ${planName} membership expired on ${formattedDate}. Please renew to continue enjoying your benefits at Prime Age Fitness.`
 				: `Dear ${firstName}, your ${planName} membership expires on ${formattedDate}. Please renew soon to continue enjoying your benefits at Prime Age Fitness.`;
 
-			return await sendSms({
+			const response = await sendSms({
 				message,
 				to: [internationalizePhoneNumber(membership.contact, true)],
 			});
+
+			if (!response) {
+				throw new Error("Failed to send membership reminder SMS");
+			}
+
+			return response;
 		});
 	}
 );

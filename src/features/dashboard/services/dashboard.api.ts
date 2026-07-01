@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { addDays, endOfDay, startOfDay } from "date-fns";
-import { and, avg, between, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	attendanceLogs,
@@ -17,6 +17,7 @@ import {
 import { dateFormat } from "@/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
 import { authMiddleware } from "@/middlewares/auth-middleware";
+import { requirePermission } from "@/lib/permissions/permissions";
 
 const {
 	monthStartDate,
@@ -133,6 +134,7 @@ export const getExpiringMemberships = createServerFn()
 			.leftJoin(membershipPlans, eq(memberMemberships.membershipPlanId, membershipPlans.id))
 			.where(
 				and(
+					isNull(members.deletedAt),
 					between(
 						memberMemberships.endDate,
 						dateFormat(startOfLast7Days),
@@ -217,6 +219,7 @@ export const sendMembershipReminderFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator((membershipId: string) => membershipId)
 	.handler(async ({ data: membershipId }) => {
+		await requirePermission("dashboard:view");
 		await inngest.send({
 			name: "app/members.send.membership.reminder",
 			data: { membershipId },

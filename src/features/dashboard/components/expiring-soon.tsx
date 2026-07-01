@@ -59,7 +59,12 @@ function MemberActionItem({
 	};
 	index: number;
 }) {
-	const endDate = member.endDate ? new Date(`${member.endDate}T00:00:00`) : null;
+	// const endDate = member.endDate ? new Date(`${member.endDate}T00:00:00`) : null;
+	const endDate = !member.endDate
+		? null
+		: member.endDate instanceof Date
+			? startOfDay(member.endDate)
+			: new Date(`${member.endDate}T00:00:00`);
 	const isExpired = endDate ? endDate < startOfDay(new Date()) : false;
 
 	const { mutate: sendReminder, isPending } = useMutation({
