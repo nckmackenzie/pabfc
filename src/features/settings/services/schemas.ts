@@ -49,10 +49,8 @@ export const billingSchema = z.object({
 	vatType: z.enum(vatTypes).nullish(),
 	vatAccountId: z.string().nullish(),
 	autoCreateFinancialYear: z.boolean().nullish(),
-	mpesaSettlementAccountId: z.coerce
-		.number<number>()
-		.nullish()
-		.transform((val) => (val === 0 ? undefined : val)),
+	mpesaSettlementAccountId: z.coerce.number<number>().nullish(),
+	// .transform((val) => (val === 0 ? null : val)),
 });
 
 export const biometricSettingsSchema = z.object({
