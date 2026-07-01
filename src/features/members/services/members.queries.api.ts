@@ -61,7 +61,11 @@ export const getActiveMembers = createServerFn()
 			.findMany({
 				columns: { id: true, firstName: true, lastName: true },
 				where: and(eq(members.memberStatus, "active"), isNull(members.deletedAt)),
-				orderBy: asc(sql`lower(${members.firstName})`),
+				orderBy: [
+					asc(sql`lower(${members.firstName})`),
+					asc(sql`lower(${members.lastName})`),
+					asc(members.id),
+				],
 			})
 			.then((m) =>
 				m.map(({ id, firstName, lastName }) => ({

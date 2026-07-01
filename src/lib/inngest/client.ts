@@ -52,6 +52,11 @@ type Events = {
 			challengeId: string;
 		};
 	};
+	"app/members.send.membership.reminder": {
+		data: {
+			membershipId: string;
+		};
+	};
 };
 
 export const inngest = new Inngest({

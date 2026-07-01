@@ -15,6 +15,7 @@ import {
 	mockTodaysAttendances,
 } from "@/features/dashboard/lib/mockData";
 import { dateFormat } from "@/lib/helpers";
+import { inngest } from "@/lib/inngest/client";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
 const {
@@ -46,52 +47,36 @@ export const dashboardStats = createServerFn()
 				and(
 					eq(members.memberStatus, "active"),
 					gte(members.createdAt, monthStartDate),
-					lte(members.createdAt, new Date()),
-				),
+					lte(members.createdAt, new Date())
+				)
 			),
 			db.$count(
 				members,
 				and(
 					eq(members.memberStatus, "active"),
 					gte(members.createdAt, previousMonthStartDate),
-					lte(members.createdAt, previousMonthEndDate),
-				),
+					lte(members.createdAt, previousMonthEndDate)
+				)
 			),
 			db.$count(
 				memberMemberships,
-				between(
-					memberMemberships.endDate,
-					dateFormat(startOfLast7Days),
-					dateFormat(new Date()),
-				),
+				between(memberMemberships.endDate, dateFormat(startOfLast7Days), dateFormat(new Date()))
 			),
+			db.$count(attendanceLogs, between(attendanceLogs.checkInTime, startOfLast7Days, new Date())),
 			db.$count(
 				attendanceLogs,
-				between(attendanceLogs.checkInTime, startOfLast7Days, new Date()),
-			),
-			db.$count(
-				attendanceLogs,
-				between(
-					attendanceLogs.checkInTime,
-					startOfPreviousPeriod,
-					endOfPreviousPeriod,
-				),
+				between(attendanceLogs.checkInTime, startOfPreviousPeriod, endOfPreviousPeriod)
 			),
 			db
 				.select({ averageDuration: avg(attendanceOverview.duration) })
 				.from(attendanceOverview)
-				.where(
-					between(attendanceOverview.checkInTime, startOfLast7Days, new Date()),
-				),
+				.where(between(attendanceOverview.checkInTime, startOfLast7Days, new Date())),
 			db.$count(
 				memberMemberships,
 				and(
-					gte(
-						memberMemberships.endDate,
-						dateFormat(startOfDay(endOfPreviousPeriod)),
-					),
-					eq(memberMemberships.status, "expired"),
-				),
+					gte(memberMemberships.endDate, dateFormat(startOfDay(endOfPreviousPeriod))),
+					eq(memberMemberships.status, "expired")
+				)
 			),
 		]);
 		return {
@@ -99,8 +84,7 @@ export const dashboardStats = createServerFn()
 			newMembersThisMonth,
 			expiringMemberships,
 			totalAttendance,
-			averageAttendanceDuration:
-				averageAttendanceDuration[0].averageDuration ?? 0,
+			averageAttendanceDuration: averageAttendanceDuration[0].averageDuration ?? 0,
 			totalAttendancePreviousPeriod,
 			newMembersLastMonth,
 			expiredMemberships,
@@ -113,22 +97,15 @@ export const getTodaysAttendances = createServerFn()
 		const todaysAttendances = await db
 			.select({
 				id: attendanceLogs.id,
-				memberName:
-					sql<string>`${members.firstName} || ' ' || ${members.lastName}`.as(
-						"memberName",
-					),
+				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`.as(
+					"memberName"
+				),
 				image: members.image,
 				checkInTime: attendanceLogs.checkInTime,
 			})
 			.from(attendanceLogs)
 			.innerJoin(members, eq(attendanceLogs.memberId, members.id))
-			.where(
-				between(
-					attendanceLogs.checkInTime,
-					startOfDay(new Date()),
-					endOfDay(new Date()),
-				),
-			)
+			.where(between(attendanceLogs.checkInTime, startOfDay(new Date()), endOfDay(new Date())))
 			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
 			.execute();
 
@@ -153,26 +130,25 @@ export const getExpiringMemberships = createServerFn()
 			})
 			.from(memberMemberships)
 			.innerJoin(members, eq(memberMemberships.memberId, members.id))
-			.leftJoin(
-				membershipPlans,
-				eq(memberMemberships.membershipPlanId, membershipPlans.id),
-			)
+			.leftJoin(membershipPlans, eq(memberMemberships.membershipPlanId, membershipPlans.id))
 			.where(
-				between(
-					memberMemberships.endDate,
-					dateFormat(startOfLast7Days),
-					dateFormat(addDays(new Date(), 7)),
-				),
+				and(
+					between(
+						memberMemberships.endDate,
+						dateFormat(startOfLast7Days),
+						dateFormat(addDays(new Date(), 7))
+					),
+					sql`NOT EXISTS (
+						SELECT 1 FROM member_memberships mm_newer
+						WHERE mm_newer.member_id = ${memberMemberships.memberId}
+						AND mm_newer.id != ${memberMemberships.id}
+						AND mm_newer.end_date > ${memberMemberships.endDate}
+					)`
+				)
 			)
 			.orderBy(desc(memberMemberships.endDate));
 
 		return expiringMemberships;
-
-		// return process.env.APP_ENV === "production"
-		// 	? expiringMemberships
-		// 	: expiringMemberships.length > 0
-		// 		? expiringMemberships
-		// 		: mockExpiringMemberships;
 	});
 
 export const getAverageAttendanceByDay = createServerFn()
@@ -207,8 +183,7 @@ export const getAverageAttendanceByDay = createServerFn()
 		});
 
 		// Now group daily totals by day of week
-		const dayOfWeekTotals: Record<string, { total: number; count: number }> =
-			{};
+		const dayOfWeekTotals: Record<string, { total: number; count: number }> = {};
 		daysOfWeek.forEach((day) => {
 			dayOfWeekTotals[day] = { total: 0, count: 0 };
 		});
@@ -236,4 +211,14 @@ export const getAverageAttendanceByDay = createServerFn()
 			: result.length > 0
 				? result
 				: mockAverageAttendanceByDay;
+	});
+
+export const sendMembershipReminderFn = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator((membershipId: string) => membershipId)
+	.handler(async ({ data: membershipId }) => {
+		await inngest.send({
+			name: "app/members.send.membership.reminder",
+			data: { membershipId },
+		});
 	});
