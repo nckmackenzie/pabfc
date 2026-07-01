@@ -16,7 +16,7 @@ export const Route = createFileRoute("/app/chart-of-accounts/$accountId/edit")({
 	pendingComponent: FormLoader,
 	loader: async ({ params, context: { queryClient } }) => {
 		const account = await queryClient.ensureQueryData(
-			accountQueries.detail(Number(params.accountId)),
+			accountQueries.detail(Number(params.accountId))
 		);
 		if (!account) {
 			throw notFound();
@@ -41,7 +41,7 @@ function RouteComponent() {
 			<ChartOfAccountsForm
 				account={{
 					...account,
-					isSubcategory: account.isPosting,
+					isSubcategory: account.parentId != null,
 					parentId: account.parentId?.toString() || null,
 					isBankAccount: !!account.bank?.accountNumber,
 					accountNumber: account.bank?.accountNumber || null,

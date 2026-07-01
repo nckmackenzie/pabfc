@@ -40,10 +40,7 @@ export const getTrialBalance = createServerFn()
 		const financialYear = await db.query.financialYears.findFirst({
 			columns: { startDate: true },
 			where: (financialYears, { and, gte, lte }) =>
-				and(
-					lte(financialYears.startDate, asOfDate),
-					gte(financialYears.endDate, asOfDate),
-				),
+				and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
 		});
 
 		if (!financialYear) {
@@ -116,10 +113,7 @@ export const getTrialBalance = createServerFn()
             END AS credit_balance
         FROM ledger_accounts r
         JOIN rolled ON rolled.reporting_id = r.id
-        WHERE (
-            r.is_posting = false
-            OR (r.is_posting = true AND r.parent_id IS NULL)
-        )
+        WHERE r.parent_id IS NULL
         AND (rolled.total_debits <> rolled.total_credits)
         ORDER BY r.code NULLS LAST, r.name;
     `);
@@ -134,7 +128,7 @@ export const getTrialBalanceDrillDown = createServerFn()
 			id: z.number(),
 			asOfDate: z.iso.date(),
 			q: z.string().optional(),
-		}),
+		})
 	)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:trial-balance");
@@ -152,10 +146,7 @@ export const getTrialBalanceDrillDown = createServerFn()
 		const financialYear = await db.query.financialYears.findFirst({
 			columns: { startDate: true },
 			where: (financialYears, { and, gte, lte }) =>
-				and(
-					lte(financialYears.startDate, asOfDate),
-					gte(financialYears.endDate, asOfDate),
-				),
+				and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
 		});
 
 		if (!financialYear) {
@@ -198,10 +189,7 @@ export const getTrialBalanceDrillDown = createServerFn()
 			})
 			.from(journalLines)
 			.innerJoin(ledgerAccounts, eq(journalLines.accountId, ledgerAccounts.id))
-			.innerJoin(
-				journalEntries,
-				eq(journalLines.journalEntryId, journalEntries.id),
-			)
+			.innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
 			.where(
 				and(
 					inArray(journalLines.accountId, accountIds),
@@ -213,14 +201,11 @@ export const getTrialBalanceDrillDown = createServerFn()
 								ilike(journalEntries.reference, `%${q}%`),
 								ilike(ledgerAccounts.name, `%${q}%`),
 								ilike(journalEntries.source, `%${q}%`),
-								ilike(
-									sql`TO_CHAR(${journalEntries.entryDate}, 'dd/MM/yyyy')`,
-									`%${q}%`,
-								),
-								ilike(sql`${journalLines.amount}::numeric::text`, `%${q}%`),
+								ilike(sql`TO_CHAR(${journalEntries.entryDate}, 'dd/MM/yyyy')`, `%${q}%`),
+								ilike(sql`${journalLines.amount}::numeric::text`, `%${q}%`)
 							)
-						: undefined,
-				),
+						: undefined
+				)
 			)
 			.orderBy(asc(journalEntries.entryDate), asc(journalLines.id));
 	});

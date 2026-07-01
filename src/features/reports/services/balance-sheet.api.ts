@@ -39,10 +39,7 @@ export const getBalanceSheetReport = createServerFn()
 		const financialYear = await db.query.financialYears.findFirst({
 			columns: { startDate: true },
 			where: (financialYears, { and, gte, lte }) =>
-				and(
-					lte(financialYears.startDate, asOfDate),
-					gte(financialYears.endDate, asOfDate),
-				),
+				and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
 		});
 
 		if (!financialYear) {
@@ -164,10 +161,7 @@ export const getBalanceSheetReport = createServerFn()
             LEFT JOIN rolled_up_bs ru
                 ON ru.reporting_id = r.id
             WHERE r.type IN ('asset', 'liability', 'equity')
-                AND (
-                    r.is_posting = false
-                    OR (r.is_posting = true AND r.parent_id IS NULL)
-                )
+                AND r.parent_id IS NULL
                 AND COALESCE(ru.total, 0) <> 0
 
             UNION ALL
@@ -194,7 +188,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 			id: z.number(),
 			asOfDate: z.iso.date(),
 			q: z.string().optional(),
-		}),
+		})
 	)
 	.handler(async ({ data }) => {
 		await requirePermission("reports:balance-sheet");
@@ -212,10 +206,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 		const financialYear = await db.query.financialYears.findFirst({
 			columns: { startDate: true },
 			where: (financialYears, { and, gte, lte }) =>
-				and(
-					lte(financialYears.startDate, asOfDate),
-					gte(financialYears.endDate, asOfDate),
-				),
+				and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
 		});
 
 		if (!financialYear) {
@@ -255,10 +246,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 			})
 			.from(journalLines)
 			.innerJoin(ledgerAccounts, eq(journalLines.accountId, ledgerAccounts.id))
-			.innerJoin(
-				journalEntries,
-				eq(journalLines.journalEntryId, journalEntries.id),
-			)
+			.innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
 			.where(
 				and(
 					inArray(journalLines.accountId, accountIds),
@@ -270,14 +258,11 @@ export const getBalanceSheetDrillDown = createServerFn()
 								ilike(journalEntries.reference, `%${q}%`),
 								ilike(ledgerAccounts.name, `%${q}%`),
 								ilike(journalEntries.source, `%${q}%`),
-								ilike(
-									sql`TO_CHAR(${journalEntries.entryDate}, 'dd/MM/yyyy')`,
-									`%${q}%`,
-								),
-								ilike(sql`${journalLines.amount}::numeric::text`, `%${q}%`),
+								ilike(sql`TO_CHAR(${journalEntries.entryDate}, 'dd/MM/yyyy')`, `%${q}%`),
+								ilike(sql`${journalLines.amount}::numeric::text`, `%${q}%`)
 							)
-						: undefined,
-				),
+						: undefined
+				)
 			)
 			.orderBy(asc(journalEntries.entryDate), asc(journalLines.id));
 	});
