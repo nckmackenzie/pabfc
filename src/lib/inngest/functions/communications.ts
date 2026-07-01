@@ -1,8 +1,11 @@
 import crypto from "node:crypto";
+import { format, startOfDay } from "date-fns";
 import { and, eq, gt, isNotNull, isNull, ne } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
+	memberMemberships,
 	memberRegistrationLinks,
+	membershipPlans,
 	members,
 	passwordResetChallenges,
 	type SMSBroadcastResponse,
@@ -36,9 +39,8 @@ export const sendSmsBroadcast = inngest.createFunction(
 		});
 
 		const sendSmsStep = await step.run("send-sms", async () => {
-			const broadcastResponse: Array<
-				SMSBroadcastResponse["SMSMessageData"]["Recipients"][number]
-			> = [];
+			const broadcastResponse: Array<SMSBroadcastResponse["SMSMessageData"]["Recipients"][number]> =
+				[];
 			const { receipients, content } = broadcastDetails;
 			for (const receipient of receipients) {
 				const [{ firstName, lastName, contact }] = await db
@@ -80,7 +82,7 @@ export const sendSmsBroadcast = inngest.createFunction(
 				})
 				.where(eq(smsBroadcasts.id, broadcastId));
 		});
-	},
+	}
 );
 
 export const sendTestSmsToUser = inngest.createFunction(
@@ -90,7 +92,7 @@ export const sendTestSmsToUser = inngest.createFunction(
 		const { content, contact } = event.data;
 		const res = await sendSms({ message: content, to: contact });
 		return res;
-	},
+	}
 );
 
 export const sendUserPassword = inngest.createFunction(
@@ -115,7 +117,7 @@ export const sendUserPassword = inngest.createFunction(
 			throw new Error("Failed to send temporary password SMS");
 		}
 		return response;
-	},
+	}
 );
 
 export const sendPasswordResetTemporaryPassword = inngest.createFunction(
@@ -128,8 +130,7 @@ export const sendPasswordResetTemporaryPassword = inngest.createFunction(
 			const [record] = await db
 				.select({
 					id: passwordResetChallenges.id,
-					encryptedTemporaryPassword:
-						passwordResetChallenges.encryptedTemporaryPassword,
+					encryptedTemporaryPassword: passwordResetChallenges.encryptedTemporaryPassword,
 					contact: users.contact,
 					name: users.name,
 				})
@@ -145,8 +146,8 @@ export const sendPasswordResetTemporaryPassword = inngest.createFunction(
 						eq(users.active, true),
 						eq(users.banned, false),
 						isNull(users.deleted_at),
-						ne(users.role, "member"),
-					),
+						ne(users.role, "member")
+					)
 				)
 				.limit(1);
 
@@ -161,9 +162,7 @@ export const sendPasswordResetTemporaryPassword = inngest.createFunction(
 			};
 		});
 
-		const temporaryPassword = decryptTemporaryPassword(
-			challenge.encryptedTemporaryPassword,
-		);
+		const temporaryPassword = decryptTemporaryPassword(challenge.encryptedTemporaryPassword);
 
 		const response = await step.run("send-reset-sms", async () => {
 			const firstName = challenge.name.split(" ")[0];
@@ -188,7 +187,7 @@ export const sendPasswordResetTemporaryPassword = inngest.createFunction(
 		});
 
 		return response;
-	},
+	}
 );
 
 export const sendRegistrationLink = inngest.createFunction(
@@ -205,31 +204,28 @@ export const sendRegistrationLink = inngest.createFunction(
 			throw new Error("Member not found");
 		}
 
-		const registrationLink = await step.run(
-			"generate-registration-link",
-			async () => {
-				const existingLink = await db.query.memberRegistrationLinks.findFirst({
-					columns: { shortCode: true },
-					where: and(
-						eq(memberRegistrationLinks.memberId, memberId),
-						isNull(memberRegistrationLinks.usedAt),
-					),
-				});
+		const registrationLink = await step.run("generate-registration-link", async () => {
+			const existingLink = await db.query.memberRegistrationLinks.findFirst({
+				columns: { shortCode: true },
+				where: and(
+					eq(memberRegistrationLinks.memberId, memberId),
+					isNull(memberRegistrationLinks.usedAt)
+				),
+			});
 
-				if (existingLink) {
-					return `${process.env.MEMBER_PORTAL_URL as string}/register/${existingLink.shortCode}`;
-				}
+			if (existingLink) {
+				return `${process.env.MEMBER_PORTAL_URL as string}/register/${existingLink.shortCode}`;
+			}
 
-				const shortCode = crypto.randomBytes(4).toString("hex").substring(0, 6);
+			const shortCode = crypto.randomBytes(4).toString("hex").substring(0, 6);
 
-				await db.insert(memberRegistrationLinks).values({
-					memberId,
-					shortCode,
-				});
+			await db.insert(memberRegistrationLinks).values({
+				memberId,
+				shortCode,
+			});
 
-				return `${process.env.MEMBER_PORTAL_URL as string}/register/${shortCode}`;
-			},
-		);
+			return `${process.env.MEMBER_PORTAL_URL as string}/register/${shortCode}`;
+		});
 
 		await step.run("send-registration-link", async () => {
 			const res = await sendSms({
@@ -238,5 +234,56 @@ export const sendRegistrationLink = inngest.createFunction(
 			});
 			return res;
 		});
-	},
+	}
+);
+
+export const sendMembershipReminder = inngest.createFunction(
+	{ id: "send-membership-reminder" },
+	{ event: "app/members.send.membership.reminder" },
+	async ({ event, step }) => {
+		const { membershipId } = event.data;
+
+		const membership = await step.run("get-membership-details", async () => {
+			const [record] = await db
+				.select({
+					firstName: members.firstName,
+					contact: members.contact,
+					planName: membershipPlans.name,
+					endDate: memberMemberships.endDate,
+				})
+				.from(memberMemberships)
+				.innerJoin(members, eq(memberMemberships.memberId, members.id))
+				.leftJoin(membershipPlans, eq(memberMemberships.membershipPlanId, membershipPlans.id))
+				.where(eq(memberMemberships.id, membershipId))
+				.limit(1);
+
+			if (!record?.contact) {
+				throw new Error("Membership not found");
+			}
+			return record;
+		});
+
+		await step.run("send-reminder-sms", async () => {
+			const firstName = toTitleCase(membership.firstName);
+			const planName = membership.planName ?? "membership";
+			const endDateObj = membership.endDate ? new Date(`${membership.endDate}T00:00:00`) : null;
+			const isExpired = endDateObj ? endDateObj < startOfDay(new Date()) : false;
+			const formattedDate = endDateObj ? format(endDateObj, "dd MMM yyyy") : "";
+
+			const message = isExpired
+				? `Dear ${firstName}, your ${planName} membership expired on ${formattedDate}. Please renew to continue enjoying your benefits at Prime Age Fitness.`
+				: `Dear ${firstName}, your ${planName} membership expires on ${formattedDate}. Please renew soon to continue enjoying your benefits at Prime Age Fitness.`;
+
+			const response = await sendSms({
+				message,
+				to: [internationalizePhoneNumber(membership.contact, true)],
+			});
+
+			if (!response) {
+				throw new Error("Failed to send membership reminder SMS");
+			}
+
+			return response;
+		});
+	}
 );

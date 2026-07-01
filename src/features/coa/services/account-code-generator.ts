@@ -1,13 +1,5 @@
 import type { AccountType } from "@/drizzle/schema";
 
-const ROOT_ACCOUNT_CODE_BASE: Record<AccountType, number> = {
-	asset: 1000,
-	liability: 2000,
-	equity: 3000,
-	revenue: 4000,
-	expense: 5000,
-};
-
 function toCodeNumber(code: string | null | undefined) {
 	if (!code) return null;
 
@@ -26,31 +18,27 @@ export function getNextRootAccountCode(params: {
 	allAssignedCodes: Array<string | null>;
 }) {
 	const existingNumbers = new Set(
-		params.existingCodes
-			.map(toCodeNumber)
-			.filter((value): value is number => value !== null),
+		params.existingCodes.map(toCodeNumber).filter((value): value is number => value !== null)
 	);
 	const allAssignedNumbers = new Set(
-		params.allAssignedCodes
-			.map(toCodeNumber)
-			.filter((value): value is number => value !== null),
+		params.allAssignedCodes.map(toCodeNumber).filter((value): value is number => value !== null)
 	);
 
-const ROOT_ACCOUNT_CODE_BASE: Record<AccountType, number> = {
-	asset: 1000,
-	liability: 2000,
-	equity: 3000,
-	revenue: 4000,
-	expense: 5000,
-};
+	const ROOT_ACCOUNT_CODE_BASE: Record<AccountType, number> = {
+		asset: 1000,
+		liability: 2000,
+		equity: 3000,
+		revenue: 4000,
+		expense: 5000,
+	};
 
-const ROOT_ACCOUNT_CODE_LIMIT: Record<AccountType, number> = {
-	asset: 2000,
-	liability: 3000,
-	equity: 4000,
-	revenue: 5000,
-	expense: 6000,
-};
+	const ROOT_ACCOUNT_CODE_LIMIT: Record<AccountType, number> = {
+		asset: 2000,
+		liability: 3000,
+		equity: 4000,
+		revenue: 5000,
+		expense: 6000,
+	};
 
 	let candidate = ROOT_ACCOUNT_CODE_BASE[params.type];
 	const limit = ROOT_ACCOUNT_CODE_LIMIT[params.type];
@@ -79,9 +67,7 @@ export function getNextChildAccountCode(params: {
 		.filter((value): value is number => value !== null)
 		.sort((left, right) => left - right);
 	const allAssignedNumbers = new Set(
-		params.allAssignedCodes
-			.map(toCodeNumber)
-			.filter((value): value is number => value !== null),
+		params.allAssignedCodes.map(toCodeNumber).filter((value): value is number => value !== null)
 	);
 
 	let candidate: number;
