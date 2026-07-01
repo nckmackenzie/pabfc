@@ -24,3 +24,19 @@ describe("posting rules", () => {
 		expect(shouldRestoreParentPosting(3)).toBe(false);
 	});
 });
+
+/**
+ * Both the update/detach path and the delete path call
+ * `restoreParentPostingStatusIfNoChildren`, which decides via
+ * `shouldRestoreParentPosting(remainingChildren)`.
+ */
+describe("account deletion restores parent posting status", () => {
+	it("restores the parent to posting when its last child is deleted", () => {
+		// After deleting the only child, the parent has 0 remaining children.
+		expect(shouldRestoreParentPosting(0)).toBe(true);
+	});
+
+	it("leaves the parent non-posting when other children remain", () => {
+		expect(shouldRestoreParentPosting(2)).toBe(false);
+	});
+});
