@@ -547,6 +547,13 @@
       "when": 1782381599531,
       "tag": "0077_normal_scream",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1782932974834,
+      "tag": "0078_far_darkstar",
+      "breakpoints": true
     }
   ]
 }
