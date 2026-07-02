@@ -13,11 +13,12 @@ import {
 	bankAccounts,
 } from "@/drizzle/schema";
 import { dateFormat } from "@/lib/helpers";
+import { computeMembershipEndDate } from "@/features/receipts/lib/helpers";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
 
-type Transaction = PgTransaction<
+export type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
 	typeof schema,
 	ExtractTablesWithRelations<typeof schema>
@@ -37,6 +38,11 @@ type FinalizeMembershipPaymentParams = {
 	payment: MembershipPayment;
 	reference?: string | null;
 	updatePendingPayment?: boolean;
+	// When provided (manual payment path), the caller-supplied, already-overlap-checked
+	// start date is used directly, skipping the legacy active-membership recompute below.
+	// Left undefined by the STK/Inngest path, which keeps the original recompute behavior.
+	startDate?: Date | string;
+	numberOfPeriods?: number;
 	activityLog?: {
 		userId: string;
 		action: string;
@@ -54,6 +60,8 @@ export async function finalizeMembershipPayment({
 	payment,
 	reference,
 	updatePendingPayment = true,
+	startDate: paramStartDate,
+	numberOfPeriods,
 	activityLog,
 }: FinalizeMembershipPaymentParams) {
 	if (!payment.planId) {
@@ -141,25 +149,34 @@ export async function finalizeMembershipPayment({
 		return failure({ type: "ApplicationError", message: "Journal values are not balanced" });
 	}
 
-	const activeMembership = await tx.query.memberMemberships.findFirst({
-		where: (memberships, { and, eq }) =>
-			and(eq(memberships.memberId, payment.memberId), eq(memberships.status, "active")),
-		orderBy: (memberships, { desc }) => [desc(memberships.endDate)],
-	});
+	const periods = numberOfPeriods ?? 1;
+	let startDate: Date;
 
-	const paymentDate = startOfDay(new Date(payment.paymentDate));
-	let startDate = paymentDate;
+	if (paramStartDate) {
+		// Manual payment path: trust the caller-supplied, already-overlap-checked date.
+		startDate = startOfDay(new Date(paramStartDate));
+	} else {
+		// Unchanged legacy path — still used by the STK/Inngest flow.
+		const activeMembership = await tx.query.memberMemberships.findFirst({
+			where: (memberships, { and, eq }) =>
+				and(eq(memberships.memberId, payment.memberId), eq(memberships.status, "active")),
+			orderBy: (memberships, { desc }) => [desc(memberships.endDate)],
+		});
 
-	if (activeMembership?.endDate) {
-		const activeEndDate = startOfDay(new Date(activeMembership.endDate));
-		if (activeEndDate >= paymentDate) {
-			startDate = addDays(activeEndDate, 1);
+		const paymentDate = startOfDay(new Date(payment.paymentDate));
+		startDate = paymentDate;
+
+		if (activeMembership?.endDate) {
+			const activeEndDate = startOfDay(new Date(activeMembership.endDate));
+			if (activeEndDate >= paymentDate) {
+				startDate = addDays(activeEndDate, 1);
+			}
 		}
 	}
 
 	const today = startOfDay(new Date());
 	const membershipStatus = startDate > today ? "pending" : "active";
-	const endDate = addDays(startDate, plan.duration);
+	const endDate = computeMembershipEndDate(startDate, plan.duration, periods);
 
 	await tx
 		.update(memberMemberships)
@@ -168,9 +185,14 @@ export async function finalizeMembershipPayment({
 			and(
 				eq(memberMemberships.memberId, payment.memberId),
 				eq(memberMemberships.status, "active"),
-				lt(memberMemberships.endDate, dateFormat(paymentDate))
+				lt(memberMemberships.endDate, dateFormat(startOfDay(new Date(payment.paymentDate))))
 			)
 		);
+
+	const mostRecentMembership = await tx.query.memberMemberships.findFirst({
+		where: eq(memberMemberships.memberId, payment.memberId),
+		orderBy: (memberships, { desc }) => [desc(memberships.endDate)],
+	});
 
 	await tx
 		.insert(memberMemberships)
@@ -182,7 +204,7 @@ export async function finalizeMembershipPayment({
 			autoRenew: false,
 			status: membershipStatus,
 			paymentId: payment.id,
-			previousMembershipPlanId: activeMembership?.membershipPlanId,
+			previousMembershipPlanId: mostRecentMembership?.membershipPlanId,
 			priceCharged: payment.totalAmount,
 		});
 

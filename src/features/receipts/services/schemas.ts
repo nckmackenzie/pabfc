@@ -5,6 +5,11 @@ export const paymentSchema = z.object({
 	memberId: z.string().min(1, { error: "Member is required" }),
 	planId: z.string().min(1, { error: "Plan is required" }),
 	paymentDate: z.iso.date({ error: "Payment Date is required" }),
+	startDate: z.iso.date({ error: "Start Date is required" }),
+	numberOfPeriods: z
+		.number()
+		.int({ error: "Must be a whole number" })
+		.min(1, { error: "Must be at least 1" }),
 	amount: z.number().min(1, { error: "Amount is required" }),
 	reference: z.string().min(1, { error: "Payment reference is required" }),
 	accountReference: z.string().optional(),
