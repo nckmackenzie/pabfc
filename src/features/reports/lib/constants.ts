@@ -115,6 +115,13 @@ export const REPORT_CARDS = linkOptions([
 
 export const PAYROLL_REPORT_CARDS = linkOptions([
 	{
+		to: "/app/reports/payroll/loans",
+		title: "Loan Ledger",
+		description: "Loan summary and statement view across all employees.",
+		icon: FileTextIcon,
+		permission: "employee-loans:view",
+	},
+	{
 		to: "/app/reports/payroll/p9",
 		title: "P9 Tax Certificate",
 		description: "Annual payroll tax certificate by employee and year.",
@@ -134,5 +141,22 @@ export const PAYROLL_REPORT_CARDS = linkOptions([
 		description: "Statutory and voluntary deductions grouped by type for a given period.",
 		icon: BanknoteArrowDownIcon,
 		permission: "payroll-periods:view",
+	},
+]);
+
+export const HUMAN_RESOURCES_REPORT_CARDS = linkOptions([
+	{
+		to: "/app/reports/human-resources/leave-utilisation",
+		title: "Leave Utilisation",
+		description: "Per-employee leave entitlement and usage by leave year.",
+		icon: ListIcon,
+		permission: "leaves:view",
+	},
+	{
+		to: "/app/reports/human-resources/salary-advances",
+		title: "Salary Advances",
+		description: "Advance recovery summary and statement view across all employees.",
+		icon: BanknoteArrowDownIcon,
+		permission: "salary-advances:view",
 	},
 ]);

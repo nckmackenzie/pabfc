@@ -200,6 +200,11 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				],
 			},
 			{
+				title: "HR Reports",
+				url: "/app/reports/human-resources",
+				permission: "reports:hr-reports",
+			},
+			{
 				title: "Payroll Reports",
 				url: "/app/reports/payroll",
 				permission: "reports:payroll-p9",

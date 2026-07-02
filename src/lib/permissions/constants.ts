@@ -101,5 +101,6 @@ export const PERMISSIONS = [
 	"reports:trial-balance",
 	"reports:balance-sheet",
 	"reports:payroll-p9",
+	"reports:hr-reports",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
