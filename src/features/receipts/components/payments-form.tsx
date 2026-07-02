@@ -1,11 +1,10 @@
 import { useStore } from "@tanstack/react-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { addDays, format } from "date-fns";
+import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomAlert } from "@/components/ui/custom-alert";
 import { FieldGroup } from "@/components/ui/field";
@@ -120,8 +119,10 @@ export function PaymentForm() {
 	// Auto-suggest a start date while the user hasn't manually edited it.
 	useEffect(() => {
 		if (isStartDateDirty) return;
-		const today = new Date();
-		const activeEndDate = activeMembership?.endDate ? new Date(activeMembership.endDate) : null;
+		const today = startOfDay(new Date());
+		const activeEndDate = activeMembership?.endDate
+			? startOfDay(parseISO(activeMembership.endDate))
+			: null;
 		const suggested = activeEndDate && activeEndDate >= today ? addDays(activeEndDate, 1) : today;
 		// dontUpdateMeta: this is a programmatic suggestion, not a user edit — it must not
 		// flip isDirty, otherwise the very first auto-suggestion would permanently disable
@@ -139,15 +140,15 @@ export function PaymentForm() {
 		const plan = plans.find((p) => p.id === planId);
 		if (!plan || !startDate) return { startDate: "", endDate: "" };
 		const end = computeMembershipEndDate(startDate, plan.duration, numberOfPeriods || 1);
-		return { startDate: format(new Date(startDate), "PP"), endDate: format(end, "PP") };
+		return { startDate: format(parseISO(startDate), "PP"), endDate: format(end, "PP") };
 	}, [planId, plans, startDate, numberOfPeriods]);
 
 	const currentPlanName = activeMembership?.membershipPlan?.name || "";
 	const currentPeriodStart = activeMembership?.startDate
-		? format(new Date(activeMembership.startDate), "PP")
+		? format(parseISO(activeMembership.startDate), "PP")
 		: "";
 	const currentPeriodEnd = activeMembership?.endDate
-		? format(new Date(activeMembership.endDate), "PP")
+		? format(parseISO(activeMembership.endDate), "PP")
 		: "";
 	const memberName = members.find((m) => m.value === memberId)?.label ?? "";
 	const newPlanName = plans.find((p) => p.id === planId)?.name ?? "";
@@ -293,13 +294,9 @@ export function PaymentForm() {
 				</div>
 
 				<div className="flex gap-3 justify-end mt-6">
-					<Button type="button" variant="outline" onClick={() => navigate({ to: "/app/receipts" })}>
-						Cancel
-					</Button>
 					<form.AppForm>
 						<form.SubmitButton
 							buttonText="Record Payment"
-							withReset={false}
 							isLoading={manualPaymentMutation.isPending}
 						/>
 					</form.AppForm>

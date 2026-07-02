@@ -32,6 +32,8 @@ export function PaymentDetails() {
 	const discountedAmount = currencyFormatter.format(+payment.discountedAmount);
 	const taxAmount = currencyFormatter.format(+payment.taxAmount);
 	const subTotal = currencyFormatter.format(+payment.amount);
+	const periods = payment.numberOfPeriods ?? 1;
+	const unitPrice = currencyFormatter.format(Number(payment.plan?.price ?? 0));
 
 	return (
 		<div className="space-y-6">
@@ -61,9 +63,9 @@ export function PaymentDetails() {
 										lineItems: [
 											{
 												description: `Membership Fee - ${payment.plan?.name}`,
-												qty: 1,
-												price: Number(payment.plan?.price),
-												amount: Number(payment.plan?.price),
+												qty: periods,
+												price: Number(payment.plan?.price ?? 0),
+												amount: Number(payment.amount),
 											},
 										],
 										subtotal: Number(payment.amount),
@@ -222,8 +224,8 @@ export function PaymentDetails() {
 											</p>
 										)}
 									</div>
-									<div className="col-span-2">1</div>
-									<div className="col-span-2">{subTotal}</div>
+									<div className="col-span-2">{periods}</div>
+									<div className="col-span-2">{unitPrice}</div>
 									<div className="col-span-2 text-right">{subTotal}</div>
 								</div>
 								{/* Totals */}

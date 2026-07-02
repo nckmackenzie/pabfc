@@ -13,7 +13,7 @@ import {
 	bankAccounts,
 } from "@/drizzle/schema";
 import { dateFormat } from "@/lib/helpers";
-import { computeMembershipEndDate } from "@/features/receipts/lib/helpers";
+import { computeMembershipEndDate, parseCalendarDate } from "@/features/receipts/lib/helpers";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
@@ -154,7 +154,7 @@ export async function finalizeMembershipPayment({
 
 	if (paramStartDate) {
 		// Manual payment path: trust the caller-supplied, already-overlap-checked date.
-		startDate = startOfDay(new Date(paramStartDate));
+		startDate = startOfDay(parseCalendarDate(paramStartDate));
 	} else {
 		// Unchanged legacy path — still used by the STK/Inngest flow.
 		const activeMembership = await tx.query.memberMemberships.findFirst({
@@ -167,7 +167,7 @@ export async function finalizeMembershipPayment({
 		startDate = paymentDate;
 
 		if (activeMembership?.endDate) {
-			const activeEndDate = startOfDay(new Date(activeMembership.endDate));
+			const activeEndDate = startOfDay(parseCalendarDate(activeMembership.endDate));
 			if (activeEndDate >= paymentDate) {
 				startDate = addDays(activeEndDate, 1);
 			}

@@ -1,3 +1,4 @@
+import { format, parseISO } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { computeMembershipEndDate, membershipRangeConflicts } from "./helpers";
 
@@ -126,22 +127,30 @@ describe("membershipRangeConflicts", () => {
 describe("computeMembershipEndDate", () => {
 	it("reproduces the original single-period behavior (startDate + duration)", () => {
 		const endDate = computeMembershipEndDate("2026-01-01", 30, 1);
-		expect(endDate.toISOString().slice(0, 10)).toBe("2026-01-31");
+		expect(format(endDate, "yyyy-MM-dd")).toBe("2026-01-31");
 	});
 
 	it("multiplies duration by numberOfPeriods for a daily plan", () => {
 		const endDate = computeMembershipEndDate("2026-01-01", 1, 3);
-		expect(endDate.toISOString().slice(0, 10)).toBe("2026-01-04");
+		expect(format(endDate, "yyyy-MM-dd")).toBe("2026-01-04");
 	});
 
 	it("multiplies duration by numberOfPeriods for a monthly-ish plan", () => {
 		const endDate = computeMembershipEndDate("2026-01-01", 30, 2);
-		expect(endDate.toISOString().slice(0, 10)).toBe("2026-03-02");
+		expect(format(endDate, "yyyy-MM-dd")).toBe("2026-03-02");
+	});
+
+	it("treats a yyyy-MM-dd string as the local calendar date, not UTC midnight", () => {
+		// Guards against the `new Date("yyyy-MM-dd")` timezone-shift bug: that constructor
+		// parses as UTC midnight, which can land on the previous calendar day once read
+		// back in a positive-UTC-offset timezone. parseISO (used internally) must not do this.
+		const endDate = computeMembershipEndDate("2026-01-01", 0, 1);
+		expect(format(endDate, "yyyy-MM-dd")).toBe("2026-01-01");
 	});
 
 	it("accepts a Date object and a yyyy-MM-dd string and produces the same result", () => {
 		const fromString = computeMembershipEndDate("2026-01-01", 30, 1);
-		const fromDate = computeMembershipEndDate(new Date("2026-01-01"), 30, 1);
+		const fromDate = computeMembershipEndDate(parseISO("2026-01-01"), 30, 1);
 		expect(fromString.getTime()).toBe(fromDate.getTime());
 	});
 });

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import { memberMemberships, mpesaStkRequests, payments } from "@/drizzle/schema";
@@ -47,6 +47,10 @@ async function checkMembershipOverlap({
 		});
 	}
 	return success(undefined);
+}
+
+async function lockMemberMembershipCreation(tx: Transaction, memberId: string) {
+	await tx.execute(sql`select pg_advisory_xact_lock(hashtext('member_memberships'), hashtext(${memberId}))`);
 }
 
 const stkPaymentSchema = paymentSchema.extend({
@@ -206,6 +210,8 @@ export const createManualMembershipPaymentFn = createServerFn({
 			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(amount, taxType);
 
 			const result = await db.transaction(async (tx) => {
+				await lockMemberMembershipCreation(tx, memberId);
+
 				const candidateEndDate = dateFormat(
 					computeMembershipEndDate(startDate, plan.duration, numberOfPeriods)
 				);
