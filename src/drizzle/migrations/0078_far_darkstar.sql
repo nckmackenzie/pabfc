@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ADD COLUMN "number_of_periods" integer DEFAULT 1 NOT NULL;

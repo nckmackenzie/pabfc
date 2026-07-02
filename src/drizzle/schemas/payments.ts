@@ -165,7 +165,9 @@ export const payments = pgTable("payments", {
 		.references(() => members.id),
 	planId: varchar("plan_id").references(() => membershipPlans.id),
 	paymentNo: varchar("payment_no", { length: 50 }).notNull().unique(),
+	// subtotal before discount = plan.price * numberOfPeriods
 	amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+	numberOfPeriods: integer("number_of_periods").notNull().default(1),
 	discountType: discountTypeEnum("discount_type").notNull().default("none"),
 	discount: numeric("discount", { precision: 18, scale: 2 }),
 	discountedAmount: numeric("discount_amount", { precision: 18, scale: 2 })

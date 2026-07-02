@@ -4,24 +4,14 @@ import { format } from "date-fns";
 import { Download, RefreshCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReceiptNo } from "@/features/receipts/hooks/use-receipt-no";
 import { GymReceiptPdf } from "./donwloadable-receipt";
 
 export function PaymentDetails() {
-	const payment = getRouteApi(
-		"/app/receipts/$receiptId/details",
-	).useLoaderData();
-	const { receiptNo, isLoading: isLoadingReceiptNo } = useReceiptNo(
-		+payment.paymentNo,
-	);
+	const payment = getRouteApi("/app/receipts/$receiptId/details").useLoaderData();
+	const { receiptNo, isLoading: isLoadingReceiptNo } = useReceiptNo(+payment.paymentNo);
 
 	const currencyFormatter = new Intl.NumberFormat("en-KE", {
 		style: "currency",
@@ -32,6 +22,8 @@ export function PaymentDetails() {
 	const discountedAmount = currencyFormatter.format(+payment.discountedAmount);
 	const taxAmount = currencyFormatter.format(+payment.taxAmount);
 	const subTotal = currencyFormatter.format(+payment.amount);
+	const periods = payment.numberOfPeriods ?? 1;
+	const unitPrice = currencyFormatter.format(Number(payment.plan?.price ?? 0));
 
 	return (
 		<div className="space-y-6">
@@ -55,15 +47,13 @@ export function PaymentDetails() {
 											id: payment.member.memberNo.toString(),
 											address: "",
 										},
-										paymentMethod: payment.method
-											.replace("_", " ")
-											.toUpperCase(),
+										paymentMethod: payment.method.replace("_", " ").toUpperCase(),
 										lineItems: [
 											{
 												description: `Membership Fee - ${payment.plan?.name}`,
-												qty: 1,
-												price: Number(payment.plan?.price),
-												amount: Number(payment.plan?.price),
+												qty: periods,
+												price: periods > 0 ? Number(payment.amount) / periods : 0,
+												amount: Number(payment.amount),
 											},
 										],
 										subtotal: Number(payment.amount),
@@ -74,7 +64,7 @@ export function PaymentDetails() {
 								/>
 							}
 							fileName={`Receipt-${payment.paymentNo}.pdf`}
-							key={Date.now()}
+							key={payment.id}
 						>
 							{({ loading }) =>
 								loading ? (
@@ -116,11 +106,7 @@ export function PaymentDetails() {
 									)}
 								</CardDescription>
 							</div>
-							<Badge
-								variant={
-									payment.status === "completed" ? "success" : "secondary"
-								}
-							>
+							<Badge variant={payment.status === "completed" ? "success" : "secondary"}>
 								{payment.status === "completed" ? "Paid" : payment.status}
 							</Badge>
 						</CardHeader>
@@ -143,55 +129,36 @@ export function PaymentDetails() {
 									</p>
 								</div>
 								<div className="space-y-1">
-									<p className="font-medium text-muted-foreground">
-										Payment method
-									</p>
-									<p className="font-semibold capitalize">
-										{payment.method.replace(/_/g, " ")}
-									</p>
+									<p className="font-medium text-muted-foreground">Payment method</p>
+									<p className="font-semibold capitalize">{payment.method.replace(/_/g, " ")}</p>
 								</div>
 								<div className="space-y-1">
-									<p className="font-medium text-muted-foreground">
-										Payment date
-									</p>
+									<p className="font-medium text-muted-foreground">Payment date</p>
 									<p className="font-semibold">
 										{format(new Date(payment.paymentDate), "MMM d, yyyy")}
 									</p>
 								</div>
 								<div className="space-y-1">
 									<p className="font-medium text-muted-foreground">Status</p>
-									<Badge
-										variant="outline"
-										className="text-green-600 border-green-600 capitalize"
-									>
+									<Badge variant="outline" className="text-green-600 border-green-600 capitalize">
 										{payment.status}
 									</Badge>
 								</div>
 								{payment.membership && (
 									<div className="space-y-1">
-										<p className="font-medium text-muted-foreground">
-											Billing period
-										</p>
+										<p className="font-medium text-muted-foreground">Billing period</p>
 										<p className="font-semibold">
-											{format(new Date(payment.membership.startDate), "MMM d")}{" "}
-											-{" "}
+											{format(new Date(payment.membership.startDate), "MMM d")} -{" "}
 											{payment.membership.endDate
-												? format(
-														new Date(payment.membership.endDate),
-														"MMM d, yyyy",
-													)
+												? format(new Date(payment.membership.endDate), "MMM d, yyyy")
 												: "Ongoing"}
 										</p>
 									</div>
 								)}
 								{payment.user && (
 									<div className="space-y-1">
-										<p className="font-medium text-muted-foreground">
-											Initiated By
-										</p>
-										<p className="font-semibold capitalize">
-											{payment.user.name}
-										</p>
+										<p className="font-medium text-muted-foreground">Initiated By</p>
+										<p className="font-semibold capitalize">{payment.user.name}</p>
 									</div>
 								)}
 							</div>
@@ -201,9 +168,7 @@ export function PaymentDetails() {
 					<Card>
 						<CardHeader>
 							<CardTitle>Line items</CardTitle>
-							<CardDescription>
-								Breakdown of what this payment covers.
-							</CardDescription>
+							<CardDescription>Breakdown of what this payment covers.</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-4">
@@ -217,13 +182,11 @@ export function PaymentDetails() {
 									<div className="col-span-6">
 										<p className="font-medium">Membership fee</p>
 										{payment.plan && (
-											<p className="text-muted-foreground text-xs">
-												{payment.plan.name}
-											</p>
+											<p className="text-muted-foreground text-xs">{payment.plan.name}</p>
 										)}
 									</div>
-									<div className="col-span-2">1</div>
-									<div className="col-span-2">{subTotal}</div>
+									<div className="col-span-2">{periods}</div>
+									<div className="col-span-2">{unitPrice}</div>
 									<div className="col-span-2 text-right">{subTotal}</div>
 								</div>
 								{/* Totals */}
@@ -251,14 +214,12 @@ export function PaymentDetails() {
 					<Card>
 						<CardHeader>
 							<CardTitle>Activity timeline</CardTitle>
-							<CardDescription>
-								Key events related to this payment.
-							</CardDescription>
+							<CardDescription>Key events related to this payment.</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-6 relative pl-4 border-l">
 								<div className="relative">
-									<div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-slate-200" />
+									<div className="absolute left-[-21px] top-1 h-3 w-3 rounded-full bg-slate-200" />
 									<h4 className="text-sm font-medium">Payment Captured</h4>
 									<p className="text-xs text-muted-foreground">
 										{format(new Date(payment.paymentDate), "MMM d")}
@@ -266,22 +227,16 @@ export function PaymentDetails() {
 								</div>
 								{payment.membership?.startDate && (
 									<div className="relative">
-										<div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-slate-200" />
+										<div className="absolute left-[-21px] top-1 h-3 w-3 rounded-full bg-slate-200" />
 										<div className="flex items-center gap-2">
 											<RefreshCcw className="h-3 w-3 text-muted-foreground" />
-											<h4 className="text-sm font-medium">
-												Membership renewed
-											</h4>
+											<h4 className="text-sm font-medium">Membership renewed</h4>
 										</div>
 										<p className="text-xs text-muted-foreground">
 											{payment.plan?.name} - Period:{" "}
-											{format(new Date(payment.membership.startDate), "MMM d")}{" "}
-											-{" "}
+											{format(new Date(payment.membership.startDate), "MMM d")} -{" "}
 											{payment.membership.endDate
-												? format(
-														new Date(payment.membership.endDate),
-														"MMM d, yyyy",
-													)
+												? format(new Date(payment.membership.endDate), "MMM d, yyyy")
 												: "Ongoing"}
 										</p>
 									</div>
@@ -295,9 +250,7 @@ export function PaymentDetails() {
 					<Card>
 						<CardHeader>
 							<CardTitle>Linked membership plan</CardTitle>
-							<CardDescription>
-								Plan this payment was applied to.
-							</CardDescription>
+							<CardDescription>Plan this payment was applied to.</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-6">
 							{payment.plan && (
@@ -305,9 +258,7 @@ export function PaymentDetails() {
 									<div className="flex justify-between items-start mb-1">
 										<h3 className="font-semibold">{payment.plan.name}</h3>
 									</div>
-									<p className="text-sm text-muted-foreground">
-										Ongoing • Monthly
-									</p>
+									<p className="text-sm text-muted-foreground">Ongoing • Monthly</p>
 								</div>
 							)}
 
@@ -315,34 +266,23 @@ export function PaymentDetails() {
 								{payment.membership && (
 									<>
 										<div>
-											<p className="text-muted-foreground font-medium text-xs">
-												Contract term
-											</p>
+											<p className="text-muted-foreground font-medium text-xs">Contract term</p>
 											<p>Month-to-month</p>
 										</div>
 										<div>
-											<p className="text-muted-foreground font-medium text-xs">
-												Next renewal
-											</p>
+											<p className="text-muted-foreground font-medium text-xs">Next renewal</p>
 											<p>
 												{payment.membership.endDate
-													? format(
-															new Date(payment.membership.endDate),
-															"MMM d, yyyy",
-														)
+													? format(new Date(payment.membership.endDate), "MMM d, yyyy")
 													: "N/A"}
 											</p>
 										</div>
 										<div>
-											<p className="text-muted-foreground font-medium text-xs">
-												Payment Reference
-											</p>
+											<p className="text-muted-foreground font-medium text-xs">Payment Reference</p>
 											<p>{payment.reference}</p>
 										</div>
 										<div>
-											<p className="text-muted-foreground font-medium text-xs">
-												Current status
-											</p>
+											<p className="text-muted-foreground font-medium text-xs">Current status</p>
 											<Badge variant="success" className="capitalize">
 												{payment.membership.status || "Active"}
 											</Badge>

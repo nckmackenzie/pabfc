@@ -70,16 +70,12 @@ export function ReceiptsTable() {
 		{
 			accessorKey: "reference",
 			header: "Reference",
-			cell: ({ row }) => row.original.reference,
+			cell: ({ row }) => row.original.reference?.toUpperCase(),
 		},
 		{
 			accessorKey: "amount",
 			header: "Amount",
-			cell: ({ row }) => (
-				<Badge variant="outline">
-					{currencyFormatter(row.original.amount)}
-				</Badge>
-			),
+			cell: ({ row }) => <Badge variant="outline">{currencyFormatter(row.original.amount)}</Badge>,
 		},
 		{
 			accessorKey: "status",
@@ -119,10 +115,7 @@ export function ReceiptsTable() {
 			cell: ({ row }) => (
 				<DatatableActions>
 					<DropdownMenuItem asChild>
-						<Link
-							to="/app/receipts/$receiptId/details"
-							params={{ receiptId: row.original.id }}
-						>
+						<Link to="/app/receipts/$receiptId/details" params={{ receiptId: row.original.id }}>
 							<ViewDetailsAction />
 						</Link>
 					</DropdownMenuItem>
