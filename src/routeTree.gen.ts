@@ -75,6 +75,7 @@ import { Route as ApiCommunicationsGetMembersRouteImport } from './routes/api/co
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppUsersRolesRouteRouteImport } from './routes/app/users/roles.route'
 import { Route as AppReportsPayrollRouteRouteImport } from './routes/app/reports/payroll/route'
+import { Route as AppReportsHumanResourcesRouteRouteImport } from './routes/app/reports/human-resources/route'
 import { Route as AppReportsFinanceRouteRouteImport } from './routes/app/reports/finance/route'
 import { Route as AppPayrollSalaryStructuresRouteRouteImport } from './routes/app/payroll/salary-structures/route'
 import { Route as AppPayrollSalaryAdvancesRouteRouteImport } from './routes/app/payroll/salary-advances/route'
@@ -85,6 +86,7 @@ import { Route as AppBankingsPostingsRouteRouteImport } from './routes/app/banki
 import { Route as AppUsersRolesIndexRouteImport } from './routes/app/users/roles.index'
 import { Route as AppReportsPayrollIndexRouteImport } from './routes/app/reports/payroll/index'
 import { Route as AppReportsMembersIndexRouteImport } from './routes/app/reports/members/index'
+import { Route as AppReportsHumanResourcesIndexRouteImport } from './routes/app/reports/human-resources/index'
 import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports/finance/index'
 import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
 import { Route as AppPayrollSalaryStructuresIndexRouteImport } from './routes/app/payroll/salary-structures/index'
@@ -124,7 +126,10 @@ import { Route as AppBillsBillIdEditRouteImport } from './routes/app/bills/$bill
 import { Route as AppBankingsPostingsNewRouteImport } from './routes/app/bankings/postings/new'
 import { Route as AppReportsPayrollStatutorySchedulesIndexRouteImport } from './routes/app/reports/payroll/statutory-schedules/index'
 import { Route as AppReportsPayrollP9IndexRouteImport } from './routes/app/reports/payroll/p9/index'
+import { Route as AppReportsPayrollLoansIndexRouteImport } from './routes/app/reports/payroll/loans/index'
 import { Route as AppReportsPayrollDeductionsIndexRouteImport } from './routes/app/reports/payroll/deductions/index'
+import { Route as AppReportsHumanResourcesSalaryAdvancesIndexRouteImport } from './routes/app/reports/human-resources/salary-advances/index'
+import { Route as AppReportsHumanResourcesLeaveUtilisationIndexRouteImport } from './routes/app/reports/human-resources/leave-utilisation/index'
 import { Route as AppReportsFinanceTrialBalanceIndexRouteImport } from './routes/app/reports/finance/trial-balance/index'
 import { Route as AppReportsFinanceReceiptsIndexRouteImport } from './routes/app/reports/finance/receipts/index'
 import { Route as AppReportsFinancePaymentsIndexRouteImport } from './routes/app/reports/finance/payments/index'
@@ -484,6 +489,12 @@ const AppReportsPayrollRouteRoute = AppReportsPayrollRouteRouteImport.update({
   path: '/reports/payroll',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppReportsHumanResourcesRouteRoute =
+  AppReportsHumanResourcesRouteRouteImport.update({
+    id: '/reports/human-resources',
+    path: '/reports/human-resources',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 const AppReportsFinanceRouteRoute = AppReportsFinanceRouteRouteImport.update({
   id: '/reports/finance',
   path: '/reports/finance',
@@ -538,6 +549,12 @@ const AppReportsMembersIndexRoute = AppReportsMembersIndexRouteImport.update({
   path: '/reports/members/',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppReportsHumanResourcesIndexRoute =
+  AppReportsHumanResourcesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppReportsHumanResourcesRouteRoute,
+  } as any)
 const AppReportsFinanceIndexRoute = AppReportsFinanceIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -754,11 +771,29 @@ const AppReportsPayrollP9IndexRoute =
     path: '/p9/',
     getParentRoute: () => AppReportsPayrollRouteRoute,
   } as any)
+const AppReportsPayrollLoansIndexRoute =
+  AppReportsPayrollLoansIndexRouteImport.update({
+    id: '/loans/',
+    path: '/loans/',
+    getParentRoute: () => AppReportsPayrollRouteRoute,
+  } as any)
 const AppReportsPayrollDeductionsIndexRoute =
   AppReportsPayrollDeductionsIndexRouteImport.update({
     id: '/deductions/',
     path: '/deductions/',
     getParentRoute: () => AppReportsPayrollRouteRoute,
+  } as any)
+const AppReportsHumanResourcesSalaryAdvancesIndexRoute =
+  AppReportsHumanResourcesSalaryAdvancesIndexRouteImport.update({
+    id: '/salary-advances/',
+    path: '/salary-advances/',
+    getParentRoute: () => AppReportsHumanResourcesRouteRoute,
+  } as any)
+const AppReportsHumanResourcesLeaveUtilisationIndexRoute =
+  AppReportsHumanResourcesLeaveUtilisationIndexRouteImport.update({
+    id: '/leave-utilisation/',
+    path: '/leave-utilisation/',
+    getParentRoute: () => AppReportsHumanResourcesRouteRoute,
   } as any)
 const AppReportsFinanceTrialBalanceIndexRoute =
   AppReportsFinanceTrialBalanceIndexRouteImport.update({
@@ -936,6 +971,7 @@ export interface FileRoutesByFullPath {
   '/app/payroll/salary-advances': typeof AppPayrollSalaryAdvancesRouteRouteWithChildren
   '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresRouteRouteWithChildren
   '/app/reports/finance': typeof AppReportsFinanceRouteRouteWithChildren
+  '/app/reports/human-resources': typeof AppReportsHumanResourcesRouteRouteWithChildren
   '/app/reports/payroll': typeof AppReportsPayrollRouteRouteWithChildren
   '/app/users/roles': typeof AppUsersRolesRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -1013,6 +1049,7 @@ export interface FileRoutesByFullPath {
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
+  '/app/reports/human-resources/': typeof AppReportsHumanResourcesIndexRoute
   '/app/reports/members/': typeof AppReportsMembersIndexRoute
   '/app/reports/payroll/': typeof AppReportsPayrollIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
@@ -1035,7 +1072,10 @@ export interface FileRoutesByFullPath {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/human-resources/leave-utilisation/': typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
+  '/app/reports/human-resources/salary-advances/': typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
   '/app/reports/payroll/deductions/': typeof AppReportsPayrollDeductionsIndexRoute
+  '/app/reports/payroll/loans/': typeof AppReportsPayrollLoansIndexRoute
   '/app/reports/payroll/p9/': typeof AppReportsPayrollP9IndexRoute
   '/app/reports/payroll/statutory-schedules/': typeof AppReportsPayrollStatutorySchedulesIndexRoute
   '/api/access-control/agent/attendance-sync/state/': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
@@ -1134,6 +1174,7 @@ export interface FileRoutesByTo {
   '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance': typeof AppReportsFinanceIndexRoute
+  '/app/reports/human-resources': typeof AppReportsHumanResourcesIndexRoute
   '/app/reports/members': typeof AppReportsMembersIndexRoute
   '/app/reports/payroll': typeof AppReportsPayrollIndexRoute
   '/app/users/roles': typeof AppUsersRolesIndexRoute
@@ -1156,7 +1197,10 @@ export interface FileRoutesByTo {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/human-resources/leave-utilisation': typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
+  '/app/reports/human-resources/salary-advances': typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
   '/app/reports/payroll/deductions': typeof AppReportsPayrollDeductionsIndexRoute
+  '/app/reports/payroll/loans': typeof AppReportsPayrollLoansIndexRoute
   '/app/reports/payroll/p9': typeof AppReportsPayrollP9IndexRoute
   '/app/reports/payroll/statutory-schedules': typeof AppReportsPayrollStatutorySchedulesIndexRoute
   '/api/access-control/agent/attendance-sync/state': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
@@ -1200,6 +1244,7 @@ export interface FileRoutesById {
   '/app/payroll/salary-advances': typeof AppPayrollSalaryAdvancesRouteRouteWithChildren
   '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresRouteRouteWithChildren
   '/app/reports/finance': typeof AppReportsFinanceRouteRouteWithChildren
+  '/app/reports/human-resources': typeof AppReportsHumanResourcesRouteRouteWithChildren
   '/app/reports/payroll': typeof AppReportsPayrollRouteRouteWithChildren
   '/app/users/roles': typeof AppUsersRolesRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -1277,6 +1322,7 @@ export interface FileRoutesById {
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
+  '/app/reports/human-resources/': typeof AppReportsHumanResourcesIndexRoute
   '/app/reports/members/': typeof AppReportsMembersIndexRoute
   '/app/reports/payroll/': typeof AppReportsPayrollIndexRoute
   '/app/users/roles/': typeof AppUsersRolesIndexRoute
@@ -1299,7 +1345,10 @@ export interface FileRoutesById {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/human-resources/leave-utilisation/': typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
+  '/app/reports/human-resources/salary-advances/': typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
   '/app/reports/payroll/deductions/': typeof AppReportsPayrollDeductionsIndexRoute
+  '/app/reports/payroll/loans/': typeof AppReportsPayrollLoansIndexRoute
   '/app/reports/payroll/p9/': typeof AppReportsPayrollP9IndexRoute
   '/app/reports/payroll/statutory-schedules/': typeof AppReportsPayrollStatutorySchedulesIndexRoute
   '/api/access-control/agent/attendance-sync/state/': typeof ApiAccessControlAgentAttendanceSyncStateIndexRoute
@@ -1343,6 +1392,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-advances'
     | '/app/payroll/salary-structures'
     | '/app/reports/finance'
+    | '/app/reports/human-resources'
     | '/app/reports/payroll'
     | '/app/users/roles'
     | '/api/auth/$'
@@ -1420,6 +1470,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-structures/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
+    | '/app/reports/human-resources/'
     | '/app/reports/members/'
     | '/app/reports/payroll/'
     | '/app/users/roles/'
@@ -1442,7 +1493,10 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/app/reports/human-resources/leave-utilisation/'
+    | '/app/reports/human-resources/salary-advances/'
     | '/app/reports/payroll/deductions/'
+    | '/app/reports/payroll/loans/'
     | '/app/reports/payroll/p9/'
     | '/app/reports/payroll/statutory-schedules/'
     | '/api/access-control/agent/attendance-sync/state/'
@@ -1541,6 +1595,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-structures'
     | '/app/reports/attendance'
     | '/app/reports/finance'
+    | '/app/reports/human-resources'
     | '/app/reports/members'
     | '/app/reports/payroll'
     | '/app/users/roles'
@@ -1563,7 +1618,10 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/app/reports/human-resources/leave-utilisation'
+    | '/app/reports/human-resources/salary-advances'
     | '/app/reports/payroll/deductions'
+    | '/app/reports/payroll/loans'
     | '/app/reports/payroll/p9'
     | '/app/reports/payroll/statutory-schedules'
     | '/api/access-control/agent/attendance-sync/state'
@@ -1606,6 +1664,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-advances'
     | '/app/payroll/salary-structures'
     | '/app/reports/finance'
+    | '/app/reports/human-resources'
     | '/app/reports/payroll'
     | '/app/users/roles'
     | '/api/auth/$'
@@ -1683,6 +1742,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-structures/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
+    | '/app/reports/human-resources/'
     | '/app/reports/members/'
     | '/app/reports/payroll/'
     | '/app/users/roles/'
@@ -1705,7 +1765,10 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/app/reports/human-resources/leave-utilisation/'
+    | '/app/reports/human-resources/salary-advances/'
     | '/app/reports/payroll/deductions/'
+    | '/app/reports/payroll/loans/'
     | '/app/reports/payroll/p9/'
     | '/app/reports/payroll/statutory-schedules/'
     | '/api/access-control/agent/attendance-sync/state/'
@@ -2201,6 +2264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsPayrollRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/reports/human-resources': {
+      id: '/app/reports/human-resources'
+      path: '/reports/human-resources'
+      fullPath: '/app/reports/human-resources'
+      preLoaderRoute: typeof AppReportsHumanResourcesRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/reports/finance': {
       id: '/app/reports/finance'
       path: '/reports/finance'
@@ -2270,6 +2340,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/reports/members/'
       preLoaderRoute: typeof AppReportsMembersIndexRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/app/reports/human-resources/': {
+      id: '/app/reports/human-resources/'
+      path: '/'
+      fullPath: '/app/reports/human-resources/'
+      preLoaderRoute: typeof AppReportsHumanResourcesIndexRouteImport
+      parentRoute: typeof AppReportsHumanResourcesRouteRoute
     }
     '/app/reports/finance/': {
       id: '/app/reports/finance/'
@@ -2544,12 +2621,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsPayrollP9IndexRouteImport
       parentRoute: typeof AppReportsPayrollRouteRoute
     }
+    '/app/reports/payroll/loans/': {
+      id: '/app/reports/payroll/loans/'
+      path: '/loans'
+      fullPath: '/app/reports/payroll/loans/'
+      preLoaderRoute: typeof AppReportsPayrollLoansIndexRouteImport
+      parentRoute: typeof AppReportsPayrollRouteRoute
+    }
     '/app/reports/payroll/deductions/': {
       id: '/app/reports/payroll/deductions/'
       path: '/deductions'
       fullPath: '/app/reports/payroll/deductions/'
       preLoaderRoute: typeof AppReportsPayrollDeductionsIndexRouteImport
       parentRoute: typeof AppReportsPayrollRouteRoute
+    }
+    '/app/reports/human-resources/salary-advances/': {
+      id: '/app/reports/human-resources/salary-advances/'
+      path: '/salary-advances'
+      fullPath: '/app/reports/human-resources/salary-advances/'
+      preLoaderRoute: typeof AppReportsHumanResourcesSalaryAdvancesIndexRouteImport
+      parentRoute: typeof AppReportsHumanResourcesRouteRoute
+    }
+    '/app/reports/human-resources/leave-utilisation/': {
+      id: '/app/reports/human-resources/leave-utilisation/'
+      path: '/leave-utilisation'
+      fullPath: '/app/reports/human-resources/leave-utilisation/'
+      preLoaderRoute: typeof AppReportsHumanResourcesLeaveUtilisationIndexRouteImport
+      parentRoute: typeof AppReportsHumanResourcesRouteRoute
     }
     '/app/reports/finance/trial-balance/': {
       id: '/app/reports/finance/trial-balance/'
@@ -3149,9 +3247,30 @@ const AppReportsFinanceRouteRouteWithChildren =
     AppReportsFinanceRouteRouteChildren,
   )
 
+interface AppReportsHumanResourcesRouteRouteChildren {
+  AppReportsHumanResourcesIndexRoute: typeof AppReportsHumanResourcesIndexRoute
+  AppReportsHumanResourcesLeaveUtilisationIndexRoute: typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
+  AppReportsHumanResourcesSalaryAdvancesIndexRoute: typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
+}
+
+const AppReportsHumanResourcesRouteRouteChildren: AppReportsHumanResourcesRouteRouteChildren =
+  {
+    AppReportsHumanResourcesIndexRoute: AppReportsHumanResourcesIndexRoute,
+    AppReportsHumanResourcesLeaveUtilisationIndexRoute:
+      AppReportsHumanResourcesLeaveUtilisationIndexRoute,
+    AppReportsHumanResourcesSalaryAdvancesIndexRoute:
+      AppReportsHumanResourcesSalaryAdvancesIndexRoute,
+  }
+
+const AppReportsHumanResourcesRouteRouteWithChildren =
+  AppReportsHumanResourcesRouteRoute._addFileChildren(
+    AppReportsHumanResourcesRouteRouteChildren,
+  )
+
 interface AppReportsPayrollRouteRouteChildren {
   AppReportsPayrollIndexRoute: typeof AppReportsPayrollIndexRoute
   AppReportsPayrollDeductionsIndexRoute: typeof AppReportsPayrollDeductionsIndexRoute
+  AppReportsPayrollLoansIndexRoute: typeof AppReportsPayrollLoansIndexRoute
   AppReportsPayrollP9IndexRoute: typeof AppReportsPayrollP9IndexRoute
   AppReportsPayrollStatutorySchedulesIndexRoute: typeof AppReportsPayrollStatutorySchedulesIndexRoute
 }
@@ -3161,6 +3280,7 @@ const AppReportsPayrollRouteRouteChildren: AppReportsPayrollRouteRouteChildren =
     AppReportsPayrollIndexRoute: AppReportsPayrollIndexRoute,
     AppReportsPayrollDeductionsIndexRoute:
       AppReportsPayrollDeductionsIndexRoute,
+    AppReportsPayrollLoansIndexRoute: AppReportsPayrollLoansIndexRoute,
     AppReportsPayrollP9IndexRoute: AppReportsPayrollP9IndexRoute,
     AppReportsPayrollStatutorySchedulesIndexRoute:
       AppReportsPayrollStatutorySchedulesIndexRoute,
@@ -3191,6 +3311,7 @@ interface AppRouteRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppUnauthorizedRoute: typeof AppUnauthorizedRoute
   AppReportsFinanceRouteRoute: typeof AppReportsFinanceRouteRouteWithChildren
+  AppReportsHumanResourcesRouteRoute: typeof AppReportsHumanResourcesRouteRouteWithChildren
   AppReportsPayrollRouteRoute: typeof AppReportsPayrollRouteRouteWithChildren
   AppActivityLogsIndexRoute: typeof AppActivityLogsIndexRoute
   AppAttendancesIndexRoute: typeof AppAttendancesIndexRoute
@@ -3220,6 +3341,8 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppUnauthorizedRoute: AppUnauthorizedRoute,
   AppReportsFinanceRouteRoute: AppReportsFinanceRouteRouteWithChildren,
+  AppReportsHumanResourcesRouteRoute:
+    AppReportsHumanResourcesRouteRouteWithChildren,
   AppReportsPayrollRouteRoute: AppReportsPayrollRouteRouteWithChildren,
   AppActivityLogsIndexRoute: AppActivityLogsIndexRoute,
   AppAttendancesIndexRoute: AppAttendancesIndexRoute,

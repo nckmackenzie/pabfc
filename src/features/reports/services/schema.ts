@@ -9,6 +9,8 @@ import {
 	MEMBERS_STATUS_REPORT_FILTER,
 	RECEIPTS_REPORT_TYPE,
 } from "@/features/reports/lib/constants";
+import { loanStatusSchema } from "@/features/payroll/services/loan.schemas";
+import { salaryAdvanceStatusSchema } from "@/features/payroll/services/salary-advance.schemas";
 import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
 
 export const receiptValidateSchema = dateRangeSchema.safeExtend({
@@ -292,6 +294,42 @@ export const payrollPeriodReportFormSchema = z.object({
 		.min(1, "Select a period"),
 });
 
+export const loanLedgerReportValidateSearchSchema = z.object({
+	employeeId: z.string().optional(),
+	status: loanStatusSchema.optional(),
+});
+
+export const loanLedgerReportFormSchema = z.object({
+	employeeId: z.string().optional(),
+	status: loanStatusSchema.catch("all"),
+});
+
+export const leaveUtilisationValidateSearchSchema = z.object({
+	leaveYear: z.coerce.number().int().optional(),
+	departmentId: z.coerce.number().int().positive().optional(),
+	employeeId: z.string().optional(),
+});
+
+export const leaveUtilisationReportFormSchema = z.object({
+	leaveYear: z
+		.string({
+			error: (iss) => (!iss.input ? "Select leave year" : "Invalid leave year"),
+		})
+		.regex(/^\d{4}$/, "Invalid leave year"),
+	departmentId: z.string().optional(),
+	employeeId: z.string().optional(),
+});
+
+export const salaryAdvanceReportValidateSearchSchema = z.object({
+	employeeId: z.string().optional(),
+	status: z.union([salaryAdvanceStatusSchema, z.literal("active")]).optional(),
+});
+
+export const salaryAdvanceReportFormSchema = z.object({
+	employeeId: z.string().optional(),
+	status: z.union([salaryAdvanceStatusSchema, z.literal("active")]).optional(),
+});
+
 export type BankingValidateSchema = z.infer<typeof bankingReportFormSchema>;
 export type PaymentsReportFormSchema = z.infer<typeof paymentsReportFormSchema>;
 export type MembersReportFormSchema = z.infer<typeof membersReportFormSchema>;
@@ -300,3 +338,6 @@ export type AttendanceReportFormSchema = z.infer<
 >;
 export type PayrollP9ReportFormSchema = z.infer<typeof payrollP9ReportFormSchema>;
 export type PayrollPeriodReportFormSchema = z.infer<typeof payrollPeriodReportFormSchema>;
+export type LoanLedgerReportFormSchema = z.infer<typeof loanLedgerReportFormSchema>;
+export type LeaveUtilisationReportFormSchema = z.infer<typeof leaveUtilisationReportFormSchema>;
+export type SalaryAdvanceReportFormSchema = z.infer<typeof salaryAdvanceReportFormSchema>;
