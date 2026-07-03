@@ -12,9 +12,7 @@ import { getIncomeStatementDrillDown } from "@/features/reports/services/income-
 import { currencyFormatter, dateFormat, toNumber } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
-type DrillDownItem = Awaited<
-	ReturnType<typeof getIncomeStatementDrillDown>
->[number];
+type DrillDownItem = Awaited<ReturnType<typeof getIncomeStatementDrillDown>>[number];
 
 const columns: Array<ColumnDef<DrillDownItem>> = [
 	{
@@ -36,9 +34,7 @@ const columns: Array<ColumnDef<DrillDownItem>> = [
 		accessorKey: "amount",
 		header: () => <div className="text-right">Amount</div>,
 		cell: ({ row }) => (
-			<div className="text-right">
-				{formatDrilldownAmount(toNumber(row.original.amount))}
-			</div>
+			<div className="text-right">{formatDrilldownAmount(toNumber(row.original.amount))}</div>
 		),
 	},
 	{
@@ -73,21 +69,13 @@ export function IncomeStatementDrillDown({
 	const [search, setSearch] = useState<string>();
 
 	return (
-		<div className="px-4 space-y-4">
-			<Search
-				placeholder="Search transactions..."
-				onHandleSearch={(q: string) => setSearch(q)}
-			/>
+		<div className="px-4 space-y-4 overflow-x-auto">
+			<Search placeholder="Search transactions..." onHandleSearch={(q: string) => setSearch(q)} />
 			<ErrorBoundaryWithSuspense
 				loader={<DatatableSkeleton />}
 				errorMessage="Error fetching data for the selected account."
 			>
-				<DrilldownTable
-					id={id}
-					dateFrom={dateFrom}
-					dateTo={dateTo}
-					search={search}
-				/>
+				<DrilldownTable id={id} dateFrom={dateFrom} dateTo={dateTo} search={search} />
 			</ErrorBoundaryWithSuspense>
 		</div>
 	);
@@ -129,9 +117,7 @@ function DrilldownTable({
 			customFooter={
 				<>
 					<TableCell colSpan={3}>Totals</TableCell>
-					<TableCell className="text-right px-4">
-						{formatDrilldownAmount(total)}
-					</TableCell>
+					<TableCell className="text-right px-4">{formatDrilldownAmount(total)}</TableCell>
 					<TableCell colSpan={2} />
 				</>
 			}

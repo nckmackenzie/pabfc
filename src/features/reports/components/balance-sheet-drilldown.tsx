@@ -87,7 +87,7 @@ export function BalanceSheetDrillDown({ id, asOfDate }: { id: number; asOfDate: 
 	const [search, setSearch] = useState<string>();
 
 	return (
-		<div className="px-4 space-y-4">
+		<div className="px-4 space-y-4 overflow-x-auto">
 			<Search placeholder="Search transactions..." onHandleSearch={(q: string) => setSearch(q)} />
 			<ErrorBoundaryWithSuspense
 				loader={<DatatableSkeleton />}
