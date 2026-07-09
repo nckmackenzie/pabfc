@@ -46,13 +46,14 @@ export function ReceiptsTable() {
 			header: "Member",
 			cell: ({
 				row: {
-					original: { memberName, image },
+					original: { memberName, image, memberCount },
 				},
 			}) => {
 				return (
 					<div className="flex items-center gap-2">
 						<MemberAvatar memberName={memberName} image={image} />
 						<span>{toTitleCase(`${memberName}`)}</span>
+						{memberCount > 1 && <Badge variant="outline">+{memberCount - 1}</Badge>}
 					</div>
 				);
 			},

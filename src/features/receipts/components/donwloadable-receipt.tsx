@@ -165,11 +165,11 @@ const styles = StyleSheet.create({
 interface ReceiptProps {
 	receiptNo: string;
 	date: string;
-	member: {
+	members: Array<{
 		name: string;
 		id: string;
 		address?: string;
-	};
+	}>;
 	paymentMethod: string;
 	lineItems: Array<{
 		description: string;
@@ -223,9 +223,14 @@ export const GymReceiptPdf = ({ data }: { data: ReceiptProps }) => (
 				<View style={styles.infoCol}>
 					<Text style={styles.infoLabel}>BILL TO:</Text>
 					<Text style={[styles.infoValue, styles.bold]}>
-						{data.member.name}
+						{data.members[0]?.name}
 					</Text>
-					<Text style={styles.infoValue}>Member No: {data.member.id}</Text>
+					<Text style={styles.infoValue}>Member No: {data.members[0]?.id}</Text>
+					{data.members.length > 1 && (
+						<Text style={styles.infoValue}>
+							Also covers: {data.members.slice(1).map((member) => member.name).join(", ")}
+						</Text>
+					)}
 				</View>
 			</View>
 

@@ -56,11 +56,12 @@ export const getMembersReport = createServerFn()
 			),
 			payment_totals AS (
 				SELECT
-					p.member_id,
+					pm.member_id,
 					COALESCE(SUM(p.total_amount), 0) AS total_payments
-				FROM payments p
+				FROM payment_members pm
+				JOIN payments p ON p.id = pm.payment_id
 				WHERE DATE(p.payment_date) <= ${asOfDate}
-				GROUP BY p.member_id
+				GROUP BY pm.member_id
 			)
 			SELECT
 				m.id,

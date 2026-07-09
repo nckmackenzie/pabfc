@@ -24,6 +24,7 @@ export function PaymentDetails() {
 	const subTotal = currencyFormatter.format(+payment.amount);
 	const periods = payment.numberOfPeriods ?? 1;
 	const unitPrice = currencyFormatter.format(Number(payment.plan?.price ?? 0));
+	const coveredMembers = payment.members.map(({ member }) => member);
 
 	return (
 		<div className="space-y-6">
@@ -42,11 +43,11 @@ export function PaymentDetails() {
 									data={{
 										receiptNo: payment.paymentNo,
 										date: format(new Date(payment.paymentDate), "MMM d, yyyy"),
-										member: {
-											name: `${payment.member.firstName} ${payment.member.lastName}`,
-											id: payment.member.memberNo.toString(),
+										members: coveredMembers.map((member) => ({
+											name: `${member.firstName} ${member.lastName}`,
+											id: member.memberNo.toString(),
 											address: "",
-										},
+										})),
 										paymentMethod: payment.method.replace("_", " ").toUpperCase(),
 										lineItems: [
 											{
@@ -120,13 +121,17 @@ export function PaymentDetails() {
 
 							<div className="grid grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
 								<div className="space-y-1">
-									<p className="font-medium text-muted-foreground">Member</p>
-									<p className="font-semibold">
-										{payment.member.firstName} {payment.member.lastName}
+									<p className="font-medium text-muted-foreground">
+										{coveredMembers.length > 1 ? "Members" : "Member"}
 									</p>
-									<p className="text-muted-foreground text-xs">
-										Member ID: {payment.member.memberNo || "N/A"}
-									</p>
+									{coveredMembers.map((member) => (
+										<p className="font-semibold" key={member.memberNo}>
+											{member.firstName} {member.lastName}{" "}
+											<span className="text-muted-foreground text-xs font-normal">
+												(ID: {member.memberNo || "N/A"})
+											</span>
+										</p>
+									))}
 								</div>
 								<div className="space-y-1">
 									<p className="font-medium text-muted-foreground">Payment method</p>

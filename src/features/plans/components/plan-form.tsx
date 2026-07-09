@@ -14,6 +14,7 @@ const defaultValues = {
 	name: "",
 	// duration: 0,
 	// price: 0,
+	memberCount: 1,
 	description: "",
 	isSessionBased: false,
 	sessionCount: null,
@@ -99,6 +100,19 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 								type="number"
 								label="Price"
 								placeholder="Enter price"
+								required
+							/>
+						)}
+					</form.AppField>
+					<form.AppField name="memberCount">
+						{(field) => (
+							<field.Input
+								type="number"
+								label="Member Count"
+								placeholder="Enter number of members covered"
+								helperText="Number of members this plan covers, e.g. 2 for a couple plan"
+								min={1}
+								step={1}
 								required
 							/>
 						)}

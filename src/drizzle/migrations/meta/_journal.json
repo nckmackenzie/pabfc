@@ -554,6 +554,20 @@
       "when": 1782932974834,
       "tag": "0078_far_darkstar",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1783515405710,
+      "tag": "0079_old_harrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1783515405711,
+      "tag": "0080_payment_members_seed",
+      "breakpoints": true
     }
   ]
 }

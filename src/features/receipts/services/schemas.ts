@@ -2,7 +2,9 @@ import { z } from "zod";
 import { DISCOUNT_TYPES } from "@/drizzle/schema";
 
 export const paymentSchema = z.object({
-	memberId: z.string().min(1, { error: "Member is required" }),
+	memberIds: z
+		.array(z.string().min(1))
+		.min(1, { error: "At least one member is required" }),
 	planId: z.string().min(1, { error: "Plan is required" }),
 	paymentDate: z.iso.date({ error: "Payment Date is required" }),
 	startDate: z.iso.date({ error: "Start Date is required" }),

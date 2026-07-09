@@ -49,6 +49,9 @@ export const getPayments = createServerFn()
 				id: payments.id,
 				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
 				image: members.image,
+				memberCount: sql<number>`(select count(*) from payment_members pm where pm.payment_id = ${payments.id})`.mapWith(
+					Number
+				),
 				plan: membershipPlans.name,
 				paymentNo: payments.paymentNo,
 				amount: payments.lineTotal,
@@ -88,6 +91,18 @@ export const getPayment = createServerFn()
 						lastName: true,
 						image: true,
 						memberNo: true,
+					},
+				},
+				members: {
+					with: {
+						member: {
+							columns: {
+								firstName: true,
+								lastName: true,
+								image: true,
+								memberNo: true,
+							},
+						},
 					},
 				},
 				plan: { columns: { name: true, price: true } },
