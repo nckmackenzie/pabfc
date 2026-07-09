@@ -228,7 +228,11 @@ export const GymReceiptPdf = ({ data }: { data: ReceiptProps }) => (
 					<Text style={styles.infoValue}>Member No: {data.members[0]?.id}</Text>
 					{data.members.length > 1 && (
 						<Text style={styles.infoValue}>
-							Also covers: {data.members.slice(1).map((member) => member.name).join(", ")}
+							Also covers:{" "}
+							{data.members
+								.slice(1)
+								.map((member) => `${member.name} (Member No: ${member.id})`)
+								.join(", ")}
 						</Text>
 					)}
 				</View>
