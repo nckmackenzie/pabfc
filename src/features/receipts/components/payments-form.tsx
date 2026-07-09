@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomAlert } from "@/components/ui/custom-alert";
 import { FieldGroup } from "@/components/ui/field";
+import { MultiSelectItem } from "@/components/ui/multi-select";
 import { SelectItem } from "@/components/ui/select";
 import { ToastContent } from "@/components/ui/toast-content";
 import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
@@ -38,7 +39,7 @@ export function PaymentForm() {
 	const form = useAppForm({
 		defaultValues: {
 			planId: "",
-			memberId: "",
+			memberIds: [],
 			paymentDate: format(new Date(), "yyyy-MM-dd"),
 			startDate: format(new Date(), "yyyy-MM-dd"),
 			numberOfPeriods: 1,
@@ -52,6 +53,14 @@ export function PaymentForm() {
 		},
 		onSubmit: ({ value }) => {
 			setSubmissionError(null);
+			const selectedPlan = plans.find((plan) => plan.id === value.planId);
+			const requiredMemberCount = selectedPlan?.memberCount ?? 1;
+			if (value.memberIds.length !== requiredMemberCount) {
+				setSubmissionError(
+					`This plan requires exactly ${requiredMemberCount} member(s), but ${value.memberIds.length} were selected.`
+				);
+				return;
+			}
 			manualPaymentMutation.mutate(value, {
 				onSuccess: (result) => {
 					if (!result.success) {
@@ -76,9 +85,9 @@ export function PaymentForm() {
 		},
 	});
 
-	const [memberId, planId, discountType, discount, numberOfPeriods, startDate, reference] =
+	const [memberIds, planId, discountType, discount, numberOfPeriods, startDate, reference] =
 		useStore(form.store, (state) => [
-			state.values.memberId,
+			state.values.memberIds,
 			state.values.planId,
 			state.values.discountType,
 			state.values.discount,
@@ -91,21 +100,37 @@ export function PaymentForm() {
 		(state) => state.fieldMeta.startDate?.isDirty ?? false
 	);
 
+	// The first selected member is the billing/account-holder member — the same one
+	// payments.memberId will be set to, and the one whose membership history drives
+	// the "current plan" preview and the auto-suggested start date below.
+	const primaryMemberId = memberIds[0] ?? "";
+	const selectedPlan = plans.find((plan) => plan.id === planId);
+	const requiredMemberCount = selectedPlan?.memberCount ?? 1;
+
 	const { data: activeMembership, isLoading: isLoadingPlan } = useQuery({
-		queryKey: ["member-active-plan", memberId],
-		queryFn: () => getMemberPreviousPlanDetails({ data: memberId }),
-		enabled: memberId.trim().length > 0,
+		queryKey: ["member-active-plan", primaryMemberId],
+		queryFn: () => getMemberPreviousPlanDetails({ data: primaryMemberId }),
+		enabled: primaryMemberId.trim().length > 0,
 		refetchOnWindowFocus: false,
 	});
 
+	// If a plan change lowers the required member count below what's already
+	// selected, trim the extra members rather than leaving an invalid selection.
+	useEffect(() => {
+		if (memberIds.length > requiredMemberCount) {
+			form.setFieldValue("memberIds", memberIds.slice(0, requiredMemberCount));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [requiredMemberCount]);
+
 	const pricingSummary = useMemo(() => {
-		const plan = plans.find((plan) => plan.id === planId);
-		if (!plan) return { planPrice: 0, discountAmount: 0, amountDue: 0 };
-		const planPrice = (plan.price ?? 0) * (numberOfPeriods || 1);
+		if (!selectedPlan) return { planPrice: 0, discountAmount: 0, amountDue: 0 };
+		const planPrice =
+			(selectedPlan.price ?? 0) * (selectedPlan.memberCount ?? 1) * (numberOfPeriods || 1);
 		const discountAmount = discountCalculator(discountType, discount ?? 0, planPrice);
 		const amountDue = Math.max(0, planPrice - discountAmount);
 		return { planPrice, discountAmount, amountDue };
-	}, [planId, plans, discountType, discount, numberOfPeriods]);
+	}, [selectedPlan, discountType, discount, numberOfPeriods]);
 
 	useEffect(() => {
 		if (form.getFieldValue("amount") !== pricingSummary.amountDue) {
@@ -130,18 +155,17 @@ export function PaymentForm() {
 		form.setFieldValue("startDate", format(suggested, "yyyy-MM-dd"), { dontUpdateMeta: true });
 	}, [activeMembership, isStartDateDirty, form]);
 
-	// Switching members should re-enable auto-suggestion for the new member.
+	// Switching the billing member should re-enable auto-suggestion for the new member.
 	useEffect(() => {
 		form.setFieldMeta("startDate", (meta) => ({ ...meta, isDirty: false }));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [memberId]);
+	}, [primaryMemberId]);
 
 	const newMembershipDates = useMemo(() => {
-		const plan = plans.find((p) => p.id === planId);
-		if (!plan || !startDate) return { startDate: "", endDate: "" };
-		const end = computeMembershipEndDate(startDate, plan.duration, numberOfPeriods || 1);
+		if (!selectedPlan || !startDate) return { startDate: "", endDate: "" };
+		const end = computeMembershipEndDate(startDate, selectedPlan.duration, numberOfPeriods || 1);
 		return { startDate: format(parseISO(startDate), "PP"), endDate: format(end, "PP") };
-	}, [planId, plans, startDate, numberOfPeriods]);
+	}, [selectedPlan, startDate, numberOfPeriods]);
 
 	const currentPlanName = activeMembership?.membershipPlan?.name || "";
 	const currentPeriodStart = activeMembership?.startDate
@@ -150,8 +174,11 @@ export function PaymentForm() {
 	const currentPeriodEnd = activeMembership?.endDate
 		? format(parseISO(activeMembership.endDate), "PP")
 		: "";
-	const memberName = members.find((m) => m.value === memberId)?.label ?? "";
-	const newPlanName = plans.find((p) => p.id === planId)?.name ?? "";
+	const memberName = memberIds
+		.map((id) => members.find((m) => m.value === id)?.label)
+		.filter(Boolean)
+		.join(", ");
+	const newPlanName = selectedPlan?.name ?? "";
 
 	return (
 		<div className="space-y-6">
@@ -182,14 +209,46 @@ export function PaymentForm() {
 									<form.AppField name="paymentDate">
 										{(field) => <field.Input label="Date" required type="date" />}
 									</form.AppField>
-									<form.AppField name="memberId">
+									<form.AppField name="planId">
 										{(field) => (
-											<field.Combobox
-												label="Member"
+											<field.Select label="Plan" required placeholder="Select a plan">
+												{plans.map((plan) => (
+													<SelectItem key={plan.id} value={plan.id}>
+														{plan.name}
+														{plan.memberCount > 1 ? ` (${plan.memberCount} members)` : ""}
+													</SelectItem>
+												))}
+											</field.Select>
+										)}
+									</form.AppField>
+								</FieldGroup>
+								<FieldGroup>
+									<form.AppField name="memberIds">
+										{(field) => (
+											<field.MultiSelect
+												label="Members"
 												required
-												items={members}
-												placeholder="Select a member"
-											/>
+												placeholder="Select a plan, then choose member(s)"
+												helperText={
+													planId
+														? `${memberIds.length}/${requiredMemberCount} member(s) selected — the first member selected is billed as the account holder`
+														: "Select a plan first to see how many members it covers"
+												}
+											>
+												{members.map((member) => {
+													const isSelected = memberIds.includes(member.value);
+													const capReached = memberIds.length >= requiredMemberCount;
+													return (
+														<MultiSelectItem
+															key={member.value}
+															value={member.value}
+															disabled={!isSelected && capReached}
+														>
+															{member.label}
+														</MultiSelectItem>
+													);
+												})}
+											</field.MultiSelect>
 										)}
 									</form.AppField>
 								</FieldGroup>
@@ -204,17 +263,6 @@ export function PaymentForm() {
 								</p>
 
 								<FieldGroup className="grid lg:grid-cols-2 gap-4">
-									<form.AppField name="planId">
-										{(field) => (
-											<field.Select label="New Plan" required placeholder="Select a plan">
-												{plans.map((plan) => (
-													<SelectItem key={plan.id} value={plan.id}>
-														{plan.name}
-													</SelectItem>
-												))}
-											</field.Select>
-										)}
-									</form.AppField>
 									<form.AppField name="discountType">
 										{(field) => (
 											<field.Select
@@ -230,11 +278,11 @@ export function PaymentForm() {
 											</field.Select>
 										)}
 									</form.AppField>
-								</FieldGroup>
-								<FieldGroup className="grid lg:grid-cols-2 gap-4">
 									<form.AppField name="startDate">
 										{(field) => <field.Input label="Start Date" required type="date" />}
 									</form.AppField>
+								</FieldGroup>
+								<FieldGroup className="grid lg:grid-cols-2 gap-4">
 									<form.AppField name="numberOfPeriods">
 										{(field) => (
 											<field.Input

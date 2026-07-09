@@ -156,6 +156,7 @@ export const membershipPlans = pgTable(
 		isSessionBased: boolean("is_session_based").notNull().default(false),
 		sessionCount: integer("session_count").notNull().default(0),
 		price: integer("price").notNull().default(0),
+		memberCount: integer("member_count").notNull().default(1),
 		validFrom: date("valid_from"),
 		validTo: date("valid_to"),
 		revenueAccountId: integer("revenue_account_id").references(

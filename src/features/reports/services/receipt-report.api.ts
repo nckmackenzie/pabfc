@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, gte, lte, type SQL, sql } from "drizzle-orm";
+import { and, asc, eq, exists, gte, lte, type SQL, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { members, payments } from "@/drizzle/schema";
+import { members, paymentMembers, payments } from "@/drizzle/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -25,7 +25,18 @@ export const getReceiptReport = createServerFn()
 
 		if (reportType === "by-member") {
 			if (!memberId) throw new ApplicationError("Member is required");
-			filters.push(eq(payments.memberId, memberId));
+			// A group payment covers members beyond the billing member (payments.memberId),
+			// so match against payment_members rather than the billing member alone.
+			filters.push(
+				exists(
+					db
+						.select({ id: paymentMembers.id })
+						.from(paymentMembers)
+						.where(
+							and(eq(paymentMembers.paymentId, payments.id), eq(paymentMembers.memberId, memberId))
+						)
+				)
+			);
 		}
 
 		return db

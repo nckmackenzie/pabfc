@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
 	date,
+	index,
 	integer,
 	jsonb,
 	numeric,
@@ -9,6 +10,7 @@ import {
 	serial,
 	text,
 	timestamp,
+	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
@@ -191,11 +193,12 @@ export const payments = pgTable("payments", {
 	updatedAt,
 });
 
-export const paymentRelations = relations(payments, ({ one }) => ({
+export const paymentRelations = relations(payments, ({ one, many }) => ({
 	member: one(members, {
 		fields: [payments.memberId],
 		references: [members.id],
 	}),
+	members: many(paymentMembers),
 	plan: one(membershipPlans, {
 		fields: [payments.planId],
 		references: [membershipPlans.id],
@@ -203,6 +206,38 @@ export const paymentRelations = relations(payments, ({ one }) => ({
 	user: one(users, {
 		fields: [payments.createdByUserId],
 		references: [users.id],
+	}),
+}));
+
+export const paymentMembers = pgTable(
+	"payment_members",
+	{
+		id,
+		paymentId: varchar("payment_id")
+			.notNull()
+			.references(() => payments.id, { onDelete: "cascade" }),
+		memberId: varchar("member_id")
+			.notNull()
+			.references(() => members.id, { onDelete: "restrict" }),
+		createdAt,
+	},
+	(table) => [
+		uniqueIndex("uq_payment_members_payment_member").on(
+			table.paymentId,
+			table.memberId,
+		),
+		index("idx_payment_members_member_id").on(table.memberId),
+	],
+);
+
+export const paymentMemberRelations = relations(paymentMembers, ({ one }) => ({
+	payment: one(payments, {
+		fields: [paymentMembers.paymentId],
+		references: [payments.id],
+	}),
+	member: one(members, {
+		fields: [paymentMembers.memberId],
+		references: [members.id],
 	}),
 }));
 

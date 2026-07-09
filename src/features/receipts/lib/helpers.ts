@@ -37,3 +37,19 @@ export function computeMembershipEndDate(
 ): Date {
 	return addDays(parseCalendarDate(startDate), planDurationDays * numberOfPeriods);
 }
+
+// Splits a decimal money amount (e.g. "100.00") into `count` shares that sum back
+// to the original amount exactly, in cents, rather than the naive `amount / count`
+// which loses or gains cents to floating-point/toFixed rounding (e.g. 100/3 = 33.33
+// x3 = 99.99). Any leftover cent(s) from the integer division go to the first share
+// so the caller can assign them to a designated member (e.g. the billing member).
+export function splitAmountEvenly(amount: string, count: number): string[] {
+	const totalCents = Math.round(parseFloat(amount) * 100);
+	const baseShareCents = Math.floor(totalCents / count);
+	const remainderCents = totalCents - baseShareCents * count;
+
+	return Array.from({ length: count }, (_, index) => {
+		const shareCents = baseShareCents + (index < remainderCents ? 1 : 0);
+		return (shareCents / 100).toFixed(2);
+	});
+}

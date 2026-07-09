@@ -13,7 +13,11 @@ import {
 	bankAccounts,
 } from "@/drizzle/schema";
 import { dateFormat } from "@/lib/helpers";
-import { computeMembershipEndDate, parseCalendarDate } from "@/features/receipts/lib/helpers";
+import {
+	computeMembershipEndDate,
+	parseCalendarDate,
+	splitAmountEvenly,
+} from "@/features/receipts/lib/helpers";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
@@ -36,6 +40,10 @@ type MembershipPayment = Omit<
 type FinalizeMembershipPaymentParams = {
 	tx: Transaction;
 	payment: MembershipPayment;
+	// All members covered by this payment (including the billing member). Defaults
+	// to just the billing member (payment.memberId) for the STK/Inngest path, which
+	// never supports group plans.
+	memberIds?: string[];
 	reference?: string | null;
 	updatePendingPayment?: boolean;
 	// When provided (manual payment path), the caller-supplied, already-overlap-checked
@@ -58,12 +66,14 @@ export async function refreshMembersOverview(tx?: Transaction) {
 export async function finalizeMembershipPayment({
 	tx,
 	payment,
+	memberIds,
 	reference,
 	updatePendingPayment = true,
 	startDate: paramStartDate,
 	numberOfPeriods,
 	activityLog,
 }: FinalizeMembershipPaymentParams) {
+	const coveredMemberIds = memberIds && memberIds.length > 0 ? memberIds : [payment.memberId];
 	if (!payment.planId) {
 		return failure({
 			type: "ApplicationError",
@@ -178,35 +188,43 @@ export async function finalizeMembershipPayment({
 	const membershipStatus = startDate > today ? "pending" : "active";
 	const endDate = computeMembershipEndDate(startDate, plan.duration, periods);
 
-	await tx
-		.update(memberMemberships)
-		.set({ status: "expired" })
-		.where(
-			and(
-				eq(memberMemberships.memberId, payment.memberId),
-				eq(memberMemberships.status, "active"),
-				lt(memberMemberships.endDate, dateFormat(startOfDay(new Date(payment.paymentDate))))
-			)
-		);
+	// Split the payment total across every covered member (in cents, so the shares
+	// sum back to the exact total) so that each member's own membership row reflects
+	// their share, rather than each of N members appearing to have individually paid
+	// the full group amount. Any leftover cent goes to the first (billing) member.
+	const priceChargedShares = splitAmountEvenly(payment.totalAmount, coveredMemberIds.length);
 
-	const mostRecentMembership = await tx.query.memberMemberships.findFirst({
-		where: eq(memberMemberships.memberId, payment.memberId),
-		orderBy: (memberships, { desc }) => [desc(memberships.endDate)],
-	});
+	for (const [index, memberId] of coveredMemberIds.entries()) {
+		await tx
+			.update(memberMemberships)
+			.set({ status: "expired" })
+			.where(
+				and(
+					eq(memberMemberships.memberId, memberId),
+					eq(memberMemberships.status, "active"),
+					lt(memberMemberships.endDate, dateFormat(startOfDay(new Date(payment.paymentDate))))
+				)
+			);
 
-	await tx
-		.insert(memberMemberships)
-		.values({
-			memberId: payment.memberId,
-			membershipPlanId: payment.planId,
-			startDate: dateFormat(startDate),
-			endDate: dateFormat(endDate),
-			autoRenew: false,
-			status: membershipStatus,
-			paymentId: payment.id,
-			previousMembershipPlanId: mostRecentMembership?.membershipPlanId,
-			priceCharged: payment.totalAmount,
+		const mostRecentMembership = await tx.query.memberMemberships.findFirst({
+			where: eq(memberMemberships.memberId, memberId),
+			orderBy: (memberships, { desc }) => [desc(memberships.endDate)],
 		});
+
+		await tx
+			.insert(memberMemberships)
+			.values({
+				memberId,
+				membershipPlanId: payment.planId,
+				startDate: dateFormat(startDate),
+				endDate: dateFormat(endDate),
+				autoRenew: false,
+				status: membershipStatus,
+				paymentId: payment.id,
+				previousMembershipPlanId: mostRecentMembership?.membershipPlanId,
+				priceCharged: priceChargedShares[index],
+			});
+	}
 
 	if (updatePendingPayment) {
 		const [updatedPayment] = await tx

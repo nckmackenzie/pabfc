@@ -7,6 +7,7 @@ export const planSchema = z
 		name: z.string().min(1, "Name is required"),
 		duration: z.number().min(1, "Duration is required"),
 		price: z.number().min(1, "Price is required"),
+		memberCount: z.number().int().min(1, "Member count must be at least 1"),
 		description: z.string().nullish(),
 		isSessionBased: z.boolean(),
 		sessionCount: z.number().nullish(),

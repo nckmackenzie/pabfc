@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
-import { memberMemberships, mpesaStkRequests, payments } from "@/drizzle/schema";
+import { memberMemberships, members, mpesaStkRequests, paymentMembers, payments } from "@/drizzle/schema";
 import {
 	finalizeMembershipPayment,
 	type Transaction,
@@ -18,33 +18,35 @@ import { failure, success, type Result } from "@/lib/result";
 
 async function checkMembershipOverlap({
 	tx,
-	memberId,
+	memberIds,
 	startDate,
 	endDate,
 }: {
 	tx: Transaction;
-	memberId: string;
+	memberIds: string[];
 	startDate: string;
 	endDate: string;
 }): Promise<Result<void>> {
-	const existing = await tx.query.memberMemberships.findMany({
-		where: eq(memberMemberships.memberId, memberId),
-		columns: { id: true, status: true, startDate: true, endDate: true },
-	});
-	const conflict = existing.find((m) =>
-		membershipRangeConflicts({
-			status: m.status,
-			existingStart: m.startDate,
-			existingEnd: m.endDate,
-			newStart: startDate,
-			newEnd: endDate,
-		})
-	);
-	if (conflict) {
-		return failure({
-			type: "ConflictError",
-			message: `Selected dates overlap with an existing membership (${conflict.startDate} to ${conflict.endDate ?? "open-ended"}).`,
+	for (const memberId of memberIds) {
+		const existing = await tx.query.memberMemberships.findMany({
+			where: eq(memberMemberships.memberId, memberId),
+			columns: { id: true, status: true, startDate: true, endDate: true },
 		});
+		const conflict = existing.find((m) =>
+			membershipRangeConflicts({
+				status: m.status,
+				existingStart: m.startDate,
+				existingEnd: m.endDate,
+				newStart: startDate,
+				newEnd: endDate,
+			})
+		);
+		if (conflict) {
+			return failure({
+				type: "ConflictError",
+				message: `Selected dates overlap with an existing membership (${conflict.startDate} to ${conflict.endDate ?? "open-ended"}).`,
+			});
+		}
 	}
 	return success(undefined);
 }
@@ -72,7 +74,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("receipts:create");
 
-			const { phoneNumber, memberId, planId, paymentDate, discountType, discount } = data;
+			const { phoneNumber, memberIds, planId, paymentDate, discountType, discount } = data;
 			const paymentNo = await getPaymentNo();
 			const settings = await db.query.settings.findFirst({
 				columns: { billing: true },
@@ -86,6 +88,11 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 				throw new Error("Plan not found");
 			}
 
+			if (plan.memberCount > 1) {
+				throw new Error("Group plans must be paid via manual receipt entry, not M-Pesa STK push.");
+			}
+
+			const memberId = memberIds[0];
 			const discountedAmount = discountCalculator(discountType, discount ?? 0, plan.price);
 
 			const amount = plan.price - discountedAmount;
@@ -179,8 +186,17 @@ export const createManualMembershipPaymentFn = createServerFn({
 		}) => {
 			await requirePermission("receipts:create");
 
-			const { memberId, planId, paymentDate, startDate, numberOfPeriods, discountType, discount, reference } =
+			const { memberIds, planId, paymentDate, startDate, numberOfPeriods, discountType, discount, reference } =
 				data;
+
+			const uniqueMemberIds = [...new Set(memberIds)];
+			if (uniqueMemberIds.length !== memberIds.length) {
+				return failure({
+					type: "ApplicationError",
+					message: "Duplicate members selected.",
+				});
+			}
+
 			const paymentNo = await getPaymentNo();
 			const settings = await db.query.settings.findFirst({
 				columns: { billing: true },
@@ -193,7 +209,32 @@ export const createManualMembershipPaymentFn = createServerFn({
 				return failure({ type: "NotFoundError", message: "Plan not found" });
 			}
 
-			const baseAmount = plan.price * numberOfPeriods;
+			if (memberIds.length !== plan.memberCount) {
+				return failure({
+					type: "ApplicationError",
+					message: `This plan requires exactly ${plan.memberCount} member(s), but ${memberIds.length} were selected.`,
+				});
+			}
+
+			const selectedMembers = await db.query.members.findMany({
+				columns: { id: true, memberStatus: true },
+				where: inArray(members.id, memberIds),
+			});
+			if (
+				selectedMembers.length !== memberIds.length ||
+				selectedMembers.some((member) => member.memberStatus !== "active")
+			) {
+				return failure({
+					type: "ApplicationError",
+					message: "All selected members must be active.",
+				});
+			}
+
+			// The first selected member is treated as the billing member — the
+			// account holder recorded on payments.memberId.
+			const billingMemberId = memberIds[0];
+
+			const baseAmount = plan.price * plan.memberCount * numberOfPeriods;
 			const discountedAmount = discountCalculator(discountType, discount ?? 0, baseAmount);
 			const amount = Math.max(0, baseAmount - discountedAmount);
 
@@ -210,14 +251,20 @@ export const createManualMembershipPaymentFn = createServerFn({
 			const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(amount, taxType);
 
 			const result = await db.transaction(async (tx) => {
-				await lockMemberMembershipCreation(tx, memberId);
+				// Acquire per-member advisory locks in a stable (sorted) order so that
+				// two concurrent group payments sharing a member can't deadlock each
+				// other by locking the same members in opposite orders.
+				const sortedMemberIds = [...memberIds].sort();
+				for (const memberId of sortedMemberIds) {
+					await lockMemberMembershipCreation(tx, memberId);
+				}
 
 				const candidateEndDate = dateFormat(
 					computeMembershipEndDate(startDate, plan.duration, numberOfPeriods)
 				);
 				const overlapCheck = await checkMembershipOverlap({
 					tx,
-					memberId,
+					memberIds,
 					startDate,
 					endDate: candidateEndDate,
 				});
@@ -232,7 +279,7 @@ export const createManualMembershipPaymentFn = createServerFn({
 						amount: baseAmount.toString(),
 						numberOfPeriods,
 						lineTotal: amountExlusiveTax.toString(),
-						memberId,
+						memberId: billingMemberId,
 						planId,
 						paymentNo: paymentNo.toString(),
 						status: "completed",
@@ -249,9 +296,17 @@ export const createManualMembershipPaymentFn = createServerFn({
 					})
 					.returning();
 
+				await tx.insert(paymentMembers).values(
+					memberIds.map((memberId) => ({
+						paymentId: payment.id,
+						memberId,
+					}))
+				);
+
 				return finalizeMembershipPayment({
 					tx,
 					payment,
+					memberIds,
 					reference,
 					updatePendingPayment: false,
 					startDate,
