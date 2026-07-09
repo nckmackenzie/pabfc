@@ -45,11 +45,9 @@ export const users = pgTable(
 		memberId: varchar("member_id", { length: 255 }).unique(),
 		deleted_at: timestamp("deleted_at"),
 		deactivatedAt: timestamp("deactivated_at"),
+		isSystemAdmin: boolean("is_system_admin").default(false),
 	},
-	(table) => [
-		index("users_name_idx").on(table.email),
-		index("users_contact_idx").on(table.contact),
-	],
+	(table) => [index("users_name_idx").on(table.email), index("users_contact_idx").on(table.contact)]
 );
 
 export const sessions = pgTable(
@@ -69,7 +67,7 @@ export const sessions = pgTable(
 			.references(() => users.id, { onDelete: "cascade" }),
 		impersonatedBy: text("impersonated_by"),
 	},
-	(table) => [index("sessions_userId_idx").on(table.userId)],
+	(table) => [index("sessions_userId_idx").on(table.userId)]
 );
 
 export const accounts = pgTable(
@@ -93,7 +91,7 @@ export const accounts = pgTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	(table) => [index("accounts_userId_idx").on(table.userId)],
+	(table) => [index("accounts_userId_idx").on(table.userId)]
 );
 
 export const verifications = pgTable(
@@ -109,7 +107,7 @@ export const verifications = pgTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	(table) => [index("verifications_identifier_idx").on(table.identifier)],
+	(table) => [index("verifications_identifier_idx").on(table.identifier)]
 );
 
 export const twoFactors = pgTable("two_factors", {
@@ -136,7 +134,7 @@ export const loginAttempts = pgTable(
 		index("login_attempts_user_id_index").on(table.userId),
 		index("login_attempts_ip_address_idx").on(table.ipAddress),
 		index("login_attempts_attempted_at_idx").on(table.attemptedAt),
-	],
+	]
 );
 
 export const passwordResetAttempts = pgTable(
@@ -152,12 +150,10 @@ export const passwordResetAttempts = pgTable(
 	},
 	(table) => [
 		index("password_reset_attempts_user_id_idx").on(table.userId),
-		index("password_reset_attempts_identifier_hash_idx").on(
-			table.identifierHash,
-		),
+		index("password_reset_attempts_identifier_hash_idx").on(table.identifierHash),
 		index("password_reset_attempts_ip_address_idx").on(table.ipAddress),
 		index("password_reset_attempts_created_at_idx").on(table.createdAt),
-	],
+	]
 );
 
 export const passwordResetChallenges = pgTable(
@@ -184,12 +180,10 @@ export const passwordResetChallenges = pgTable(
 	},
 	(table) => [
 		index("password_reset_challenges_user_id_idx").on(table.userId),
-		index("password_reset_challenges_identifier_hash_idx").on(
-			table.identifierHash,
-		),
+		index("password_reset_challenges_identifier_hash_idx").on(table.identifierHash),
 		index("password_reset_challenges_ip_address_idx").on(table.ipAddress),
 		index("password_reset_challenges_expires_at_idx").on(table.expiresAt),
-	],
+	]
 );
 
 export const forms = pgTable("forms", {
@@ -227,7 +221,7 @@ export const rolePermissions = pgTable(
 		roleId: varchar("role_id", { length: 36 }).notNull(),
 		permissionId: varchar("permission_id", { length: 36 }).notNull(),
 	},
-	(t) => [primaryKey({ columns: [t.roleId, t.permissionId] })],
+	(t) => [primaryKey({ columns: [t.roleId, t.permissionId] })]
 );
 
 export const userRoles = pgTable(
@@ -236,7 +230,7 @@ export const userRoles = pgTable(
 		userId: varchar("user_id", { length: 36 }).notNull(),
 		roleId: varchar("role_id", { length: 36 }).notNull(),
 	},
-	(t) => [primaryKey({ columns: [t.userId, t.roleId] })],
+	(t) => [primaryKey({ columns: [t.userId, t.roleId] })]
 );
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -274,19 +268,16 @@ export const userRolesRelations = relations(userRoles, ({ one }) => ({
 	}),
 }));
 
-export const rolePermissionsRelations = relations(
-	rolePermissions,
-	({ one }) => ({
-		role: one(roles, {
-			fields: [rolePermissions.roleId],
-			references: [roles.id],
-		}),
-		permission: one(permissions, {
-			fields: [rolePermissions.permissionId],
-			references: [permissions.id],
-		}),
+export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+	role: one(roles, {
+		fields: [rolePermissions.roleId],
+		references: [roles.id],
 	}),
-);
+	permission: one(permissions, {
+		fields: [rolePermissions.permissionId],
+		references: [permissions.id],
+	}),
+}));
 
 export const sessionRelations = relations(sessions, ({ one }) => ({
 	users: one(users, {
