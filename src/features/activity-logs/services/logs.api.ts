@@ -30,7 +30,7 @@ export const getActivityLogs = createServerFn()
 					ilike(activityLogs.action, `%${q}%`),
 					ilike(activityLogs.os, `%${q}%`),
 					ilike(activityLogs.userAgent, `%${q}%`),
-					role === "admin" ? ilike(users.name, `%${q}%`) : undefined,
+					role === "admin" ? ilike(users.name, `%${q}%`) : undefined
 				);
 				if (searchFilters) {
 					filters.push(searchFilters);
@@ -49,6 +49,8 @@ export const getActivityLogs = createServerFn()
 				filters.push(eq(activityLogs.userId, userId));
 			}
 
+			filters.push(eq(users.isSystemAdmin, false));
+
 			return db
 				.select({
 					id: activityLogs.id,
@@ -64,5 +66,5 @@ export const getActivityLogs = createServerFn()
 				.innerJoin(users, eq(activityLogs.userId, users.id))
 				.where(and(...filters))
 				.orderBy(desc(activityLogs.activityDate));
-		},
+		}
 	);

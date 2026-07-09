@@ -1,26 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	and,
-	asc,
-	desc,
-	eq,
-	ilike,
-	isNull,
-	ne,
-	not,
-	or,
-	type SQL,
-	sql,
-} from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, ne, not, or, type SQL, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
-import {
-	accounts,
-	loginAttempts,
-	sessions,
-	userRoles,
-	users,
-} from "@/drizzle/schema";
+import { accounts, loginAttempts, sessions, userRoles, users } from "@/drizzle/schema";
 import {
 	resetPasswordFormSchema,
 	type UserSchema,
@@ -34,13 +16,7 @@ import { searchValidateSchema } from "@/lib/schema-rules";
 import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
-const createUser = async ({
-	data,
-	loggedUserId,
-}: {
-	data: UserSchema;
-	loggedUserId: string;
-}) => {
+const createUser = async ({ data, loggedUserId }: { data: UserSchema; loggedUserId: string }) => {
 	try {
 		if (await getUserByContact({ data: { contact: data.contact } })) {
 			return failure({
@@ -71,9 +47,7 @@ const createUser = async ({
 			});
 
 			if (data.role !== "admin" && data.roleIds?.length) {
-				await tx
-					.insert(userRoles)
-					.values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
+				await tx.insert(userRoles).values(data.roleIds.map((roleId) => ({ userId: id, roleId })));
 			}
 
 			return { userId: id, temporaryPassword };
@@ -105,13 +79,7 @@ const createUser = async ({
 	}
 };
 
-const updateUser = async ({
-	data,
-	loggedUserId,
-}: {
-	data: UserSchema;
-	loggedUserId: string;
-}) => {
+const updateUser = async ({ data, loggedUserId }: { data: UserSchema; loggedUserId: string }) => {
 	try {
 		if (
 			await getUserByContact({
@@ -135,14 +103,12 @@ const updateUser = async ({
 					role: data.role,
 					active: data.active,
 				})
-				.where(eq(users.id, userId));
+				.where(and(eq(users.id, userId), eq(users.isSystemAdmin, false), isNull(users.deleted_at)));
 
 			await tx.delete(userRoles).where(eq(userRoles.userId, userId));
 
 			if (data.role !== "admin" && data.roleIds?.length) {
-				await tx
-					.insert(userRoles)
-					.values(data.roleIds.map((roleId) => ({ userId, roleId })));
+				await tx.insert(userRoles).values(data.roleIds.map((roleId) => ({ userId, roleId })));
 			}
 		});
 
@@ -176,7 +142,9 @@ export const getUserByContact = createServerFn()
 			where: and(
 				eq(users.contact, contact),
 				eq(users.active, true),
-				userId ? ne(users.id, userId) : undefined,
+				isNull(users.deleted_at),
+				eq(users.isSystemAdmin, false),
+				userId ? ne(users.id, userId) : undefined
 			),
 		});
 		return user;
@@ -192,7 +160,7 @@ export const getUsers = createServerFn()
 			const searchFilters = or(
 				ilike(users.name, `%${query}%`),
 				ilike(users.contact, `%${query}%`),
-				ilike(sql`CAST(${users.role} AS TEXT)`, `%${query}%`),
+				ilike(sql`CAST(${users.role} AS TEXT)`, `%${query}%`)
 			);
 			if (searchFilters) {
 				filters.push(searchFilters);
@@ -218,7 +186,8 @@ export const getUsers = createServerFn()
 				where: and(
 					isNull(users.deleted_at),
 					not(eq(users.role, "member")),
-					...filters,
+					eq(users.isSystemAdmin, false),
+					...filters
 				),
 				orderBy: [asc(sql`lower(${users.name})`)],
 			})
@@ -226,7 +195,7 @@ export const getUsers = createServerFn()
 				users.map((user) => ({
 					...user,
 					lastSignedInAt: user.loginAttempts[0]?.attemptedAt || null,
-				})),
+				}))
 			);
 	});
 
@@ -244,7 +213,7 @@ export const upsertUser = createServerFn({ method: "POST" })
 				return updateUser({ data, loggedUserId });
 			}
 			return createUser({ data, loggedUserId });
-		},
+		}
 	);
 
 export const getUserWithRole = createServerFn()
@@ -266,7 +235,11 @@ export const getUserWithRole = createServerFn()
 					with: { role: { columns: { id: true, name: true } } },
 				},
 			},
-			where: eq(users.id, data.userId),
+			where: and(
+				eq(users.id, data.userId),
+				isNull(users.deleted_at),
+				eq(users.isSystemAdmin, false)
+			),
 		});
 	});
 
@@ -289,7 +262,11 @@ export const deleteUser = createServerFn()
 					await tx.delete(userRoles).where(eq(userRoles.userId, userId));
 					await tx.delete(accounts).where(eq(accounts.userId, userId));
 					await tx.delete(sessions).where(eq(sessions.userId, userId));
-					await tx.delete(users).where(eq(users.id, userId));
+					await tx
+						.delete(users)
+						.where(
+							and(eq(users.id, userId), isNull(users.deleted_at), eq(users.isSystemAdmin, false))
+						);
 				});
 
 				await logActivity({
@@ -308,7 +285,7 @@ export const deleteUser = createServerFn()
 					message: "Failed to delete user",
 				});
 			}
-		},
+		}
 	);
 
 export const resetPassword = createServerFn()
@@ -334,13 +311,9 @@ export const resetPassword = createServerFn()
 		await db
 			.update(accounts)
 			.set({ password: hashedPassword })
-			.where(
-				and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")),
-			);
+			.where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")));
 
 		return newPassword;
 	});
 
-export type UserWithLoginAttempts = Awaited<
-	ReturnType<typeof getUsers>
->[number];
+export type UserWithLoginAttempts = Awaited<ReturnType<typeof getUsers>>[number];
