@@ -13,7 +13,11 @@ import {
 	bankAccounts,
 } from "@/drizzle/schema";
 import { dateFormat } from "@/lib/helpers";
-import { computeMembershipEndDate, parseCalendarDate } from "@/features/receipts/lib/helpers";
+import {
+	computeMembershipEndDate,
+	parseCalendarDate,
+	splitAmountEvenly,
+} from "@/features/receipts/lib/helpers";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
@@ -184,14 +188,13 @@ export async function finalizeMembershipPayment({
 	const membershipStatus = startDate > today ? "pending" : "active";
 	const endDate = computeMembershipEndDate(startDate, plan.duration, periods);
 
-	// Split the payment total evenly across every covered member so that each
-	// member's own membership row reflects their share, rather than each of N
-	// members appearing to have individually paid the full group amount.
-	const priceChargedPerMember = (
-		parseFloat(payment.totalAmount) / coveredMemberIds.length
-	).toFixed(2);
+	// Split the payment total across every covered member (in cents, so the shares
+	// sum back to the exact total) so that each member's own membership row reflects
+	// their share, rather than each of N members appearing to have individually paid
+	// the full group amount. Any leftover cent goes to the first (billing) member.
+	const priceChargedShares = splitAmountEvenly(payment.totalAmount, coveredMemberIds.length);
 
-	for (const memberId of coveredMemberIds) {
+	for (const [index, memberId] of coveredMemberIds.entries()) {
 		await tx
 			.update(memberMemberships)
 			.set({ status: "expired" })
@@ -219,7 +222,7 @@ export async function finalizeMembershipPayment({
 				status: membershipStatus,
 				paymentId: payment.id,
 				previousMembershipPlanId: mostRecentMembership?.membershipPlanId,
-				priceCharged: priceChargedPerMember,
+				priceCharged: priceChargedShares[index],
 			});
 	}
 

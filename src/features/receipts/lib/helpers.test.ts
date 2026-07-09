@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { describe, expect, it } from "vitest";
-import { computeMembershipEndDate, membershipRangeConflicts } from "./helpers";
+import { computeMembershipEndDate, membershipRangeConflicts, splitAmountEvenly } from "./helpers";
 
 describe("membershipRangeConflicts", () => {
 	it("conflicts when date ranges are identical on an active membership", () => {
@@ -152,5 +152,32 @@ describe("computeMembershipEndDate", () => {
 		const fromString = computeMembershipEndDate("2026-01-01", 30, 1);
 		const fromDate = computeMembershipEndDate(parseISO("2026-01-01"), 30, 1);
 		expect(fromString.getTime()).toBe(fromDate.getTime());
+	});
+});
+
+describe("splitAmountEvenly", () => {
+	it("returns the full amount for a single share", () => {
+		expect(splitAmountEvenly("100.00", 1)).toEqual(["100.00"]);
+	});
+
+	it("splits an evenly-divisible amount with no remainder", () => {
+		expect(splitAmountEvenly("100.00", 2)).toEqual(["50.00", "50.00"]);
+	});
+
+	it("gives leftover cents to the leading shares so the total matches exactly", () => {
+		const shares = splitAmountEvenly("100.00", 3);
+		expect(shares).toEqual(["33.34", "33.33", "33.33"]);
+		const sum = shares.reduce((total, share) => total + parseFloat(share), 0);
+		expect(sum).toBeCloseTo(100, 2);
+	});
+
+	it("puts the single leftover cent on the first share only", () => {
+		expect(splitAmountEvenly("10.01", 2)).toEqual(["5.01", "5.00"]);
+	});
+
+	it("handles a large member count without losing cents", () => {
+		const shares = splitAmountEvenly("1000.00", 7);
+		const totalCents = shares.reduce((total, share) => total + Math.round(parseFloat(share) * 100), 0);
+		expect(totalCents).toBe(100000);
 	});
 });
