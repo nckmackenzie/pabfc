@@ -81,6 +81,12 @@ const createUser = async ({ data, loggedUserId }: { data: UserSchema; loggedUser
 
 const updateUser = async ({ data, loggedUserId }: { data: UserSchema; loggedUserId: string }) => {
 	try {
+		const userId = data.id as string;
+
+		if (!(await getUserWithRole({ data: { userId } }))) {
+			return failure({ type: "NotFoundError", message: "User not found" });
+		}
+
 		if (
 			await getUserByContact({
 				data: { contact: data.contact, userId: data.id },
@@ -92,7 +98,6 @@ const updateUser = async ({ data, loggedUserId }: { data: UserSchema; loggedUser
 			});
 		}
 
-		const userId = data.id as string;
 		await db.transaction(async (tx) => {
 			await tx
 				.update(users)
@@ -142,8 +147,6 @@ export const getUserByContact = createServerFn()
 			where: and(
 				eq(users.contact, contact),
 				eq(users.active, true),
-				isNull(users.deleted_at),
-				eq(users.isSystemAdmin, false),
 				userId ? ne(users.id, userId) : undefined
 			),
 		});

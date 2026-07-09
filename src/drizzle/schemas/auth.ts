@@ -45,7 +45,7 @@ export const users = pgTable(
 		memberId: varchar("member_id", { length: 255 }).unique(),
 		deleted_at: timestamp("deleted_at"),
 		deactivatedAt: timestamp("deactivated_at"),
-		isSystemAdmin: boolean("is_system_admin").default(false),
+		isSystemAdmin: boolean("is_system_admin").notNull().default(false),
 	},
 	(table) => [index("users_name_idx").on(table.email), index("users_contact_idx").on(table.contact)]
 );
