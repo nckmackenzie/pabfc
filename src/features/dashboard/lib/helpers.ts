@@ -38,6 +38,12 @@ export function getFinanceStatDates(today = new Date()) {
 	const previousPeriodEnd = new Date(previousPeriodStart);
 
 	previousPeriodEnd.setDate(previousPeriodDay);
+	previousPeriodEnd.setHours(
+		today.getHours(),
+		today.getMinutes(),
+		today.getSeconds(),
+		today.getMilliseconds(),
+	);
 
 	return {
 		currentPeriodStart,
