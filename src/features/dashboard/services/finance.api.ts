@@ -8,19 +8,23 @@ import {
 	membershipPlans,
 	payments,
 } from "@/drizzle/schema";
-import { getStatDates } from "@/features/dashboard/lib/helpers";
+import { getFinanceStatDates, getStatDates } from "@/features/dashboard/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { expenseFilters, paymentFilters } from "@/lib/query-helpers";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
-
-const { startOfLast30Days, startOfPreviousPeriod, endOfPreviousPeriod } =
-	getStatDates();
+const { startOfLast30Days } = getStatDates();
 
 export const getFinanceStats = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:finance");
+		const {
+			currentPeriodStart,
+			currentPeriodEnd,
+			previousPeriodStart,
+			previousPeriodEnd,
+		} = getFinanceStatDates();
 
 		const [
 			totalRevenue,
@@ -38,8 +42,8 @@ export const getFinanceStats = createServerFn()
 				.from(payments)
 				.where(
 					paymentFilters({
-						dateFrom: startOfLast30Days,
-						dateTo: new Date(),
+						dateFrom: currentPeriodStart,
+						dateTo: currentPeriodEnd,
 						status: "completed",
 					}),
 				),
@@ -50,8 +54,8 @@ export const getFinanceStats = createServerFn()
 				.from(payments)
 				.where(
 					paymentFilters({
-						dateFrom: startOfPreviousPeriod,
-						dateTo: endOfPreviousPeriod,
+						dateFrom: previousPeriodStart,
+						dateTo: previousPeriodEnd,
 						status: "completed",
 					}),
 				),
@@ -61,7 +65,10 @@ export const getFinanceStats = createServerFn()
 				})
 				.from(expenseHeaders)
 				.where(
-					expenseFilters({ dateFrom: startOfLast30Days, dateTo: new Date() }),
+					expenseFilters({
+						dateFrom: currentPeriodStart,
+						dateTo: currentPeriodEnd,
+					}),
 				),
 			db
 				.select({
@@ -70,8 +77,8 @@ export const getFinanceStats = createServerFn()
 				.from(expenseHeaders)
 				.where(
 					expenseFilters({
-						dateFrom: startOfPreviousPeriod,
-						dateTo: endOfPreviousPeriod,
+						dateFrom: previousPeriodStart,
+						dateTo: previousPeriodEnd,
 					}),
 				),
 			db
@@ -106,8 +113,8 @@ export const getFinanceStats = createServerFn()
 				.from(payments)
 				.where(
 					paymentFilters({
-						dateFrom: startOfLast30Days,
-						dateTo: new Date(),
+						dateFrom: currentPeriodStart,
+						dateTo: currentPeriodEnd,
 						status: "completed",
 					}),
 				),
@@ -118,13 +125,15 @@ export const getFinanceStats = createServerFn()
 				.from(payments)
 				.where(
 					paymentFilters({
-						dateFrom: startOfPreviousPeriod,
-						dateTo: endOfPreviousPeriod,
+						dateFrom: previousPeriodStart,
+						dateTo: previousPeriodEnd,
 						status: "completed",
 					}),
 				),
 		]);
 
+		// These response keys are still consumed by the existing dashboard UI,
+		// but the values now represent MTD and previous-month-to-date ranges.
 		const stats = {
 			totalRevenueLast30Days: totalRevenue[0].totalRevenue,
 			totalRevenuePreviousPeriod:

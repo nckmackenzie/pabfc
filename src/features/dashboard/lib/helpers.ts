@@ -1,6 +1,8 @@
 import {
 	addDays,
 	endOfMonth,
+	getDate,
+	lastDayOfMonth,
 	startOfMonth,
 	subDays,
 	subMonths,
@@ -23,5 +25,24 @@ export function getStatDates() {
 		startOfLast30Days,
 		startOfPreviousPeriod,
 		endOfPreviousPeriod,
+	};
+}
+
+export function getFinanceStatDates(today = new Date()) {
+	const currentPeriodStart = startOfMonth(today);
+	const currentPeriodEnd = today;
+	const previousPeriodStart = startOfMonth(subMonths(today, 1));
+	const previousMonthLastDay = getDate(lastDayOfMonth(previousPeriodStart));
+	const currentDayOfMonth = getDate(today);
+	const previousPeriodDay = Math.min(currentDayOfMonth, previousMonthLastDay);
+	const previousPeriodEnd = new Date(previousPeriodStart);
+
+	previousPeriodEnd.setDate(previousPeriodDay);
+
+	return {
+		currentPeriodStart,
+		currentPeriodEnd,
+		previousPeriodStart,
+		previousPeriodEnd,
 	};
 }
