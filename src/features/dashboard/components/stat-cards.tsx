@@ -106,6 +106,8 @@ interface KPICardProps {
 	trend?: {
 		value: number;
 		isPositive: boolean;
+		isNeutral?: boolean;
+		displayValue?: string;
 	};
 	variant?: "default" | "success" | "warning" | "destructive";
 	className?: string;
@@ -158,11 +160,15 @@ export function KPICard({
 							<span
 								className={cn(
 									"font-medium",
-									trend.isPositive ? "text-emerald-500" : "text-destructive",
+									trend.isNeutral
+										? "text-muted-foreground"
+										: trend.isPositive
+											? "text-emerald-500"
+											: "text-destructive",
 								)}
 							>
-								{trend.isPositive ? "+" : "-"}
-								{Math.abs(trend.value)}%
+								{trend.displayValue ??
+									`${trend.isPositive ? "+" : "-"}${Math.abs(trend.value)}%`}
 							</span>
 							<span className="text-muted-foreground">vs last month</span>
 						</div>

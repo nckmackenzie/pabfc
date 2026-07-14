@@ -16,7 +16,7 @@ import {
 	dateFormat,
 	percentageChangeCalculator,
 } from "@/lib/helpers";
-import { getStatDates } from "../lib/helpers";
+import { getFinanceStatDates } from "../lib/helpers";
 import { FinanceAreaChart, FinancePieChart } from "./finance-charts";
 import { FinanceRecentTransactions } from "./finance-recent-transactions";
 
@@ -78,13 +78,13 @@ function FinanceStatCards() {
 			totalDiscountedRevenuePreviousPeriod,
 		},
 	} = useSuspenseQuery(dashboardQueries.financeStats());
-	const { startOfLast30Days } = getStatDates();
+	const { currentPeriodStart, currentPeriodEnd } = getFinanceStatDates();
 	return (
 		<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 			<KPICard
 				title="Membership Revenue"
 				value={currencyFormatter(totalRevenueLast30Days, false)}
-				subtitle="Membership revenue in last 30 days"
+				subtitle="Membership revenue month to date"
 				icon={HandCoinsIcon}
 				trend={percentageChangeCalculator(
 					totalRevenueLast30Days,
@@ -95,7 +95,7 @@ function FinanceStatCards() {
 			<KPICard
 				title="Expenses"
 				value={currencyFormatter(totalExpensesLast30Days, false)}
-				subtitle="Expenses in last 30 days"
+				subtitle="Expenses month to date"
 				icon={BanknoteArrowDownIcon}
 				trend={percentageChangeCalculator(
 					totalExpensesLast30Days,
@@ -105,8 +105,8 @@ function FinanceStatCards() {
 				link={{
 					to: "/app/expenses",
 					search: {
-						from: dateFormat(startOfLast30Days),
-						to: dateFormat(new Date()),
+						from: dateFormat(currentPeriodStart),
+						to: dateFormat(currentPeriodEnd),
 					},
 				}}
 			/>
@@ -121,7 +121,7 @@ function FinanceStatCards() {
 			<KPICard
 				title="Discounted Revenue"
 				value={currencyFormatter(totalDiscountedRevenue, false)}
-				subtitle="Discounted revenue in last 30 days"
+				subtitle="Discounted revenue month to date"
 				icon={BadgePercentIcon}
 				trend={percentageChangeCalculator(
 					totalDiscountedRevenue,

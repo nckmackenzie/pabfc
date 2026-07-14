@@ -192,15 +192,44 @@ export function normalizeDateRange(
 }
 
 export function percentageChangeCalculator(current: number, previous: number) {
-	if (previous === 0) {
-		return { value: current === 0 ? 0 : 100, isPositive: current >= 0 };
+	if (current === 0 && previous === 0) {
+		return {
+			value: 0,
+			isPositive: true,
+			isNeutral: true,
+			displayValue: "0%",
+		};
+	}
+
+	if (previous === 0 && current > 0) {
+		return {
+			value: 100,
+			isPositive: true,
+			isNeutral: false,
+			displayValue: "New",
+		};
+	}
+
+	if (previous > 0 && current === 0) {
+		return {
+			value: 100,
+			isPositive: false,
+			isNeutral: false,
+			displayValue: "-100%",
+		};
 	}
 
 	const change = ((current - previous) / previous) * 100;
+	const roundedChange = Number.isFinite(change) ? Number(change.toFixed(1)) : 0;
 
 	return {
-		value: Number.isFinite(change) ? Math.abs(Number(change.toFixed(1))) : 0,
-		isPositive: change >= 0,
+		value: Math.abs(roundedChange),
+		isPositive: roundedChange > 0,
+		isNeutral: roundedChange === 0,
+		displayValue:
+			roundedChange === 0
+				? "0%"
+				: `${roundedChange > 0 ? "+" : "-"}${Math.abs(roundedChange)}%`,
 	};
 }
 
