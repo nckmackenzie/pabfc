@@ -575,6 +575,13 @@
       "when": 1784188063545,
       "tag": "0081_curved_proemial_gods",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1784266618520,
+      "tag": "0082_groovy_gambit",
+      "breakpoints": true
     }
   ]
 }

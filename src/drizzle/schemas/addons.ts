@@ -12,11 +12,7 @@ import {
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 import { ledgerAccounts } from "./chart-of-accounts";
 import { members } from "./member";
-import {
-	paymentChannelEnum,
-	paymentMethodEnum,
-	paymentStatusEnum,
-} from "./payment-enums";
+import { paymentChannelEnum, paymentMethodEnum, paymentStatusEnum } from "./payment-enums";
 import { payments } from "./payments";
 import { vatTypeEnum } from "./settings";
 
@@ -86,7 +82,7 @@ export const addonInvoiceLines = pgTable("addon_invoice_lines", {
 		.notNull()
 		.references(() => addonInvoices.id, { onDelete: "cascade" }),
 	// nullable so historical lines survive addon deletion
-	addonId: varchar("addon_id").references(() => addons.id),
+	addonId: varchar("addon_id").references(() => addons.id, { onDelete: "set null" }),
 	// snapshotted at creation
 	addonName: varchar("addon_name", { length: 255 }).notNull(),
 	unitAmount: numeric("unit_amount", { precision: 10, scale: 2 }).notNull(),
