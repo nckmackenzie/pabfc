@@ -66,7 +66,12 @@ export function ReceiptsTable() {
 		{
 			accessorKey: "plan",
 			header: "Membership Plan",
-			cell: ({ row }) => toTitleCase(row.original.plan ?? ""),
+			cell: ({ row }) =>
+				row.original.type === "addon" ? (
+					<Badge variant="secondary">Addon only</Badge>
+				) : (
+					toTitleCase(row.original.plan ?? "")
+				),
 		},
 		{
 			accessorKey: "reference",
@@ -116,9 +121,21 @@ export function ReceiptsTable() {
 			cell: ({ row }) => (
 				<DatatableActions>
 					<DropdownMenuItem asChild>
-						<Link to="/app/receipts/$receiptId/details" params={{ receiptId: row.original.id }}>
-							<ViewDetailsAction />
-						</Link>
+						{row.original.type === "addon" ? (
+							<Link
+								to="/app/receipts/addons/$addonInvoiceId/details"
+								params={{ addonInvoiceId: row.original.id }}
+							>
+								<ViewDetailsAction />
+							</Link>
+						) : (
+							<Link
+								to="/app/receipts/$receiptId/details"
+								params={{ receiptId: row.original.id }}
+							>
+								<ViewDetailsAction />
+							</Link>
+						)}
 					</DropdownMenuItem>
 				</DatatableActions>
 			),

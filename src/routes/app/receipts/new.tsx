@@ -4,6 +4,7 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
 import { PaymentForm } from "@/features/receipts/components/payments-form";
+import { paymentsQueries } from "@/features/receipts/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
@@ -17,12 +18,14 @@ export const Route = createFileRoute("/app/receipts/new")({
 	}),
 	pendingComponent: FormLoader,
 	loader: async ({ context: { queryClient } }) => {
-		const [members, plans] = await Promise.all([
+		const [members, plans, { taxType }] = await Promise.all([
 			queryClient.ensureQueryData(memberQueries.activeMembers()),
 			queryClient.ensureQueryData(planQueries.list()),
+			queryClient.ensureQueryData(paymentsQueries.membershipTaxType()),
 		]);
 		return {
 			members,
+			taxType,
 			plans: plans
 				.filter(({ active }) => active)
 				.map((plan) => ({ ...plan, name: toTitleCase(plan.name) })),

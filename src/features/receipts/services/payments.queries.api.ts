@@ -1,15 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
+	addonInvoices,
 	memberMemberships,
 	members,
 	membershipPlans,
 	mpesaStkRequests,
 	payments,
 } from "@/drizzle/schema";
+import { requireAnyPermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
+import type { VatType } from "@/drizzle/schema";
 
 export const getPaymentStatusFn = createServerFn()
 	.middleware([authMiddleware])
@@ -40,21 +43,41 @@ export const getPaymentNo = createServerFn()
 		return +rows[0].maxno + 1;
 	});
 
+// The effective membership tax type staff need to preview a receipt total. Mirrors
+// the server-side derivation in createManualMembershipPaymentFn so the preview and
+// the recorded amount agree. Scoped to receipt permissions (unlike admin getSettings).
+export const getMembershipTaxType = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async (): Promise<{ taxType: VatType }> => {
+		await requireAnyPermission(["receipts:create", "receipts:view"]);
+
+		const settings = await db.query.settings.findFirst({
+			columns: { billing: true },
+		});
+		const taxType: VatType = settings?.billing?.applyTaxToMembership
+			? (settings.billing?.vatType ?? "inclusive")
+			: "none";
+		return { taxType };
+	});
+
 export const getPayments = createServerFn()
 	.middleware([authMiddleware])
 	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
-		return db
+		// Membership payments (may also carry addons). "Amount" reflects the actual
+		// total paid (incl. VAT and any addons), not just the membership line total.
+		const membershipRows = await db
 			.select({
 				id: payments.id,
+				type: sql<"membership">`'membership'`,
 				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
 				image: members.image,
 				memberCount: sql<number>`(select count(*) from payment_members pm where pm.payment_id = ${payments.id})`.mapWith(
 					Number
 				),
-				plan: membershipPlans.name,
+				plan: sql<string | null>`${membershipPlans.name}`,
 				paymentNo: payments.paymentNo,
-				amount: payments.lineTotal,
+				amount: payments.totalAmount,
 				reference: payments.reference,
 				paymentDate: payments.paymentDate,
 				channel: payments.channel,
@@ -71,12 +94,51 @@ export const getPayments = createServerFn()
 							ilike(membershipPlans.name, `%${q}%`),
 							ilike(payments.paymentNo, `%${q}%`),
 							ilike(payments.reference, `%${q}%`),
-							ilike(sql`CAST(${payments.lineTotal} AS TEXT)`, `%${q}%`),
+							ilike(sql`CAST(${payments.totalAmount} AS TEXT)`, `%${q}%`),
 							ilike(sql`CAST(${payments.paymentDate} AS TEXT)`, `%${q}%`)
 						)
 					: undefined
-			)
-			.orderBy(desc(payments.createdAt));
+			);
+
+		// Standalone addon-only receipts write only to addon_invoices, so they must be
+		// surfaced here too, otherwise they'd be unreachable after creation.
+		const addonRows = await db
+			.select({
+				id: addonInvoices.id,
+				type: sql<"addon">`'addon'`,
+				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
+				image: members.image,
+				memberCount: addonInvoices.numberOfMembers,
+				plan: sql<string | null>`NULL`,
+				paymentNo: addonInvoices.invoiceNo,
+				amount: addonInvoices.totalAmount,
+				reference: addonInvoices.reference,
+				paymentDate: addonInvoices.paymentDate,
+				channel: addonInvoices.channel,
+				status: addonInvoices.status,
+			})
+			.from(addonInvoices)
+			.innerJoin(members, eq(addonInvoices.memberId, members.id))
+			.where(
+				and(
+					isNull(addonInvoices.paymentId),
+					q
+						? or(
+								ilike(members.firstName, `%${q}%`),
+								ilike(members.lastName, `%${q}%`),
+								ilike(addonInvoices.invoiceNo, `%${q}%`),
+								ilike(addonInvoices.reference, `%${q}%`),
+								ilike(sql`CAST(${addonInvoices.totalAmount} AS TEXT)`, `%${q}%`),
+								ilike(sql`CAST(${addonInvoices.paymentDate} AS TEXT)`, `%${q}%`)
+							)
+						: undefined
+				)
+			);
+
+		return [...membershipRows, ...addonRows].sort(
+			(a, b) =>
+				new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+		);
 	});
 
 export const getPayment = createServerFn()
@@ -107,6 +169,9 @@ export const getPayment = createServerFn()
 				},
 				plan: { columns: { name: true, price: true } },
 				user: { columns: { name: true } },
+				addonInvoices: {
+					with: { lines: true },
+				},
 			},
 			where: eq(payments.id, id),
 		});
@@ -123,8 +188,12 @@ export const getPayment = createServerFn()
 			},
 		});
 
+		// A membership payment has at most one addon invoice attached.
+		const { addonInvoices: attachedAddonInvoices, ...paymentRest } = payment;
+
 		return {
-			...payment,
+			...paymentRest,
 			membership,
+			addonInvoice: attachedAddonInvoices[0] ?? null,
 		};
 	});

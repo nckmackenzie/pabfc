@@ -12,7 +12,12 @@ import {
 import { active, createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 import { ledgerAccounts } from "./chart-of-accounts";
 import { members } from "./member";
-import { paymentChannelEnum, paymentMethodEnum, payments, paymentStatusEnum } from "./payments";
+import {
+	paymentChannelEnum,
+	paymentMethodEnum,
+	paymentStatusEnum,
+} from "./payment-enums";
+import { payments } from "./payments";
 import { vatTypeEnum } from "./settings";
 
 export const addons = pgTable("addons", {

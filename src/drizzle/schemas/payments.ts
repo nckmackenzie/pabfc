@@ -19,19 +19,27 @@ import {
 	members,
 	membershipPlans,
 } from "@/drizzle/schemas/member";
+import { addonInvoices } from "./addons";
 import { users } from "./auth";
 import { ledgerAccounts } from "./chart-of-accounts";
+import {
+	paymentChannelEnum,
+	paymentMethodEnum,
+	paymentStatusEnum,
+} from "./payment-enums";
 import { vatTypeEnum } from "./settings";
+
+// Re-exported so existing `@/drizzle/schema` barrel consumers keep importing these
+// from the same place after the enums moved to payment-enums.ts.
+export {
+	paymentChannelEnum,
+	paymentMethodEnum,
+	paymentStatusEnum,
+} from "./payment-enums";
 
 export const DISCOUNT_TYPES = ["none", "amount", "percentage"] as const;
 export type DiscountType = (typeof DISCOUNT_TYPES)[number];
 export const discountTypeEnum = pgEnum("discount_type", DISCOUNT_TYPES);
-
-export const paymentChannelEnum = pgEnum("payment_channel", [
-	"portal",
-	"staff",
-	"auto_renewal",
-]);
 
 export const invoiceStatusEnum = pgEnum("invoice_status", [
 	"draft",
@@ -40,22 +48,6 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
 	"paid",
 	"cancelled",
 	"overdue",
-]);
-
-export const paymentMethodEnum = pgEnum("payment_method", [
-	"mpesa_stk",
-	"mpesa_manual",
-	"cash",
-	"card",
-	"bank_transfer",
-]);
-
-export const paymentStatusEnum = pgEnum("payment_status", [
-	"pending",
-	"completed",
-	"failed",
-	"cancelled",
-	"refunded",
 ]);
 
 export const mpesaStkStatusEnum = pgEnum("mpesa_stk_status", [
@@ -207,6 +199,7 @@ export const paymentRelations = relations(payments, ({ one, many }) => ({
 		fields: [payments.createdByUserId],
 		references: [users.id],
 	}),
+	addonInvoices: many(addonInvoices),
 }));
 
 export const paymentMembers = pgTable(
