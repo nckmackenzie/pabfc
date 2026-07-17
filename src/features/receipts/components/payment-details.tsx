@@ -26,6 +26,16 @@ export function PaymentDetails() {
 	const unitPrice = currencyFormatter.format(Number(payment.plan?.price ?? 0));
 	const coveredMembers = payment.members.map(({ member }) => member);
 
+	const addonLines = payment.addonInvoice?.lines ?? [];
+	const addonSubtotalValue = addonLines.reduce(
+		(total, line) => total + Number(line.lineTotal),
+		0,
+	);
+	// Line items (membership + addons) sum to this combined subtotal.
+	const combinedSubtotal = currencyFormatter.format(
+		Number(payment.amount) + addonSubtotalValue,
+	);
+
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -56,8 +66,14 @@ export function PaymentDetails() {
 												price: periods > 0 ? Number(payment.amount) / periods : 0,
 												amount: Number(payment.amount),
 											},
+											...addonLines.map((line) => ({
+												description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
+												qty: line.numberOfPeriods,
+												price: Number(line.unitAmount),
+												amount: Number(line.lineTotal),
+											})),
 										],
-										subtotal: Number(payment.amount),
+										subtotal: Number(payment.amount) + addonSubtotalValue,
 										discount: Number(payment.discountedAmount),
 										tax: Number(payment.taxAmount),
 										total: Number(payment.totalAmount),
@@ -194,11 +210,31 @@ export function PaymentDetails() {
 									<div className="col-span-2">{unitPrice}</div>
 									<div className="col-span-2 text-right">{subTotal}</div>
 								</div>
+								{addonLines.map((line) => (
+									<div
+										key={line.id}
+										className="grid grid-cols-12 text-sm items-center py-2 border-b"
+									>
+										<div className="col-span-6">
+											<p className="font-medium">{line.addonName}</p>
+											<p className="text-muted-foreground text-xs">
+												Addon{line.perMember ? ` · per member × ${line.numberOfMembers}` : ""}
+											</p>
+										</div>
+										<div className="col-span-2">{line.numberOfPeriods}</div>
+										<div className="col-span-2">
+											{currencyFormatter.format(Number(line.unitAmount))}
+										</div>
+										<div className="col-span-2 text-right">
+											{currencyFormatter.format(Number(line.lineTotal))}
+										</div>
+									</div>
+								))}
 								{/* Totals */}
 								<div className="space-y-2 pt-4">
 									<div className="flex justify-between text-sm">
 										<span className="text-muted-foreground">Subtotal</span>
-										<span>{subTotal}</span>
+										<span>{combinedSubtotal}</span>
 									</div>
 									<div className="flex justify-between text-sm">
 										<span className="text-muted-foreground">Discount:</span>
@@ -216,6 +252,7 @@ export function PaymentDetails() {
 							</div>
 						</CardContent>
 					</Card>
+
 					<Card>
 						<CardHeader>
 							<CardTitle>Activity timeline</CardTitle>

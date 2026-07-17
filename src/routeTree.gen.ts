@@ -89,6 +89,7 @@ import { Route as AppReportsMembersIndexRouteImport } from './routes/app/reports
 import { Route as AppReportsHumanResourcesIndexRouteImport } from './routes/app/reports/human-resources/index'
 import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports/finance/index'
 import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
+import { Route as AppPlansAddonsIndexRouteImport } from './routes/app/plans/addons/index'
 import { Route as AppPayrollSalaryStructuresIndexRouteImport } from './routes/app/payroll/salary-structures/index'
 import { Route as AppPayrollSalaryAdvancesIndexRouteImport } from './routes/app/payroll/salary-advances/index'
 import { Route as AppPayrollPeriodsIndexRouteImport } from './routes/app/payroll/periods/index'
@@ -101,6 +102,7 @@ import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$use
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
 import { Route as AppSuppliersSupplierIdEditRouteImport } from './routes/app/suppliers/$supplierId/edit'
 import { Route as AppReceiptsReceiptIdDetailsRouteImport } from './routes/app/receipts/$receiptId/details'
+import { Route as AppPlansAddonsNewRouteImport } from './routes/app/plans/addons/new'
 import { Route as AppPlansPlanIdViewMembersRouteImport } from './routes/app/plans/$planId/view-members'
 import { Route as AppPlansPlanIdRevenueRouteImport } from './routes/app/plans/$planId/revenue'
 import { Route as AppPlansPlanIdEditRouteImport } from './routes/app/plans/$planId/edit'
@@ -141,6 +143,8 @@ import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes
 import { Route as AppPayrollPeriodsPeriodIdIndexRouteImport } from './routes/app/payroll/periods/$periodId/index'
 import { Route as ApiAccessControlAgentHeartbeatIndexRouteImport } from './routes/api/access-control/agent/heartbeat/index'
 import { Route as AppUsersRolesRoleIdEditRouteImport } from './routes/app/users/roles.$roleId.edit'
+import { Route as AppReceiptsAddonsAddonInvoiceIdDetailsRouteImport } from './routes/app/receipts/addons/$addonInvoiceId/details'
+import { Route as AppPlansAddonsAddonIdEditRouteImport } from './routes/app/plans/addons/$addonId/edit'
 import { Route as AppPayrollSalaryStructuresStructureStructureIdRouteImport } from './routes/app/payroll/salary-structures/structure.$structureId'
 import { Route as AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport } from './routes/app/payroll/salary-structures/employee.$employeeId'
 import { Route as AppPayrollPeriodsPeriodIdEditRouteImport } from './routes/app/payroll/periods/$periodId/edit'
@@ -566,6 +570,11 @@ const AppReportsAttendanceIndexRoute =
     path: '/reports/attendance/',
     getParentRoute: () => AppRouteRoute,
   } as any)
+const AppPlansAddonsIndexRoute = AppPlansAddonsIndexRouteImport.update({
+  id: '/addons/',
+  path: '/addons/',
+  getParentRoute: () => AppPlansRouteRoute,
+} as any)
 const AppPayrollSalaryStructuresIndexRoute =
   AppPayrollSalaryStructuresIndexRouteImport.update({
     id: '/',
@@ -631,6 +640,11 @@ const AppReceiptsReceiptIdDetailsRoute =
     path: '/$receiptId/details',
     getParentRoute: () => AppReceiptsRouteRoute,
   } as any)
+const AppPlansAddonsNewRoute = AppPlansAddonsNewRouteImport.update({
+  id: '/addons/new',
+  path: '/addons/new',
+  getParentRoute: () => AppPlansRouteRoute,
+} as any)
 const AppPlansPlanIdViewMembersRoute =
   AppPlansPlanIdViewMembersRouteImport.update({
     id: '/$planId/view-members',
@@ -860,6 +874,18 @@ const AppUsersRolesRoleIdEditRoute = AppUsersRolesRoleIdEditRouteImport.update({
   path: '/$roleId/edit',
   getParentRoute: () => AppUsersRolesRouteRoute,
 } as any)
+const AppReceiptsAddonsAddonInvoiceIdDetailsRoute =
+  AppReceiptsAddonsAddonInvoiceIdDetailsRouteImport.update({
+    id: '/addons/$addonInvoiceId/details',
+    path: '/addons/$addonInvoiceId/details',
+    getParentRoute: () => AppReceiptsRouteRoute,
+  } as any)
+const AppPlansAddonsAddonIdEditRoute =
+  AppPlansAddonsAddonIdEditRouteImport.update({
+    id: '/addons/$addonId/edit',
+    path: '/addons/$addonId/edit',
+    getParentRoute: () => AppPlansRouteRoute,
+  } as any)
 const AppPayrollSalaryStructuresStructureStructureIdRoute =
   AppPayrollSalaryStructuresStructureStructureIdRouteImport.update({
     id: '/structure/$structureId',
@@ -1035,6 +1061,7 @@ export interface FileRoutesByFullPath {
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
+  '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
@@ -1047,6 +1074,7 @@ export interface FileRoutesByFullPath {
   '/app/payroll/periods/': typeof AppPayrollPeriodsIndexRoute
   '/app/payroll/salary-advances/': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
+  '/app/plans/addons/': typeof AppPlansAddonsIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
   '/app/reports/human-resources/': typeof AppReportsHumanResourcesIndexRoute
@@ -1061,6 +1089,8 @@ export interface FileRoutesByFullPath {
   '/app/payroll/periods/$periodId/edit': typeof AppPayrollPeriodsPeriodIdEditRoute
   '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
   '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
+  '/app/plans/addons/$addonId/edit': typeof AppPlansAddonsAddonIdEditRoute
+  '/app/receipts/addons/$addonInvoiceId/details': typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/payroll/periods/$periodId/': typeof AppPayrollPeriodsPeriodIdIndexRoute
@@ -1160,6 +1190,7 @@ export interface FileRoutesByTo {
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
+  '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
@@ -1172,6 +1203,7 @@ export interface FileRoutesByTo {
   '/app/payroll/periods': typeof AppPayrollPeriodsIndexRoute
   '/app/payroll/salary-advances': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresIndexRoute
+  '/app/plans/addons': typeof AppPlansAddonsIndexRoute
   '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance': typeof AppReportsFinanceIndexRoute
   '/app/reports/human-resources': typeof AppReportsHumanResourcesIndexRoute
@@ -1186,6 +1218,8 @@ export interface FileRoutesByTo {
   '/app/payroll/periods/$periodId/edit': typeof AppPayrollPeriodsPeriodIdEditRoute
   '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
   '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
+  '/app/plans/addons/$addonId/edit': typeof AppPlansAddonsAddonIdEditRoute
+  '/app/receipts/addons/$addonInvoiceId/details': typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/payroll/periods/$periodId': typeof AppPayrollPeriodsPeriodIdIndexRoute
@@ -1308,6 +1342,7 @@ export interface FileRoutesById {
   '/app/plans/$planId/edit': typeof AppPlansPlanIdEditRoute
   '/app/plans/$planId/revenue': typeof AppPlansPlanIdRevenueRoute
   '/app/plans/$planId/view-members': typeof AppPlansPlanIdViewMembersRoute
+  '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
@@ -1320,6 +1355,7 @@ export interface FileRoutesById {
   '/app/payroll/periods/': typeof AppPayrollPeriodsIndexRoute
   '/app/payroll/salary-advances/': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
+  '/app/plans/addons/': typeof AppPlansAddonsIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
   '/app/reports/human-resources/': typeof AppReportsHumanResourcesIndexRoute
@@ -1334,6 +1370,8 @@ export interface FileRoutesById {
   '/app/payroll/periods/$periodId/edit': typeof AppPayrollPeriodsPeriodIdEditRoute
   '/app/payroll/salary-structures/employee/$employeeId': typeof AppPayrollSalaryStructuresEmployeeEmployeeIdRoute
   '/app/payroll/salary-structures/structure/$structureId': typeof AppPayrollSalaryStructuresStructureStructureIdRoute
+  '/app/plans/addons/$addonId/edit': typeof AppPlansAddonsAddonIdEditRoute
+  '/app/receipts/addons/$addonInvoiceId/details': typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/payroll/periods/$periodId/': typeof AppPayrollPeriodsPeriodIdIndexRoute
@@ -1456,6 +1494,7 @@ export interface FileRouteTypes {
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
+    | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
@@ -1468,6 +1507,7 @@ export interface FileRouteTypes {
     | '/app/payroll/periods/'
     | '/app/payroll/salary-advances/'
     | '/app/payroll/salary-structures/'
+    | '/app/plans/addons/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
     | '/app/reports/human-resources/'
@@ -1482,6 +1522,8 @@ export interface FileRouteTypes {
     | '/app/payroll/periods/$periodId/edit'
     | '/app/payroll/salary-structures/employee/$employeeId'
     | '/app/payroll/salary-structures/structure/$structureId'
+    | '/app/plans/addons/$addonId/edit'
+    | '/app/receipts/addons/$addonInvoiceId/details'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
     | '/app/payroll/periods/$periodId/'
@@ -1581,6 +1623,7 @@ export interface FileRouteTypes {
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
+    | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
@@ -1593,6 +1636,7 @@ export interface FileRouteTypes {
     | '/app/payroll/periods'
     | '/app/payroll/salary-advances'
     | '/app/payroll/salary-structures'
+    | '/app/plans/addons'
     | '/app/reports/attendance'
     | '/app/reports/finance'
     | '/app/reports/human-resources'
@@ -1607,6 +1651,8 @@ export interface FileRouteTypes {
     | '/app/payroll/periods/$periodId/edit'
     | '/app/payroll/salary-structures/employee/$employeeId'
     | '/app/payroll/salary-structures/structure/$structureId'
+    | '/app/plans/addons/$addonId/edit'
+    | '/app/receipts/addons/$addonInvoiceId/details'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat'
     | '/app/payroll/periods/$periodId'
@@ -1728,6 +1774,7 @@ export interface FileRouteTypes {
     | '/app/plans/$planId/edit'
     | '/app/plans/$planId/revenue'
     | '/app/plans/$planId/view-members'
+    | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
@@ -1740,6 +1787,7 @@ export interface FileRouteTypes {
     | '/app/payroll/periods/'
     | '/app/payroll/salary-advances/'
     | '/app/payroll/salary-structures/'
+    | '/app/plans/addons/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
     | '/app/reports/human-resources/'
@@ -1754,6 +1802,8 @@ export interface FileRouteTypes {
     | '/app/payroll/periods/$periodId/edit'
     | '/app/payroll/salary-structures/employee/$employeeId'
     | '/app/payroll/salary-structures/structure/$structureId'
+    | '/app/plans/addons/$addonId/edit'
+    | '/app/receipts/addons/$addonInvoiceId/details'
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
     | '/app/payroll/periods/$periodId/'
@@ -2362,6 +2412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsAttendanceIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/plans/addons/': {
+      id: '/app/plans/addons/'
+      path: '/addons'
+      fullPath: '/app/plans/addons/'
+      preLoaderRoute: typeof AppPlansAddonsIndexRouteImport
+      parentRoute: typeof AppPlansRouteRoute
+    }
     '/app/payroll/salary-structures/': {
       id: '/app/payroll/salary-structures/'
       path: '/'
@@ -2445,6 +2502,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/receipts/$receiptId/details'
       preLoaderRoute: typeof AppReceiptsReceiptIdDetailsRouteImport
       parentRoute: typeof AppReceiptsRouteRoute
+    }
+    '/app/plans/addons/new': {
+      id: '/app/plans/addons/new'
+      path: '/addons/new'
+      fullPath: '/app/plans/addons/new'
+      preLoaderRoute: typeof AppPlansAddonsNewRouteImport
+      parentRoute: typeof AppPlansRouteRoute
     }
     '/app/plans/$planId/view-members': {
       id: '/app/plans/$planId/view-members'
@@ -2725,6 +2789,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/users/roles/$roleId/edit'
       preLoaderRoute: typeof AppUsersRolesRoleIdEditRouteImport
       parentRoute: typeof AppUsersRolesRouteRoute
+    }
+    '/app/receipts/addons/$addonInvoiceId/details': {
+      id: '/app/receipts/addons/$addonInvoiceId/details'
+      path: '/addons/$addonInvoiceId/details'
+      fullPath: '/app/receipts/addons/$addonInvoiceId/details'
+      preLoaderRoute: typeof AppReceiptsAddonsAddonInvoiceIdDetailsRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
+    }
+    '/app/plans/addons/$addonId/edit': {
+      id: '/app/plans/addons/$addonId/edit'
+      path: '/addons/$addonId/edit'
+      fullPath: '/app/plans/addons/$addonId/edit'
+      preLoaderRoute: typeof AppPlansAddonsAddonIdEditRouteImport
+      parentRoute: typeof AppPlansRouteRoute
     }
     '/app/payroll/salary-structures/structure/$structureId': {
       id: '/app/payroll/salary-structures/structure/$structureId'
@@ -3135,6 +3213,9 @@ interface AppPlansRouteRouteChildren {
   AppPlansPlanIdEditRoute: typeof AppPlansPlanIdEditRoute
   AppPlansPlanIdRevenueRoute: typeof AppPlansPlanIdRevenueRoute
   AppPlansPlanIdViewMembersRoute: typeof AppPlansPlanIdViewMembersRoute
+  AppPlansAddonsNewRoute: typeof AppPlansAddonsNewRoute
+  AppPlansAddonsIndexRoute: typeof AppPlansAddonsIndexRoute
+  AppPlansAddonsAddonIdEditRoute: typeof AppPlansAddonsAddonIdEditRoute
 }
 
 const AppPlansRouteRouteChildren: AppPlansRouteRouteChildren = {
@@ -3143,6 +3224,9 @@ const AppPlansRouteRouteChildren: AppPlansRouteRouteChildren = {
   AppPlansPlanIdEditRoute: AppPlansPlanIdEditRoute,
   AppPlansPlanIdRevenueRoute: AppPlansPlanIdRevenueRoute,
   AppPlansPlanIdViewMembersRoute: AppPlansPlanIdViewMembersRoute,
+  AppPlansAddonsNewRoute: AppPlansAddonsNewRoute,
+  AppPlansAddonsIndexRoute: AppPlansAddonsIndexRoute,
+  AppPlansAddonsAddonIdEditRoute: AppPlansAddonsAddonIdEditRoute,
 }
 
 const AppPlansRouteRouteWithChildren = AppPlansRouteRoute._addFileChildren(
@@ -3153,12 +3237,15 @@ interface AppReceiptsRouteRouteChildren {
   AppReceiptsNewRoute: typeof AppReceiptsNewRoute
   AppReceiptsIndexRoute: typeof AppReceiptsIndexRoute
   AppReceiptsReceiptIdDetailsRoute: typeof AppReceiptsReceiptIdDetailsRoute
+  AppReceiptsAddonsAddonInvoiceIdDetailsRoute: typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
 }
 
 const AppReceiptsRouteRouteChildren: AppReceiptsRouteRouteChildren = {
   AppReceiptsNewRoute: AppReceiptsNewRoute,
   AppReceiptsIndexRoute: AppReceiptsIndexRoute,
   AppReceiptsReceiptIdDetailsRoute: AppReceiptsReceiptIdDetailsRoute,
+  AppReceiptsAddonsAddonInvoiceIdDetailsRoute:
+    AppReceiptsAddonsAddonInvoiceIdDetailsRoute,
 }
 
 const AppReceiptsRouteRouteWithChildren =

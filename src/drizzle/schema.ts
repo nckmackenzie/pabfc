@@ -1,4 +1,5 @@
 export * from "@/drizzle/schemas/access-control";
+export * from "@/drizzle/schemas/addons";
 export * from "@/drizzle/schemas/attendance";
 export * from "@/drizzle/schemas/audit-logs";
 export * from "@/drizzle/schemas/auth";

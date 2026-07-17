@@ -17,6 +17,27 @@ export const paymentSchema = z.object({
 	accountReference: z.string().optional(),
 	discountType: z.enum(DISCOUNT_TYPES),
 	discount: z.number().nullish(),
+	// Optional addons charged alongside the membership payment. VAT-exempt and
+	// snapshotted into addon_invoice_lines at creation time.
+	addonIds: z.array(z.string().min(1)).optional(),
+});
+
+// "Addon Only" mode — no membership plan involved. The member selector remains
+// (drives the billing member and, for perMember addons, the multiplier), plus an
+// independent period selector.
+export const addonOnlyPaymentSchema = z.object({
+	memberIds: z
+		.array(z.string().min(1))
+		.min(1, { error: "At least one member is required" }),
+	addonIds: z
+		.array(z.string().min(1))
+		.min(1, { error: "At least one addon is required" }),
+	paymentDate: z.iso.date({ error: "Payment Date is required" }),
+	numberOfPeriods: z
+		.number()
+		.int({ error: "Must be a whole number" })
+		.min(1, { error: "Must be at least 1" }),
+	reference: z.string().min(1, { error: "Payment reference is required" }),
 });
 
 export const paymentsSearchValidateSchema = z.object({
@@ -30,6 +51,7 @@ export const paymentsSearchValidateSchema = z.object({
 });
 
 export type PaymentSchema = z.infer<typeof paymentSchema>;
+export type AddonOnlyPaymentSchema = z.infer<typeof addonOnlyPaymentSchema>;
 export type PaymentsSearchValidateSchema = z.infer<
 	typeof paymentsSearchValidateSchema
 >;

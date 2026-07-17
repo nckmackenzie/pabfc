@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
+	getMembershipTaxType,
 	getPayment,
 	getPayments,
 } from "@/features/receipts/services/payments.queries.api";
@@ -17,5 +18,10 @@ export const paymentsQueries = {
 		queryOptions({
 			queryKey: [...paymentsQueries.all, "detail", id],
 			queryFn: () => getPayment({ data: id }),
+		}),
+	membershipTaxType: () =>
+		queryOptions({
+			queryKey: [...paymentsQueries.all, "membership-tax-type"],
+			queryFn: () => getMembershipTaxType(),
 		}),
 };

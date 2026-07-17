@@ -3,6 +3,8 @@ import {
 	BasePageComponent,
 	BasePageLoadingSkeleton,
 } from "@/components/ui/base-page";
+import { PackageIcon } from "@/components/ui/icons";
+import { ButtonLink } from "@/components/ui/links";
 import { PlansTable } from "@/features/plans/components/plans-table";
 import { useFilters } from "@/hooks/use-filters";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -37,6 +39,15 @@ function RouteComponent() {
 			defaultSearchValue={filters.q}
 			onSearch={(val) => setFilters({ q: val })}
 			createPermissions={["plans:create"]}
+			extraActionButtons={
+				<ButtonLink
+					variant="outline"
+					path="/app/plans/addons"
+					icon={<PackageIcon />}
+				>
+					Manage Addons
+				</ButtonLink>
+			}
 		>
 			<PlansTable />
 		</BasePageComponent>
