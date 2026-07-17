@@ -47,7 +47,7 @@ export function AddonForm({
 					onSuccess: () => {
 						form.reset();
 					},
-				},
+				}
 			);
 		},
 	});
@@ -72,11 +72,7 @@ export function AddonForm({
 		<div className="space-y-6">
 			<PageHeader
 				title={addon ? "Edit Addon" : "Create Addon"}
-				description={
-					addon
-						? "Update the details of the addon"
-						: "Provide the details of the addon"
-				}
+				description={addon ? "Update the details of the addon" : "Provide the details of the addon"}
 			/>
 			<form
 				onSubmit={(e) => {
@@ -86,13 +82,7 @@ export function AddonForm({
 			>
 				<FieldGroup className="grid md:grid-cols-2 gap-4">
 					<form.AppField name="name">
-						{(field) => (
-							<field.Input
-								label="Addon Name"
-								placeholder="Enter addon name"
-								required
-							/>
-						)}
+						{(field) => <field.Input label="Addon Name" placeholder="Enter addon name" required />}
 					</form.AppField>
 					<form.AppField name="amount">
 						{(field) => (
@@ -116,25 +106,17 @@ export function AddonForm({
 						</div>
 					)}
 					<form.AppField name="description">
-						{(field) => (
-							<field.Textarea
-								label="Description"
-								placeholder="Enter description"
-							/>
-						)}
+						{(field) => <field.Textarea label="Description" placeholder="Enter description" />}
 					</form.AppField>
 					<form.AppField name="revenueAccountId">
 						{(field) => (
 							<field.Select label="Revenue Account" required>
 								{accounts
 									.filter(
-										(account) => account.isActive && account.isPosting,
+										(account) => account.isActive && account.isPosting && account.type === "revenue"
 									)
 									.map((account) => (
-										<SelectItem
-											key={account.id.toString()}
-											value={account.id.toString()}
-										>
+										<SelectItem key={account.id.toString()} value={account.id.toString()}>
 											{account.name}
 										</SelectItem>
 									))}
