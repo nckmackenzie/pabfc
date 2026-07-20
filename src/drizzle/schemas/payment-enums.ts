@@ -25,6 +25,7 @@ export const paymentStatuses = [
 	"failed",
 	"cancelled",
 	"refunded",
+	"voided",
 ] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
 export const paymentStatusEnum = pgEnum("payment_status", paymentStatuses);
