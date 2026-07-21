@@ -16,10 +16,7 @@ import {
 } from "@/drizzle/schema";
 import { dateFormat, toBig, toDecimalString } from "@/lib/helpers";
 import { nextAddonInvoiceNo } from "@/features/addons/services/addon-invoice.helpers";
-import {
-	type ComputedAddonLine,
-	sumAddonSubtotal,
-} from "@/features/addons/lib/helpers";
+import { type ComputedAddonLine, sumAddonSubtotal } from "@/features/addons/lib/helpers";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
 import {
 	computeMembershipEndDate,
@@ -38,11 +35,12 @@ export type Transaction = PgTransaction<
 
 type MembershipPayment = Omit<
 	typeof payments.$inferSelect,
-	"createdAt" | "updatedAt" | "paymentDate"
+	"createdAt" | "updatedAt" | "paymentDate" | "voidedAt"
 > & {
 	createdAt: Date | string;
 	updatedAt: Date | string;
 	paymentDate: Date | string;
+	voidedAt: Date | string | null;
 };
 
 type FinalizeMembershipPaymentParams = {
@@ -145,9 +143,7 @@ export async function finalizeMembershipPayment({
 	// Credits (membership revenue, VAT, combined addon revenue) then the bank debit.
 	const lines = buildReceiptJournalLines({
 		membershipRevenue: { accountId: plan.revenueAccountId, amount: payment.lineTotal },
-		vat: hasTax
-			? { accountId: settings!.billing!.vatAccountId!, amount: payment.taxAmount }
-			: null,
+		vat: hasTax ? { accountId: settings!.billing!.vatAccountId!, amount: payment.taxAmount } : null,
 		addonLines: hasAddons ? addonLines : [],
 		bankAccountId: bankAccount,
 		bankAmount: payment.totalAmount,

@@ -2,9 +2,7 @@ import { z } from "zod";
 import { DISCOUNT_TYPES } from "@/drizzle/schema";
 
 export const paymentSchema = z.object({
-	memberIds: z
-		.array(z.string().min(1))
-		.min(1, { error: "At least one member is required" }),
+	memberIds: z.array(z.string().min(1)).min(1, { error: "At least one member is required" }),
 	planId: z.string().min(1, { error: "Plan is required" }),
 	paymentDate: z.iso.date({ error: "Payment Date is required" }),
 	startDate: z.iso.date({ error: "Start Date is required" }),
@@ -26,12 +24,8 @@ export const paymentSchema = z.object({
 // (drives the billing member and, for perMember addons, the multiplier), plus an
 // independent period selector.
 export const addonOnlyPaymentSchema = z.object({
-	memberIds: z
-		.array(z.string().min(1))
-		.min(1, { error: "At least one member is required" }),
-	addonIds: z
-		.array(z.string().min(1))
-		.min(1, { error: "At least one addon is required" }),
+	memberIds: z.array(z.string().min(1)).min(1, { error: "At least one member is required" }),
+	addonIds: z.array(z.string().min(1)).min(1, { error: "At least one addon is required" }),
 	paymentDate: z.iso.date({ error: "Payment Date is required" }),
 	numberOfPeriods: z
 		.number()
@@ -40,18 +34,19 @@ export const addonOnlyPaymentSchema = z.object({
 	reference: z.string().min(1, { error: "Payment reference is required" }),
 });
 
+export const voidPaymentSchema = z.object({
+	paymentId: z.string().min(1, { error: "Payment is required" }),
+	voidReason: z.string().trim().min(10, { error: "Reason must be at least 10 characters" }),
+});
+
 export const paymentsSearchValidateSchema = z.object({
 	q: z.string().optional().catch(""),
 	payment: z.string().optional().catch(""),
 	channel: z.enum(["all", "portal", "staff"]).optional().catch("all"),
-	status: z
-		.enum(["all", "completed", "pending", "refunded", "failed"])
-		.optional()
-		.catch("all"),
+	status: z.enum(["all", "completed", "pending", "refunded", "failed"]).optional().catch("all"),
 });
 
 export type PaymentSchema = z.infer<typeof paymentSchema>;
 export type AddonOnlyPaymentSchema = z.infer<typeof addonOnlyPaymentSchema>;
-export type PaymentsSearchValidateSchema = z.infer<
-	typeof paymentsSearchValidateSchema
->;
+export type VoidPaymentSchema = z.infer<typeof voidPaymentSchema>;
+export type PaymentsSearchValidateSchema = z.infer<typeof paymentsSearchValidateSchema>;

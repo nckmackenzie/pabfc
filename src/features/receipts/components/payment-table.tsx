@@ -7,33 +7,19 @@ import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { CheckIcon, LoaderIcon, ResetIcon, XIcon } from "@/components/ui/icons";
+import { PermissionGate } from "@/components/ui/permission-gate";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MemberAvatar } from "@/features/members/components/member-table";
+import { VoidPaymentModal } from "@/features/receipts/components/void-payment-modal";
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { useFilters } from "@/hooks/use-filters";
+import { useModal } from "@/integrations/modal-provider";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 export function ReceiptsTable() {
 	const { filters } = useFilters(getRouteApi("/app/receipts/").id);
-	// const queryClient = useQueryClient();
 	const { data: payments } = useSuspenseQuery(paymentsQueries.list(filters));
-	// const { data: freshPayments } = useQuery({
-	// 	...paymentsQueries.list(filters),
-	// 	enabled: !!filters.payment,
-	// 	refetchInterval: 2000,
-	// });
-
-	// useEffect(() => {
-	// 	if (freshPayments && filters.payment) {
-	// 		const payment = freshPayments.find(
-	// 			(payment) => payment.id === filters.payment,
-	// 		);
-	// 		if (payment?.status === "completed") {
-	// 			queryClient.invalidateQueries({ queryKey: ["receipts"] });
-	// 			setFilters({ payment: undefined });
-	// 		}
-	// 	}
-	// }, [freshPayments, filters.payment, setFilters, queryClient]);
 
 	const columns: Array<ColumnDef<(typeof payments)[0]>> = [
 		{
@@ -99,7 +85,9 @@ export function ReceiptsTable() {
 								? "info"
 								: status === "refunded"
 									? "warning"
-									: "destructive"
+									: status === "voided"
+										? "destructive"
+										: "secondary"
 					}
 					className="capitalize"
 				>
@@ -129,18 +117,37 @@ export function ReceiptsTable() {
 								<ViewDetailsAction />
 							</Link>
 						) : (
-							<Link
-								to="/app/receipts/$receiptId/details"
-								params={{ receiptId: row.original.id }}
-							>
+							<Link to="/app/receipts/$receiptId/details" params={{ receiptId: row.original.id }}>
 								<ViewDetailsAction />
 							</Link>
 						)}
 					</DropdownMenuItem>
+					{row.original.status === "completed" && row.original.type !== "addon" && (
+						<PermissionGate
+							permission="receipts:void"
+							loadingComponent={<Skeleton className="h-4 w-32" />}
+						>
+							<VoidReceiptMenuItem paymentId={row.original.id} />
+						</PermissionGate>
+					)}
 				</DatatableActions>
 			),
 		},
 	];
 
 	return <DataTable columns={columns} data={payments} />;
+}
+
+function VoidReceiptMenuItem({ paymentId }: { paymentId: string }) {
+	const { setOpen } = useModal();
+
+	return (
+		<DropdownMenuItem
+			onSelect={() => setOpen(<VoidPaymentModal paymentId={paymentId} />)}
+			className="text-destructive"
+		>
+			<XIcon className="size-4" />
+			<span className="-ml-1">Void</span>
+		</DropdownMenuItem>
+	);
 }

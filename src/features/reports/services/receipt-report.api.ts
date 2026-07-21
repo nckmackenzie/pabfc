@@ -16,10 +16,11 @@ export const getReceiptReport = createServerFn()
 
 		const { dateRange, reportType, memberId } = data;
 
-		const filters: Array<SQL> = [];
+		// Only completed payments belong in this report — excludes voided, pending,
+		// failed, cancelled, and refunded.
+		const filters: Array<SQL> = [eq(payments.status, "completed")];
 
-		if (!dateRange.from || !dateRange.to)
-			throw new ApplicationError("Date range is required");
+		if (!dateRange.from || !dateRange.to) throw new ApplicationError("Date range is required");
 
 		const { from, to } = normalizeDateRange(dateRange.from, dateRange.to, true);
 
@@ -52,12 +53,6 @@ export const getReceiptReport = createServerFn()
 			})
 			.from(payments)
 			.innerJoin(members, eq(payments.memberId, members.id))
-			.where(
-				and(
-					gte(payments.paymentDate, from),
-					lte(payments.paymentDate, to),
-					...filters,
-				),
-			)
+			.where(and(gte(payments.paymentDate, from), lte(payments.paymentDate, to), ...filters))
 			.orderBy(asc(payments.paymentDate));
 	});
