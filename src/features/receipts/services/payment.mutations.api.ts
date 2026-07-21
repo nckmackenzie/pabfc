@@ -499,7 +499,7 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 					await tx
 						.update(payments)
 						.set({ status: "voided", voidedAt: now, voidedByUserId: userId, voidReason })
-						.where(eq(payments.id, payment.id));
+						.where(and(eq(payments.id, payment.id), eq(payments.status, "completed")));
 
 					await tx
 						.update(addonInvoices)
