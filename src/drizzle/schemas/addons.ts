@@ -60,6 +60,9 @@ export const addonInvoices = pgTable("addon_invoices", {
 	reference: varchar("reference", { length: 50 }),
 	notes: text("notes"),
 	createdByUserId: varchar("created_by_user_id"),
+	voidedAt: timestamp("voided_at", { withTimezone: true }),
+	voidedByUserId: varchar("voided_by_user_id"),
+	voidReason: text("void_reason"),
 	createdAt,
 	updatedAt,
 });

@@ -14,28 +14,16 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
-import {
-	memberMemberships,
-	members,
-	membershipPlans,
-} from "@/drizzle/schemas/member";
+import { memberMemberships, members, membershipPlans } from "@/drizzle/schemas/member";
 import { addonInvoices } from "./addons";
 import { users } from "./auth";
 import { ledgerAccounts } from "./chart-of-accounts";
-import {
-	paymentChannelEnum,
-	paymentMethodEnum,
-	paymentStatusEnum,
-} from "./payment-enums";
+import { paymentChannelEnum, paymentMethodEnum, paymentStatusEnum } from "./payment-enums";
 import { vatTypeEnum } from "./settings";
 
 // Re-exported so existing `@/drizzle/schema` barrel consumers keep importing these
 // from the same place after the enums moved to payment-enums.ts.
-export {
-	paymentChannelEnum,
-	paymentMethodEnum,
-	paymentStatusEnum,
-} from "./payment-enums";
+export { paymentChannelEnum, paymentMethodEnum, paymentStatusEnum } from "./payment-enums";
 
 export const DISCOUNT_TYPES = ["none", "amount", "percentage"] as const;
 export type DiscountType = (typeof DISCOUNT_TYPES)[number];
@@ -72,9 +60,7 @@ export const customerInvoices = pgTable("customer_invoices", {
 		precision: 18,
 		scale: 2,
 	}).notNull(),
-	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 })
-		.notNull()
-		.default("0"),
+	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 }).notNull().default("0"),
 	totalAmount: numeric("total_amount", { precision: 18, scale: 2 }).notNull(),
 	balanceAmount: numeric("balance_amount", {
 		precision: 18,
@@ -88,16 +74,13 @@ export const customerInvoices = pgTable("customer_invoices", {
 	updatedAt,
 });
 
-export const customerInvoiceRelations = relations(
-	customerInvoices,
-	({ one, many }) => ({
-		member: one(members, {
-			fields: [customerInvoices.memberId],
-			references: [members.id],
-		}),
-		lines: many(customerInvoiceLines),
+export const customerInvoiceRelations = relations(customerInvoices, ({ one, many }) => ({
+	member: one(members, {
+		fields: [customerInvoices.memberId],
+		references: [members.id],
 	}),
-);
+	lines: many(customerInvoiceLines),
+}));
 
 export const customerInvoiceLines = pgTable("customer_invoice_lines", {
 	id: serial("id").primaryKey(),
@@ -108,14 +91,10 @@ export const customerInvoiceLines = pgTable("customer_invoice_lines", {
 	description: text("description").notNull(),
 	planId: varchar("plan_id").references(() => membershipPlans.id),
 	membershipId: varchar("membership_id").references(() => memberMemberships.id),
-	quantity: numeric("quantity", { precision: 18, scale: 2 })
-		.notNull()
-		.default("1"),
+	quantity: numeric("quantity", { precision: 18, scale: 2 }).notNull().default("1"),
 	unitPrice: numeric("unit_price", { precision: 18, scale: 2 }).notNull(),
 	lineSubtotal: numeric("line_subtotal", { precision: 18, scale: 2 }).notNull(),
-	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 })
-		.notNull()
-		.default("0"),
+	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 }).notNull().default("0"),
 	lineTotal: numeric("line_total", { precision: 18, scale: 2 }).notNull(),
 	revenueAccountId: integer("revenue_account_id")
 		.notNull()
@@ -123,37 +102,32 @@ export const customerInvoiceLines = pgTable("customer_invoice_lines", {
 	taxAccountId: integer("tax_account_id").references(() => ledgerAccounts.id),
 });
 
-export const customerInvoiceLineRelations = relations(
-	customerInvoiceLines,
-	({ one }) => ({
-		invoice: one(customerInvoices, {
-			fields: [customerInvoiceLines.invoiceId],
-			references: [customerInvoices.id],
-		}),
-		plan: one(membershipPlans, {
-			fields: [customerInvoiceLines.planId],
-			references: [membershipPlans.id],
-		}),
-		membership: one(memberMemberships, {
-			fields: [customerInvoiceLines.membershipId],
-			references: [memberMemberships.id],
-		}),
-		revenueAccount: one(ledgerAccounts, {
-			fields: [customerInvoiceLines.revenueAccountId],
-			references: [ledgerAccounts.id],
-		}),
-		taxAccount: one(ledgerAccounts, {
-			fields: [customerInvoiceLines.taxAccountId],
-			references: [ledgerAccounts.id],
-		}),
+export const customerInvoiceLineRelations = relations(customerInvoiceLines, ({ one }) => ({
+	invoice: one(customerInvoices, {
+		fields: [customerInvoiceLines.invoiceId],
+		references: [customerInvoices.id],
 	}),
-);
+	plan: one(membershipPlans, {
+		fields: [customerInvoiceLines.planId],
+		references: [membershipPlans.id],
+	}),
+	membership: one(memberMemberships, {
+		fields: [customerInvoiceLines.membershipId],
+		references: [memberMemberships.id],
+	}),
+	revenueAccount: one(ledgerAccounts, {
+		fields: [customerInvoiceLines.revenueAccountId],
+		references: [ledgerAccounts.id],
+	}),
+	taxAccount: one(ledgerAccounts, {
+		fields: [customerInvoiceLines.taxAccountId],
+		references: [ledgerAccounts.id],
+	}),
+}));
 
 export const payments = pgTable("payments", {
 	id,
-	paymentDate: timestamp("payment_date", { withTimezone: true })
-		.notNull()
-		.defaultNow(),
+	paymentDate: timestamp("payment_date", { withTimezone: true }).notNull().defaultNow(),
 	memberId: varchar("member_id")
 		.notNull()
 		.references(() => members.id),
@@ -164,14 +138,10 @@ export const payments = pgTable("payments", {
 	numberOfPeriods: integer("number_of_periods").notNull().default(1),
 	discountType: discountTypeEnum("discount_type").notNull().default("none"),
 	discount: numeric("discount", { precision: 18, scale: 2 }),
-	discountedAmount: numeric("discount_amount", { precision: 18, scale: 2 })
-		.notNull()
-		.default("0"),
+	discountedAmount: numeric("discount_amount", { precision: 18, scale: 2 }).notNull().default("0"),
 	lineTotal: numeric("line_total", { precision: 18, scale: 2 }).notNull(),
 	vatType: vatTypeEnum("vat_type").notNull().default("none"),
-	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 })
-		.notNull()
-		.default("0"),
+	taxAmount: numeric("tax_amount", { precision: 18, scale: 2 }).notNull().default("0"),
 	totalAmount: numeric("total_amount", { precision: 18, scale: 2 }).notNull(),
 	currency: varchar("currency", { length: 10 }).notNull().default("KES"),
 	status: paymentStatusEnum("status").notNull().default("pending"),
@@ -179,8 +149,11 @@ export const payments = pgTable("payments", {
 	channel: paymentChannelEnum("channel").notNull(),
 	reference: varchar("reference", { length: 50 }),
 	externalReference: varchar("external_reference", { length: 100 }),
-	createdByUserId: varchar("created_by_user_id"),
+	createdByUserId: varchar("created_by_user_id").references(() => users.id),
 	notes: text("notes"),
+	voidedAt: timestamp("voided_at", { withTimezone: true }),
+	voidedByUserId: varchar("voided_by_user_id").references(() => users.id),
+	voidReason: text("void_reason"),
 	createdAt,
 	updatedAt,
 });
@@ -199,6 +172,10 @@ export const paymentRelations = relations(payments, ({ one, many }) => ({
 		fields: [payments.createdByUserId],
 		references: [users.id],
 	}),
+	voidedByUser: one(users, {
+		fields: [payments.voidedByUserId],
+		references: [users.id],
+	}),
 	addonInvoices: many(addonInvoices),
 }));
 
@@ -215,12 +192,9 @@ export const paymentMembers = pgTable(
 		createdAt,
 	},
 	(table) => [
-		uniqueIndex("uq_payment_members_payment_member").on(
-			table.paymentId,
-			table.memberId,
-		),
+		uniqueIndex("uq_payment_members_payment_member").on(table.paymentId, table.memberId),
 		index("idx_payment_members_member_id").on(table.memberId),
-	],
+	]
 );
 
 export const paymentMemberRelations = relations(paymentMembers, ({ one }) => ({
@@ -248,19 +222,16 @@ export const paymentApplications = pgTable("payment_applications", {
 	}).notNull(),
 });
 
-export const paymentApplicationRelations = relations(
-	paymentApplications,
-	({ one }) => ({
-		payment: one(payments, {
-			fields: [paymentApplications.paymentId],
-			references: [payments.id],
-		}),
-		invoice: one(customerInvoices, {
-			fields: [paymentApplications.invoiceId],
-			references: [customerInvoices.id],
-		}),
+export const paymentApplicationRelations = relations(paymentApplications, ({ one }) => ({
+	payment: one(payments, {
+		fields: [paymentApplications.paymentId],
+		references: [payments.id],
 	}),
-);
+	invoice: one(customerInvoices, {
+		fields: [paymentApplications.invoiceId],
+		references: [customerInvoices.id],
+	}),
+}));
 
 export const mpesaStkRequests = pgTable("mpesa_stk_requests", {
 	id: serial("id").primaryKey(),

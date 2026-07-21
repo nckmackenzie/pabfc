@@ -8,12 +8,14 @@ import {
 	addonInvoices,
 	addons,
 	bankAccounts,
+	bankPostings,
 	ledgerAccounts,
 	memberMemberships,
 	members,
 	mpesaStkRequests,
 	paymentMembers,
 	payments,
+	users,
 } from "@/drizzle/schema";
 import { nextAddonInvoiceNo } from "@/features/addons/services/addon-invoice.helpers";
 import {
@@ -27,10 +29,15 @@ import {
 	type Transaction,
 } from "@/features/receipts/services/membership-payment-finalizer";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
+import { buildVoidReversalJournalLines, checkVoidEligibility } from "@/features/receipts/lib/void";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { createBankingEntry } from "@/services/banking";
 import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
-import { addonOnlyPaymentSchema, paymentSchema } from "@/features/receipts/services/schemas";
+import {
+	addonOnlyPaymentSchema,
+	paymentSchema,
+	voidPaymentSchema,
+} from "@/features/receipts/services/schemas";
 import {
 	computeMembershipEndDate,
 	membershipRangeConflicts,
@@ -438,6 +445,115 @@ export const createManualMembershipPaymentFn = createServerFn({
 
 				// The transaction only ever resolves with a success result — every
 				// failure path throws PaymentTransactionError, handled below.
+				return result;
+			} catch (error) {
+				if (error instanceof PaymentTransactionError) {
+					return error.result;
+				}
+				console.log(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Something went wrong.Please try again.",
+				});
+			}
+		}
+	);
+
+export const voidPaymentFn = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator(voidPaymentSchema)
+	.handler(
+		async ({
+			data: { paymentId, voidReason },
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("receipts:void");
+
+			try {
+				const result = await db.transaction(async (tx) => {
+					const eligibility = await checkVoidEligibility(tx, paymentId);
+					if (!eligibility.success) {
+						throw new PaymentTransactionError(eligibility);
+					}
+					const { payment, coveredMembers } = eligibility.data;
+
+					const reversalLinesResult = await buildVoidReversalJournalLines(tx, payment);
+					if (!reversalLinesResult.success) {
+						throw new PaymentTransactionError(reversalLinesResult);
+					}
+					const reversalLines = reversalLinesResult.data;
+
+					const voidingUser = await tx.query.users.findFirst({
+						where: eq(users.id, userId),
+						columns: { name: true },
+					});
+
+					// Member names must be captured above before this delete — the join
+					// table won't be queryable for them afterward.
+					await tx.delete(memberMemberships).where(eq(memberMemberships.paymentId, payment.id));
+					await tx.delete(paymentMembers).where(eq(paymentMembers.paymentId, payment.id));
+
+					const now = new Date();
+					await tx
+						.update(payments)
+						.set({ status: "voided", voidedAt: now, voidedByUserId: userId, voidReason })
+						.where(eq(payments.id, payment.id));
+
+					await tx
+						.update(addonInvoices)
+						.set({ status: "voided", voidedAt: now, voidedByUserId: userId, voidReason })
+						.where(eq(addonInvoices.paymentId, payment.id));
+
+					const memberNames = coveredMembers.map((member) => member.name).join(", ");
+					const description = `VOID REVERSAL — Original receipt #${payment.paymentNo} voided on ${dateFormat(now, "long")} by ${voidingUser?.name ?? "Unknown user"}. Reason: ${voidReason}`;
+
+					await createJournalEntry({
+						entry: {
+							entryDate: dateFormat(now),
+							reference: payment.paymentNo,
+							source: "payment void",
+							sourceId: payment.id,
+							description,
+						},
+						lines: reversalLines,
+						tx,
+					});
+
+					// If the original payment posted a banking entry, mirror it back with
+					// dc flipped — same "mirror the actual entry" principle as the journal.
+					const originalBankPosting = await tx.query.bankPostings.findFirst({
+						where: and(
+							eq(bankPostings.source, "plan payment"),
+							eq(bankPostings.sourceId, payment.id)
+						),
+					});
+					if (originalBankPosting) {
+						await createBankingEntry({
+							tx,
+							entry: {
+								bankId: originalBankPosting.bankId,
+								dc: originalBankPosting.dc === "debit" ? "credit" : "debit",
+								amount: originalBankPosting.amount,
+								reference: originalBankPosting.reference,
+								transactionDate: dateFormat(now),
+								source: "payment void",
+								sourceId: payment.id,
+								narration: description,
+							},
+						});
+					}
+
+					await tx.insert(activityLogs).values({
+						userId,
+						action: "void receipt",
+						description: `Voided receipt ${payment.paymentNo}. Reason: ${voidReason}. Affected member(s): ${memberNames}.`,
+					});
+
+					return success(undefined);
+				});
+
 				return result;
 			} catch (error) {
 				if (error instanceof PaymentTransactionError) {

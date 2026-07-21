@@ -5,6 +5,7 @@ import { Download, RefreshCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CustomAlert } from "@/components/ui/custom-alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReceiptNo } from "@/features/receipts/hooks/use-receipt-no";
 import { GymReceiptPdf } from "./donwloadable-receipt";
@@ -24,17 +25,25 @@ export function PaymentDetails() {
 	const subTotal = currencyFormatter.format(+payment.amount);
 	const periods = payment.numberOfPeriods ?? 1;
 	const unitPrice = currencyFormatter.format(Number(payment.plan?.price ?? 0));
-	const coveredMembers = payment.members.map(({ member }) => member);
+	// Void deletes `paymentMembers` rows, so `payment.members` is empty for a voided
+	// payment — fall back to the billing member (`payment.member`) directly.
+	const coveredMembers =
+		payment.members.length > 0 ? payment.members.map(({ member }) => member) : [payment.member];
+	const statusBadgeVariant =
+		payment.status === "completed"
+			? "success"
+			: payment.status === "pending"
+				? "info"
+				: payment.status === "refunded"
+					? "warning"
+					: payment.status === "voided"
+						? "secondary"
+						: "destructive";
 
 	const addonLines = payment.addonInvoice?.lines ?? [];
-	const addonSubtotalValue = addonLines.reduce(
-		(total, line) => total + Number(line.lineTotal),
-		0,
-	);
+	const addonSubtotalValue = addonLines.reduce((total, line) => total + Number(line.lineTotal), 0);
 	// Line items (membership + addons) sum to this combined subtotal.
-	const combinedSubtotal = currencyFormatter.format(
-		Number(payment.amount) + addonSubtotalValue,
-	);
+	const combinedSubtotal = currencyFormatter.format(Number(payment.amount) + addonSubtotalValue);
 
 	return (
 		<div className="space-y-6">
@@ -46,55 +55,57 @@ export function PaymentDetails() {
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					<Button asChild variant="outline">
-						<PDFDownloadLink
-							document={
-								<GymReceiptPdf
-									data={{
-										receiptNo: payment.paymentNo,
-										date: format(new Date(payment.paymentDate), "MMM d, yyyy"),
-										members: coveredMembers.map((member) => ({
-											name: `${member.firstName} ${member.lastName}`,
-											id: member.memberNo.toString(),
-											address: "",
-										})),
-										paymentMethod: payment.method.replace("_", " ").toUpperCase(),
-										lineItems: [
-											{
-												description: `Membership Fee - ${payment.plan?.name}`,
-												qty: periods,
-												price: periods > 0 ? Number(payment.amount) / periods : 0,
-												amount: Number(payment.amount),
-											},
-											...addonLines.map((line) => ({
-												description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
-												qty: line.numberOfPeriods,
-												price: Number(line.unitAmount),
-												amount: Number(line.lineTotal),
+					{payment.status !== "voided" && (
+						<Button asChild variant="outline">
+							<PDFDownloadLink
+								document={
+									<GymReceiptPdf
+										data={{
+											receiptNo: payment.paymentNo,
+											date: format(new Date(payment.paymentDate), "MMM d, yyyy"),
+											members: coveredMembers.map((member) => ({
+												name: `${member.firstName} ${member.lastName}`,
+												id: member.memberNo.toString(),
+												address: "",
 											})),
-										],
-										subtotal: Number(payment.amount) + addonSubtotalValue,
-										discount: Number(payment.discountedAmount),
-										tax: Number(payment.taxAmount),
-										total: Number(payment.totalAmount),
-									}}
-								/>
-							}
-							fileName={`Receipt-${payment.paymentNo}.pdf`}
-							key={payment.id}
-						>
-							{({ loading }) =>
-								loading ? (
-									"Generating PDF..."
-								) : (
-									<>
-										<Download className="mr-2 h-4 w-4" />
-										Download receipt
-									</>
-								)
-							}
-						</PDFDownloadLink>
-					</Button>
+											paymentMethod: payment.method.replace("_", " ").toUpperCase(),
+											lineItems: [
+												{
+													description: `Membership Fee - ${payment.plan?.name}`,
+													qty: periods,
+													price: periods > 0 ? Number(payment.amount) / periods : 0,
+													amount: Number(payment.amount),
+												},
+												...addonLines.map((line) => ({
+													description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
+													qty: line.numberOfPeriods,
+													price: Number(line.unitAmount),
+													amount: Number(line.lineTotal),
+												})),
+											],
+											subtotal: Number(payment.amount) + addonSubtotalValue,
+											discount: Number(payment.discountedAmount),
+											tax: Number(payment.taxAmount),
+											total: Number(payment.totalAmount),
+										}}
+									/>
+								}
+								fileName={`Receipt-${payment.paymentNo}.pdf`}
+								key={payment.id}
+							>
+								{({ loading }) =>
+									loading ? (
+										"Generating PDF..."
+									) : (
+										<>
+											<Download className="mr-2 h-4 w-4" />
+											Download receipt
+										</>
+									)
+								}
+							</PDFDownloadLink>
+						</Button>
+					)}
 					{/* <Button variant="outline" size="sm">
 						<Download className="mr-2 h-4 w-4" />
 						Download receipt
@@ -108,6 +119,25 @@ export function PaymentDetails() {
 					</Button> */}
 				</div>
 			</div>
+
+			{payment.status === "voided" && (
+				<CustomAlert
+					variant="destructive"
+					title="Receipt voided"
+					description={
+						<div className="space-y-1">
+							<p>
+								Voided{" "}
+								{payment.voidedAt ? format(new Date(payment.voidedAt), "MMM d, yyyy 'at' p") : ""}
+								{payment.voidedByUser?.name ? ` by ${payment.voidedByUser.name}` : ""}.
+							</p>
+							{payment.voidReason && (
+								<p className="text-muted-foreground">Reason: {payment.voidReason}</p>
+							)}
+						</div>
+					}
+				/>
+			)}
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				<div className="lg:col-span-2 space-y-6">
@@ -123,7 +153,7 @@ export function PaymentDetails() {
 									)}
 								</CardDescription>
 							</div>
-							<Badge variant={payment.status === "completed" ? "success" : "secondary"}>
+							<Badge variant={statusBadgeVariant} className="capitalize">
 								{payment.status === "completed" ? "Paid" : payment.status}
 							</Badge>
 						</CardHeader>

@@ -72,9 +72,10 @@ export const getPayments = createServerFn()
 				type: sql<"membership">`'membership'`,
 				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
 				image: members.image,
-				memberCount: sql<number>`(select count(*) from payment_members pm where pm.payment_id = ${payments.id})`.mapWith(
-					Number
-				),
+				memberCount:
+					sql<number>`(select count(*) from payment_members pm where pm.payment_id = ${payments.id})`.mapWith(
+						Number
+					),
 				plan: sql<string | null>`${membershipPlans.name}`,
 				paymentNo: payments.paymentNo,
 				amount: payments.totalAmount,
@@ -136,8 +137,7 @@ export const getPayments = createServerFn()
 			);
 
 		return [...membershipRows, ...addonRows].sort(
-			(a, b) =>
-				new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+			(a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
 		);
 	});
 
@@ -169,6 +169,7 @@ export const getPayment = createServerFn()
 				},
 				plan: { columns: { name: true, price: true } },
 				user: { columns: { name: true } },
+				voidedByUser: { columns: { name: true } },
 				addonInvoices: {
 					with: { lines: true },
 				},
