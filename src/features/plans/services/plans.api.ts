@@ -53,6 +53,7 @@ export const getPlans = createServerFn()
 		await requireAnyPermission([
 			"plans:view",
 			"receipts:create",
+			"receipts:top-up",
 			"members:view",
 			"communication:view",
 			"communication:create",

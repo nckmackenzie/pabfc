@@ -38,6 +38,41 @@ export function computeMembershipEndDate(
 	return addDays(parseCalendarDate(startDate), planDurationDays * numberOfPeriods);
 }
 
+// Staff-entered default for the upgrade form's top-up field — the price difference
+// between what the new plan would cost for the same number of periods/members and
+// what was already paid. Purely a pre-fill hint: whatever the staff member submits
+// is what's actually charged (see membership-upgrades in task.md).
+export function computeSuggestedTopUpAmount({
+	newPlanPrice,
+	newPlanMemberCount,
+	originalNumberOfPeriods,
+	originalPaymentAmount,
+}: {
+	newPlanPrice: number;
+	newPlanMemberCount: number;
+	originalNumberOfPeriods: number;
+	originalPaymentAmount: number;
+}): number {
+	const newPlanTotal = newPlanPrice * newPlanMemberCount * originalNumberOfPeriods;
+	return Math.max(0, newPlanTotal - originalPaymentAmount);
+}
+
+// A plan is only offered as an upgrade target when it isn't the member's current
+// plan, its duration is at least as long (e.g. a Monthly/30-day plan can't
+// "upgrade" to a Fortnight/14-day plan, since that would shorten the membership),
+// and it requires the same number of members — the upgrade flow can't add or
+// remove covered members, so a plan needing a different headcount would leave the
+// membership rows mismatched against the plan's own memberCount invariant (the
+// same one createManualMembershipPaymentFn enforces at payment creation time).
+export function isEligibleUpgradePlan(
+	candidatePlan: { id: string; duration: number; memberCount: number },
+	currentPlan: { id: string; duration: number; memberCount: number }
+): boolean {
+	if (candidatePlan.id === currentPlan.id) return false;
+	if (candidatePlan.memberCount !== currentPlan.memberCount) return false;
+	return candidatePlan.duration >= currentPlan.duration;
+}
+
 // Splits a decimal money amount (e.g. "100.00") into `count` shares that sum back
 // to the original amount exactly, in cents, rather than the naive `amount / count`
 // which loses or gains cents to floating-point/toFixed rounding (e.g. 100/3 = 33.33

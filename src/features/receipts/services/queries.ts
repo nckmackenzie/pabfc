@@ -1,8 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
 	getMembershipTaxType,
+	getMembershipUpgradeInfo,
 	getPayment,
 	getPayments,
+	getUpgradeContext,
 } from "@/features/receipts/services/payments.queries.api";
 import type { PaymentsSearchValidateSchema } from "@/features/receipts/services/schemas";
 
@@ -23,5 +25,15 @@ export const paymentsQueries = {
 		queryOptions({
 			queryKey: [...paymentsQueries.all, "membership-tax-type"],
 			queryFn: () => getMembershipTaxType(),
+		}),
+	upgradeContext: (id: string) =>
+		queryOptions({
+			queryKey: [...paymentsQueries.all, "upgrade-context", id],
+			queryFn: () => getUpgradeContext({ data: id }),
+		}),
+	upgradeInfo: (id: string) =>
+		queryOptions({
+			queryKey: [...paymentsQueries.all, "upgrade-info", id],
+			queryFn: () => getMembershipUpgradeInfo({ data: id }),
 		}),
 };

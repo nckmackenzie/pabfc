@@ -30,6 +30,7 @@ export const PERMISSIONS = [
 	"receipts:update",
 	"receipts:delete",
 	"receipts:void",
+	"receipts:top-up",
 	"bills:view",
 	"bills:create",
 	"bills:update",

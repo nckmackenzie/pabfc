@@ -6,10 +6,12 @@ import {
 	memberMemberships,
 	members,
 	membershipPlans,
+	membershipUpgrades,
 	mpesaStkRequests,
 	payments,
 } from "@/drizzle/schema";
-import { requireAnyPermission } from "@/lib/permissions/permissions";
+import { checkUpgradeEligibility } from "@/features/receipts/lib/upgrade";
+import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import type { VatType } from "@/drizzle/schema";
@@ -197,4 +199,97 @@ export const getPayment = createServerFn()
 			membership,
 			addonInvoice: attachedAddonInvoices[0] ?? null,
 		};
+	});
+
+// Loader data for the /app/receipts/$receiptId/upgrade route, and the source of
+// truth for whether the "Upgrade" entry point should be offered on the receipt
+// details page. Runs the same eligibility check the mutation re-runs server-side,
+// so an ineligible payment surfaces its reason before the form is ever shown.
+export const getUpgradeContext = createServerFn()
+	.middleware([authMiddleware])
+	.validator((id: string) => id)
+	.handler(async ({ data: id }) => {
+		await requirePermission("receipts:top-up");
+
+		const eligibility = await checkUpgradeEligibility(db, id);
+		if (!eligibility.success) {
+			return { eligible: false as const, reason: eligibility.error.message };
+		}
+
+		const {
+			payment,
+			plan,
+			coveredMembers,
+			originalStartDate,
+			originalNumberOfPeriods,
+			memberships,
+		} = eligibility.data;
+
+		return {
+			eligible: true as const,
+			payment: {
+				id: payment.id,
+				paymentNo: payment.paymentNo,
+				amount: payment.amount,
+				numberOfPeriods: payment.numberOfPeriods,
+				reference: payment.reference,
+			},
+			plan: {
+				id: plan.id,
+				name: plan.name,
+				price: plan.price,
+				duration: plan.duration,
+				memberCount: plan.memberCount,
+			},
+			coveredMembers,
+			originalStartDate,
+			originalEndDate: memberships[0]?.endDate ?? null,
+			originalNumberOfPeriods,
+		};
+	});
+
+// Powers the before/after banners on the receipt details page (Step 6): a payment
+// can be the original side of an upgrade, the upgrade (top-up) side, or neither.
+export const getMembershipUpgradeInfo = createServerFn()
+	.middleware([authMiddleware])
+	.validator((id: string) => id)
+	.handler(async ({ data: id }) => {
+		await requireAnyPermission(["receipts:view", "receipts:top-up"]);
+
+		const asOriginal = await db.query.membershipUpgrades.findFirst({
+			where: eq(membershipUpgrades.originalPaymentId, id),
+			with: {
+				upgradePayment: { columns: { id: true, paymentNo: true } },
+				newPlan: { columns: { name: true } },
+			},
+		});
+		if (asOriginal) {
+			return {
+				role: "original" as const,
+				upgradeDate: asOriginal.upgradeDate,
+				newPlanName: asOriginal.newPlan.name,
+				linkedPaymentId: asOriginal.upgradePayment.id,
+				linkedPaymentNo: asOriginal.upgradePayment.paymentNo,
+			};
+		}
+
+		const asUpgrade = await db.query.membershipUpgrades.findFirst({
+			where: eq(membershipUpgrades.upgradePaymentId, id),
+			with: {
+				originalPayment: { columns: { id: true, paymentNo: true } },
+				originalPlan: { columns: { name: true } },
+			},
+		});
+		if (asUpgrade) {
+			return {
+				role: "upgrade" as const,
+				originalEndDate: asUpgrade.originalEndDate,
+				newEndDate: asUpgrade.newEndDate,
+				originalPlanName: asUpgrade.originalPlan.name,
+				linkedPaymentId: asUpgrade.originalPayment.id,
+				linkedPaymentNo: asUpgrade.originalPayment.paymentNo,
+			};
+		}
+
+		return null;
 	});

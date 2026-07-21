@@ -1,5 +1,6 @@
-import { and, eq, gt, isNull, ne, or } from "drizzle-orm";
-import { journalEntries, memberMemberships, payments, paymentMembers } from "@/drizzle/schema";
+import { and, eq, or } from "drizzle-orm";
+import { journalEntries, memberMemberships, membershipUpgrades, payments, paymentMembers } from "@/drizzle/schema";
+import { findLaterMembership } from "@/features/receipts/lib/eligibility";
 import type { ReceiptJournalLine } from "@/features/receipts/lib/journal";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 import { failure, success, type Result } from "@/lib/result";
@@ -61,14 +62,12 @@ export async function checkVoidEligibility(
 	// A member has "renewed" if any other membership row of theirs (not created by this
 	// payment) starts later than the membership this payment created.
 	for (const { id: memberId, name } of coveredMembers) {
-		const laterMembership = await tx.query.memberMemberships.findFirst({
-			where: and(
-				eq(memberMemberships.memberId, memberId),
-				or(ne(memberMemberships.paymentId, payment.id), isNull(memberMemberships.paymentId)),
-				gt(memberMemberships.startDate, membershipRow.startDate)
-			),
-			orderBy: (row, { asc }) => [asc(row.startDate)],
-		});
+		const laterMembership = await findLaterMembership(
+			tx,
+			memberId,
+			payment.id,
+			membershipRow.startDate
+		);
 		if (laterMembership) {
 			return failure({
 				type: "ConflictError",
@@ -77,11 +76,26 @@ export async function checkVoidEligibility(
 		}
 	}
 
-	// TODO: `membership_upgrades` doesn't exist in the schema yet. Once the Upgrade
-	// feature ships, add a check here for a row with `originalPaymentId = payment.id`
-	// or `upgradePaymentId = payment.id` — an upgrade mutates the existing
-	// memberMemberships row in place rather than creating a new one, so the
-	// "later membership" check above won't catch an upgraded payment.
+	// An upgrade mutates the existing memberMemberships row in place rather than
+	// creating a new one, so the "later membership" check above won't catch it —
+	// voiding either side of an upgrade is unsupported for now and needs a manual
+	// correction instead.
+	const relatedUpgrade = await tx.query.membershipUpgrades.findFirst({
+		where: or(
+			eq(membershipUpgrades.originalPaymentId, payment.id),
+			eq(membershipUpgrades.upgradePaymentId, payment.id)
+		),
+	});
+	if (relatedUpgrade) {
+		const role =
+			relatedUpgrade.originalPaymentId === payment.id
+				? "the original payment that was upgraded"
+				: "the top-up payment from a membership upgrade";
+		return failure({
+			type: "ConflictError",
+			message: `This payment is ${role} and cannot be voided automatically — it requires a manual correction.`,
+		});
+	}
 
 	return success({ payment, coveredMembers, membership: membershipRow });
 }

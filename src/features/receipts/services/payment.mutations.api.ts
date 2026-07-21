@@ -12,6 +12,8 @@ import {
 	ledgerAccounts,
 	memberMemberships,
 	members,
+	membershipPlans,
+	membershipUpgrades,
 	mpesaStkRequests,
 	paymentMembers,
 	payments,
@@ -29,6 +31,7 @@ import {
 	type Transaction,
 } from "@/features/receipts/services/membership-payment-finalizer";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
+import { checkUpgradeEligibility } from "@/features/receipts/lib/upgrade";
 import { buildVoidReversalJournalLines, checkVoidEligibility } from "@/features/receipts/lib/void";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { createBankingEntry } from "@/services/banking";
@@ -36,11 +39,14 @@ import { getPaymentNo } from "@/features/receipts/services/payments.queries.api"
 import {
 	addonOnlyPaymentSchema,
 	paymentSchema,
+	upgradePaymentSchema,
 	voidPaymentSchema,
 } from "@/features/receipts/services/schemas";
 import {
 	computeMembershipEndDate,
+	isEligibleUpgradePlan,
 	membershipRangeConflicts,
+	splitAmountEvenly,
 } from "@/features/receipts/lib/helpers";
 import {
 	discountCalculator,
@@ -473,6 +479,19 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 
 			try {
 				const result = await db.transaction(async (tx) => {
+					// Lock on the covered members before the eligibility check — the same
+					// resource upgradePaymentFn locks — so a concurrent void/upgrade on this
+					// payment can't both pass eligibility and race to conflicting writes
+					// (e.g. void deletes the membership while an upgrade extends it).
+					const coveredMemberRows = await tx.query.paymentMembers.findMany({
+						where: eq(paymentMembers.paymentId, paymentId),
+						columns: { memberId: true },
+					});
+					const sortedMemberIds = [...new Set(coveredMemberRows.map((row) => row.memberId))].sort();
+					for (const memberId of sortedMemberIds) {
+						await lockMemberMembershipCreation(tx, memberId);
+					}
+
 					const eligibility = await checkVoidEligibility(tx, paymentId);
 					if (!eligibility.success) {
 						throw new PaymentTransactionError(eligibility);
@@ -552,6 +571,287 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 					});
 
 					return success(undefined);
+				});
+
+				return result;
+			} catch (error) {
+				if (error instanceof PaymentTransactionError) {
+					return error.result;
+				}
+				console.log(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Something went wrong.Please try again.",
+				});
+			}
+		}
+	);
+
+// Converts a member from a cheaper/shorter plan onto a pricier one, retroactively
+// from their original start date, for a staff-entered top-up amount. Does not call
+// finalizeMembershipPayment and does not insert a new memberMemberships row — it
+// mutates the existing row(s) in place, which is why voidPaymentFn (via
+// checkVoidEligibility) refuses to void either side of an upgrade.
+export const upgradePaymentFn = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator(upgradePaymentSchema)
+	.handler(
+		async ({
+			data: { originalPaymentId, newPlanId, topUpAmount, reference, upgradeDate, notes },
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("receipts:top-up");
+
+			// Small helper so ad hoc validation failures inside the transaction can throw
+			// a properly-typed PaymentTransactionError without an intermediate `Result`
+			// variable — mirrors the `if (!result.success) throw ...` idiom used for the
+			// eligibility/overlap checks below, just for checks that aren't already
+			// wrapped in a Result-returning helper.
+			const fail = (error: Parameters<typeof failure>[0]) =>
+				new PaymentTransactionError({ success: false, error });
+
+			try {
+				const result = await db.transaction(async (tx) => {
+					// Lock on the covered members (sorted, same convention as
+					// createManualMembershipPaymentFn) before the authoritative eligibility
+					// check, so a concurrent void/upgrade/renewal on the same members can't
+					// slip in between the check and this transaction's writes.
+					const coveredMemberRows = await tx.query.paymentMembers.findMany({
+						where: eq(paymentMembers.paymentId, originalPaymentId),
+						columns: { memberId: true },
+					});
+					const sortedMemberIds = [...new Set(coveredMemberRows.map((row) => row.memberId))].sort();
+					for (const memberId of sortedMemberIds) {
+						await lockMemberMembershipCreation(tx, memberId);
+					}
+
+					const eligibility = await checkUpgradeEligibility(tx, originalPaymentId);
+					if (!eligibility.success) {
+						throw new PaymentTransactionError(eligibility);
+					}
+					const {
+						payment: originalPayment,
+						plan: originalPlan,
+						memberships,
+						coveredMembers,
+						billingMemberId,
+						originalStartDate,
+						originalNumberOfPeriods,
+					} = eligibility.data;
+
+					const newPlan = await tx.query.membershipPlans.findFirst({
+						where: eq(membershipPlans.id, newPlanId),
+					});
+					if (!newPlan) {
+						throw fail({ type: "NotFoundError", message: "New plan not found" });
+					}
+					if (!newPlan.active) {
+						throw fail({ type: "ApplicationError", message: "The selected plan is not active." });
+					}
+					if (!newPlan.revenueAccountId) {
+						throw fail({
+							type: "ApplicationError",
+							message: "Plan revenue account is not configured",
+						});
+					}
+					// Mirrors the client-side select filtering (isEligibleUpgradePlan) so a
+					// stale/tampered client can't downgrade a member's duration or move the
+					// covered members onto a plan requiring a different headcount — this flow
+					// can't add or remove members, so the counts must match exactly.
+					if (newPlan.memberCount !== originalPlan.memberCount) {
+						throw fail({
+							type: "ApplicationError",
+							message: `Cannot upgrade to ${newPlan.name}: it requires ${newPlan.memberCount} member(s), but this receipt covers ${originalPlan.memberCount}.`,
+						});
+					}
+					if (!isEligibleUpgradePlan(newPlan, originalPlan)) {
+						throw fail({
+							type: "ApplicationError",
+							message: `Cannot upgrade to ${newPlan.name}: its duration (${newPlan.duration} days) is shorter than the current plan's (${originalPlan.duration} days).`,
+						});
+					}
+
+					const settings = await tx.query.settings.findFirst({
+						columns: { billing: true },
+					});
+
+					const newEndDate = computeMembershipEndDate(
+						originalStartDate,
+						newPlan.duration,
+						originalNumberOfPeriods
+					);
+
+					const paymentNo = await getPaymentNo();
+
+					// Same VAT treatment as normal membership payments (not the VAT-exempt
+					// addon treatment) — see membership-payment-finalizer.ts's tax block.
+					const taxType = settings?.billing?.applyTaxToMembership
+						? (settings.billing?.vatType ?? "inclusive")
+						: "none";
+					const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(topUpAmount, taxType);
+					const hasTax = taxAmount > 0;
+					if (hasTax && !settings?.billing?.vatAccountId) {
+						throw fail({ type: "ApplicationError", message: "VAT account is not configured" });
+					}
+
+					let hasSettlementAccount = false;
+					let bankAccount: number;
+					if (settings?.billing?.mpesaSettlementAccountId) {
+						hasSettlementAccount = true;
+						bankAccount = settings.billing.mpesaSettlementAccountId;
+					} else {
+						const fetchedAccount = await tx.query.ledgerAccounts.findFirst({
+							columns: { id: true },
+							where: eq(sql`lower(${ledgerAccounts.name})`, "cash at bank"),
+						});
+						if (!fetchedAccount) {
+							throw fail({
+								type: "ApplicationError",
+								message: "No bank account configured for payments",
+							});
+						}
+						bankAccount = fetchedAccount.id;
+					}
+
+					const description = `Top-up upgrade for receipt # ${originalPayment.paymentNo} — ${originalPlan.name} to ${newPlan.name} - ${reference}`;
+
+					const lines = buildReceiptJournalLines({
+						membershipRevenue: {
+							accountId: newPlan.revenueAccountId,
+							amount: toDecimalString(amountExlusiveTax),
+						},
+						vat:
+							hasTax && settings?.billing?.vatAccountId
+								? { accountId: settings.billing.vatAccountId, amount: toDecimalString(taxAmount) }
+								: null,
+						bankAccountId: bankAccount,
+						bankAmount: toDecimalString(totalInclusiveTax),
+						memo: description,
+					});
+
+					if (!areJournalValuesBalanced(lines)) {
+						throw fail({ type: "ApplicationError", message: "Journal values are not balanced" });
+					}
+
+					const [newPayment] = await tx
+						.insert(payments)
+						.values({
+							paymentDate: new Date(upgradeDate),
+							amount: toDecimalString(topUpAmount),
+							numberOfPeriods: originalNumberOfPeriods,
+							lineTotal: toDecimalString(amountExlusiveTax),
+							memberId: billingMemberId,
+							planId: newPlanId,
+							paymentNo: paymentNo.toString(),
+							status: "completed",
+							discountType: "none",
+							discountedAmount: "0",
+							taxAmount: toDecimalString(taxAmount),
+							totalAmount: toDecimalString(totalInclusiveTax),
+							reference,
+							// Matches createManualMembershipPaymentFn's convention — this flow
+							// has no method/channel form fields, so it's hardcoded the same way.
+							method: "mpesa_manual",
+							channel: "staff",
+							createdByUserId: userId,
+							vatType: taxType,
+						})
+						.returning();
+
+					await tx.insert(paymentMembers).values(
+						coveredMembers.map(({ id: memberId }) => ({
+							paymentId: newPayment.id,
+							memberId,
+						}))
+					);
+
+					// Split the top-up across each covered member's existing priceCharged —
+					// same billing-member-gets-the-leftover-cent convention finalizeMembership
+					// Payment uses for the initial split — so the new plan's member list
+					// reflects the full amount charged for this period, not just the
+					// pre-upgrade price.
+					const orderedMemberIds = [
+						billingMemberId,
+						...coveredMembers.map(({ id }) => id).filter((id) => id !== billingMemberId),
+					];
+					const topUpShares = splitAmountEvenly(toDecimalString(topUpAmount), orderedMemberIds.length);
+					const topUpShareByMemberId = new Map(
+						orderedMemberIds.map((id, index) => [id, topUpShares[index]])
+					);
+
+					// The mutated rows deliberately keep pointing at `originalPaymentId` —
+					// this is the same membership period, just extended. That's why Void's
+					// eligibility check (checkVoidEligibility) separately guards against
+					// voiding either side of an upgrade.
+					for (const membership of memberships) {
+						const share = topUpShareByMemberId.get(membership.memberId) ?? "0.00";
+						await tx
+							.update(memberMemberships)
+							.set({
+								membershipPlanId: newPlanId,
+								endDate: dateFormat(newEndDate),
+								priceCharged: toDecimalString(toBig(membership.priceCharged).plus(toBig(share))),
+							})
+							.where(eq(memberMemberships.id, membership.id));
+					}
+
+					await createJournalEntry({
+						entry: {
+							entryDate: dateFormat(upgradeDate),
+							reference: newPayment.paymentNo,
+							source: "membership upgrade",
+							sourceId: newPayment.id,
+							description,
+						},
+						lines,
+						tx,
+					});
+
+					if (hasSettlementAccount) {
+						const bankAccountRow = await tx.query.bankAccounts.findFirst({
+							columns: { id: true },
+							where: eq(bankAccounts.accountId, bankAccount),
+						});
+						if (bankAccountRow?.id) {
+							await createBankingEntry({
+								tx,
+								entry: {
+									bankId: bankAccountRow.id,
+									dc: "debit",
+									amount: toDecimalString(totalInclusiveTax),
+									reference: reference ?? newPayment.paymentNo,
+									transactionDate: dateFormat(upgradeDate),
+									source: "membership upgrade",
+									sourceId: newPayment.id,
+									narration: description,
+								},
+							});
+						}
+					}
+
+					await tx.insert(membershipUpgrades).values({
+						originalPaymentId,
+						upgradePaymentId: newPayment.id,
+						memberId: billingMemberId,
+						originalPlanId: originalPlan.id,
+						newPlanId,
+						originalEndDate: memberships[0]?.endDate ?? null,
+						newEndDate: dateFormat(newEndDate),
+						topUpAmount: toDecimalString(topUpAmount),
+						upgradeDate,
+						notes: notes ?? null,
+						createdByUserId: userId,
+					});
+
+					await tx.insert(activityLogs).values({
+						userId,
+						action: "upgrade membership",
+						description: `Upgraded receipt ${originalPayment.paymentNo} from ${originalPlan.name} to ${newPlan.name} via top-up receipt ${paymentNo}. Affected member(s): ${coveredMembers.map((member) => member.name).join(", ")}.`,
+					});
+
+					return success(newPayment.id);
 				});
 
 				return result;

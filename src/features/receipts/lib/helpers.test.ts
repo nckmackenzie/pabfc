@@ -1,6 +1,12 @@
 import { format, parseISO } from "date-fns";
 import { describe, expect, it } from "vitest";
-import { computeMembershipEndDate, membershipRangeConflicts, splitAmountEvenly } from "./helpers";
+import {
+	computeMembershipEndDate,
+	computeSuggestedTopUpAmount,
+	isEligibleUpgradePlan,
+	membershipRangeConflicts,
+	splitAmountEvenly,
+} from "./helpers";
 
 describe("membershipRangeConflicts", () => {
 	it("conflicts when date ranges are identical on an active membership", () => {
@@ -179,5 +185,73 @@ describe("splitAmountEvenly", () => {
 		const shares = splitAmountEvenly("1000.00", 7);
 		const totalCents = shares.reduce((total, share) => total + Math.round(parseFloat(share) * 100), 0);
 		expect(totalCents).toBe(100000);
+	});
+});
+
+describe("computeSuggestedTopUpAmount", () => {
+	it("reproduces the Fortnight → Monthly example from the spec (Ksh 3,000 → Ksh 5,000, suggests Ksh 2,000)", () => {
+		expect(
+			computeSuggestedTopUpAmount({
+				newPlanPrice: 5000,
+				newPlanMemberCount: 1,
+				originalNumberOfPeriods: 1,
+				originalPaymentAmount: 3000,
+			})
+		).toBe(2000);
+	});
+
+	it("multiplies by member count and number of periods for group/multi-period plans", () => {
+		expect(
+			computeSuggestedTopUpAmount({
+				newPlanPrice: 1000,
+				newPlanMemberCount: 3,
+				originalNumberOfPeriods: 2,
+				originalPaymentAmount: 4000,
+			})
+		).toBe(2000); // (1000 * 3 * 2) - 4000
+	});
+
+	it("floors at zero rather than going negative when the original payment already covers the new plan", () => {
+		expect(
+			computeSuggestedTopUpAmount({
+				newPlanPrice: 1000,
+				newPlanMemberCount: 1,
+				originalNumberOfPeriods: 1,
+				originalPaymentAmount: 5000,
+			})
+		).toBe(0);
+	});
+});
+
+describe("isEligibleUpgradePlan", () => {
+	const monthly = { id: "monthly", duration: 30, memberCount: 1 };
+	const fortnight = { id: "fortnight", duration: 14, memberCount: 1 };
+
+	it("rejects a shorter-duration plan (Monthly cannot 'upgrade' to Fortnight)", () => {
+		expect(isEligibleUpgradePlan(fortnight, monthly)).toBe(false);
+	});
+
+	it("allows a longer-duration plan (Fortnight can upgrade to Monthly)", () => {
+		expect(isEligibleUpgradePlan(monthly, fortnight)).toBe(true);
+	});
+
+	it("allows an equal-duration plan that isn't the current one", () => {
+		const monthlyPremium = { id: "monthly-premium", duration: 30, memberCount: 1 };
+		expect(isEligibleUpgradePlan(monthlyPremium, monthly)).toBe(true);
+	});
+
+	it("rejects the current plan itself even though duration matches", () => {
+		expect(isEligibleUpgradePlan(monthly, monthly)).toBe(false);
+	});
+
+	it("rejects a plan with a different member count, even with a longer duration", () => {
+		const familyMonthly = { id: "family-monthly", duration: 30, memberCount: 3 };
+		expect(isEligibleUpgradePlan(familyMonthly, monthly)).toBe(false);
+	});
+
+	it("allows a plan with a matching member count greater than 1", () => {
+		const familyMonthly = { id: "family-monthly", duration: 30, memberCount: 3 };
+		const familyFortnight = { id: "family-fortnight", duration: 14, memberCount: 3 };
+		expect(isEligibleUpgradePlan(familyMonthly, familyFortnight)).toBe(true);
 	});
 });
