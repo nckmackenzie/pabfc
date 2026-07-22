@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { date, index, numeric, pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { date, numeric, pgTable, text, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { createdAt, id } from "@/drizzle/schema-helpers";
 import { users } from "./auth";
 import { members, membershipPlans } from "./member";
@@ -38,8 +38,11 @@ export const membershipUpgrades = pgTable(
 		createdAt,
 	},
 	(table) => [
-		index("idx_membership_upgrades_original_payment_id").on(table.originalPaymentId),
-		index("idx_membership_upgrades_upgrade_payment_id").on(table.upgradePaymentId),
+		// A payment can only ever be the original side of one upgrade, and only ever
+		// be the upgrade (top-up) side of one upgrade — mirrors the two-directional
+		// check in checkUpgradeEligibility, enforced here at the DB level too.
+		uniqueIndex("uq_membership_upgrades_original_payment_id").on(table.originalPaymentId),
+		uniqueIndex("uq_membership_upgrades_upgrade_payment_id").on(table.upgradePaymentId),
 	]
 );
 
