@@ -9,11 +9,14 @@ import {
 } from "lucide-react";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExpiredMembershipsSheet } from "@/features/dashboard/components/expired-memberships-sheet";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
+import { useSheet } from "@/integrations/sheet-provider";
 import { percentageChangeCalculator } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 
 export function StatCards() {
+	const { setOpen } = useSheet();
 	const {
 		data: {
 			activeMembers,
@@ -26,6 +29,14 @@ export function StatCards() {
 			expiredMemberships,
 		},
 	} = useSuspenseQuery(dashboardQueries.stats());
+
+	function showExpiredMemberships() {
+		setOpen(<ExpiredMembershipsSheet />, {
+			title: "Expired Memberships",
+			description: "Members whose memberships expired in the last 30 days.",
+			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
 
 	return (
 		<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -70,6 +81,7 @@ export function StatCards() {
 				subtitle={`Expired memberships in last 30 days`}
 				icon={Clock11Icon}
 				variant="destructive"
+				onViewDetails={showExpiredMemberships}
 			/>
 		</div>
 	);
@@ -112,6 +124,7 @@ interface KPICardProps {
 	variant?: "default" | "success" | "warning" | "destructive";
 	className?: string;
 	link?: Pick<LinkProps, "to" | "search">;
+	onViewDetails?: () => void;
 }
 
 export function KPICard({
@@ -123,6 +136,7 @@ export function KPICard({
 	variant = "default",
 	className,
 	link,
+	onViewDetails,
 }: KPICardProps) {
 	const variantStyles = {
 		default: "from-primary/10 to-primary/5 border-primary/20",
@@ -187,6 +201,16 @@ export function KPICard({
 					View Details
 					<ArrowRightIcon className="h-4 w-4 transition-all group-hover:translate-x-1" />
 				</Link>
+			)}
+			{!link && onViewDetails && (
+				<button
+					type="button"
+					onClick={onViewDetails}
+					className="group self-end flex items-center gap-1 text-sm text-primary transition-all hover:underline"
+				>
+					View Details
+					<ArrowRightIcon className="h-4 w-4 transition-all group-hover:translate-x-1" />
+				</button>
 			)}
 		</div>
 	);

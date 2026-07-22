@@ -6,6 +6,7 @@ import {
 import {
 	dashboardStats,
 	getAverageAttendanceByDay,
+	getExpiredMemberships,
 	getExpiringMemberships,
 	getTodaysAttendances,
 } from "@/features/dashboard/services/dashboard.api";
@@ -28,6 +29,11 @@ export const dashboardQueries = {
 		queryOptions({
 			queryKey: [...dashboardQueries.all, "expiring-memberships"],
 			queryFn: () => getExpiringMemberships(),
+		}),
+	expiredMemberships: () =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "expired-memberships"],
+			queryFn: () => getExpiredMemberships(),
 		}),
 	averageAttendanceByDay: () =>
 		queryOptions({
