@@ -18,12 +18,18 @@ import {
 	isEligibleUpgradePlan,
 } from "@/features/receipts/lib/helpers";
 import type { getUpgradeContext } from "@/features/receipts/services/payments.queries.api";
-import { type UpgradePaymentSchema, upgradePaymentSchema } from "@/features/receipts/services/schemas";
+import {
+	type UpgradePaymentSchema,
+	upgradePaymentSchema,
+} from "@/features/receipts/services/schemas";
 import { useAppForm } from "@/lib/form";
 import { taxCalculator } from "@/lib/helpers";
 import type { VatType } from "@/drizzle/schema";
 
-type EligibleUpgradeContext = Extract<Awaited<ReturnType<typeof getUpgradeContext>>, { eligible: true }>;
+type EligibleUpgradeContext = Extract<
+	Awaited<ReturnType<typeof getUpgradeContext>>,
+	{ eligible: true }
+>;
 
 export function UpgradePaymentForm() {
 	const { upgradeContext, plans, taxType } = getRouteApi(
@@ -70,7 +76,13 @@ function EligibleUpgradeForm({
 	const upgradeMutation = useUpgradePayment();
 	const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-	const { payment, plan: currentPlan, coveredMembers, originalStartDate, originalEndDate } = upgradeContext;
+	const {
+		payment,
+		plan: currentPlan,
+		coveredMembers,
+		originalStartDate,
+		originalEndDate,
+	} = upgradeContext;
 
 	// Only plans at least as long as the current one are sensible upgrade targets —
 	// the loader already excludes the current plan and inactive plans.
@@ -118,7 +130,10 @@ function EligibleUpgradeForm({
 		state.values.topUpAmount,
 		state.values.reference,
 	]);
-	const isTopUpDirty = useStore(form.store, (state) => state.fieldMeta.topUpAmount?.isDirty ?? false);
+	const isTopUpDirty = useStore(
+		form.store,
+		(state) => state.fieldMeta.topUpAmount?.isDirty ?? false
+	);
 
 	const selectedPlan = eligiblePlans.find((plan) => plan.id === newPlanId);
 
@@ -133,8 +148,7 @@ function EligibleUpgradeForm({
 			originalPaymentAmount: Number(payment.amount),
 		});
 		form.setFieldValue("topUpAmount", suggested, { dontUpdateMeta: true });
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedPlan, isTopUpDirty]);
+	}, [selectedPlan, isTopUpDirty, form, payment.amount, payment.numberOfPeriods]);
 
 	// Membership VAT preview — mirrors the server's taxCalculator(topUpAmount, taxType)
 	// so the previewed total matches what upgradePaymentFn will actually charge/post.
@@ -144,7 +158,11 @@ function EligibleUpgradeForm({
 		? {
 				startDate: format(parseISO(originalStartDate), "PP"),
 				endDate: format(
-					computeMembershipEndDate(originalStartDate, selectedPlan.duration, payment.numberOfPeriods),
+					computeMembershipEndDate(
+						originalStartDate,
+						selectedPlan.duration,
+						payment.numberOfPeriods
+					),
 					"PP"
 				),
 			}
@@ -252,7 +270,10 @@ function EligibleUpgradeForm({
 
 				<div className="flex gap-3 justify-end mt-6">
 					<form.AppForm>
-						<form.SubmitButton buttonText="Upgrade Membership" isLoading={upgradeMutation.isPending} />
+						<form.SubmitButton
+							buttonText="Upgrade Membership"
+							isLoading={upgradeMutation.isPending}
+						/>
 					</form.AppForm>
 				</div>
 			</form>
