@@ -9,10 +9,7 @@ import {
 	members,
 	membershipPlans,
 } from "@/drizzle/schema";
-import {
-	getExpiredMembershipStatDates,
-	getStatDates,
-} from "@/features/dashboard/lib/helpers";
+import { getExpiredMembershipStatDates, getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
@@ -45,6 +42,7 @@ function getExpiredMembershipConditions(today = new Date()) {
 export const dashboardStats = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("dashboard:view");
 		const [
 			activeMembers,
 			newMembersThisMonth,
@@ -89,12 +87,7 @@ export const dashboardStats = createServerFn()
 				.select({ count: sql<number>`count(*)::int` })
 				.from(memberMemberships)
 				.innerJoin(members, eq(memberMemberships.memberId, members.id))
-				.where(
-					and(
-						isNull(members.deletedAt),
-						...getExpiredMembershipConditions(),
-					),
-				),
+				.where(and(isNull(members.deletedAt), ...getExpiredMembershipConditions())),
 		]);
 		return {
 			activeMembers,
@@ -122,16 +115,8 @@ export const getExpiredMemberships = createServerFn()
 			})
 			.from(memberMemberships)
 			.innerJoin(members, eq(memberMemberships.memberId, members.id))
-			.innerJoin(
-				membershipPlans,
-				eq(memberMemberships.membershipPlanId, membershipPlans.id),
-			)
-			.where(
-				and(
-					isNull(members.deletedAt),
-					...getExpiredMembershipConditions(),
-				),
-			)
+			.innerJoin(membershipPlans, eq(memberMemberships.membershipPlanId, membershipPlans.id))
+			.where(and(isNull(members.deletedAt), ...getExpiredMembershipConditions()))
 			.orderBy(desc(memberMemberships.endDate), desc(memberMemberships.id));
 	});
 
