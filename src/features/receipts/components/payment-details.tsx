@@ -1,18 +1,49 @@
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { getRouteApi } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Download, RefreshCcw } from "lucide-react";
+import { ArrowUpCircle, Download, RefreshCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomAlert } from "@/components/ui/custom-alert";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReceiptNo } from "@/features/receipts/hooks/use-receipt-no";
+import { paymentsQueries } from "@/features/receipts/services/queries";
+import { usePermissions } from "@/hooks/use-permissions";
+import { dateFormat } from "@/lib/helpers";
 import { GymReceiptPdf } from "./donwloadable-receipt";
 
 export function PaymentDetails() {
 	const payment = getRouteApi("/app/receipts/$receiptId/details").useLoaderData();
 	const { receiptNo, isLoading: isLoadingReceiptNo } = useReceiptNo(+payment.paymentNo);
+	const { hasPermission } = usePermissions();
+
+	// The banner query only needs view access; the eligibility query is gated on
+	// receipts:top-up too, since getUpgradeContext requires it server-side — checking
+	// client-side first avoids a guaranteed-to-fail request for staff without it.
+	// The endDate check mirrors checkUpgradeEligibility's server-side rule (only an
+	// active membership — end date not yet due — can be topped up) so an expired
+	// membership doesn't even trigger the eligibility round trip.
+	const today = dateFormat(new Date());
+	const isMembershipStillActive = !payment.membership?.endDate || payment.membership.endDate >= today;
+	const canParticipateInUpgrade =
+		payment.status === "completed" && !!payment.planId && isMembershipStillActive;
+
+	const { data: upgradeInfo } = useQuery({
+		...paymentsQueries.upgradeInfo(payment.id),
+		enabled: canParticipateInUpgrade,
+	});
+	// Only re-run the (heavier) full eligibility check once we know this payment isn't
+	// already one side of an upgrade — avoids an extra round trip on every receipt.
+	const { data: upgradeContext } = useQuery({
+		...paymentsQueries.upgradeContext(payment.id),
+		enabled: canParticipateInUpgrade && upgradeInfo === null && hasPermission("receipts:top-up"),
+	});
+	const showUpgradeButton =
+		canParticipateInUpgrade && upgradeInfo === null && upgradeContext?.eligible === true;
+	const { receiptNo: linkedReceiptNo } = useReceiptNo(Number(upgradeInfo?.linkedPaymentNo ?? 0));
 
 	const currencyFormatter = new Intl.NumberFormat("en-KE", {
 		style: "currency",
@@ -106,6 +137,16 @@ export function PaymentDetails() {
 							</PDFDownloadLink>
 						</Button>
 					)}
+					{showUpgradeButton && (
+						<PermissionGate permission="receipts:top-up">
+							<Button asChild>
+								<Link to="/app/receipts/$receiptId/upgrade" params={{ receiptId: payment.id }}>
+									<ArrowUpCircle className="mr-2 h-4 w-4" />
+									Upgrade membership
+								</Link>
+							</Button>
+						</PermissionGate>
+					)}
 					{/* <Button variant="outline" size="sm">
 						<Download className="mr-2 h-4 w-4" />
 						Download receipt
@@ -135,6 +176,46 @@ export function PaymentDetails() {
 								<p className="text-muted-foreground">Reason: {payment.voidReason}</p>
 							)}
 						</div>
+					}
+				/>
+			)}
+
+			{upgradeInfo?.role === "original" && (
+				<CustomAlert
+					title="Upgraded"
+					description={
+						<span>
+							Upgraded on {dateFormat(upgradeInfo.upgradeDate, "long")} to {upgradeInfo.newPlanName}{" "}
+							—{" "}
+							<Link
+								to="/app/receipts/$receiptId/details"
+								params={{ receiptId: upgradeInfo.linkedPaymentId }}
+								className="underline"
+							>
+								see receipt #{linkedReceiptNo || upgradeInfo.linkedPaymentNo}
+							</Link>
+						</span>
+					}
+				/>
+			)}
+
+			{upgradeInfo?.role === "upgrade" && (
+				<CustomAlert
+					title="Top-up upgrade"
+					description={
+						<span>
+							Top-up upgrade from {upgradeInfo.originalPlanName} (
+							<Link
+								to="/app/receipts/$receiptId/details"
+								params={{ receiptId: upgradeInfo.linkedPaymentId }}
+								className="underline"
+							>
+								receipt #{linkedReceiptNo || upgradeInfo.linkedPaymentNo}
+							</Link>
+							) — extended{" "}
+							{upgradeInfo.originalEndDate ? dateFormat(upgradeInfo.originalEndDate, "long") : "—"}{" "}
+							→ {upgradeInfo.newEndDate ? dateFormat(upgradeInfo.newEndDate, "long") : "—"}
+						</span>
 					}
 				/>
 			)}

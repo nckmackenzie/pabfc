@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { DISCOUNT_TYPES } from "@/drizzle/schema";
+import {
+	nullableTrimmedString,
+	requiredNumberSchemaEntry,
+	requiredStringNonLowerSchemaEntry,
+} from "@/lib/schema-rules";
 
 export const paymentSchema = z.object({
 	memberIds: z.array(z.string().min(1)).min(1, { error: "At least one member is required" }),
@@ -31,12 +36,21 @@ export const addonOnlyPaymentSchema = z.object({
 		.number()
 		.int({ error: "Must be a whole number" })
 		.min(1, { error: "Must be at least 1" }),
-	reference: z.string().min(1, { error: "Payment reference is required" }),
+	reference: requiredStringNonLowerSchemaEntry("Payment reference is required"),
 });
 
 export const voidPaymentSchema = z.object({
-	paymentId: z.string().min(1, { error: "Payment is required" }),
+	paymentId: requiredStringNonLowerSchemaEntry("Payment is required"),
 	voidReason: z.string().trim().min(10, { error: "Reason must be at least 10 characters" }),
+});
+
+export const upgradePaymentSchema = z.object({
+	originalPaymentId: requiredStringNonLowerSchemaEntry("Original payment is required"),
+	newPlanId: requiredStringNonLowerSchemaEntry("New plan is required"),
+	topUpAmount: requiredNumberSchemaEntry("Top-up amount is required"),
+	reference: requiredStringNonLowerSchemaEntry("Payment reference is required"),
+	upgradeDate: z.iso.date({ error: "Upgrade date is required" }),
+	notes: nullableTrimmedString,
 });
 
 export const paymentsSearchValidateSchema = z.object({
@@ -49,4 +63,5 @@ export const paymentsSearchValidateSchema = z.object({
 export type PaymentSchema = z.infer<typeof paymentSchema>;
 export type AddonOnlyPaymentSchema = z.infer<typeof addonOnlyPaymentSchema>;
 export type VoidPaymentSchema = z.infer<typeof voidPaymentSchema>;
+export type UpgradePaymentSchema = z.infer<typeof upgradePaymentSchema>;
 export type PaymentsSearchValidateSchema = z.infer<typeof paymentsSearchValidateSchema>;
