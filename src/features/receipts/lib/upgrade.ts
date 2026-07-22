@@ -8,6 +8,7 @@ import {
 } from "@/drizzle/schema";
 import type { DbClient } from "@/features/receipts/lib/eligibility";
 import { findLaterMembership } from "@/features/receipts/lib/eligibility";
+import { dateFormat } from "@/lib/helpers";
 import { failure, success, type Result } from "@/lib/result";
 
 export type UpgradeEligiblePayment = typeof payments.$inferSelect;
@@ -77,6 +78,18 @@ export async function checkUpgradeEligibility(
 		return failure({
 			type: "ApplicationError",
 			message: "No membership record found for this payment; cannot verify upgrade eligibility.",
+		});
+	}
+
+	// Only an active membership (end date not yet due) can be topped up — an already
+	// expired one needs a fresh renewal payment instead. Same "expired" definition
+	// runMembershipMaintenance uses (endDate < today) rather than trusting the stored
+	// `status` column, which only gets flipped when that maintenance job next runs.
+	const today = dateFormat(new Date());
+	if (membershipRow.endDate && membershipRow.endDate < today) {
+		return failure({
+			type: "ApplicationError",
+			message: `This membership already expired on ${membershipRow.endDate} and cannot be upgraded — the member must renew instead.`,
 		});
 	}
 

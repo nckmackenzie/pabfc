@@ -23,7 +23,13 @@ export function PaymentDetails() {
 	// The banner query only needs view access; the eligibility query is gated on
 	// receipts:top-up too, since getUpgradeContext requires it server-side — checking
 	// client-side first avoids a guaranteed-to-fail request for staff without it.
-	const canParticipateInUpgrade = payment.status === "completed" && !!payment.planId;
+	// The endDate check mirrors checkUpgradeEligibility's server-side rule (only an
+	// active membership — end date not yet due — can be topped up) so an expired
+	// membership doesn't even trigger the eligibility round trip.
+	const today = dateFormat(new Date());
+	const isMembershipStillActive = !payment.membership?.endDate || payment.membership.endDate >= today;
+	const canParticipateInUpgrade =
+		payment.status === "completed" && !!payment.planId && isMembershipStillActive;
 
 	const { data: upgradeInfo } = useQuery({
 		...paymentsQueries.upgradeInfo(payment.id),
