@@ -10,7 +10,7 @@ describe("computeSuggestedCreditAmount", () => {
 	it("computes dailyRate and suggestedAmount for a partial month", () => {
 		const result = computeSuggestedCreditAmount({
 			priceCharged: "3000.00",
-			planDurationDays: 30,
+			totalDurationDays: 30,
 			unusedDays: 10,
 		});
 		expect(result.dailyRate).toBe("100.00");
@@ -20,7 +20,7 @@ describe("computeSuggestedCreditAmount", () => {
 	it("caps the suggested amount at priceCharged even if unusedDays exceeds the plan duration", () => {
 		const result = computeSuggestedCreditAmount({
 			priceCharged: "3000.00",
-			planDurationDays: 30,
+			totalDurationDays: 30,
 			unusedDays: 45,
 		});
 		expect(result.suggestedAmount).toBe("3000.00");
@@ -31,11 +31,21 @@ describe("computeSuggestedCreditAmount", () => {
 		// uses the unrounded rate internally so 3 days doesn't undershoot 1000.00.
 		const result = computeSuggestedCreditAmount({
 			priceCharged: "1000.00",
-			planDurationDays: 3,
+			totalDurationDays: 3,
 			unusedDays: 3,
 		});
 		expect(result.dailyRate).toBe("333.33");
 		expect(result.suggestedAmount).toBe("1000.00");
+	});
+
+	it("prorates the charge over every purchased period", () => {
+		const result = computeSuggestedCreditAmount({
+			priceCharged: "6000.00",
+			totalDurationDays: 60,
+			unusedDays: 30,
+		});
+		expect(result.dailyRate).toBe("100.00");
+		expect(result.suggestedAmount).toBe("3000.00");
 	});
 });
 

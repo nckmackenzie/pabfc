@@ -108,7 +108,7 @@ export async function checkCreditNoteEligibility(
 	const priceCharged = membership.priceCharged;
 	const { dailyRate, suggestedAmount } = computeSuggestedCreditAmount({
 		priceCharged,
-		planDurationDays: membership.membershipPlan.duration,
+		totalDurationDays: membership.membershipPlan.duration * payment.numberOfPeriods,
 		unusedDays,
 	});
 
@@ -139,20 +139,21 @@ export function computeMembershipTaxRatio(lineTotal: string, taxAmount: string):
 		: toBig(taxAmount).div(membershipTaxInclusiveTotal);
 }
 
-// dailyRate = priceCharged / planDurationDays; suggestedAmount = dailyRate ×
+// dailyRate = priceCharged / totalDurationDays; suggestedAmount = dailyRate ×
 // unusedDays, capped at priceCharged (never suggest crediting more than what was
-// actually charged). Extracted as a pure function so the capping/rounding math is
-// unit-testable without a DB connection.
+// actually charged). totalDurationDays covers every period purchased by the
+// originating payment. Extracted as a pure function so the capping/rounding math
+// is unit-testable without a DB connection.
 export function computeSuggestedCreditAmount({
 	priceCharged,
-	planDurationDays,
+	totalDurationDays,
 	unusedDays,
 }: {
 	priceCharged: string;
-	planDurationDays: number;
+	totalDurationDays: number;
 	unusedDays: number;
 }) {
-	const dailyRateBig = toBig(priceCharged).div(planDurationDays);
+	const dailyRateBig = toBig(priceCharged).div(totalDurationDays);
 	const rawSuggested = dailyRateBig.times(unusedDays);
 	const cappedSuggested = rawSuggested.gt(toBig(priceCharged)) ? toBig(priceCharged) : rawSuggested;
 
