@@ -610,6 +610,13 @@
       "when": 1784698582588,
       "tag": "0086_same_dreaming_celestial",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1784710174786,
+      "tag": "0087_fixed_blue_blade",
+      "breakpoints": true
     }
   ]
 }

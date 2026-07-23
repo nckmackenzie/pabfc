@@ -51,6 +51,13 @@ export const billingSchema = z.object({
 	autoCreateFinancialYear: z.boolean().nullish(),
 	mpesaSettlementAccountId: z.coerce.number<number>().nullish(),
 	// .transform((val) => (val === 0 ? null : val)),
+	memberCreditsPayableAccountId: z.coerce.number<number>().nullish(),
+	creditForfeitureIncomeAccountId: z.coerce.number<number>().nullish(),
+	creditNoteExpiryMonths: z.coerce
+		.number<number>()
+		.int({ error: "Credit note expiry must be a whole number of months" })
+		.positive({ error: "Credit note expiry must be greater than zero" })
+		.nullish(),
 });
 
 export const biometricSettingsSchema = z.object({

@@ -39,6 +39,11 @@ export const Route = createFileRoute("/app/settings")({
 			assets: accounts
 				.filter((acc) => acc.type === "asset" && acc.isActive && acc.isPosting)
 				.map((acc) => ({ id: acc.id, name: acc.name })),
+			// Credit note forfeiture is credited to a revenue account, not a liability
+			// one — the "Credit Forfeiture Income Account" field needs its own list.
+			incomeAccounts: accounts
+				.filter((acc) => acc.type === "revenue" && acc.isActive && acc.isPosting)
+				.map((acc) => ({ id: acc.id, name: acc.name })),
 		};
 	},
 });

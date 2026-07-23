@@ -1,5 +1,12 @@
 import { and, eq, or } from "drizzle-orm";
-import { journalEntries, memberMemberships, membershipUpgrades, payments, paymentMembers } from "@/drizzle/schema";
+import {
+	creditNotes,
+	journalEntries,
+	memberMemberships,
+	membershipUpgrades,
+	payments,
+	paymentMembers,
+} from "@/drizzle/schema";
 import { findLaterMembership } from "@/features/receipts/lib/eligibility";
 import type { ReceiptJournalLine } from "@/features/receipts/lib/journal";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
@@ -94,6 +101,20 @@ export async function checkVoidEligibility(
 		return failure({
 			type: "ConflictError",
 			message: `This payment is ${role} and cannot be voided automatically — it requires a manual correction.`,
+		});
+	}
+
+	// Issuing a credit note terminates the underlying membership row outside the
+	// normal creation path (see issueCreditNoteFn) — same reasoning as the
+	// membershipUpgrades check above, this payment can't be voided automatically.
+	const relatedCreditNote = await tx.query.creditNotes.findFirst({
+		where: eq(creditNotes.originalPaymentId, payment.id),
+		columns: { id: true, creditNoteNo: true },
+	});
+	if (relatedCreditNote) {
+		return failure({
+			type: "ConflictError",
+			message: `This payment funded credit note ${relatedCreditNote.creditNoteNo} and cannot be voided automatically — it requires a manual correction.`,
 		});
 	}
 

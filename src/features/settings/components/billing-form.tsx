@@ -8,7 +8,7 @@ import { upsertBillingSettings } from "@/features/settings/services/settings.api
 import { useAppForm } from "@/lib/form";
 
 export function BillingForm({ billingSettings }: { billingSettings?: BillingSchema }) {
-	const { accounts, assets } = getRouteApi("/app/settings").useLoaderData();
+	const { accounts, assets, incomeAccounts } = getRouteApi("/app/settings").useLoaderData();
 	const dataMutation = useSettingsMutation({
 		actionFn: upsertBillingSettings,
 		queryKey: ["settings"],
@@ -26,6 +26,9 @@ export function BillingForm({ billingSettings }: { billingSettings?: BillingSche
 				vatAccountId: null,
 				autoCreateFinancialYear: false,
 				mpesaSettlementAccountId: null,
+				memberCreditsPayableAccountId: null,
+				creditForfeitureIncomeAccountId: null,
+				creditNoteExpiryMonths: 12,
 			} as BillingSchema),
 		validators: {
 			onSubmit: billingSchema,
@@ -127,6 +130,47 @@ export function BillingForm({ billingSettings }: { billingSettings?: BillingSche
 						/>
 					)}
 				</form.AppField>
+
+				<div className="col-span-full grid lg:grid-cols-3 gap-4">
+					<form.AppField name="memberCreditsPayableAccountId">
+						{(field) => (
+							<field.Select
+								label="Member Credits Payable Account"
+								helperText="Liability account for outstanding member credit note balances. Must already exist in Chart of Accounts."
+							>
+								{accounts.map((acc) => (
+									<SelectItem key={acc.id} value={acc.id.toString()}>
+										{acc.name}
+									</SelectItem>
+								))}
+							</field.Select>
+						)}
+					</form.AppField>
+					<form.AppField name="creditForfeitureIncomeAccountId">
+						{(field) => (
+							<field.Select
+								label="Credit Forfeiture Income Account"
+								helperText="Income account credited when an unused credit note expires unredeemed. Must already exist in Chart of Accounts."
+							>
+								{incomeAccounts.map((acc) => (
+									<SelectItem key={acc.id} value={acc.id.toString()}>
+										{acc.name}
+									</SelectItem>
+								))}
+							</field.Select>
+						)}
+					</form.AppField>
+					<form.AppField name="creditNoteExpiryMonths">
+						{(field) => (
+							<field.Input
+								label="Credit Note Expiry (Months)"
+								placeholder="12"
+								type="number"
+								helperText="Months after issuance before an unredeemed credit note balance is written off."
+							/>
+						)}
+					</form.AppField>
+				</div>
 
 				<div className="col-span-full">
 					<form.AppForm>

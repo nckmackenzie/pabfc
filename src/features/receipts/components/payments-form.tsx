@@ -14,6 +14,7 @@ import { SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToastContent } from "@/components/ui/toast-content";
 import { addonQueries } from "@/features/addons/services/queries";
+import { getMemberCreditBalanceFn } from "@/features/credit-notes/services/credit-note.queries.api";
 import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
 import { memberQueries } from "@/features/members/services/queries";
 import {
@@ -117,7 +118,7 @@ function MembershipPaymentForm() {
 	} = getRouteApi("/app/receipts/new").useLoaderData();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate({ from: "/app/receipts/new" });
-	const { data: freshMembers } = useQuery(memberQueries.activeMembers());
+	const { data: freshMembers } = useQuery(memberQueries.allMembersValueWithLabel());
 	const members = freshMembers || loaderMembers;
 	const { data: addons = [] } = useQuery(addonQueries.list({ active: true }));
 	const manualPaymentMutation = useManualMembershipPayment();
@@ -135,6 +136,7 @@ function MembershipPaymentForm() {
 			discountType: "none",
 			discount: 0,
 			addonIds: [],
+			appliedCreditAmount: 0,
 		} as PaymentSchema,
 		validators: {
 			onSubmit: paymentSchema,
@@ -182,6 +184,7 @@ function MembershipPaymentForm() {
 		startDate,
 		reference,
 		addonIds,
+		appliedCreditAmount,
 	] = useStore(form.store, (state) => [
 		state.values.memberIds,
 		state.values.planId,
@@ -191,6 +194,7 @@ function MembershipPaymentForm() {
 		state.values.startDate,
 		state.values.reference,
 		state.values.addonIds ?? [],
+		state.values.appliedCreditAmount ?? 0,
 	]);
 	const isStartDateDirty = useStore(
 		form.store,
@@ -210,6 +214,16 @@ function MembershipPaymentForm() {
 		enabled: primaryMemberId.trim().length > 0,
 		refetchOnWindowFocus: false,
 	});
+
+	// Only the billing member's own credit balance is ever offered here — other
+	// members covered by the same payment never have their credit surfaced.
+	const { data: creditBalance } = useQuery({
+		queryKey: ["member-credit-balance", primaryMemberId],
+		queryFn: () => getMemberCreditBalanceFn({ data: primaryMemberId }),
+		enabled: primaryMemberId.trim().length > 0,
+		refetchOnWindowFocus: false,
+	});
+	const availableCredit = Number(creditBalance?.balance ?? 0);
 
 	// If a plan change lowers the required member count below what's already
 	// selected, trim the extra members rather than leaving an invalid selection.
@@ -233,7 +247,7 @@ function MembershipPaymentForm() {
 	// so the previewed total matches the amount that will be recorded.
 	const membershipTax = useMemo(
 		() => taxCalculator(pricingSummary.amountDue, taxType),
-		[pricingSummary.amountDue, taxType],
+		[pricingSummary.amountDue, taxType]
 	);
 
 	// Addon breakdown preview — perMember addons multiply by the plan's member count.
@@ -241,6 +255,9 @@ function MembershipPaymentForm() {
 		() => buildAddonSummary(addons, addonIds, numberOfPeriods || 1, selectedPlan?.memberCount ?? 1),
 		[addons, addonIds, numberOfPeriods, selectedPlan]
 	);
+
+	const grandTotal = membershipTax.totalInclusiveTax + addonSummary.subtotal;
+	const maxCreditApplicable = Math.min(availableCredit, grandTotal);
 
 	useEffect(() => {
 		if (form.getFieldValue("amount") !== pricingSummary.amountDue) {
@@ -250,6 +267,15 @@ function MembershipPaymentForm() {
 			form.setFieldValue("discount", 0);
 		}
 	}, [pricingSummary, form, discountType, discount]);
+
+	// Clamp whenever the applicable cap shrinks (e.g. plan/addon change lowers the
+	// total, or the member's balance is exhausted) — never clamp upward, that would
+	// silently apply credit the staff member didn't ask for.
+	useEffect(() => {
+		if (appliedCreditAmount > maxCreditApplicable) {
+			form.setFieldValue("appliedCreditAmount", Math.max(0, maxCreditApplicable));
+		}
+	}, [appliedCreditAmount, maxCreditApplicable, form]);
 
 	// Auto-suggest a start date while the user hasn't manually edited it.
 	useEffect(() => {
@@ -374,6 +400,22 @@ function MembershipPaymentForm() {
 									{(field) => <field.Input label="Payment Reference" required />}
 								</form.AppField>
 							</FieldGroup>
+							{maxCreditApplicable > 0 && (
+								<FieldGroup>
+									<form.AppField name="appliedCreditAmount">
+										{(field) => (
+											<field.Input
+												label="Apply Credit"
+												type="number"
+												min={0}
+												max={maxCreditApplicable}
+												step={0.01}
+												helperText={`${currencyFormatter(availableCredit)} available — up to ${currencyFormatter(maxCreditApplicable)} can be applied to this payment.`}
+											/>
+										)}
+									</form.AppField>
+								</FieldGroup>
+							)}
 
 							<p className="text-xs font-medium uppercase text-muted-foreground tracking-wide pt-2">
 								Plan Change
@@ -455,6 +497,7 @@ function MembershipPaymentForm() {
 							membershipTotal={membershipTax.totalInclusiveTax}
 							addonLines={addonSummary.lines}
 							addonSubtotal={addonSummary.subtotal}
+							creditApplied={appliedCreditAmount}
 						/>
 					</div>
 				</div>
@@ -489,6 +532,7 @@ function AddonOnlyPaymentForm() {
 			paymentDate: format(new Date(), "yyyy-MM-dd"),
 			numberOfPeriods: 1,
 			reference: "",
+			appliedCreditAmount: 0,
 		} as AddonOnlyPaymentSchema,
 		validators: {
 			onSubmit: addonOnlyPaymentSchema,
@@ -519,17 +563,38 @@ function AddonOnlyPaymentForm() {
 		},
 	});
 
-	const [memberIds, addonIds, numberOfPeriods, reference] = useStore(form.store, (state) => [
-		state.values.memberIds,
-		state.values.addonIds,
-		state.values.numberOfPeriods,
-		state.values.reference,
-	]);
+	const [memberIds, addonIds, numberOfPeriods, reference, appliedCreditAmount] = useStore(
+		form.store,
+		(state) => [
+			state.values.memberIds,
+			state.values.addonIds,
+			state.values.numberOfPeriods,
+			state.values.reference,
+			state.values.appliedCreditAmount ?? 0,
+		]
+	);
 
 	const addonSummary = useMemo(
 		() => buildAddonSummary(addons, addonIds, numberOfPeriods || 1, memberIds.length || 1),
 		[addons, addonIds, numberOfPeriods, memberIds]
 	);
+
+	// Same billing-member-only convention as the membership form above.
+	const primaryMemberId = memberIds[0] ?? "";
+	const { data: creditBalance } = useQuery({
+		queryKey: ["member-credit-balance", primaryMemberId],
+		queryFn: () => getMemberCreditBalanceFn({ data: primaryMemberId }),
+		enabled: primaryMemberId.trim().length > 0,
+		refetchOnWindowFocus: false,
+	});
+	const availableCredit = Number(creditBalance?.balance ?? 0);
+	const maxCreditApplicable = Math.min(availableCredit, addonSummary.subtotal);
+
+	useEffect(() => {
+		if (appliedCreditAmount > maxCreditApplicable) {
+			form.setFieldValue("appliedCreditAmount", Math.max(0, maxCreditApplicable));
+		}
+	}, [appliedCreditAmount, maxCreditApplicable, form]);
 
 	const memberName = memberIds
 		.map((id) => members.find((m) => m.value === id)?.label)
@@ -600,6 +665,22 @@ function AddonOnlyPaymentForm() {
 									{(field) => <field.Input label="Payment Reference" required />}
 								</form.AppField>
 							</FieldGroup>
+							{maxCreditApplicable > 0 && (
+								<FieldGroup>
+									<form.AppField name="appliedCreditAmount">
+										{(field) => (
+											<field.Input
+												label="Apply Credit"
+												type="number"
+												min={0}
+												max={maxCreditApplicable}
+												step={0.01}
+												helperText={`${currencyFormatter(availableCredit)} available — up to ${currencyFormatter(maxCreditApplicable)} can be applied to this payment.`}
+											/>
+										)}
+									</form.AppField>
+								</FieldGroup>
+							)}
 
 							{submissionError && (
 								<CustomAlert variant="destructive" title="Error" description={submissionError} />
@@ -623,6 +704,7 @@ function AddonOnlyPaymentForm() {
 							reference={reference}
 							addonLines={addonSummary.lines}
 							addonSubtotal={addonSummary.subtotal}
+							creditApplied={appliedCreditAmount}
 						/>
 					</div>
 				</div>

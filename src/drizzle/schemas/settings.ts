@@ -38,6 +38,9 @@ export const settings = pgTable("settings", {
 		vatAccountId?: number;
 		autoCreateFinancialYear?: boolean;
 		mpesaSettlementAccountId?: number;
+		memberCreditsPayableAccountId?: number;
+		creditForfeitureIncomeAccountId?: number;
+		creditNoteExpiryMonths?: number;
 	}>(),
 	createdAt,
 	updatedAt,

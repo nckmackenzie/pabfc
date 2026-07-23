@@ -23,6 +23,10 @@ export const paymentSchema = z.object({
 	// Optional addons charged alongside the membership payment. VAT-exempt and
 	// snapshotted into addon_invoice_lines at creation time.
 	addonIds: z.array(z.string().min(1)).optional(),
+	// Amount of the billing member's own credit note balance to apply toward this
+	// payment, funding it partially or fully instead of cash. Server re-validates
+	// against the actual available balance and payment total.
+	appliedCreditAmount: z.number().min(0).optional(),
 });
 
 // "Addon Only" mode — no membership plan involved. The member selector remains
@@ -37,6 +41,7 @@ export const addonOnlyPaymentSchema = z.object({
 		.int({ error: "Must be a whole number" })
 		.min(1, { error: "Must be at least 1" }),
 	reference: requiredStringNonLowerSchemaEntry("Payment reference is required"),
+	appliedCreditAmount: z.number().min(0).optional(),
 });
 
 export const voidPaymentSchema = z.object({

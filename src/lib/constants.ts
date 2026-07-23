@@ -94,6 +94,11 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				permission: "receipts:view",
 			},
 			{
+				title: "Credit Notes",
+				url: "/app/credit-notes",
+				permission: "credit-notes:view",
+			},
+			{
 				title: "Bills",
 				url: "/app/bills",
 				permission: "bills:view",

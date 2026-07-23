@@ -29,4 +29,15 @@ export const memberQueries = {
 			// queryFn: () => getMembers({ data: { status: "active" } }),
 			queryFn: () => getActiveMembers(),
 		}),
+	allMembersValueWithLabel: () =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "allMembersValueWithLabel"],
+			queryFn: async () => {
+				const members = await getMembers({ data: {} });
+				return members.map(({ id, fullName }) => ({
+					value: id,
+					label: fullName,
+				}));
+			},
+		}),
 };
