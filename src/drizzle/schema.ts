@@ -6,6 +6,7 @@ export * from "@/drizzle/schemas/auth";
 export * from "@/drizzle/schemas/bank";
 export * from "@/drizzle/schemas/bill";
 export * from "@/drizzle/schemas/chart-of-accounts";
+export * from "@/drizzle/schemas/credit-notes";
 export * from "@/drizzle/schemas/expenses";
 export * from "@/drizzle/schemas/financial-years";
 export * from "@/drizzle/schemas/member";
@@ -16,4 +17,3 @@ export * from "@/drizzle/schemas/sms";
 export * from "@/drizzle/schemas/employees";
 export * from "@/drizzle/schemas/leave";
 export * from "@/drizzle/schemas/payroll";
-

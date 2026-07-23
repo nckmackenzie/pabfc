@@ -9,6 +9,7 @@ import {
 	addons,
 	bankAccounts,
 	bankPostings,
+	creditNoteRedemptions,
 	ledgerAccounts,
 	memberMemberships,
 	members,
@@ -32,6 +33,12 @@ import {
 } from "@/features/receipts/services/membership-payment-finalizer";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
 import { checkUpgradeEligibility } from "@/features/receipts/lib/upgrade";
+import {
+	applyCreditRedemption,
+	lockMemberCredits,
+	restoreCreditNoteBalance,
+} from "@/features/credit-notes/lib/redemption";
+import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { buildVoidReversalJournalLines, checkVoidEligibility } from "@/features/receipts/lib/void";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { createBankingEntry } from "@/services/banking";
@@ -286,6 +293,7 @@ export const createManualMembershipPaymentFn = createServerFn({
 					discountType,
 					discount,
 					reference,
+					appliedCreditAmount,
 				} = data;
 
 				const uniqueMemberIds = [...new Set(memberIds)];
@@ -432,6 +440,10 @@ export const createManualMembershipPaymentFn = createServerFn({
 						startDate,
 						numberOfPeriods,
 						addonLines: addonLines.length > 0 ? addonLines : undefined,
+						appliedCreditAmount:
+							appliedCreditAmount && appliedCreditAmount > 0
+								? toDecimalString(appliedCreditAmount)
+								: undefined,
 						activityLog: {
 							action: "create receipt",
 							description: `Created membership receipt ${paymentNo}.`,
@@ -564,6 +576,32 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 						});
 					}
 
+					// The reversal journal above already mirrors the original entry's lines
+					// (including any CR memberCreditsPayable line), but that only fixes the
+					// GL — the subsidiary ledger (each credit note's own balance) doesn't
+					// self-correct and must be restored explicitly.
+					const redeemedCreditNotes = await tx.query.creditNoteRedemptions.findMany({
+						where: eq(creditNoteRedemptions.paymentId, payment.id),
+						with: { creditNote: { columns: { memberId: true } } },
+					});
+					// Same lock namespace applyCreditRedemption/expireCreditNotes use —
+					// without it, a concurrent redemption reading+decrementing the same
+					// credit note's balance could be overwritten by this restore (or vice
+					// versa) since restoreCreditNoteBalance's read-then-update isn't
+					// otherwise serialized against them.
+					const redeemedMemberIds = [
+						...new Set(redeemedCreditNotes.map((redemption) => redemption.creditNote.memberId)),
+					].sort();
+					for (const memberId of redeemedMemberIds) {
+						await lockMemberCredits(tx, memberId);
+					}
+					for (const redemption of redeemedCreditNotes) {
+						await tx
+							.delete(creditNoteRedemptions)
+							.where(eq(creditNoteRedemptions.id, redemption.id));
+						await restoreCreditNoteBalance(tx, redemption.creditNoteId, redemption.amountApplied);
+					}
+
 					await tx.insert(activityLogs).values({
 						userId,
 						action: "void receipt",
@@ -690,7 +728,10 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 					const taxType = settings?.billing?.applyTaxToMembership
 						? (settings.billing?.vatType ?? "inclusive")
 						: "none";
-					const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(topUpAmount, taxType);
+					const { amountExlusiveTax, taxAmount, totalInclusiveTax } = taxCalculator(
+						topUpAmount,
+						taxType
+					);
 					const hasTax = taxAmount > 0;
 					if (hasTax && !settings?.billing?.vatAccountId) {
 						throw fail({ type: "ApplicationError", message: "VAT account is not configured" });
@@ -776,7 +817,10 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 						billingMemberId,
 						...coveredMembers.map(({ id }) => id).filter((id) => id !== billingMemberId),
 					];
-					const topUpShares = splitAmountEvenly(toDecimalString(topUpAmount), orderedMemberIds.length);
+					const topUpShares = splitAmountEvenly(
+						toDecimalString(topUpAmount),
+						orderedMemberIds.length
+					);
 					const topUpShareByMemberId = new Map(
 						orderedMemberIds.map((id, index) => [id, topUpShares[index]])
 					);
@@ -880,7 +924,8 @@ export const createAddonOnlyPaymentFn = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("receipts:create");
 
-			const { memberIds, addonIds, paymentDate, numberOfPeriods, reference } = data;
+			const { memberIds, addonIds, paymentDate, numberOfPeriods, reference, appliedCreditAmount } =
+				data;
 
 			const uniqueMemberIds = [...new Set(memberIds)];
 			if (uniqueMemberIds.length !== memberIds.length) {
@@ -954,12 +999,50 @@ export const createAddonOnlyPaymentFn = createServerFn({ method: "POST" })
 
 				const description = `Addon payment for invoice # ${invoiceNo} - ${reference}`;
 
-				// One credit per unique addon revenue account, then the bank debit for
-				// the total. No membership revenue or VAT lines for addon-only receipts.
+				// Same credit-redemption validation as finalizeMembershipPayment: lock
+				// before reading the available balance, then validate against both the
+				// invoice total and the member's actual balance.
+				const hasCreditApplied = !!appliedCreditAmount && appliedCreditAmount > 0;
+				if (hasCreditApplied) {
+					await lockMemberCredits(tx, billingMemberId);
+					if (!settings?.billing?.memberCreditsPayableAccountId) {
+						return failure({
+							type: "ApplicationError",
+							message: "Member credits payable account is not configured",
+						});
+					}
+					if (toBig(appliedCreditAmount).gt(addonSubtotal)) {
+						return failure({
+							type: "ApplicationError",
+							message: "Applied credit cannot exceed the payment total.",
+						});
+					}
+					const availableBalance = await getAvailableCreditBalance(tx, billingMemberId);
+					if (toBig(appliedCreditAmount).gt(availableBalance)) {
+						return failure({
+							type: "ApplicationError",
+							message: "Applied credit exceeds the member's available credit balance.",
+						});
+					}
+				}
+				const addonBankAmount = hasCreditApplied
+					? toDecimalString(toBig(addonSubtotal).minus(appliedCreditAmount as number))
+					: addonSubtotal;
+				const hasBankPortion = toBig(addonBankAmount).gt(0);
+
+				// One credit per unique addon revenue account, then debit(s): credit
+				// applied (if any) then the bank portion. No membership revenue or VAT
+				// lines for addon-only receipts.
 				const lines = buildReceiptJournalLines({
 					addonLines,
-					bankAccountId: bankAccount,
-					bankAmount: addonSubtotal,
+					creditApplied: hasCreditApplied
+						? {
+								accountId: settings!.billing!.memberCreditsPayableAccountId!,
+								amount: toDecimalString(appliedCreditAmount),
+							}
+						: null,
+					bankAccountId: hasBankPortion ? bankAccount : undefined,
+					bankAmount: hasBankPortion ? addonBankAmount : undefined,
 					memo: description,
 				});
 
@@ -1019,7 +1102,7 @@ export const createAddonOnlyPaymentFn = createServerFn({ method: "POST" })
 					tx,
 				});
 
-				if (hasSettlementAccount) {
+				if (hasSettlementAccount && hasBankPortion) {
 					const bankAccountId = await tx.query.bankAccounts.findFirst({
 						columns: { id: true },
 						where: eq(bankAccounts.accountId, bankAccount),
@@ -1030,7 +1113,7 @@ export const createAddonOnlyPaymentFn = createServerFn({ method: "POST" })
 							entry: {
 								bankId: bankAccountId.id,
 								dc: "debit",
-								amount: addonSubtotal,
+								amount: addonBankAmount,
 								reference,
 								transactionDate: dateFormat(paymentDate),
 								source: "addon payment",
@@ -1039,6 +1122,15 @@ export const createAddonOnlyPaymentFn = createServerFn({ method: "POST" })
 							},
 						});
 					}
+				}
+
+				if (hasCreditApplied) {
+					await applyCreditRedemption({
+						tx,
+						memberId: billingMemberId,
+						amountToApply: toDecimalString(appliedCreditAmount),
+						addonInvoiceId: addonInvoice.id,
+					});
 				}
 
 				await tx.insert(activityLogs).values({

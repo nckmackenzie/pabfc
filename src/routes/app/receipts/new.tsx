@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app/receipts/new")({
 	pendingComponent: FormLoader,
 	loader: async ({ context: { queryClient } }) => {
 		const [members, plans, { taxType }] = await Promise.all([
-			queryClient.ensureQueryData(memberQueries.activeMembers()),
+			queryClient.ensureQueryData(memberQueries.allMembersValueWithLabel()),
 			queryClient.ensureQueryData(planQueries.list()),
 			queryClient.ensureQueryData(paymentsQueries.membershipTaxType()),
 		]);

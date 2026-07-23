@@ -1,16 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday, subDays } from "date-fns";
-import {
-	and,
-	eq,
-	inArray,
-	isNull,
-	lt,
-	lte,
-	notInArray,
-	or,
-	sql,
-} from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncJobs,
@@ -24,8 +14,10 @@ import {
 	vwInvoices,
 } from "@/drizzle/schema";
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
+import { expireCreditNotes } from "@/features/credit-notes/services/credit-note.maintenance";
 import { dateFormat, normalizeDateRange } from "@/lib/helpers";
 import { deleteOlderLogs } from "@/services/activity-logger";
+import { disableMemberAccessIfNoValidMembership } from "@/services/member-access";
 
 async function autoCreateFinancialYear() {
 	const settings = await db.query.settings.findFirst({
@@ -63,8 +55,8 @@ async function runDailyMaintenance() {
 			and(
 				sql`${vwInvoices.balance} > 0`,
 				lte(vwInvoices.dueDate, sql`CURRENT_DATE`),
-				notInArray(vwInvoices.status, ["cancelled", "overdue", "draft"]),
-			),
+				notInArray(vwInvoices.status, ["cancelled", "overdue", "draft"])
+			)
 		);
 
 	await db
@@ -73,8 +65,8 @@ async function runDailyMaintenance() {
 		.where(
 			inArray(
 				bills.id,
-				overDueInvoices.map((i) => i.id),
-			),
+				overDueInvoices.map((i) => i.id)
+			)
 		);
 
 	// 3) auto create financial year
@@ -85,6 +77,9 @@ async function runDailyMaintenance() {
 
 	// 5) deactivate inactive members
 	await deactivateInactiveMembers();
+
+	// 6) write off expired, unredeemed credit note balances
+	await expireCreditNotes();
 }
 
 async function deactivateInactiveMembers() {
@@ -97,9 +92,7 @@ async function deactivateInactiveMembers() {
 	const lastAttendanceSubquery = db
 		.select({
 			memberId: attendanceLogs.memberId,
-			lastCheckIn: sql<Date>`max(${attendanceLogs.checkInTime})`.as(
-				"last_check_in",
-			),
+			lastCheckIn: sql<Date>`max(${attendanceLogs.checkInTime})`.as("last_check_in"),
 		})
 		.from(attendanceLogs)
 		.groupBy(attendanceLogs.memberId)
@@ -113,11 +106,8 @@ async function deactivateInactiveMembers() {
 		.where(
 			and(
 				eq(memberMemberships.status, "active"),
-				or(
-					isNull(memberMemberships.endDate),
-					sql`${memberMemberships.endDate} >= ${today}`,
-				),
-			),
+				or(isNull(memberMemberships.endDate), sql`${memberMemberships.endDate} >= ${today}`)
+			)
 		);
 
 	const membersToDeactivate = await db
@@ -131,14 +121,8 @@ async function deactivateInactiveMembers() {
 			unauthorizedAreaId: biotimePersonProfiles.unauthorizedAreaId,
 		})
 		.from(members)
-		.leftJoin(
-			lastAttendanceSubquery,
-			eq(members.id, lastAttendanceSubquery.memberId),
-		)
-		.leftJoin(
-			biotimePersonProfiles,
-			eq(members.id, biotimePersonProfiles.memberId),
-		)
+		.leftJoin(lastAttendanceSubquery, eq(members.id, lastAttendanceSubquery.memberId))
+		.leftJoin(biotimePersonProfiles, eq(members.id, biotimePersonProfiles.memberId))
 		.where(
 			and(
 				eq(members.memberStatus, "active"),
@@ -146,12 +130,9 @@ async function deactivateInactiveMembers() {
 				notInArray(members.id, membersWithActiveSubscription),
 				or(
 					lte(lastAttendanceSubquery.lastCheckIn, thresholdDate),
-					and(
-						isNull(lastAttendanceSubquery.lastCheckIn),
-						lte(members.createdAt, thresholdDate),
-					),
-				),
-			),
+					and(isNull(lastAttendanceSubquery.lastCheckIn), lte(members.createdAt, thresholdDate))
+				)
+			)
 		);
 
 	if (membersToDeactivate.length === 0) {
@@ -193,10 +174,7 @@ async function deactivateInactiveMembers() {
 					})
 					.where(eq(biotimePersonProfiles.id, member.profileId));
 
-				if (
-					member.biotimeEmployeeId !== null &&
-					member.biotimeEmployeeId !== undefined
-				) {
+				if (member.biotimeEmployeeId !== null && member.biotimeEmployeeId !== undefined) {
 					// 4) Insert access control sync job
 					await tx.insert(accessControlSyncJobs).values({
 						memberId: member.id,
@@ -229,112 +207,17 @@ async function expireMembershipsAndDisableAccess() {
 				status: "expired",
 				updatedAt: now,
 			})
-			.where(
-				and(
-					eq(memberMemberships.status, "active"),
-					lt(memberMemberships.endDate, today),
-				),
-			)
+			.where(and(eq(memberMemberships.status, "active"), lt(memberMemberships.endDate, today)))
 			.returning({
 				memberId: memberMemberships.memberId,
 			});
 
 		if (expiredMemberships.length === 0) return;
 
-		const affectedMemberIds = [
-			...new Set(expiredMemberships.map((m) => m.memberId)),
-		];
+		const affectedMemberIds = [...new Set(expiredMemberships.map((m) => m.memberId))];
 
 		for (const memberId of affectedMemberIds) {
-			// 2) Check if member still has another valid membership
-			const validMembership = await tx.query.memberMemberships.findFirst({
-				where: and(
-					eq(memberMemberships.memberId, memberId),
-					eq(memberMemberships.status, "active"),
-				),
-			});
-
-			// If they have an active/upcoming membership, do not disable access
-			if (validMembership) continue;
-
-			// 3) Get member + access profile
-			const memberAccess = await tx
-				.select({
-					memberId: members.id,
-					memberNo: members.memberNo,
-					profileId: biotimePersonProfiles.id,
-					biotimeEmployeeId: biotimePersonProfiles.biotimeEmployeeId,
-					unauthorizedAreaId: biotimePersonProfiles.unauthorizedAreaId,
-				})
-				.from(members)
-				.leftJoin(
-					biotimePersonProfiles,
-					eq(members.id, biotimePersonProfiles.memberId),
-				)
-				.where(eq(members.id, memberId))
-				.limit(1);
-
-			const row = memberAccess[0];
-
-			if (!row) continue;
-
-			// 4) Update member status
-			await tx
-				.update(members)
-				.set({
-					memberStatus: "inactive",
-					deactivatedAt: now,
-					updatedAt: now,
-				})
-				.where(eq(members.id, memberId));
-
-			// 5) Disable portal user
-			await tx
-				.update(users)
-				.set({
-					active: false,
-					deactivatedAt: now,
-					updatedAt: now,
-				})
-				.where(eq(users.memberId, memberId));
-
-			// 6) Update access profile
-			if (row.profileId) {
-				await tx
-					.update(biotimePersonProfiles)
-					.set({
-						desiredAccessEnabled: false,
-						accessControlStatus: "pending_sync",
-						lastSyncError: null,
-						updatedAt: now,
-					})
-					.where(
-						and(
-							eq(biotimePersonProfiles.id, row.profileId),
-							eq(biotimePersonProfiles.personType, "member"),
-						),
-					);
-			}
-
-			// 7) Create BioTime disable job
-			if (row.biotimeEmployeeId && row.profileId) {
-				await tx
-					.insert(accessControlSyncJobs)
-					.values({
-						memberId,
-						biotimePersonProfileId: row.profileId,
-						personType: "member",
-						action: "DISABLE_ACCESS",
-						status: "pending",
-						payload: {
-							biotimeEmployeeId: row.biotimeEmployeeId,
-							areaIds: [row.unauthorizedAreaId ?? 1],
-							reason: "membership_expired",
-						},
-						idempotencyKey: `DISABLE_ACCESS:MEMBERSHIP_EXPIRED:${memberId}`,
-					})
-					.onConflictDoNothing();
-			}
+			await disableMemberAccessIfNoValidMembership(tx, memberId, "membership_expired");
 		}
 	});
 }

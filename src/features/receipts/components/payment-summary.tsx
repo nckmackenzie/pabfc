@@ -31,6 +31,9 @@ type PaymentSummaryProps = {
 	membershipTotal?: number;
 	addonLines?: AddonSummaryLine[];
 	addonSubtotal?: number;
+	// Portion of the total funded by the billing member's credit note balance —
+	// shown as a deduction so "Amount Due"/"Total" reflects the cash actually owed.
+	creditApplied?: number;
 };
 
 function getInitials(name: string) {
@@ -57,12 +60,14 @@ export function PaymentSummary({
 	membershipTotal,
 	addonLines = [],
 	addonSubtotal = 0,
+	creditApplied = 0,
 }: PaymentSummaryProps) {
 	const isMembership = mode === "membership";
 	const hasAddons = addonLines.length > 0;
 	// Fall back to amountDue when the caller doesn't supply a VAT-inclusive total.
 	const membershipDue = isMembership ? (membershipTotal ?? amountDue) : 0;
 	const grandTotal = membershipDue + addonSubtotal;
+	const netAmountDue = Math.max(0, grandTotal - creditApplied);
 
 	return (
 		<Card className="shadow-none">
@@ -87,7 +92,9 @@ export function PaymentSummary({
 						<Separator />
 
 						<div>
-							<p className="text-xs font-medium uppercase text-muted-foreground">Current Membership</p>
+							<p className="text-xs font-medium uppercase text-muted-foreground">
+								Current Membership
+							</p>
 							<p className="text-sm">{currentPlanName || "—"}</p>
 							<p className="text-sm text-muted-foreground">
 								{currentPeriodStart && currentPeriodEnd
@@ -160,9 +167,22 @@ export function PaymentSummary({
 
 				<Separator />
 
+				{creditApplied > 0 && (
+					<>
+						<div className="flex justify-between text-sm">
+							<span className="text-muted-foreground">{isMembership ? "Amount Due" : "Total"}</span>
+							<span>{currencyFormatter(grandTotal)}</span>
+						</div>
+						<div className="flex justify-between text-sm">
+							<span className="text-muted-foreground">Credit applied</span>
+							<span className="text-green-600">-{currencyFormatter(creditApplied)}</span>
+						</div>
+					</>
+				)}
+
 				<div className="flex justify-between font-bold text-base">
 					<span>{isMembership ? "Amount Due" : "Total"}</span>
-					<span>{currencyFormatter(grandTotal)}</span>
+					<span>{currencyFormatter(netAmountDue)}</span>
 				</div>
 			</CardContent>
 		</Card>

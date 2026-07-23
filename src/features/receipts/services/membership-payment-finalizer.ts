@@ -23,6 +23,8 @@ import {
 	parseCalendarDate,
 	splitAmountEvenly,
 } from "@/features/receipts/lib/helpers";
+import { applyCreditRedemption, lockMemberCredits } from "@/features/credit-notes/lib/redemption";
+import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
@@ -62,6 +64,13 @@ type FinalizeMembershipPaymentParams = {
 	// revenue account is added to the journal before the bank debit. Addons are
 	// VAT-exempt, so payment.totalAmount already includes the (untaxed) addon subtotal.
 	addonLines?: ComputedAddonLine[];
+	// Amount of the billing member's credit note balance(s) to apply toward this
+	// payment, funding it partially or fully instead of cash. Validated against the
+	// member's available balance and payment.totalAmount below; the specific credit
+	// note(s) drawn from are resolved FIFO by applyCreditRedemption after the journal
+	// posts successfully. Revenue/VAT lines are unaffected — only the funding split
+	// (bank vs. credit) changes.
+	appliedCreditAmount?: string;
 	activityLog?: {
 		userId: string;
 		action: string;
@@ -83,6 +92,7 @@ export async function finalizeMembershipPayment({
 	startDate: paramStartDate,
 	numberOfPeriods,
 	addonLines,
+	appliedCreditAmount,
 	activityLog,
 }: FinalizeMembershipPaymentParams) {
 	const coveredMemberIds = memberIds && memberIds.length > 0 ? memberIds : [payment.memberId];
@@ -138,15 +148,56 @@ export async function finalizeMembershipPayment({
 	const hasAddons = !!addonLines && addonLines.length > 0;
 	const addonSubtotal = hasAddons ? sumAddonSubtotal(addonLines) : "0.00";
 
+	// Credit redemption: validate before any writes, same as the VAT/bank-account
+	// guards above, so a failure here doesn't leave the transaction partially applied.
+	const hasCreditApplied = !!appliedCreditAmount && toBig(appliedCreditAmount).gt(0);
+	if (hasCreditApplied) {
+		// Lock before reading the available balance (not just before applying it) so a
+		// concurrent redemption against the same member's credit can't slip in between
+		// this check and the eventual applyCreditRedemption call below.
+		await lockMemberCredits(tx, payment.memberId);
+		if (!settings?.billing?.memberCreditsPayableAccountId) {
+			return failure({
+				type: "ApplicationError",
+				message: "Member credits payable account is not configured",
+			});
+		}
+		if (toBig(appliedCreditAmount).gt(payment.totalAmount)) {
+			return failure({
+				type: "ApplicationError",
+				message: "Applied credit cannot exceed the payment total.",
+			});
+		}
+		const availableBalance = await getAvailableCreditBalance(tx, payment.memberId);
+		if (toBig(appliedCreditAmount).gt(availableBalance)) {
+			return failure({
+				type: "ApplicationError",
+				message: "Applied credit exceeds the member's available credit balance.",
+			});
+		}
+	}
+	const bankAmount = hasCreditApplied
+		? toDecimalString(toBig(payment.totalAmount).minus(appliedCreditAmount as string))
+		: payment.totalAmount;
+	const hasBankPortion = toBig(bankAmount).gt(0);
+
 	const description = `Payment for receipt # ${payment.paymentNo} - ${reference ?? payment.reference ?? ""}`;
 
-	// Credits (membership revenue, VAT, combined addon revenue) then the bank debit.
+	// Credits (membership revenue, VAT, combined addon revenue) then debit(s): credit
+	// applied (if any) then the bank portion (omitted entirely if credit covers the
+	// full total, rather than posting a zero-value bank line).
 	const lines = buildReceiptJournalLines({
 		membershipRevenue: { accountId: plan.revenueAccountId, amount: payment.lineTotal },
 		vat: hasTax ? { accountId: settings!.billing!.vatAccountId!, amount: payment.taxAmount } : null,
 		addonLines: hasAddons ? addonLines : [],
-		bankAccountId: bankAccount,
-		bankAmount: payment.totalAmount,
+		creditApplied: hasCreditApplied
+			? {
+					accountId: settings!.billing!.memberCreditsPayableAccountId!,
+					amount: appliedCreditAmount!,
+				}
+			: null,
+		bankAccountId: hasBankPortion ? bankAccount : undefined,
+		bankAmount: hasBankPortion ? bankAmount : undefined,
 		memo: description,
 	});
 
@@ -293,7 +344,7 @@ export async function finalizeMembershipPayment({
 		tx,
 	});
 
-	if (hasSettlementAccount) {
+	if (hasSettlementAccount && hasBankPortion) {
 		const bankAccountId = await tx.query.bankAccounts.findFirst({
 			columns: { id: true },
 			where: eq(bankAccounts.accountId, bankAccount),
@@ -304,7 +355,7 @@ export async function finalizeMembershipPayment({
 				entry: {
 					bankId: bankAccountId.id,
 					dc: "debit",
-					amount: payment.totalAmount,
+					amount: bankAmount,
 					reference: payment.reference ?? payment.paymentNo,
 					transactionDate: dateFormat(payment.paymentDate),
 					source: "plan payment",
@@ -313,6 +364,15 @@ export async function finalizeMembershipPayment({
 				},
 			});
 		}
+	}
+
+	if (hasCreditApplied) {
+		await applyCreditRedemption({
+			tx,
+			memberId: payment.memberId,
+			amountToApply: appliedCreditAmount!,
+			paymentId: payment.id,
+		});
 	}
 
 	if (activityLog) {
