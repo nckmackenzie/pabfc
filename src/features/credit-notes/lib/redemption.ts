@@ -5,8 +5,10 @@ import {
 	type CreditFifoAllocation,
 	resolveCreditFifoAllocation,
 } from "@/features/credit-notes/lib/fifo";
+import type { ReceiptJournalLine } from "@/features/receipts/lib/journal";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
-import { toBig, toDecimalString } from "@/lib/helpers";
+import { dateFormat, toBig, toDecimalString } from "@/lib/helpers";
+import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 
 // New lock namespace alongside lockMemberMembershipCreation's 'member_memberships' one
 // (see payment.mutations.api.ts) — nothing else in the codebase currently serializes
@@ -44,6 +46,14 @@ export async function applyCreditRedemption({
 	await lockMemberCredits(tx, memberId);
 
 	const allocations = await resolveCreditFifoAllocation(tx, memberId, amountToApply);
+	const totalAllocated = allocations.reduce(
+		(sum, allocation) => sum.plus(allocation.amountToApply),
+		toBig(0)
+	);
+
+	if (!totalAllocated.eq(amountToApply)) {
+		throw new Error("Insufficient available credit");
+	}
 
 	for (const allocation of allocations) {
 		const creditNote = await tx.query.creditNotes.findFirst({
@@ -72,51 +82,114 @@ export async function applyCreditRedemption({
 	return allocations;
 }
 
-// Pure status-transition math for restoreCreditNoteBalance below — unit-testable
-// without a DB connection. Known limitation: if the credit note expired (and was
-// written off) between the original redemption and this void, this still restores
-// the balance but leaves the existing "expired" status alone — reviving it as
-// spendable would need a manual correction alongside reversing the expiry
-// write-off journal, which is out of scope here.
+// Pure balance/status math for restoreCreditNoteBalance below — unit-testable
+// without a DB connection. A restored credit note is always brought back to a
+// redeemable status (never left "expired" with a nonzero balance) — see
+// restoreCreditNoteBalance for the write-off reversal that keeps this consistent
+// with the GL when the note had already been expired.
 export function computeRestoredCreditNoteState({
 	amount,
 	balanceRemaining,
-	status,
 	amountToRestore,
 }: {
 	amount: string;
 	balanceRemaining: string;
-	status: CreditNoteStatus;
 	amountToRestore: string;
 }): { balanceRemaining: string; status: CreditNoteStatus } {
 	const restored = toBig(balanceRemaining).plus(amountToRestore);
 	const capped = restored.gt(amount) ? toBig(amount) : restored;
+	const status: CreditNoteStatus = capped.gte(amount) ? "active" : "partially_redeemed";
 
-	const newStatus: CreditNoteStatus =
-		status === "expired" ? status : capped.gte(amount) ? "active" : "partially_redeemed";
-
-	return { balanceRemaining: toDecimalString(capped), status: newStatus };
+	return { balanceRemaining: toDecimalString(capped), status };
 }
 
 // Void's "subsidiary ledger and GL must both move together" fix-up (Step 11): adds
 // `amountToRestore` back onto a credit note's balance and recomputes its status.
+//
+// If the note had already expired (expireCreditNotes wrote off its balance and
+// zeroed it — see credit-note.maintenance.ts), restoring a balance into it without
+// also touching the GL would leave a credit note sitting "expired" with a nonzero
+// balance: unreachable by both the FIFO redemption query and the expiry job (both
+// filter to active/partially_redeemed), and unreconciled against the GL, which
+// still shows the full original write-off as forfeited income. So in that case
+// this also posts the exact inverse of the write-off journal for the restored
+// amount — DR the forfeiture income back out, CR the payable liability back in —
+// and un-expires the note, atomically with the balance/status update.
 export async function restoreCreditNoteBalance(
 	tx: Transaction,
 	creditNoteId: string,
 	amountToRestore: string
 ) {
+	const creditNoteRef = await tx.query.creditNotes.findFirst({
+		where: eq(creditNotes.id, creditNoteId),
+		columns: { memberId: true },
+	});
+	if (!creditNoteRef) return;
+
+	// Lock before the authoritative read below (not just before the final write) so
+	// this function is safe to call on its own — voidPaymentFn already locks by
+	// member before looping over redemptions, but that's caller discipline this
+	// function shouldn't have to rely on; re-entrant within the same tx (Postgres
+	// advisory xact locks stack per session), so locking again here is a no-op when
+	// the caller already holds it.
+	await lockMemberCredits(tx, creditNoteRef.memberId);
+
 	const creditNote = await tx.query.creditNotes.findFirst({
 		where: eq(creditNotes.id, creditNoteId),
-		columns: { amount: true, balanceRemaining: true, status: true },
+		columns: { creditNoteNo: true, amount: true, balanceRemaining: true, status: true },
 	});
 	if (!creditNote) return;
 
 	const { balanceRemaining, status } = computeRestoredCreditNoteState({
 		amount: creditNote.amount,
 		balanceRemaining: creditNote.balanceRemaining,
-		status: creditNote.status,
 		amountToRestore,
 	});
+
+	if (creditNote.status === "expired" && toBig(amountToRestore).gt(0)) {
+		const settings = await tx.query.settings.findFirst({ columns: { billing: true } });
+		const payableAccountId = settings?.billing?.memberCreditsPayableAccountId;
+		const forfeitureAccountId = settings?.billing?.creditForfeitureIncomeAccountId;
+		if (!payableAccountId || !forfeitureAccountId) {
+			throw new Error(
+				"Cannot restore credit note balance: member credits payable / credit forfeiture income account is not configured."
+			);
+		}
+
+		const today = dateFormat(new Date());
+		const description = `Reversal of credit note ${creditNote.creditNoteNo}'s expiry write-off — KES ${amountToRestore} restored after a redeeming payment was voided.`;
+		const lines: ReceiptJournalLine[] = [
+			{
+				lineNumber: 1,
+				accountId: forfeitureAccountId,
+				amount: amountToRestore,
+				dc: "debit",
+				memo: description,
+			},
+			{
+				lineNumber: 2,
+				accountId: payableAccountId,
+				amount: amountToRestore,
+				dc: "credit",
+				memo: description,
+			},
+		];
+		if (!areJournalValuesBalanced(lines)) {
+			throw new Error("Credit note expiry-reversal journal values are not balanced");
+		}
+
+		await createJournalEntry({
+			entry: {
+				entryDate: today,
+				reference: creditNote.creditNoteNo,
+				source: "credit note expiry reversal",
+				sourceId: creditNoteId,
+				description,
+			},
+			lines,
+			tx,
+		});
+	}
 
 	await tx
 		.update(creditNotes)

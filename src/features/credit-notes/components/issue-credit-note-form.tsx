@@ -18,16 +18,13 @@ import {
 import { ToastContent } from "@/components/ui/toast-content";
 import { useIssueCreditNote } from "@/features/credit-notes/hooks/use-issue-credit-note";
 import {
-	getCreditableMembershipsFn,
-	getCreditNoteIssuanceContextFn,
-} from "@/features/credit-notes/services/credit-note.queries.api";
-import {
 	issueCreditNoteSchema,
 	type IssueCreditNoteSchema,
 } from "@/features/credit-notes/services/schemas";
 import { memberQueries } from "@/features/members/services/queries";
 import { useAppForm } from "@/lib/form";
 import { currencyFormatter } from "@/lib/helpers";
+import { creditNoteQueries } from "../services/queries";
 
 export function IssueCreditNoteForm() {
 	const queryClient = useQueryClient();
@@ -83,17 +80,11 @@ export function IssueCreditNoteForm() {
 		state.values.reason,
 	]);
 
-	const { data: memberships = [] } = useQuery({
-		queryKey: ["creditable-memberships", memberId],
-		queryFn: () => getCreditableMembershipsFn({ data: memberId }),
-		enabled: memberId.trim().length > 0,
-	});
+	const { data: memberships = [] } = useQuery(creditNoteQueries.creditableMemberships(memberId));
 
-	const { data: context, isFetching: isLoadingContext } = useQuery({
-		queryKey: ["credit-note-issuance-context", membershipId],
-		queryFn: () => getCreditNoteIssuanceContextFn({ data: membershipId }),
-		enabled: membershipId.trim().length > 0,
-	});
+	const { data: context, isFetching: isLoadingContext } = useQuery(
+		creditNoteQueries.issuanceContext(membershipId)
+	);
 
 	// Default the amount field to the suggested amount whenever a new eligible
 	// membership is selected — staff can still edit it afterward.

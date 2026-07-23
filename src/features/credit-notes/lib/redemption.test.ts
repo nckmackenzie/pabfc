@@ -6,7 +6,6 @@ describe("computeRestoredCreditNoteState", () => {
 		const result = computeRestoredCreditNoteState({
 			amount: "1000.00",
 			balanceRemaining: "0.00",
-			status: "fully_redeemed",
 			amountToRestore: "400.00",
 		});
 		expect(result).toEqual({ balanceRemaining: "400.00", status: "partially_redeemed" });
@@ -16,7 +15,6 @@ describe("computeRestoredCreditNoteState", () => {
 		const result = computeRestoredCreditNoteState({
 			amount: "1000.00",
 			balanceRemaining: "400.00",
-			status: "partially_redeemed",
 			amountToRestore: "600.00",
 		});
 		expect(result).toEqual({ balanceRemaining: "1000.00", status: "active" });
@@ -26,7 +24,6 @@ describe("computeRestoredCreditNoteState", () => {
 		const result = computeRestoredCreditNoteState({
 			amount: "1000.00",
 			balanceRemaining: "200.00",
-			status: "partially_redeemed",
 			amountToRestore: "300.00",
 		});
 		expect(result).toEqual({ balanceRemaining: "500.00", status: "partially_redeemed" });
@@ -38,19 +35,22 @@ describe("computeRestoredCreditNoteState", () => {
 		const result = computeRestoredCreditNoteState({
 			amount: "1000.00",
 			balanceRemaining: "900.00",
-			status: "partially_redeemed",
 			amountToRestore: "300.00",
 		});
 		expect(result).toEqual({ balanceRemaining: "1000.00", status: "active" });
 	});
 
-	it("leaves an expired credit note's status alone even when restoring its balance", () => {
+	it("returns to active on a full restore from a zero balance (e.g. a fully expired or fully_redeemed note)", () => {
+		// This function no longer takes the credit note's prior status — an expired
+		// note restored via a void must become spendable again, not stay stuck
+		// "expired" with a nonzero balance. restoreCreditNoteBalance (DB-touching,
+		// not unit-tested here) is what additionally reverses the expiry write-off
+		// journal when the prior status was "expired".
 		const result = computeRestoredCreditNoteState({
 			amount: "1000.00",
 			balanceRemaining: "0.00",
-			status: "expired",
-			amountToRestore: "400.00",
+			amountToRestore: "1000.00",
 		});
-		expect(result).toEqual({ balanceRemaining: "400.00", status: "expired" });
+		expect(result).toEqual({ balanceRemaining: "1000.00", status: "active" });
 	});
 });

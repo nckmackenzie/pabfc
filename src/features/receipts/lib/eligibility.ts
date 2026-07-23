@@ -1,5 +1,5 @@
 import { and, eq, gt, isNull, ne, or } from "drizzle-orm";
-import { db } from "@/drizzle/db";
+import type { db } from "@/drizzle/db";
 import { memberMemberships } from "@/drizzle/schema";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 

@@ -106,6 +106,12 @@ export async function checkCreditNoteEligibility(
 	);
 
 	const priceCharged = membership.priceCharged;
+	if (membership.membershipPlan.duration <= 0) {
+		return failure({
+			type: "ApplicationError",
+			message: "Membership plan duration must be greater than zero.",
+		});
+	}
 	const { dailyRate, suggestedAmount } = computeSuggestedCreditAmount({
 		priceCharged,
 		totalDurationDays: membership.membershipPlan.duration * payment.numberOfPeriods,
