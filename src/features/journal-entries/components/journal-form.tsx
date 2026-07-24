@@ -6,12 +6,7 @@ import { ActionButton } from "@/components/ui/action-button";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Field, FieldGroup } from "@/components/ui/field";
-import {
-	CheckIcon,
-	MinusIcon,
-	PlusIcon,
-	TrashIcon,
-} from "@/components/ui/icons";
+import { CheckIcon, MinusIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { LoadingSwap } from "@/components/ui/loading-swap";
 import { PageHeader } from "@/components/ui/page-header";
 import { PermissionGate } from "@/components/ui/permission-gate";
@@ -30,10 +25,7 @@ import {
 	upsertJournalEntries,
 } from "@/features/journal-entries/services/journal-entry.api";
 import { journalQueries } from "@/features/journal-entries/services/queries";
-import {
-	type JournalEntry,
-	journalEntrySchema,
-} from "@/features/journal-entries/services/schemas";
+import { type JournalEntry, journalEntrySchema } from "@/features/journal-entries/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
@@ -78,20 +70,18 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 							});
 						}
 					},
-				},
+				}
 			);
 		},
 	});
-	const [journalLines] = useStore(form.store, (state) => [
-		state.values.journalLines,
-	]);
+	const [journalLines] = useStore(form.store, (state) => [state.values.journalLines]);
 	const { totalDebits, totalCredits } = journalLines.reduce(
 		(acc, line) => {
 			acc.totalDebits += line.debit || 0;
 			acc.totalCredits += line.credit || 0;
 			return acc;
 		},
-		{ totalDebits: 0, totalCredits: 0 },
+		{ totalDebits: 0, totalCredits: 0 }
 	);
 
 	async function handleDelete(journalId: string) {
@@ -125,9 +115,7 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 						{(field) => <field.Input type="date" label="Date" required />}
 					</form.AppField>
 					<form.AppField name="journalNo">
-						{(field) => (
-							<field.Input type="number" label="Journal No" required />
-						)}
+						{(field) => <field.Input type="number" label="Journal No" required />}
 					</form.AppField>
 				</FieldGroup>
 				<form.Field name="journalLines" mode="array">
@@ -175,16 +163,11 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 									{field.state.value.map((line, index) => (
 										<TableRow key={line.id}>
 											<TableCell>
-												<form.AppField
-													name={`journalLines[${index}].accountId`}
-												>
+												<form.AppField name={`journalLines[${index}].accountId`}>
 													{(field) => (
 														<field.Select label="">
 															{activeAccounts.map((account) => (
-																<SelectItem
-																	key={account.value}
-																	value={account.value}
-																>
+																<SelectItem key={account.value} value={account.value}>
 																	{account.label}
 																</SelectItem>
 															))}
@@ -195,33 +178,19 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 											<TableCell>
 												<form.AppField name={`journalLines[${index}].debit`}>
 													{(field) => (
-														<field.Input
-															type="number"
-															value={
-																field.state.value === 0 ? "" : field.state.value
-															}
-															label=""
-														/>
+														<field.Input type="number" value={field.state.value || ""} label="" />
 													)}
 												</form.AppField>
 											</TableCell>
 											<TableCell>
 												<form.AppField name={`journalLines[${index}].credit`}>
 													{(field) => (
-														<field.Input
-															type="number"
-															value={
-																field.state.value === 0 ? "" : field.state.value
-															}
-															label=""
-														/>
+														<field.Input type="number" value={field.state.value || ""} label="" />
 													)}
 												</form.AppField>
 											</TableCell>
 											<TableCell>
-												<form.AppField
-													name={`journalLines[${index}].description`}
-												>
+												<form.AppField name={`journalLines[${index}].description`}>
 													{(field) => <field.Input type="text" label="" />}
 												</form.AppField>
 											</TableCell>
@@ -231,10 +200,7 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 													variant="ghost"
 													onClick={() => field.removeValue(index)}
 												>
-													<TrashIcon
-														className="size-4 text-destructive"
-														aria-hidden="true"
-													/>
+													<TrashIcon className="size-4 text-destructive" aria-hidden="true" />
 												</Button>
 											</TableCell>
 										</TableRow>
@@ -243,9 +209,7 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 								{journalLines.length > 0 && (
 									<TableFooter>
 										<TableRow>
-											<TableCell className="text-right font-bold">
-												Total
-											</TableCell>
+											<TableCell className="text-right font-bold">Total</TableCell>
 											<TableCell className="text-right font-bold">
 												{currencyFormatter(totalDebits, false)}
 											</TableCell>
@@ -264,15 +228,9 @@ export function JournalEntryForm({ journal }: { journal?: JournalEntry }) {
 					{([isSubmitting]) => (
 						<Field orientation={"horizontal"}>
 							<PermissionGate
-								permission={
-									journal ? "journal-entries:update" : "journal-entries:create"
-								}
+								permission={journal ? "journal-entries:update" : "journal-entries:create"}
 							>
-								<Button
-									type="submit"
-									className="flex"
-									disabled={isSubmitting || isPending}
-								>
+								<Button type="submit" className="flex" disabled={isSubmitting || isPending}>
 									<LoadingSwap isLoading={isSubmitting || isPending}>
 										<CheckIcon />
 										{journal ? "Update" : "Submit"}

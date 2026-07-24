@@ -57,13 +57,7 @@ export const auth = betterAuth({
 		autoSignIn: true,
 		password: {
 			hash: hashPassword,
-			verify: async ({
-				hash,
-				password,
-			}: {
-				password: string;
-				hash: string;
-			}) => {
+			verify: async ({ hash, password }: { password: string; hash: string }) => {
 				return await verifyPassword(password, hash);
 			},
 		},
@@ -75,8 +69,8 @@ export const auth = betterAuth({
 		},
 	},
 	session: {
-		expiresIn: 60 * 60 * 24 * 7,
-		updateAge: 60 * 60 * 24, // 1 day
+		expiresIn: 60 * 60, // 1 hour
+		updateAge: 60 * 5, // 5 minutes
 		cookieCache: {
 			enabled: true,
 			maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
@@ -95,8 +89,8 @@ export const auth = betterAuth({
 						or(
 							eq(users.contact, ctx.body.username),
 							eq(users.email, ctx.body.username),
-							eq(users.username, ctx.body.username),
-						),
+							eq(users.username, ctx.body.username)
+						)
 					),
 			});
 
