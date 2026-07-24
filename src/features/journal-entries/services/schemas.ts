@@ -13,12 +13,16 @@ export const journalEntrySchema = z.object({
 			.object({
 				id: z.string(),
 				accountId: z.string().min(1, { error: "Account is required" }),
-				debit: z.number().nullish(),
-				credit: z.number().nullish(),
+				debit: z.number().nonnegative().nullish(),
+				credit: z.number().nonnegative().nullish(),
 				description: z.string().nullish(),
 			})
 			.refine(({ credit, debit }) => (debit ?? 0) > 0 || (credit ?? 0) > 0, {
 				message: "Debit or Credit is required",
+				path: ["credit"],
+			})
+			.refine(({ credit, debit }) => !((debit ?? 0) > 0 && (credit ?? 0) > 0), {
+				message: "A line cannot have both Debit and Credit amounts",
 				path: ["credit"],
 			})
 	),
