@@ -10,21 +10,19 @@ export const billSchema = z
 		terms: z.string().nullish(),
 		dueDate: z.iso.date().nullish(),
 		isRecurring: z.boolean(),
-		recurrencePattern: z
-			.enum(["daily", "weekly", "monthly", "yearly"])
-			.nullish(),
+		recurrencePattern: z.enum(["daily", "weekly", "monthly", "yearly"]).nullish(),
 		recurrenceEndDate: z.iso.date().nullish(),
 		notes: z.string().nullish(),
 		lines: z.array(
 			z.object({
 				id: z.string().min(1, "Line ID is required"),
-				expenseAccountId: z.string().min(1, "Expense Account is required"),
+				accountId: z.string().min(1, "Account is required"),
 				description: z.string().min(1, "Description is required"),
 				vatType: z.enum(vatTypes).nullish(),
 				amount: z.number().positive("Amount must be positive"),
 				// unitPrice: z.number().positive("Unit Price must be positive"),
 				// quantity: z.number().positive("Quantity must be positive"),
-			}),
+			})
 		),
 	})
 	.superRefine((data, ctx) => {

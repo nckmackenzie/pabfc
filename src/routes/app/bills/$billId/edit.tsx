@@ -3,10 +3,7 @@ import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { BillForm } from "@/features/bills/components/bill-form";
 import { getBillFormValues } from "@/features/bills/lib/utils";
-import {
-	billQueries,
-	supplierQueries,
-} from "@/features/bills/services/queries";
+import { billQueries, supplierQueries } from "@/features/bills/services/queries";
 import { accountQueries } from "@/features/coa/services/queries";
 
 export const Route = createFileRoute("/app/bills/$billId/edit")({
@@ -18,7 +15,7 @@ export const Route = createFileRoute("/app/bills/$billId/edit")({
 		const [vendors, accounts, bill] = await Promise.all([
 			queryClient.ensureQueryData(supplierQueries.active()),
 			queryClient.ensureQueryData(
-				accountQueries.activeChildAccountsByAccountType("expense"),
+				accountQueries.activeChildAccountsByAccountType(["expense", "asset"])
 			),
 			queryClient.ensureQueryData(billQueries.detail(billId)),
 		]);

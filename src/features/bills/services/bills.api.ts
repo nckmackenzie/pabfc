@@ -4,10 +4,7 @@ import { and, eq, gt, ilike, or, type SQL, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
 import { billItems, bills, vwInvoices } from "@/drizzle/schema";
-import {
-	billSchema,
-	billValidateSearch,
-} from "@/features/bills/services/schemas";
+import { billSchema, billValidateSearch } from "@/features/bills/services/schemas";
 import { taxCalculator } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
@@ -32,7 +29,7 @@ export const getBills = createServerFn()
 				ilike(vwInvoices.invoiceNo, `%${q}%`),
 				ilike(vwInvoices.name, `%${q}%`),
 				ilike(sql`CAST(${vwInvoices.total} AS TEXT)`, `%${q}%`),
-				ilike(sql`CAST(${vwInvoices.totalPayment} AS TEXT)`, `%${q}%`),
+				ilike(sql`CAST(${vwInvoices.totalPayment} AS TEXT)`, `%${q}%`)
 			);
 			if (searchFilters) filters.push(searchFilters);
 		}
@@ -99,10 +96,12 @@ export const upsertBill = createServerFn()
 			} = data;
 
 			const billItemsValues = lines.map((line) => {
-				const { taxAmount, amountExlusiveTax, totalInclusiveTax } =
-					taxCalculator(line.amount, line.vatType ?? "none");
+				const { taxAmount, amountExlusiveTax, totalInclusiveTax } = taxCalculator(
+					line.amount,
+					line.vatType ?? "none"
+				);
 				return {
-					expenseAccountId: +line.expenseAccountId,
+					accountId: +line.accountId,
 					description: line.description?.toLowerCase() ?? null,
 					subTotal: amountExlusiveTax.toString(),
 					vatType: line.vatType ?? "none",
@@ -118,17 +117,14 @@ export const upsertBill = createServerFn()
 					acc.total += parseFloat(line.total ?? "0");
 					return acc;
 				},
-				{ subTotal: 0, tax: 0, total: 0 },
+				{ subTotal: 0, tax: 0, total: 0 }
 			);
 
-			const accountsPayableId = await createOrGetAccountId(
-				"accounts payable",
-				"liability",
-			);
+			const accountsPayableId = await createOrGetAccountId("accounts payable", "liability");
 
 			const ledgerLines = billItemsValues.map((line, index) => ({
 				lineNumber: index + 1,
-				accountId: line.expenseAccountId,
+				accountId: line.accountId,
 				amount: line.subTotal.toString(),
 				memo: line.description,
 				dc: "debit" as "debit" | "credit",
@@ -206,8 +202,9 @@ export const upsertBill = createServerFn()
 					await tx.insert(billItems).values(
 						billItemsValues.map((b) => ({
 							billId,
+							expenseAccountId: b.accountId,
 							...b,
-						})),
+						}))
 					);
 
 					await createJournalEntry({
@@ -226,9 +223,7 @@ export const upsertBill = createServerFn()
 						data: {
 							action: data.id ? "update bill" : "create bill",
 							userId,
-							description: data.id
-								? `Updated bill ${invoiceNo}`
-								: `Created bill ${invoiceNo}`,
+							description: data.id ? `Updated bill ${invoiceNo}` : `Created bill ${invoiceNo}`,
 						},
 					});
 				});
@@ -241,7 +236,7 @@ export const upsertBill = createServerFn()
 					message: `Failed to ${id ? "update" : "create"} bill`,
 				});
 			}
-		},
+		}
 	);
 
 export const deleteBill = createServerFn()
@@ -301,7 +296,7 @@ export const deleteBill = createServerFn()
 					message: "Failed to delete bill",
 				});
 			}
-		},
+		}
 	);
 
 export const getUnpaidBillsBySupplier = createServerFn()
@@ -311,7 +306,5 @@ export const getUnpaidBillsBySupplier = createServerFn()
 		db
 			.select()
 			.from(vwInvoices)
-			.where(
-				and(eq(vwInvoices.vendorId, vendorId), gt(vwInvoices.balance, "0")),
-			),
+			.where(and(eq(vwInvoices.vendorId, vendorId), gt(vwInvoices.balance, "0")))
 	);
