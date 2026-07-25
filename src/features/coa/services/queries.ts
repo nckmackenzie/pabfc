@@ -45,13 +45,15 @@ export const accountQueries = {
 					}));
 			},
 		}),
-	activeChildAccountsByAccountType: (accountType: AccountType) =>
+	activeChildAccountsByAccountType: (accountTypes: Array<AccountType>) =>
 		queryOptions({
-			queryKey: [...accountQueries.all, "active-accounts", accountType],
+			queryKey: [...accountQueries.all, "active-accounts", accountTypes],
 			queryFn: async () => {
 				const accounts = await getAccounts({ data: {} });
 				return accounts
-					.filter((account) => account.parentId && account.isActive && account.type === accountType)
+					.filter(
+						(account) => account.parentId && account.isActive && accountTypes.includes(account.type)
+					)
 					.map(({ id, name }) => ({
 						value: id.toString(),
 						label: toTitleCase(name),
