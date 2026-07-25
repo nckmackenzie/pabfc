@@ -48,4 +48,4 @@ In `src/features/dashboard/components/stat-cards.tsx`:
 
 - Unit test for the new days-remaining helper: future date → "Expires in N days", past date → "Expired N days ago", today → sensible boundary case.
 - Manual verification in the browser: open both new sheets from the dashboard, confirm data, pagination, and empty states render correctly.
-- Run TypeScript type checking and scoped Biome checks for touched files.
+- Run TypeScript type checking (`npm run typecheck`) and scoped ESLint checks for touched files (this repo uses ESLint, not Biome).
