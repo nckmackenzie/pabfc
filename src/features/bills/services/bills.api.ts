@@ -200,10 +200,10 @@ export const upsertBill = createServerFn()
 					}
 
 					await tx.insert(billItems).values(
-						billItemsValues.map((b) => ({
+						billItemsValues.map(({ accountId, ...rest }) => ({
 							billId,
-							expenseAccountId: b.accountId,
-							...b,
+							expenseAccountId: accountId,
+							...rest,
 						}))
 					);
 
