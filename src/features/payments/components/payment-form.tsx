@@ -23,10 +23,7 @@ import {
 import { Wrapper } from "@/components/ui/wrapper";
 import { billQueries } from "@/features/bills/services/queries";
 import { createPayment } from "@/features/payments/services/payments.api";
-import {
-	type PaymentFormValues,
-	paymentFormSchema,
-} from "@/features/payments/services/schema";
+import { type PaymentFormValues, paymentFormSchema } from "@/features/payments/services/schema";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { useAppForm } from "@/lib/form";
@@ -120,7 +117,7 @@ export function PaymentForm({
 					balance: parseFloat(bill.balance),
 					billId: bill.id,
 					amount: null,
-				})) ?? [],
+				})) ?? []
 			);
 		}
 	}, [vendorId, refetch, form, data, payment]);
@@ -157,7 +154,7 @@ export function PaymentForm({
 			bills.map((bill) => ({
 				...bill,
 				amount: bill.selected ? parseFloat(bill.balance.toString()) : null,
-			})),
+			}))
 		);
 	}
 
@@ -189,11 +186,7 @@ export function PaymentForm({
 				</form.AppField>
 				<form.AppField name="paymentMethod">
 					{(field) => (
-						<field.Select
-							label="Payment Method"
-							required
-							placeholder="Select Payment Method"
-						>
+						<field.Select label="Payment Method" required placeholder="Select Payment Method">
 							{PAYMENT_METHODS.map((method) => (
 								<SelectItem key={method.value} value={method.value}>
 									{method.label}
@@ -267,15 +260,10 @@ export function PaymentForm({
 							</p>
 						</div>
 						<div className="grid gap-0.5">
-							<p className="text-sm text-muted-foreground font-semibold">
-								Total Amount
-							</p>
+							<p className="text-sm text-muted-foreground font-semibold">Total Amount</p>
 							<p className="text-sm font-semibold">
 								{currencyFormatter(
-									bills.reduce(
-										(acc, bill) => acc + parseFloat(bill.balance.toString()),
-										0,
-									),
+									bills.reduce((acc, bill) => acc + parseFloat(bill.balance.toString()), 0)
 								)}
 							</p>
 						</div>
@@ -304,26 +292,14 @@ export function PaymentForm({
 													</form.AppField>
 												</TableCell>
 												<TableCell>{bill.invoiceNo}</TableCell>
+												<TableCell>{dateFormat(bill.invoiceDate, "reporting")}</TableCell>
 												<TableCell>
-													{dateFormat(bill.invoiceDate, "reporting")}
+													{bill.dueDate ? dateFormat(bill.dueDate, "reporting") : ""}
 												</TableCell>
+												<TableCell>{currencyFormatter(bill.total, false)}</TableCell>
+												<TableCell>{currencyFormatter(bill.balance, false)}</TableCell>
 												<TableCell>
-													{bill.dueDate
-														? dateFormat(bill.dueDate, "reporting")
-														: ""}
-												</TableCell>
-												<TableCell>
-													{currencyFormatter(bill.total, false)}
-												</TableCell>
-												<TableCell>
-													{currencyFormatter(bill.balance, false)}
-												</TableCell>
-												<TableCell>
-													<form.Subscribe
-														selector={(state) =>
-															state.values.bills[index]?.selected
-														}
-													>
+													<form.Subscribe selector={(state) => state.values.bills[index]?.selected}>
 														{(selected) =>
 															selected ? (
 																<form.AppField name={`bills[${index}].amount`}>
@@ -331,6 +307,7 @@ export function PaymentForm({
 																		<field.Input
 																			label=""
 																			type="number"
+																			step="0.01"
 																			min={0}
 																			max={bill.balance}
 																			className="h-8"
@@ -353,12 +330,11 @@ export function PaymentForm({
 									<TableCell colSpan={6}>
 										<div className="flex items-centre gap-2">
 											<Checkbox
-												onCheckedChange={(checked) =>
-													checked ? handleAllocateFullAmount() : null
-												}
+												onCheckedChange={(checked) => (checked ? handleAllocateFullAmount() : null)}
 											/>
 											<label
 												htmlFor="select-all"
+												id="select-all"
 												className="text-muted-foreground font-normal"
 											>
 												Allocate full outstanding amount to all selected bills
@@ -370,9 +346,9 @@ export function PaymentForm({
 										{currencyFormatter(
 											bills.reduce(
 												(acc, bill) =>
-													acc + parseFloat(bill.amount?.toString() ?? "0"),
-												0,
-											),
+													bill.selected ? acc + parseFloat(bill.amount?.toString() ?? "0") : acc,
+												0
+											)
 										)}
 									</TableCell>
 								</TableRow>

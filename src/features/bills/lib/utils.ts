@@ -16,7 +16,7 @@ export const getBillFormValues = (
 		dueDate: clonedValues ? null : bill.dueDate,
 		lines: bill.items.map((lines) => ({
 			id: lines.id.toString(),
-			expenseAccountId: lines.expenseAccountId.toString(),
+			accountId: lines.expenseAccountId.toString(),
 			vatType: lines.vatType,
 			description: lines.description ? toTitleCase(lines.description) : "",
 			amount:

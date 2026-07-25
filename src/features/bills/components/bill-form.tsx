@@ -39,7 +39,7 @@ type BillForm = {
 };
 
 const defaultLine = {
-	expenseAccountId: "",
+	accountId: "",
 	vatType: "none" as const,
 	amount: 0,
 	description: "",
@@ -56,15 +56,10 @@ const defaultValues = {
 	terms: null,
 } as BillSchema;
 
-export function BillForm({
-	loaderVendors,
-	loaderAccounts,
-	bill,
-	isEdit,
-}: BillForm) {
+export function BillForm({ loaderVendors, loaderAccounts, bill, isEdit }: BillForm) {
 	const [{ data: accounts }, { data: vendors }] = useQueries({
 		queries: [
-			accountQueries.activeChildAccountsByAccountType("expense"),
+			accountQueries.activeChildAccountsByAccountType(["expense", "asset"]),
 			supplierQueries.active(),
 		],
 	});
@@ -98,7 +93,7 @@ export function BillForm({
 		setOpen(
 			<CustomModal title="Add New Vendor" className="max-w-3xl! w-full!">
 				<VendorForm fromModal={true} />
-			</CustomModal>,
+			</CustomModal>
 		);
 	};
 
@@ -179,9 +174,7 @@ export function BillForm({
 								<Button
 									type="button"
 									variant="secondary"
-									onClick={() =>
-										field.pushValue({ ...defaultLine, id: nanoid() })
-									}
+									onClick={() => field.pushValue({ ...defaultLine, id: nanoid() })}
 									disabled={isPending}
 								>
 									<PlusIcon className="size-4" aria-hidden="true" />
@@ -213,14 +206,11 @@ export function BillForm({
 								{field.state.value.map((line, index) => (
 									<TableRow key={line.id}>
 										<TableCell>
-											<form.AppField name={`lines[${index}].expenseAccountId`}>
+											<form.AppField name={`lines[${index}].accountId`}>
 												{(field) => (
 													<field.Select label="">
 														{(accounts || loaderAccounts).map((account) => (
-															<SelectItem
-																key={account.value}
-																value={account.value}
-															>
+															<SelectItem key={account.value} value={account.value}>
 																{account.label}
 															</SelectItem>
 														))}
@@ -238,9 +228,7 @@ export function BillForm({
 												{(field) => (
 													<field.Input
 														type="number"
-														value={
-															field.state.value === 0 ? "" : field.state.value
-														}
+														value={field.state.value === 0 ? "" : field.state.value}
 														label=""
 													/>
 												)}
@@ -266,10 +254,7 @@ export function BillForm({
 												onClick={() => field.removeValue(index)}
 												disabled={isPending}
 											>
-												<TrashIcon
-													className="size-4 text-destructive"
-													aria-hidden="true"
-												/>
+												<TrashIcon className="size-4 text-destructive" aria-hidden="true" />
 											</Button>
 										</TableCell>
 									</TableRow>
@@ -282,10 +267,7 @@ export function BillForm({
 											Total
 										</TableCell>
 										<TableCell className="text-right font-bold">
-											{currencyFormatter(
-												Number.isNaN(totalAmount) ? 0 : totalAmount,
-												false,
-											)}
+											{currencyFormatter(Number.isNaN(totalAmount) ? 0 : totalAmount, false)}
 										</TableCell>
 										<TableCell colSpan={2} />
 									</TableRow>
