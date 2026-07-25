@@ -1,6 +1,6 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { formatDistanceToNow, startOfDay } from "date-fns";
 import { Loader2, SendIcon } from "lucide-react";
+import { getMembershipExpiryStatus } from "../lib/helpers";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,13 +59,7 @@ function MemberActionItem({
 	};
 	index: number;
 }) {
-	// const endDate = member.endDate ? new Date(`${member.endDate}T00:00:00`) : null;
-	const endDate = !member.endDate
-		? null
-		: member.endDate instanceof Date
-			? startOfDay(member.endDate)
-			: new Date(`${member.endDate}T00:00:00`);
-	const isExpired = endDate ? endDate < startOfDay(new Date()) : false;
+	const expiryStatus = getMembershipExpiryStatus(member.endDate);
 
 	const { mutate: sendReminder, isPending } = useMutation({
 		mutationFn: () => sendMembershipReminderFn({ data: member.id }),
@@ -87,11 +81,9 @@ function MemberActionItem({
 					<p className="font-medium text-foreground capitalize">{member.memberName}</p>
 					<p className="text-xs text-muted-foreground capitalize">{member.planName}</p>
 				</div>
-				{endDate && (
-					<Badge variant={isExpired ? "danger" : "warning"}>
-						{isExpired
-							? `Expired ${formatDistanceToNow(endDate, { addSuffix: true })}`
-							: `Expiring in ${formatDistanceToNow(endDate)}`}
+				{expiryStatus && (
+					<Badge variant={expiryStatus.isExpired ? "danger" : "warning"}>
+						{expiryStatus.label}
 					</Badge>
 				)}
 			</div>

@@ -14,10 +14,10 @@ Out of scope: any "Stop membership" action. This design is display-only.
 
 **Component:** New `ActiveMembersSheet` in `src/features/dashboard/components/active-members-sheet.tsx`, modeled on `ExpiredMembershipsSheet` (loading/error/empty states via `TableSkeleton` / `EmptyState`) but rendering a `DataTable` instead of a plain `Table`. Columns:
 
-| Column | Source |
-|---|---|
-| Member | `fullName` |
-| Member No | `memberNo` |
+| Column       | Source                                        |
+| ------------ | --------------------------------------------- |
+| Member       | `fullName`                                    |
+| Member No    | `memberNo`                                    |
 | Current Plan | `activePlanName` (fall back to `"—"` if null) |
 
 ## Expiring Soon Sheet
@@ -26,11 +26,11 @@ Out of scope: any "Stop membership" action. This design is display-only.
 
 **Component:** New `ExpiringSoonSheet` in `src/features/dashboard/components/expiring-soon-sheet.tsx`, using `dashboardQueries.expiringMemberships()` (already exists) and rendering a `DataTable`. Columns:
 
-| Column | Source |
-|---|---|
-| Member | `memberName` |
-| Member No | `memberNo` |
-| Current Plan | `planName` (fall back to `"—"` if null) |
+| Column         | Source                                                                                                                                                                                                                                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Member         | `memberName`                                                                                                                                                                                                                                                                                                               |
+| Member No      | `memberNo`                                                                                                                                                                                                                                                                                                                 |
+| Current Plan   | `planName` (fall back to `"—"` if null)                                                                                                                                                                                                                                                                                    |
 | Days Remaining | Derived from `endDate`, phrased the same way `MemberActionItem` in `expiring-soon.tsx` phrases it today: `"Expires in N days"` for future end dates, `"Expired N days ago"` for past end dates. Extract this phrasing into a small shared helper so both places compute it identically, rather than duplicating the logic. |
 
 ## Stat Card Wiring

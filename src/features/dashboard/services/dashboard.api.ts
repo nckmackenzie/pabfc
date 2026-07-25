@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { addDays, endOfDay, startOfDay } from "date-fns";
-import { and, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import { endOfDay, startOfDay } from "date-fns";
+import { and, asc, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	attendanceLogs,
@@ -10,12 +10,12 @@ import {
 	membershipPlans,
 } from "@/drizzle/schema";
 import { getExpiredMembershipConditions } from "@/features/dashboard/lib/expired-memberships";
+import { getExpiringMembershipConditions } from "@/features/dashboard/lib/expiring-memberships";
 import { getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
 } from "@/features/dashboard/lib/mockData";
-import { dateFormat } from "@/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -61,10 +61,11 @@ export const dashboardStats = createServerFn()
 					lte(members.createdAt, previousMonthEndDate)
 				)
 			),
-			db.$count(
-				memberMemberships,
-				between(memberMemberships.endDate, dateFormat(startOfLast7Days), dateFormat(new Date()))
-			),
+			db
+				.select({ count: sql<number>`count(*)::int` })
+				.from(memberMemberships)
+				.innerJoin(members, eq(memberMemberships.memberId, members.id))
+				.where(and(isNull(members.deletedAt), ...getExpiringMembershipConditions())),
 			db.$count(attendanceLogs, between(attendanceLogs.checkInTime, startOfLast7Days, new Date())),
 			db.$count(
 				attendanceLogs,
@@ -83,7 +84,7 @@ export const dashboardStats = createServerFn()
 		return {
 			activeMembers,
 			newMembersThisMonth,
-			expiringMemberships,
+			expiringMemberships: expiringMemberships[0]?.count ?? 0,
 			totalAttendance,
 			averageAttendanceDuration: averageAttendanceDuration[0].averageDuration ?? 0,
 			totalAttendancePreviousPeriod,
@@ -139,9 +140,12 @@ export const getTodaysAttendances = createServerFn()
 export const getExpiringMemberships = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("dashboard:view");
+
 		const expiringMemberships = await db
 			.select({
 				id: memberMemberships.id,
+				memberNo: members.memberNo,
 				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
 				planName: membershipPlans.name,
 				contact: members.contact,
@@ -151,25 +155,34 @@ export const getExpiringMemberships = createServerFn()
 			.from(memberMemberships)
 			.innerJoin(members, eq(memberMemberships.memberId, members.id))
 			.leftJoin(membershipPlans, eq(memberMemberships.membershipPlanId, membershipPlans.id))
-			.where(
-				and(
-					isNull(members.deletedAt),
-					between(
-						memberMemberships.endDate,
-						dateFormat(startOfLast7Days),
-						dateFormat(addDays(new Date(), 7))
-					),
-					sql`NOT EXISTS (
-						SELECT 1 FROM member_memberships mm_newer
-						WHERE mm_newer.member_id = ${memberMemberships.memberId}
-						AND mm_newer.id != ${memberMemberships.id}
-						AND mm_newer.end_date > ${memberMemberships.endDate}
-					)`
-				)
-			)
+			.where(and(isNull(members.deletedAt), ...getExpiringMembershipConditions()))
 			.orderBy(desc(memberMemberships.endDate));
 
 		return expiringMemberships;
+	});
+
+export const getActiveMemberships = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:view");
+
+		return db
+			.select({
+				id: members.id,
+				memberNo: members.memberNo,
+				fullName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
+				activePlanName: sql<string | null>`(
+					SELECT mp.name FROM member_memberships mm
+					INNER JOIN membership_plans mp ON mp.id = mm.membership_plan_id
+					WHERE mm.member_id = ${members.id}
+					AND mm.status = 'active'
+					ORDER BY mm.start_date DESC
+					LIMIT 1
+				)`,
+			})
+			.from(members)
+			.where(eq(members.memberStatus, "active"))
+			.orderBy(asc(sql`lower(${members.firstName})`), asc(sql`lower(${members.lastName})`));
 	});
 
 export const getAverageAttendanceByDay = createServerFn()

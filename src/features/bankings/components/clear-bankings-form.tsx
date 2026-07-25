@@ -165,15 +165,27 @@ export function ClearBankingsForm() {
 												: "Money In"}
 										</TableCell>
 										<TableCell>
-											{banking.selected ? (
-												<form.AppField name={`bankings[${index}].clearedAt`}>
-													{(field) => (
-														<field.Input label="" type="date" className="h-8" />
-													)}
-												</form.AppField>
-											) : (
-												<Input className="h-8 border-none" disabled />
-											)}
+											<form.Subscribe
+												selector={(state) =>
+													state.values.bankings[index]?.selected
+												}
+											>
+												{(selected) =>
+													selected ? (
+														<form.AppField name={`bankings[${index}].clearedAt`}>
+															{(field) => (
+																<field.Input
+																	label=""
+																	type="date"
+																	className="h-8"
+																/>
+															)}
+														</form.AppField>
+													) : (
+														<Input className="h-8 border-none" disabled />
+													)
+												}
+											</form.Subscribe>
 										</TableCell>
 									</TableRow>
 								))
