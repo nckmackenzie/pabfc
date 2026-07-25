@@ -120,4 +120,13 @@ describe("getMembershipExpiryStatus", () => {
 
 		expect(status).toEqual({ isExpired: true, label: "Expired 5 days ago" });
 	});
+
+	it("treats an end date of today as not yet expired", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-07-19T21:00:00.000Z"));
+
+		const status = getMembershipExpiryStatus("2026-07-20");
+
+		expect(status?.isExpired).toBe(false);
+	});
 });

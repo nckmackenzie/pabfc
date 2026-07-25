@@ -140,6 +140,8 @@ export const getTodaysAttendances = createServerFn()
 export const getExpiringMemberships = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("dashboard:view");
+
 		const expiringMemberships = await db
 			.select({
 				id: memberMemberships.id,

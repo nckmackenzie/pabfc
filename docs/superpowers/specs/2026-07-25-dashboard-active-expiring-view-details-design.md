@@ -31,7 +31,7 @@ Out of scope: any "Stop membership" action. This design is display-only.
 | Member | `memberName` |
 | Member No | `memberNo` |
 | Current Plan | `planName` (fall back to `"—"` if null) |
-| Days Remaining | Derived from `endDate`, phrased the same way `MemberActionItem` in `expiring-soon.tsx` phrases it today: `"Expires in N days"` for future end dates, `"Expired N days ago"` for past end dates. Extract this phrasing into a small shared helper so both places compute it identically, rather than duplicating the logic. |
+| Days Remaining | Derived from `endDate`, phrased the same way `MemberActionItem` in `expiring-soon.tsx` phrases it today: `"Expiring in N days"` for future end dates, `"Expired N days ago"` for past end dates. Extract this phrasing into a small shared helper so both places compute it identically, rather than duplicating the logic. |
 
 ## Stat Card Wiring
 
