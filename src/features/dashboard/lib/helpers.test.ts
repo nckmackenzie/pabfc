@@ -1,6 +1,11 @@
 import { format } from "date-fns";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getExpiredMembershipStatDates, getFinanceStatDates, getMembershipExpiryStatus } from "./helpers";
+import {
+	getExpiredMembershipStatDates,
+	getExpiringMembershipStatDates,
+	getFinanceStatDates,
+	getMembershipExpiryStatus,
+} from "./helpers";
 
 describe("getExpiredMembershipStatDates", () => {
 	it("returns a rolling 30-day window ending on the supplied date", () => {
@@ -10,6 +15,17 @@ describe("getExpiredMembershipStatDates", () => {
 
 		expect(format(dates.periodStart, "yyyy-MM-dd")).toBe("2026-06-22");
 		expect(format(dates.periodEnd, "yyyy-MM-dd")).toBe("2026-07-22");
+	});
+});
+
+describe("getExpiringMembershipStatDates", () => {
+	it("returns a 7-day window centered on the supplied date", () => {
+		const today = new Date("2026-07-22T09:30:00.000Z");
+
+		const dates = getExpiringMembershipStatDates(today);
+
+		expect(format(dates.periodStart, "yyyy-MM-dd")).toBe("2026-07-15");
+		expect(format(dates.periodEnd, "yyyy-MM-dd")).toBe("2026-07-29");
 	});
 });
 

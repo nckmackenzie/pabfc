@@ -37,6 +37,13 @@ export function getExpiredMembershipStatDates(today = new Date()) {
 	};
 }
 
+export function getExpiringMembershipStatDates(today = new Date()) {
+	return {
+		periodStart: subDays(today, 7),
+		periodEnd: addDays(today, 7),
+	};
+}
+
 export function getFinanceStatDates(today = new Date()) {
 	const currentPeriodStart = startOfMonth(today);
 	const currentPeriodEnd = today;
