@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getExpiredMembershipStatDates, getFinanceStatDates } from "./helpers";
+import { getExpiredMembershipStatDates, getFinanceStatDates, getMembershipExpiryStatus } from "./helpers";
 
 describe("getExpiredMembershipStatDates", () => {
 	it("returns a rolling 30-day window ending on the supplied date", () => {
@@ -74,5 +74,34 @@ describe("getFinanceStatDates", () => {
 		expect(dates.previousPeriodEnd.getMilliseconds()).toBe(
 			dates.currentPeriodEnd.getMilliseconds(),
 		);
+	});
+});
+
+describe("getMembershipExpiryStatus", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it("returns null when there is no end date", () => {
+		expect(getMembershipExpiryStatus(null)).toBeNull();
+	});
+
+	it("labels a future end date as not yet expired", () => {
+		vi.useFakeTimers();
+		// Local midnight 2026-07-20 in the app's Africa/Nairobi (UTC+3) timezone.
+		vi.setSystemTime(new Date("2026-07-19T21:00:00.000Z"));
+
+		const status = getMembershipExpiryStatus("2026-07-25");
+
+		expect(status).toEqual({ isExpired: false, label: "Expiring in 5 days" });
+	});
+
+	it("labels a past end date as expired", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-07-19T21:00:00.000Z"));
+
+		const status = getMembershipExpiryStatus("2026-07-15");
+
+		expect(status).toEqual({ isExpired: true, label: "Expired 5 days ago" });
 	});
 });
