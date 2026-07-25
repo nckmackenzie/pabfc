@@ -1,8 +1,10 @@
 import {
 	addDays,
 	endOfMonth,
+	formatDistanceToNow,
 	getDate,
 	lastDayOfMonth,
+	startOfDay,
 	startOfMonth,
 	subDays,
 	subMonths,
@@ -35,6 +37,13 @@ export function getExpiredMembershipStatDates(today = new Date()) {
 	};
 }
 
+export function getExpiringMembershipStatDates(today = new Date()) {
+	return {
+		periodStart: subDays(today, 7),
+		periodEnd: addDays(today, 7),
+	};
+}
+
 export function getFinanceStatDates(today = new Date()) {
 	const currentPeriodStart = startOfMonth(today);
 	const currentPeriodEnd = today;
@@ -57,5 +66,22 @@ export function getFinanceStatDates(today = new Date()) {
 		currentPeriodEnd,
 		previousPeriodStart,
 		previousPeriodEnd,
+	};
+}
+
+export function getMembershipExpiryStatus(
+	rawEndDate: Date | string | null,
+): { isExpired: boolean; label: string } | null {
+	if (!rawEndDate) return null;
+
+	const endDate =
+		rawEndDate instanceof Date ? startOfDay(rawEndDate) : new Date(`${rawEndDate}T00:00:00`);
+	const isExpired = endDate < startOfDay(new Date());
+
+	return {
+		isExpired,
+		label: isExpired
+			? `Expired ${formatDistanceToNow(endDate, { addSuffix: true })}`
+			: `Expiring in ${formatDistanceToNow(endDate)}`,
 	};
 }

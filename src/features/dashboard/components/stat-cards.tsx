@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ActiveMembersSheet } from "@/features/dashboard/components/active-members-sheet";
 import { ExpiredMembershipsSheet } from "@/features/dashboard/components/expired-memberships-sheet";
+import { ExpiringSoonSheet } from "@/features/dashboard/components/expiring-soon-sheet";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { useSheet } from "@/integrations/sheet-provider";
 import { percentageChangeCalculator } from "@/lib/helpers";
@@ -30,10 +32,27 @@ export function StatCards() {
 		},
 	} = useSuspenseQuery(dashboardQueries.stats());
 
+	function showActiveMembers() {
+		setOpen(<ActiveMembersSheet />, {
+			title: "Active Members",
+			description: "Members with an active membership.",
+			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
+
 	function showExpiredMemberships() {
 		setOpen(<ExpiredMembershipsSheet />, {
 			title: "Expired Memberships",
 			description: "Members whose memberships expired in the last 30 days.",
+			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
+
+	function showExpiringSoon() {
+		setOpen(<ExpiringSoonSheet />, {
+			title: "Expiring Soon",
+			description:
+				"Memberships expiring within 7 days, including recently expired plans awaiting renewal.",
 			className: "overflow-y-auto sm:max-w-xl!",
 		});
 	}
@@ -50,6 +69,7 @@ export function StatCards() {
 					newMembersLastMonth,
 				)}
 				variant="default"
+				onViewDetails={showActiveMembers}
 			/>
 			<KPICard
 				title="Expiring Soon"
@@ -63,6 +83,7 @@ export function StatCards() {
 				}
 				icon={CalendarClockIcon}
 				variant="default"
+				onViewDetails={showExpiringSoon}
 			/>
 			<KPICard
 				title="Check-ins"
