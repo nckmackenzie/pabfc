@@ -332,7 +332,11 @@ export function PaymentForm({
 											<Checkbox
 												onCheckedChange={(checked) => (checked ? handleAllocateFullAmount() : null)}
 											/>
-											<label htmlFor="select-all" className="text-muted-foreground font-normal">
+											<label
+												htmlFor="select-all"
+												id="select-all"
+												className="text-muted-foreground font-normal"
+											>
 												Allocate full outstanding amount to all selected bills
 											</label>
 										</div>
@@ -341,7 +345,8 @@ export function PaymentForm({
 									<TableCell>
 										{currencyFormatter(
 											bills.reduce(
-												(acc, bill) => acc + parseFloat(bill.amount?.toString() ?? "0"),
+												(acc, bill) =>
+													bill.selected ? acc + parseFloat(bill.amount?.toString() ?? "0") : acc,
 												0
 											)
 										)}
