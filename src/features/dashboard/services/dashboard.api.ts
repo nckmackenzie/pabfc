@@ -7,7 +7,6 @@ import {
 	attendanceOverview,
 	memberMemberships,
 	members,
-	membersOverview,
 	membershipPlans,
 } from "@/drizzle/schema";
 import { getExpiredMembershipConditions } from "@/features/dashboard/lib/expired-memberships";
@@ -167,14 +166,21 @@ export const getActiveMemberships = createServerFn()
 
 		return db
 			.select({
-				id: membersOverview.id,
-				memberNo: membersOverview.memberNo,
-				fullName: membersOverview.fullName,
-				activePlanName: membersOverview.activePlanName,
+				id: members.id,
+				memberNo: members.memberNo,
+				fullName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
+				activePlanName: sql<string | null>`(
+					SELECT mp.name FROM member_memberships mm
+					INNER JOIN membership_plans mp ON mp.id = mm.membership_plan_id
+					WHERE mm.member_id = ${members.id}
+					AND mm.status = 'active'
+					ORDER BY mm.start_date DESC
+					LIMIT 1
+				)`,
 			})
-			.from(membersOverview)
-			.where(eq(membersOverview.memberStatus, "active"))
-			.orderBy(asc(membersOverview.fullName));
+			.from(members)
+			.where(eq(members.memberStatus, "active"))
+			.orderBy(asc(sql`lower(${members.firstName})`), asc(sql`lower(${members.lastName})`));
 	});
 
 export const getAverageAttendanceByDay = createServerFn()
