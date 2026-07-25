@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ActiveMembersSheet } from "@/features/dashboard/components/active-members-sheet";
 import { ExpiredMembershipsSheet } from "@/features/dashboard/components/expired-memberships-sheet";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { useSheet } from "@/integrations/sheet-provider";
@@ -30,6 +31,14 @@ export function StatCards() {
 		},
 	} = useSuspenseQuery(dashboardQueries.stats());
 
+	function showActiveMembers() {
+		setOpen(<ActiveMembersSheet />, {
+			title: "Active Members",
+			description: "Members with an active membership.",
+			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
+
 	function showExpiredMemberships() {
 		setOpen(<ExpiredMembershipsSheet />, {
 			title: "Expired Memberships",
@@ -50,6 +59,7 @@ export function StatCards() {
 					newMembersLastMonth,
 				)}
 				variant="default"
+				onViewDetails={showActiveMembers}
 			/>
 			<KPICard
 				title="Expiring Soon"
