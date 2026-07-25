@@ -319,21 +319,29 @@ export function PaymentForm({
 													{currencyFormatter(bill.balance, false)}
 												</TableCell>
 												<TableCell>
-													{bill.selected ? (
-														<form.AppField name={`bills[${index}].amount`}>
-															{(field) => (
-																<field.Input
-																	label=""
-																	type="number"
-																	min={0}
-																	max={bill.balance}
-																	className="h-8"
-																/>
-															)}
-														</form.AppField>
-													) : (
-														<Input className="h-8 border-none" disabled />
-													)}
+													<form.Subscribe
+														selector={(state) =>
+															state.values.bills[index]?.selected
+														}
+													>
+														{(selected) =>
+															selected ? (
+																<form.AppField name={`bills[${index}].amount`}>
+																	{(field) => (
+																		<field.Input
+																			label=""
+																			type="number"
+																			min={0}
+																			max={bill.balance}
+																			className="h-8"
+																		/>
+																	)}
+																</form.AppField>
+															) : (
+																<Input className="h-8 border-none" disabled />
+															)
+														}
+													</form.Subscribe>
 												</TableCell>
 											</TableRow>
 										))
