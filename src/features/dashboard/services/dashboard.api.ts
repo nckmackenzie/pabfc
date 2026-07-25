@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { addDays, endOfDay, startOfDay } from "date-fns";
-import { and, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	attendanceLogs,
 	attendanceOverview,
 	memberMemberships,
 	members,
+	membersOverview,
 	membershipPlans,
 } from "@/drizzle/schema";
 import { getExpiredMembershipConditions } from "@/features/dashboard/lib/expired-memberships";
@@ -142,6 +143,7 @@ export const getExpiringMemberships = createServerFn()
 		const expiringMemberships = await db
 			.select({
 				id: memberMemberships.id,
+				memberNo: members.memberNo,
 				memberName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
 				planName: membershipPlans.name,
 				contact: members.contact,
@@ -170,6 +172,23 @@ export const getExpiringMemberships = createServerFn()
 			.orderBy(desc(memberMemberships.endDate));
 
 		return expiringMemberships;
+	});
+
+export const getActiveMemberships = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:view");
+
+		return db
+			.select({
+				id: membersOverview.id,
+				memberNo: membersOverview.memberNo,
+				fullName: membersOverview.fullName,
+				activePlanName: membersOverview.activePlanName,
+			})
+			.from(membersOverview)
+			.where(eq(membersOverview.memberStatus, "active"))
+			.orderBy(asc(membersOverview.fullName));
 	});
 
 export const getAverageAttendanceByDay = createServerFn()

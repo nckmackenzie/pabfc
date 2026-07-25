@@ -5,6 +5,7 @@ import {
 } from "@/features/dashboard/services/access-control.api";
 import {
 	dashboardStats,
+	getActiveMemberships,
 	getAverageAttendanceByDay,
 	getExpiredMemberships,
 	getExpiringMemberships,
@@ -24,6 +25,11 @@ export const dashboardQueries = {
 			queryKey: [...dashboardQueries.all, "todays-attendances"],
 			queryFn: () => getTodaysAttendances(),
 			refetchInterval: 60 * 1000,
+		}),
+	activeMemberships: () =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "active-memberships"],
+			queryFn: () => getActiveMemberships(),
 		}),
 	expiringMemberships: () =>
 		queryOptions({
