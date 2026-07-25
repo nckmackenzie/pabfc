@@ -9,7 +9,8 @@ import {
 	members,
 	membershipPlans,
 } from "@/drizzle/schema";
-import { getExpiredMembershipStatDates, getStatDates } from "@/features/dashboard/lib/helpers";
+import { getExpiredMembershipConditions } from "@/features/dashboard/lib/expired-memberships";
+import { getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
@@ -28,16 +29,6 @@ const {
 	startOfPreviousPeriod,
 	endOfPreviousPeriod,
 } = getStatDates();
-
-function getExpiredMembershipConditions(today = new Date()) {
-	const { periodStart, periodEnd } = getExpiredMembershipStatDates(today);
-
-	return [
-		gte(memberMemberships.endDate, dateFormat(periodStart)),
-		lte(memberMemberships.endDate, dateFormat(periodEnd)),
-		eq(memberMemberships.status, "expired"),
-	] as const;
-}
 
 export const dashboardStats = createServerFn()
 	.middleware([authMiddleware])
