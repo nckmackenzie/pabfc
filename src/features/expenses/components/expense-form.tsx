@@ -13,15 +13,9 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { AddPayee } from "@/features/expenses/components/add-payee";
-import {
-	createExpense,
-	type getExpense,
-} from "@/features/expenses/services/expenses.api";
+import { createExpense, type getExpense } from "@/features/expenses/services/expenses.api";
 import { payeeQueries } from "@/features/expenses/services/queries";
-import {
-	type ExpenseSchema,
-	expenseSchema,
-} from "@/features/expenses/services/schemas";
+import { type ExpenseSchema, expenseSchema } from "@/features/expenses/services/schemas";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { PAYMENT_METHODS } from "@/lib/constants";
@@ -66,8 +60,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 	const form = useAppForm({
 		defaultValues: {
 			expenseNo,
-			expenseDate:
-				expense?.expenseDate || new Date().toISOString().split("T")[0],
+			expenseDate: expense?.expenseDate || new Date().toISOString().split("T")[0],
 			payeeId: expense?.payeeId || "",
 			paymentMethod: expense?.paymentMethod || "cash",
 			reference: expense?.reference?.toUpperCase() || "",
@@ -96,7 +89,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 							queryKey: ["expenseNo"],
 						});
 					},
-				},
+				}
 			);
 		},
 	});
@@ -107,19 +100,12 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 	}, [formValues.details]);
 
 	const isBankAccount =
-		formValues.paymentMethod === "bank" ||
-		formValues.paymentMethod === "cheque";
+		formValues.paymentMethod === "bank" || formValues.paymentMethod === "cheque";
 
 	useEffect(() => {
-		if (
-			formValues.paymentMethod === "cash" ||
-			formValues.paymentMethod === "mpesa"
-		) {
+		if (formValues.paymentMethod === "cash" || formValues.paymentMethod === "mpesa") {
 			form.setFieldValue("bankId", null);
-		} else if (
-			formValues.paymentMethod === "bank" ||
-			formValues.paymentMethod === "cheque"
-		) {
+		} else if (formValues.paymentMethod === "bank" || formValues.paymentMethod === "cheque") {
 			form.setFieldValue("creditingAccountId", null);
 		}
 	}, [formValues.paymentMethod, form]);
@@ -127,9 +113,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 	return (
 		<div className="space-y-6">
 			<PageHeader
-				title={
-					!expense ? "New Expense" : isView ? "View Expense" : "Edit Expense"
-				}
+				title={!expense ? "New Expense" : isView ? "View Expense" : "Edit Expense"}
 				description={
 					!expense
 						? "Add a new expense"
@@ -148,19 +132,10 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 			>
 				<FieldGroup className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
 					<form.AppField name="expenseNo">
-						{(field) => (
-							<field.Input readOnly label="Expense No" disabled={isView} />
-						)}
+						{(field) => <field.Input readOnly label="Expense No" disabled={isView} />}
 					</form.AppField>
 					<form.AppField name="expenseDate">
-						{(field) => (
-							<field.Input
-								type="date"
-								label="Expense Date"
-								required
-								disabled={isView}
-							/>
-						)}
+						{(field) => <field.Input type="date" label="Expense Date" required disabled={isView} />}
 					</form.AppField>
 					<div className="col-span-full lg:col-span-2">
 						<form.AppField name="payeeId">
@@ -195,12 +170,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 					{isBankAccount ? (
 						<form.AppField name="bankId">
 							{(field) => (
-								<field.Select
-									label="Bank"
-									required
-									placeholder="Select Bank"
-									disabled={isView}
-								>
+								<field.Select label="Bank" required placeholder="Select Bank" disabled={isView}>
 									{banks.map((method) => (
 										<SelectItem key={method.value} value={method.value}>
 											{method.label}
@@ -279,10 +249,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 									parseFloat(item.quantity?.toString() ?? "1") *
 									parseFloat(item.unitPrice?.toString() ?? "0");
 								return (
-									<div
-										className="p-4 border rounded-md space-y-4"
-										key={item.id}
-									>
+									<div className="p-4 border rounded-md space-y-4" key={item.id}>
 										<FieldGroup className="grid md:grid-cols-2 lg:grid-cols-12 gap-4">
 											<div className="col-span-full lg:col-span-4">
 												<form.AppField name={`details[${index}].accountId`}>
@@ -294,10 +261,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 															disabled={isView}
 														>
 															{accounts.map((account) => (
-																<SelectItem
-																	key={account.id}
-																	value={account.id.toString()}
-																>
+																<SelectItem key={account.id} value={account.id.toString()}>
 																	{account.name}
 																</SelectItem>
 															))}
@@ -310,6 +274,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 													<field.Input
 														label="Quantity"
 														type="number"
+														step="any"
 														required
 														disabled={isView}
 													/>
@@ -322,6 +287,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 															type="number"
 															label="Unit Price"
 															required
+															step="0.01"
 															disabled={isView}
 														/>
 													)}
@@ -337,33 +303,21 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 															disabled={isView}
 														>
 															<SelectItem value="none">None</SelectItem>
-															<SelectItem value="inclusive">
-																Inclusive
-															</SelectItem>
-															<SelectItem value="exclusive">
-																Exclusive
-															</SelectItem>
+															<SelectItem value="inclusive">Inclusive</SelectItem>
+															<SelectItem value="exclusive">Exclusive</SelectItem>
 														</field.Select>
 													)}
 												</form.AppField>
 											</div>
 											<Field className="col-span-full lg:col-span-2">
 												<FieldLabel>Total</FieldLabel>
-												<Input
-													value={new Intl.NumberFormat().format(lineSubTotal)}
-													readOnly
-												/>
+												<Input value={new Intl.NumberFormat().format(lineSubTotal)} readOnly />
 											</Field>
 										</FieldGroup>
 										<FieldGroup className="flex flex-row! items-center justify-between">
 											<div className="flex-1">
 												<form.AppField name={`details[${index}].description`}>
-													{(field) => (
-														<field.Input
-															label="Description"
-															disabled={isView}
-														/>
-													)}
+													{(field) => <field.Input label="Description" disabled={isView} />}
 												</form.AppField>
 											</div>
 											{!isView && (
@@ -392,9 +346,7 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 								{!isView && (
 									<FormUploader
 										value={field.state.value}
-										onChange={(newAttachments) =>
-											field.handleChange(newAttachments)
-										}
+										onChange={(newAttachments) => field.handleChange(newAttachments)}
 									/>
 								)}
 								{field.state.value?.map((attachment, index) => (
@@ -411,17 +363,8 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 												<span className="text-sm font-medium truncate max-w-[200px]">
 													{attachment.filename}
 												</span>
-												<Button
-													asChild
-													variant="link"
-													size="sm"
-													className="justify-start"
-												>
-													<a
-														href={attachment.url}
-														target="_blank"
-														rel="noopener noreferrer"
-													>
+												<Button asChild variant="link" size="sm" className="justify-start">
+													<a href={attachment.url} target="_blank" rel="noopener noreferrer">
 														View
 													</a>
 												</Button>
@@ -447,28 +390,16 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 					<div className="bg-accent p-4 rounded-md space-y-4">
 						<h2 className="text-sm font-semibold">Expense Summary</h2>
 						<div className="flex items-center justify-between">
-							<div className="text-xs font-medium text-muted-foreground">
-								Sub Total
-							</div>
-							<div className="text-xs font-medium">
-								{currencyFormatter(summary.subTotal)}
-							</div>
+							<div className="text-xs font-medium text-muted-foreground">Sub Total</div>
+							<div className="text-xs font-medium">{currencyFormatter(summary.subTotal)}</div>
 						</div>
 						<div className="flex items-center justify-between">
-							<div className="text-xs font-medium text-muted-foreground">
-								Tax Amount
-							</div>
-							<div className="text-xs font-medium">
-								{currencyFormatter(summary.taxAmount)}
-							</div>
+							<div className="text-xs font-medium text-muted-foreground">Tax Amount</div>
+							<div className="text-xs font-medium">{currencyFormatter(summary.taxAmount)}</div>
 						</div>
 						<div className="flex items-center justify-between">
-							<div className="text-xs font-medium text-muted-foreground">
-								Grand Total
-							</div>
-							<div className="text-xs font-medium">
-								{currencyFormatter(summary.grandTotal)}
-							</div>
+							<div className="text-xs font-medium text-muted-foreground">Grand Total</div>
+							<div className="text-xs font-medium">{currencyFormatter(summary.grandTotal)}</div>
 						</div>
 					</div>
 				</div>

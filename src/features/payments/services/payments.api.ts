@@ -11,6 +11,7 @@ import {
 	vendors,
 	vwInvoices,
 } from "@/drizzle/schema";
+import { runPaymentPostCommitTasks } from "@/features/payments/services/payment-post-commit";
 import { paymentFormSchema } from "@/features/payments/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
@@ -31,7 +32,7 @@ export const getPaymentNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		const result = await db.execute<{ paymentNo: number }>(
-			`SELECT COALESCE(MAX(payment_no), 0) as "paymentNo" FROM bill_payments`,
+			`SELECT COALESCE(MAX(payment_no), 0) as "paymentNo" FROM bill_payments`
 		);
 		return (result.rows[0]?.paymentNo ?? 0) + 1;
 	});
@@ -59,22 +60,19 @@ export const getPayments = createServerFn()
 							ilike(vendors.name, `%${q}%`),
 							ilike(sql`${billPayments.paymentNo}::text`, `%${q}%`),
 							ilike(billPayments.paymentMethod, `%${q}%`),
-							ilike(billPayments.reference, `%${q}%`),
+							ilike(billPayments.reference, `%${q}%`)
 						)
-					: undefined,
+					: undefined
 			)
 			.innerJoin(vendors, eq(billPayments.vendorId, vendors.id))
-			.leftJoin(
-				billPaymentLines,
-				eq(billPayments.id, billPaymentLines.billPaymentId),
-			)
+			.leftJoin(billPaymentLines, eq(billPayments.id, billPaymentLines.billPaymentId))
 			.groupBy(
 				billPayments.id,
 				billPayments.paymentNo,
 				billPayments.paymentDate,
 				billPayments.paymentMethod,
 				billPayments.reference,
-				vendors.name,
+				vendors.name
 			)
 			.orderBy(desc(billPayments.paymentNo))
 			.limit(100);
@@ -143,10 +141,7 @@ export const createPayment = createServerFn({ method: "POST" })
 				cashEquivalentAccountId,
 			} = data;
 
-			const accountsPayableId = await createOrGetAccountId(
-				"accounts payable",
-				"liability",
-			);
+			const accountsPayableId = await createOrGetAccountId("accounts payable", "liability");
 
 			const paidBills = bills.filter((bill) => bill.selected);
 
@@ -159,15 +154,13 @@ export const createPayment = createServerFn({ method: "POST" })
 
 			const totalAmountPaid = paidBills.reduce(
 				(acc, bill) => acc + parseFloat(bill.amount?.toString() ?? "0"),
-				0,
+				0
 			);
 			let creditingAccountId: number;
 
 			if (paymentMethod === "bank" || paymentMethod === "cheque") {
 				if (!bankId) {
-					throw new ApplicationError(
-						"Bank is required for this payment method",
-					);
+					throw new ApplicationError("Bank is required for this payment method");
 				}
 				const [{ accountId }] = await db
 					.select({ accountId: bankAccounts.accountId })
@@ -178,8 +171,7 @@ export const createPayment = createServerFn({ method: "POST" })
 				if (!cashEquivalentAccountId) {
 					return failure({
 						type: "ApplicationError",
-						message:
-							"Cash equivalent account is required for this payment method",
+						message: "Cash equivalent account is required for this payment method",
 					});
 				}
 				creditingAccountId = Number(cashEquivalentAccountId);
@@ -215,10 +207,7 @@ export const createPayment = createServerFn({ method: "POST" })
 						.select({ currentBalance: vwInvoices.balance })
 						.from(vwInvoices)
 						.where(eq(vwInvoices.id, bill.billId));
-					if (
-						parseFloat(bill.amount?.toString() ?? "0") >
-						parseFloat(currentBalance)
-					) {
+					if (parseFloat(bill.amount?.toString() ?? "0") > parseFloat(currentBalance)) {
 						return failure({
 							type: "ApplicationError",
 							message: "Payment amount exceeds bill balance",
@@ -260,9 +249,7 @@ export const createPayment = createServerFn({ method: "POST" })
 						.returning({ id: billPayments.id });
 
 					if (id) {
-						await tx
-							.delete(billPaymentLines)
-							.where(eq(billPaymentLines.billPaymentId, paymentId));
+						await tx.delete(billPaymentLines).where(eq(billPaymentLines.billPaymentId, paymentId));
 						await deleteJournalEntry({
 							source: "bill payment",
 							sourceId: paymentId,
@@ -283,7 +270,7 @@ export const createPayment = createServerFn({ method: "POST" })
 							lineNumber: index + 1,
 							currentBalance: bill.balance.toString(),
 							dc: "credit" as const,
-						})),
+						}))
 					);
 
 					await createJournalEntry({
@@ -312,22 +299,32 @@ export const createPayment = createServerFn({ method: "POST" })
 							tx,
 						});
 					}
-
-					await logActivity({
-						data: {
-							action: id ? "update payment" : "create payment",
-							userId,
-							description: `${id ? "Updated" : "Created"} payment no ${paymentNo}`,
-						},
-					});
-
-					await inngest.send({
-						name: "app/bills.update.invoice.status",
-						data: {
-							paidInvoiceIds: paidBills.map((bill) => bill.billId),
-						},
-					});
 				});
+
+				await runPaymentPostCommitTasks([
+					{
+						name: "activity log",
+						run: () =>
+							logActivity({
+								data: {
+									action: id ? "update payment" : "create payment",
+									userId,
+									description: `${id ? "Updated" : "Created"} payment no ${paymentNo}`,
+								},
+							}),
+					},
+					{
+						name: "invoice status event",
+						run: async () => {
+							await inngest.send({
+								name: "app/bills.update.invoice.status",
+								data: {
+									paidInvoiceIds: paidBills.map((bill) => bill.billId),
+								},
+							});
+						},
+					},
+				]);
 
 				return success(undefined);
 			} catch (error) {
@@ -337,7 +334,7 @@ export const createPayment = createServerFn({ method: "POST" })
 					message: "Failed to create/update payment",
 				});
 			}
-		},
+		}
 	);
 
 export const deletePayment = createServerFn({ method: "POST" })
@@ -402,5 +399,5 @@ export const deletePayment = createServerFn({ method: "POST" })
 					message: "Failed to delete payment",
 				});
 			}
-		},
+		}
 	);

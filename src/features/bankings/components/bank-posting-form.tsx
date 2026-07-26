@@ -3,10 +3,7 @@ import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { upsertBankPosting } from "@/features/bankings/services/bankings.api";
-import {
-	type BankPostingSchema,
-	bankPostingSchema,
-} from "@/features/bankings/services/schema";
+import { type BankPostingSchema, bankPostingSchema } from "@/features/bankings/services/schema";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { dateFormat } from "@/lib/helpers";
@@ -21,11 +18,7 @@ const defaultValues = {
 	counterAccountId: "",
 };
 
-export const BankPostingForm = ({
-	posting,
-}: {
-	posting?: BankPostingSchema;
-}) => {
+export const BankPostingForm = ({ posting }: { posting?: BankPostingSchema }) => {
 	const { accounts } = useRouteContext({
 		from: "/app/bankings/postings",
 	});
@@ -53,9 +46,7 @@ export const BankPostingForm = ({
 		<div className="space-y-6">
 			<PageHeader
 				title={posting ? "Edit Bank Posting" : "New Bank Posting"}
-				description={
-					posting ? "Edit a bank posting" : "Create a new bank posting"
-				}
+				description={posting ? "Edit a bank posting" : "Create a new bank posting"}
 			/>
 			<form
 				onSubmit={(e) => {
@@ -67,9 +58,7 @@ export const BankPostingForm = ({
 			>
 				<FieldGroup className="grid md:grid-cols-2 gap-4">
 					<form.AppField name="transactionDate">
-						{(field) => (
-							<field.Input type="date" label="Transaction Date" required />
-						)}
+						{(field) => <field.Input type="date" label="Transaction Date" required />}
 					</form.AppField>
 					<form.AppField name="bankId">
 						{(field) => (
@@ -83,7 +72,7 @@ export const BankPostingForm = ({
 						)}
 					</form.AppField>
 					<form.AppField name="amount">
-						{(field) => <field.Input type="number" label="Amount" required />}
+						{(field) => <field.Input type="number" label="Amount" required step="0.01" />}
 					</form.AppField>
 					<form.AppField name="direction">
 						{(field) => (
@@ -111,13 +100,7 @@ export const BankPostingForm = ({
 						)}
 					</form.AppField>
 					<form.AppField name="reference">
-						{(field) => (
-							<field.Input
-								label="Reference"
-								placeholder="eg chq458555"
-								required
-							/>
-						)}
+						{(field) => <field.Input label="Reference" placeholder="eg chq458555" required />}
 					</form.AppField>
 					<form.AppField name="narration">
 						{(field) => (
@@ -134,9 +117,7 @@ export const BankPostingForm = ({
 					<form.AppForm>
 						<form.SubmitButton
 							isLoading={isPending}
-							buttonText={
-								posting ? "Update Bank Posting" : "Create Bank Posting"
-							}
+							buttonText={posting ? "Update Bank Posting" : "Create Bank Posting"}
 						/>
 					</form.AppForm>
 				</FieldGroup>
