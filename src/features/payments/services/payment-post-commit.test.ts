@@ -59,4 +59,33 @@ describe("runPaymentPostCommitTasks", () => {
 		expect(attempts).toEqual(["activity log", "invoice status event"]);
 		expect(errors).toEqual(["Post-commit payment invoice status event failed"]);
 	});
+
+	it("resolves and attempts every report when the reporter throws", async () => {
+		let reportAttempts = 0;
+
+		await expect(
+			runPaymentPostCommitTasks(
+				[
+					{
+						name: "activity log",
+						run: async () => {
+							throw new Error("activity unavailable");
+						},
+					},
+					{
+						name: "invoice status event",
+						run: async () => {
+							throw new Error("inngest unavailable");
+						},
+					},
+				],
+				() => {
+					reportAttempts += 1;
+					throw new Error("reporting unavailable");
+				}
+			)
+		).resolves.toBeUndefined();
+
+		expect(reportAttempts).toBe(2);
+	});
 });

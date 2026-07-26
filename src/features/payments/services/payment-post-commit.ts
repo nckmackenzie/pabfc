@@ -13,7 +13,11 @@ export async function runPaymentPostCommitTasks(
 
 	results.forEach((result, index) => {
 		if (result.status === "rejected") {
-			reportError(`Post-commit payment ${tasks[index]!.name} failed`, result.reason);
+			try {
+				reportError(`Post-commit payment ${tasks[index]!.name} failed`, result.reason);
+			} catch {
+				// Reporting errors must not alter the committed payment result.
+			}
 		}
 	});
 }
