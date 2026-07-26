@@ -11,6 +11,7 @@ import {
 	vendors,
 	vwInvoices,
 } from "@/drizzle/schema";
+import { runPaymentPostCommitTasks } from "@/features/payments/services/payment-post-commit";
 import { paymentFormSchema } from "@/features/payments/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
@@ -300,20 +301,30 @@ export const createPayment = createServerFn({ method: "POST" })
 					}
 				});
 
-				await logActivity({
-					data: {
-						action: id ? "update payment" : "create payment",
-						userId,
-						description: `${id ? "Updated" : "Created"} payment no ${paymentNo}`,
+				await runPaymentPostCommitTasks([
+					{
+						name: "activity log",
+						run: () =>
+							logActivity({
+								data: {
+									action: id ? "update payment" : "create payment",
+									userId,
+									description: `${id ? "Updated" : "Created"} payment no ${paymentNo}`,
+								},
+							}),
 					},
-				});
-
-				await inngest.send({
-					name: "app/bills.update.invoice.status",
-					data: {
-						paidInvoiceIds: paidBills.map((bill) => bill.billId),
+					{
+						name: "invoice status event",
+						run: async () => {
+							await inngest.send({
+								name: "app/bills.update.invoice.status",
+								data: {
+									paidInvoiceIds: paidBills.map((bill) => bill.billId),
+								},
+							});
+						},
 					},
-				});
+				]);
 
 				return success(undefined);
 			} catch (error) {
