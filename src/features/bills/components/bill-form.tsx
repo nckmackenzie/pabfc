@@ -230,6 +230,7 @@ export function BillForm({ loaderVendors, loaderAccounts, bill, isEdit }: BillFo
 														type="number"
 														value={field.state.value === 0 ? "" : field.state.value}
 														label=""
+														step="0.01"
 													/>
 												)}
 											</form.AppField>
