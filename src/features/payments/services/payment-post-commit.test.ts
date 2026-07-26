@@ -23,7 +23,9 @@ describe("runPaymentPostCommitTasks", () => {
 						},
 					},
 				],
-				(message) => errors.push(message)
+				(message) => {
+					errors.push(message);
+				}
 			)
 		).resolves.toBeUndefined();
 
@@ -52,7 +54,9 @@ describe("runPaymentPostCommitTasks", () => {
 						},
 					},
 				],
-				(message) => errors.push(message)
+				(message) => {
+					errors.push(message);
+				}
 			)
 		).resolves.toBeUndefined();
 
@@ -82,6 +86,35 @@ describe("runPaymentPostCommitTasks", () => {
 				() => {
 					reportAttempts += 1;
 					throw new Error("reporting unavailable");
+				}
+			)
+		).resolves.toBeUndefined();
+
+		expect(reportAttempts).toBe(2);
+	});
+
+	it("resolves and attempts every report when the reporter rejects", async () => {
+		let reportAttempts = 0;
+
+		await expect(
+			runPaymentPostCommitTasks(
+				[
+					{
+						name: "activity log",
+						run: async () => {
+							throw new Error("activity unavailable");
+						},
+					},
+					{
+						name: "invoice status event",
+						run: async () => {
+							throw new Error("inngest unavailable");
+						},
+					},
+				],
+				async () => {
+					reportAttempts += 1;
+					throw new Error("asynchronous reporting unavailable");
 				}
 			)
 		).resolves.toBeUndefined();

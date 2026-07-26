@@ -3,7 +3,7 @@ type PaymentPostCommitTask = {
 	run: () => void | Promise<void>;
 };
 
-type ReportPostCommitError = (message: string, error: unknown) => void;
+type ReportPostCommitError = (message: string, error: unknown) => void | Promise<void>;
 
 export async function runPaymentPostCommitTasks(
 	tasks: readonly PaymentPostCommitTask[],
@@ -11,13 +11,13 @@ export async function runPaymentPostCommitTasks(
 ) {
 	const results = await Promise.allSettled(tasks.map(({ run }) => Promise.resolve().then(run)));
 
-	results.forEach((result, index) => {
-		if (result.status === "rejected") {
-			try {
-				reportError(`Post-commit payment ${tasks[index]!.name} failed`, result.reason);
-			} catch {
-				// Reporting errors must not alter the committed payment result.
+	await Promise.allSettled(
+		results.map((result, index) => {
+			if (result.status === "rejected") {
+				return Promise.resolve().then(() =>
+					reportError(`Post-commit payment ${tasks[index]!.name} failed`, result.reason)
+				);
 			}
-		}
-	});
+		})
+	);
 }
