@@ -11,6 +11,7 @@ import {
 	payments,
 } from "@/drizzle/schema";
 import { checkUpgradeEligibility } from "@/features/receipts/lib/upgrade";
+import { userHasPermission } from "@/lib/permissions/permission-queries";
 import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -208,10 +209,15 @@ export const getPayment = createServerFn()
 export const getUpgradeContext = createServerFn()
 	.middleware([authMiddleware])
 	.validator((id: string) => id)
-	.handler(async ({ data: id }) => {
+	.handler(async ({ data: id, context: { user } }) => {
 		await requirePermission("receipts:top-up");
 
-		const eligibility = await checkUpgradeEligibility(db, id);
+		const hasLateUpgradePermission = await userHasPermission(
+			user.id,
+			user.role,
+			"receipts:top-up-late"
+		);
+		const eligibility = await checkUpgradeEligibility(db, id, hasLateUpgradePermission);
 		if (!eligibility.success) {
 			return { eligible: false as const, reason: eligibility.error.message };
 		}
@@ -223,6 +229,9 @@ export const getUpgradeContext = createServerFn()
 			originalStartDate,
 			originalNumberOfPeriods,
 			memberships,
+			isLate,
+			daysLate,
+			graceDaysAllowed,
 		} = eligibility.data;
 
 		return {
@@ -245,6 +254,9 @@ export const getUpgradeContext = createServerFn()
 			originalStartDate,
 			originalEndDate: memberships[0]?.endDate ?? null,
 			originalNumberOfPeriods,
+			isLate,
+			daysLate,
+			graceDaysAllowed,
 		};
 	});
 
