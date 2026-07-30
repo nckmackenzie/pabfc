@@ -12,6 +12,7 @@ import {
 } from "@/features/settings/services/schemas";
 import { decrypt, encrypt } from "@/features/settings/services/utils";
 import { AuthorizationError } from "@/lib/error-handling/app-error";
+import { requireAnyPermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
@@ -46,6 +47,20 @@ export const getSettings = createServerFn({ method: "GET" })
 				updatedBy: false,
 			},
 		});
+	});
+
+// Narrowly-scoped read for PlanForm's helper text — plan creators/editors aren't
+// necessarily admins (unlike getSettings above), but they still need to know the
+// current global default so "leave blank to use the default" isn't a guess. Returns
+// only the one number, not the rest of billing settings.
+export const getLateUpgradeGraceDaysDefault = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requireAnyPermission(["plans:create", "plans:update"]);
+		const settingsRow = await db.query.settings.findFirst({
+			columns: { billing: true },
+		});
+		return settingsRow?.billing?.lateUpgradeGraceDays ?? 3;
 	});
 
 export const getBiotimeSettings = createServerFn({ method: "GET" })
