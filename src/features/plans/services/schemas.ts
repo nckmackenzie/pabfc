@@ -13,13 +13,16 @@ export const planSchema = z
 		sessionCount: z.number().nullish(),
 		active: z.boolean(),
 		revenueAccountId: z.string({ error: "Revenue account is required" }),
+		lateUpgradeGraceDays: z
+			.number()
+			.int("Grace period must be a whole number of days")
+			.min(0, "Grace period cannot be negative")
+			.nullish(),
 	})
 	.superRefine((data, ctx) => {
 		if (
 			data.isSessionBased &&
-			(data.sessionCount === null ||
-				data.sessionCount === undefined ||
-				data.sessionCount < 1)
+			(data.sessionCount === null || data.sessionCount === undefined || data.sessionCount < 1)
 		) {
 			ctx.addIssue({
 				code: "custom",
@@ -30,10 +33,7 @@ export const planSchema = z
 	});
 
 export const planWithMembersValidateSearchSchema = searchValidateSchema.extend({
-	memberStatus: z
-		.enum(["active", "expired", "cancelled"])
-		.optional()
-		.catch("active"),
+	memberStatus: z.enum(["active", "expired", "cancelled"]).optional().catch("active"),
 });
 
 export type PlanSchema = z.infer<typeof planSchema>;
