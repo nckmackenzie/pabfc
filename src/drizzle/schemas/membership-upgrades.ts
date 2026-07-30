@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { date, numeric, pgTable, text, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, integer, numeric, pgTable, text, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 import { createdAt, id } from "@/drizzle/schema-helpers";
 import { users } from "./auth";
 import { members, membershipPlans } from "./member";
@@ -32,6 +32,13 @@ export const membershipUpgrades = pgTable(
 		topUpAmount: numeric("top_up_amount", { precision: 18, scale: 2 }).notNull(),
 		upgradeDate: date("upgrade_date").notNull(),
 		notes: text("notes"),
+		// Late-upgrade audit trail — set together, all three null/false for a normal
+		// (not-late) upgrade. isLateUpgrade is not-null so it's always queryable
+		// without a null check; daysAfterExpiry/lateUpgradeReason are only ever
+		// non-null together with isLateUpgrade === true.
+		isLateUpgrade: boolean("is_late_upgrade").notNull().default(false),
+		daysAfterExpiry: integer("days_after_expiry"),
+		lateUpgradeReason: text("late_upgrade_reason"),
 		createdByUserId: varchar("created_by_user_id")
 			.notNull()
 			.references(() => users.id),
