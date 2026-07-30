@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { accountQueries } from "@/features/coa/services/queries";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
+import { lateUpgradeGraceDaysDefaultQuery } from "@/features/settings/services/queries";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { upsertPlan } from "../services/plans.api";
@@ -28,10 +29,12 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 		from: "/app/plans",
 		select: (ctx) => ctx.accounts,
 	});
-	const lateUpgradeGraceDaysDefault = useRouteContext({
-		from: "/app/plans",
-		select: (ctx) => ctx.lateUpgradeGraceDaysDefault,
-	});
+	// Fetched lazily via useQuery, not route context — the parent /app/plans
+	// beforeLoad must stay free of plans:create/plans:update requirements (other
+	// routes under it, like the plans list, only need plans:view), while this
+	// form is only ever rendered on /app/plans/new or /app/plans/$planId/edit,
+	// both of which already guarantee one of those two permissions individually.
+	const { data: lateUpgradeGraceDaysDefault } = useQuery(lateUpgradeGraceDaysDefaultQuery());
 	const { data: freshAccounts } = useQuery(accountQueries.list({}));
 	const accounts = freshAccounts || contextAccounts;
 	const form = useAppForm({
@@ -146,8 +149,8 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 							<field.Input
 								type="number"
 								label="Late Upgrade Grace Period (days)"
-								placeholder={`Default: ${lateUpgradeGraceDaysDefault}`}
-								helperText={`Leave blank to use the default of ${lateUpgradeGraceDaysDefault} days.`}
+								placeholder={`Default: ${lateUpgradeGraceDaysDefault ?? 3}`}
+								helperText={`Leave blank to use the default of ${lateUpgradeGraceDaysDefault ?? 3} days.`}
 								min={0}
 								step={1}
 							/>

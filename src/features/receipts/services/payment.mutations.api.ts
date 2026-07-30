@@ -940,7 +940,7 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 					});
 
 					const warning =
-						dateFormat(newEndDate) < dateFormat(new Date())
+						isLate && dateFormat(newEndDate) < dateFormat(new Date())
 							? `The recomputed membership end date (${dateFormat(newEndDate)}) is still before today — the member may need a new payment to regain access.`
 							: null;
 
