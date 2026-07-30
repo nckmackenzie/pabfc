@@ -8,6 +8,11 @@ import {
 } from "@/drizzle/schema";
 import type { DbClient } from "@/features/receipts/lib/eligibility";
 import { findLaterMembership } from "@/features/receipts/lib/eligibility";
+import {
+	computeDaysLate,
+	evaluateLateUpgradeEligibility,
+	resolveLateUpgradeGraceDays,
+} from "@/features/receipts/lib/helpers";
 import { dateFormat } from "@/lib/helpers";
 import { failure, success, type Result } from "@/lib/result";
 
@@ -23,6 +28,9 @@ export type UpgradeEligibility = {
 	billingMemberId: string;
 	originalStartDate: string;
 	originalNumberOfPeriods: number;
+	isLate: boolean;
+	daysLate: number | null;
+	graceDaysAllowed: number | null;
 };
 
 // Re-run server-side before every upgrade — never trust a client-side check alone.
@@ -31,7 +39,8 @@ export type UpgradeEligibility = {
 // the upgrade-specific rules (single-use, not itself already an upgrade side).
 export async function checkUpgradeEligibility(
 	dbOrTx: DbClient,
-	paymentId: string
+	paymentId: string,
+	hasLateUpgradePermission: boolean
 ): Promise<Result<UpgradeEligibility>> {
 	const payment = await dbOrTx.query.payments.findFirst({
 		where: eq(payments.id, paymentId),
@@ -81,16 +90,46 @@ export async function checkUpgradeEligibility(
 		});
 	}
 
-	// Only an active membership (end date not yet due) can be topped up — an already
-	// expired one needs a fresh renewal payment instead. Same "expired" definition
-	// runMembershipMaintenance uses (endDate < today) rather than trusting the stored
-	// `status` column, which only gets flipped when that maintenance job next runs.
-	const today = dateFormat(new Date());
-	if (membershipRow.endDate && membershipRow.endDate < today) {
+	// A terminated membership (e.g. closed early via a credit note — see
+	// credit-note.mutations.api.ts) is never eligible, late-upgrade grace period or
+	// not. This is a real state change, not date-derived, so it's checked against
+	// the actual column rather than computed like the active/expired boundary below.
+	if (membershipRow.status === "terminated") {
 		return failure({
 			type: "ApplicationError",
-			message: `This membership already expired on ${membershipRow.endDate} and cannot be upgraded — the member must renew instead.`,
+			message: "This membership was terminated and cannot be upgraded.",
 		});
+	}
+
+	// "Expired" stays a computed check (endDate < today) rather than trusting the
+	// stored `status` column, which only flips active→expired once
+	// runMembershipMaintenance next runs and can lag the real date. `plan` here is
+	// the member's *original* plan — its lateUpgradeGraceDays override (never the
+	// new/target plan's) governs the grace period, per task.md.
+	const today = dateFormat(new Date());
+	let isLate = false;
+	let daysLate: number | null = null;
+	let graceDaysAllowed: number | null = null;
+
+	if (membershipRow.endDate && membershipRow.endDate < today) {
+		const settingsRow = await dbOrTx.query.settings.findFirst({
+			columns: { billing: true },
+		});
+		const resolvedGraceDays = resolveLateUpgradeGraceDays(
+			plan,
+			settingsRow?.billing?.lateUpgradeGraceDays
+		);
+		const decision = evaluateLateUpgradeEligibility({
+			daysLate: computeDaysLate(membershipRow.endDate, today),
+			graceDaysAllowed: resolvedGraceDays,
+			hasLateUpgradePermission,
+		});
+		if (!decision.eligible) {
+			return failure({ type: "ApplicationError", message: decision.reason });
+		}
+		isLate = true;
+		daysLate = decision.daysLate;
+		graceDaysAllowed = decision.graceDaysAllowed;
 	}
 
 	// A member has "renewed" if any other membership row of theirs (not created by
@@ -133,5 +172,8 @@ export async function checkUpgradeEligibility(
 		billingMemberId: payment.memberId,
 		originalStartDate: membershipRow.startDate,
 		originalNumberOfPeriods: payment.numberOfPeriods,
+		isLate,
+		daysLate,
+		graceDaysAllowed,
 	});
 }
