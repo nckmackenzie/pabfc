@@ -862,6 +862,19 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 					// this is the same membership period, just extended. That's why Void's
 					// eligibility check (checkVoidEligibility) separately guards against
 					// voiding either side of an upgrade.
+					//
+					// A late upgrade is, by definition, the common case where the daily
+					// expiry cron (expireMembershipsAndDisableAccess) already flipped this
+					// row's status to "expired" before the recomputed endDate moved back to
+					// today/the future. Without promoting it back to "active" here, the
+					// member stays invisible to every query that gates on status ===
+					// "active" (the inactive-member sweep, member-overview, credit-note
+					// eligibility, etc.) despite having just paid for a covered period.
+					// Only ever promotes an expired row to active — never touches any other
+					// status (e.g. frozen/suspended) — and a non-late upgrade's row is
+					// already "active", so this is a no-op there.
+					const reactivatesExpiredRow = dateFormat(newEndDate) >= dateFormat(new Date());
+
 					for (const membership of memberships) {
 						const share = topUpShareByMemberId.get(membership.memberId) ?? "0.00";
 						await tx
@@ -870,6 +883,9 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 								membershipPlanId: newPlanId,
 								endDate: dateFormat(newEndDate),
 								priceCharged: toDecimalString(toBig(membership.priceCharged).plus(toBig(share))),
+								...(membership.status === "expired" && reactivatesExpiredRow
+									? { status: "active" as const }
+									: {}),
 							})
 							.where(eq(memberMemberships.id, membership.id));
 					}

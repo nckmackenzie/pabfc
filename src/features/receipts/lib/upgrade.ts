@@ -94,7 +94,13 @@ export async function checkUpgradeEligibility(
 	// credit-note.mutations.api.ts) is never eligible, late-upgrade grace period or
 	// not. This is a real state change, not date-derived, so it's checked against
 	// the actual column rather than computed like the active/expired boundary below.
-	if (membershipRow.status === "terminated") {
+	// Checked across every covered row, not just memberships[0]: a credit note
+	// terminates one member's row at a time (`.where(eq(memberMemberships.id,
+	// membershipId))`), so a multi-member (group/family) payment can have one
+	// covered member terminated while the others are still active/expired — the
+	// upgrade mutation below updates every row in `memberships`, so leaving any one
+	// of them terminated and still eligible would silently un-terminate it.
+	if (memberships.some((membership) => membership.status === "terminated")) {
 		return failure({
 			type: "ApplicationError",
 			message: "This membership was terminated and cannot be upgraded.",
