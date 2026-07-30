@@ -677,7 +677,6 @@ with:
 						originalNumberOfPeriods,
 						isLate,
 						daysLate,
-						graceDaysAllowed,
 					} = eligibility.data;
 
 					// The eligibility check already confirmed grace-period + permission when
@@ -694,7 +693,7 @@ with:
 					}
 ```
 
-(`graceDaysAllowed` is destructured for symmetry/readability even though this task doesn't read it further — it mirrors what `getUpgradeContext` exposes.)
+`graceDaysAllowed` is intentionally **not** destructured here — this handler never reads it (only `isLate`/`daysLate` feed the insert and activity log below), and an unused destructured variable would trip Biome's lint rule. `getUpgradeContext` (Task 5) is the one that exposes it to the client.
 
 - [ ] **Step 4: Compute the post-upgrade warning and change the success return shape**
 
