@@ -56,6 +56,12 @@ export const upgradePaymentSchema = z.object({
 	reference: requiredStringNonLowerSchemaEntry("Payment reference is required"),
 	upgradeDate: z.iso.date({ error: "Upgrade date is required" }),
 	notes: nullableTrimmedString,
+	// Only required when the eligibility check marks this as a late upgrade — the
+	// schema can't know that on its own (it isn't derivable from the submitted
+	// fields), so this stays optional here. The server enforces the minimum length
+	// imperatively in upgradePaymentFn once eligibility.data.isLate is known,
+	// mirroring voidPaymentSchema's voidReason minimum (10 chars).
+	lateUpgradeReason: nullableTrimmedString,
 });
 
 export const paymentsSearchValidateSchema = z.object({
