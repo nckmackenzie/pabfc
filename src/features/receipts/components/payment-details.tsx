@@ -25,11 +25,16 @@ export function PaymentDetails() {
 	// client-side first avoids a guaranteed-to-fail request for staff without it.
 	// The endDate check mirrors checkUpgradeEligibility's server-side rule (only an
 	// active membership — end date not yet due — can be topped up) so an expired
-	// membership doesn't even trigger the eligibility round trip.
+	// membership doesn't trigger the eligibility round trip for staff who couldn't
+	// use it anyway. Holders of receipts:top-up-late are let through regardless —
+	// whether the grace period/permission actually make it eligible is resolved by
+	// the upgradeContext query below, same as every other upgrade nuance.
 	const today = dateFormat(new Date());
 	const isMembershipStillActive = !payment.membership?.endDate || payment.membership.endDate >= today;
 	const canParticipateInUpgrade =
-		payment.status === "completed" && !!payment.planId && isMembershipStillActive;
+		payment.status === "completed" &&
+		!!payment.planId &&
+		(isMembershipStillActive || hasPermission("receipts:top-up-late"));
 
 	const { data: upgradeInfo } = useQuery({
 		...paymentsQueries.upgradeInfo(payment.id),

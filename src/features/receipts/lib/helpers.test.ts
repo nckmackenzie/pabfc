@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
 	computeMembershipEndDate,
 	computeSuggestedTopUpAmount,
+	computeDaysLate,
+	evaluateLateUpgradeEligibility,
 	isEligibleUpgradePlan,
 	membershipRangeConflicts,
+	resolveLateUpgradeGraceDays,
 	splitAmountEvenly,
 } from "./helpers";
 
@@ -253,5 +256,85 @@ describe("isEligibleUpgradePlan", () => {
 		const familyMonthly = { id: "family-monthly", duration: 30, memberCount: 3 };
 		const familyFortnight = { id: "family-fortnight", duration: 14, memberCount: 3 };
 		expect(isEligibleUpgradePlan(familyMonthly, familyFortnight)).toBe(true);
+	});
+});
+
+describe("resolveLateUpgradeGraceDays", () => {
+	it("uses the plan-level override when set", () => {
+		expect(resolveLateUpgradeGraceDays({ lateUpgradeGraceDays: 7 }, 3)).toBe(7);
+	});
+
+	it("falls back to the global default when the plan has no override", () => {
+		expect(resolveLateUpgradeGraceDays({ lateUpgradeGraceDays: null }, 5)).toBe(5);
+	});
+
+	it("falls back to 3 when neither the plan override nor the global default is set", () => {
+		expect(resolveLateUpgradeGraceDays({ lateUpgradeGraceDays: null }, undefined)).toBe(3);
+		expect(resolveLateUpgradeGraceDays({ lateUpgradeGraceDays: null }, null)).toBe(3);
+	});
+
+	it("treats a plan override of 0 as a real value, not a missing one", () => {
+		expect(resolveLateUpgradeGraceDays({ lateUpgradeGraceDays: 0 }, 5)).toBe(0);
+	});
+});
+
+describe("computeDaysLate", () => {
+	it("returns the number of calendar days between endDate and today", () => {
+		expect(computeDaysLate("2026-07-01", "2026-07-05")).toBe(4);
+	});
+
+	it("returns 0 when endDate is today", () => {
+		expect(computeDaysLate("2026-07-05", "2026-07-05")).toBe(0);
+	});
+
+	it("returns a large value for a long-expired membership", () => {
+		expect(computeDaysLate("2026-01-01", "2026-07-05")).toBe(185);
+	});
+});
+
+describe("evaluateLateUpgradeEligibility", () => {
+	it("is ineligible when daysLate exceeds graceDaysAllowed, regardless of permission", () => {
+		const result = evaluateLateUpgradeEligibility({
+			daysLate: 5,
+			graceDaysAllowed: 3,
+			hasLateUpgradePermission: true,
+		});
+		expect(result.eligible).toBe(false);
+	});
+
+	it("is ineligible within the grace period when the user lacks the late-upgrade permission", () => {
+		const result = evaluateLateUpgradeEligibility({
+			daysLate: 2,
+			graceDaysAllowed: 3,
+			hasLateUpgradePermission: false,
+		});
+		expect(result.eligible).toBe(false);
+	});
+
+	it("is eligible within the grace period when the user holds the late-upgrade permission", () => {
+		const result = evaluateLateUpgradeEligibility({
+			daysLate: 2,
+			graceDaysAllowed: 3,
+			hasLateUpgradePermission: true,
+		});
+		expect(result).toEqual({ eligible: true, daysLate: 2, graceDaysAllowed: 3 });
+	});
+
+	it("is eligible exactly on the last day of the grace period", () => {
+		const result = evaluateLateUpgradeEligibility({
+			daysLate: 3,
+			graceDaysAllowed: 3,
+			hasLateUpgradePermission: true,
+		});
+		expect(result.eligible).toBe(true);
+	});
+
+	it("is ineligible the day after the grace period ends", () => {
+		const result = evaluateLateUpgradeEligibility({
+			daysLate: 4,
+			graceDaysAllowed: 3,
+			hasLateUpgradePermission: true,
+		});
+		expect(result.eligible).toBe(false);
 	});
 });

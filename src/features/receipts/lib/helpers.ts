@@ -1,4 +1,4 @@
-import { addDays, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
 import type { MembershipStatus } from "@/drizzle/schema";
 
 // "yyyy-MM-dd" strings must go through parseISO (interpreted as local midnight),
@@ -87,4 +87,56 @@ export function splitAmountEvenly(amount: string, count: number): string[] {
 		const shareCents = baseShareCents + (index < remainderCents ? 1 : 0);
 		return (shareCents / 100).toFixed(2);
 	});
+}
+
+// Resolves the grace period for a late upgrade: the plan the member was
+// already on can override the global default; null on the plan means
+// "use the global default." Always called with the *original* plan — a
+// late upgrade's allowance is governed by what the member is leaving,
+// never by what they're upgrading to.
+export function resolveLateUpgradeGraceDays(
+	originalPlan: { lateUpgradeGraceDays: number | null },
+	globalDefaultDays: number | null | undefined
+): number {
+	return originalPlan.lateUpgradeGraceDays ?? globalDefaultDays ?? 3;
+}
+
+// Calendar-day distance between an already-passed endDate and today. Both
+// arguments are "yyyy-MM-dd" strings, parsed as local calendar dates (see
+// parseCalendarDate) so this isn't sensitive to time-of-day or timezone.
+export function computeDaysLate(endDate: string, today: string): number {
+	return differenceInCalendarDays(parseCalendarDate(today), parseCalendarDate(endDate));
+}
+
+export type LateUpgradeDecision =
+	| { eligible: true; daysLate: number; graceDaysAllowed: number }
+	| { eligible: false; reason: string };
+
+// Pure decision function for whether an already-expired membership can still
+// be upgraded: within the grace period AND the requester holds
+// receipts:top-up-late. Exceeding the grace period is always a hard no,
+// independent of permission — this mirrors task.md's ordering (grace period
+// checked before permission) so the two failure messages stay distinguishable.
+export function evaluateLateUpgradeEligibility({
+	daysLate,
+	graceDaysAllowed,
+	hasLateUpgradePermission,
+}: {
+	daysLate: number;
+	graceDaysAllowed: number;
+	hasLateUpgradePermission: boolean;
+}): LateUpgradeDecision {
+	if (daysLate > graceDaysAllowed) {
+		return {
+			eligible: false,
+			reason: `This membership expired ${daysLate} day(s) ago, exceeding the ${graceDaysAllowed}-day grace period — the member must renew instead.`,
+		};
+	}
+	if (!hasLateUpgradePermission) {
+		return {
+			eligible: false,
+			reason: `This membership expired ${daysLate} day(s) ago and requires admin approval to upgrade.`,
+		};
+	}
+	return { eligible: true, daysLate, graceDaysAllowed };
 }

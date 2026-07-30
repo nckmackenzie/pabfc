@@ -41,6 +41,7 @@ export const settings = pgTable("settings", {
 		memberCreditsPayableAccountId?: number;
 		creditForfeitureIncomeAccountId?: number;
 		creditNoteExpiryMonths?: number;
+		lateUpgradeGraceDays?: number;
 	}>(),
 	createdAt,
 	updatedAt,

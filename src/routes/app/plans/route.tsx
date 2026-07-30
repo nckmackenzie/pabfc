@@ -4,18 +4,14 @@ import { accountQueries } from "@/features/coa/services/queries";
 
 export const Route = createFileRoute("/app/plans")({
 	beforeLoad: async ({ context }) => {
-		const accounts = await context.queryClient.ensureQueryData(
-			accountQueries.list({}),
-		);
+		const accounts = await context.queryClient.ensureQueryData(accountQueries.list({}));
 		return { accounts };
 	},
 	component: RouteComponent,
 	staticData: {
 		breadcrumb: "Plans List",
 	},
-	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
-	),
+	errorComponent: ({ error }) => <AlertErrorComponent message={error.message} />,
 });
 
 function RouteComponent() {

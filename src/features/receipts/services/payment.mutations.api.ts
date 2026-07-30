@@ -64,6 +64,7 @@ import {
 	toDecimalString,
 } from "@/lib/helpers";
 import { initiateMpesaStkPush, registerUrlCallacks } from "@/lib/mpesa";
+import { userHasPermission } from "@/lib/permissions/permission-queries";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { failure, success, type Result } from "@/lib/result";
@@ -635,9 +636,17 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 	.validator(upgradePaymentSchema)
 	.handler(
 		async ({
-			data: { originalPaymentId, newPlanId, topUpAmount, reference, upgradeDate, notes },
+			data: {
+				originalPaymentId,
+				newPlanId,
+				topUpAmount,
+				reference,
+				upgradeDate,
+				notes,
+				lateUpgradeReason,
+			},
 			context: {
-				user: { id: userId },
+				user: { id: userId, role },
 			},
 		}) => {
 			await requirePermission("receipts:top-up");
@@ -665,7 +674,16 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 						await lockMemberMembershipCreation(tx, memberId);
 					}
 
-					const eligibility = await checkUpgradeEligibility(tx, originalPaymentId);
+					const hasLateUpgradePermission = await userHasPermission(
+						userId,
+						role,
+						"receipts:top-up-late"
+					);
+					const eligibility = await checkUpgradeEligibility(
+						tx,
+						originalPaymentId,
+						hasLateUpgradePermission
+					);
 					if (!eligibility.success) {
 						throw new PaymentTransactionError(eligibility);
 					}
@@ -677,7 +695,22 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 						billingMemberId,
 						originalStartDate,
 						originalNumberOfPeriods,
+						isLate,
+						daysLate,
 					} = eligibility.data;
+
+					// The eligibility check already confirmed grace-period + permission when
+					// isLate is true; this only enforces that a reason was actually supplied,
+					// same minimum-length convention as voidPaymentSchema's voidReason.
+					if (isLate) {
+						const trimmedReason = lateUpgradeReason?.trim() ?? "";
+						if (trimmedReason.length < 10) {
+							throw fail({
+								type: "ApplicationError",
+								message: "A reason (at least 10 characters) is required for a late upgrade.",
+							});
+						}
+					}
 
 					const newPlan = await tx.query.membershipPlans.findFirst({
 						where: eq(membershipPlans.id, newPlanId),
@@ -829,6 +862,19 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 					// this is the same membership period, just extended. That's why Void's
 					// eligibility check (checkVoidEligibility) separately guards against
 					// voiding either side of an upgrade.
+					//
+					// A late upgrade is, by definition, the common case where the daily
+					// expiry cron (expireMembershipsAndDisableAccess) already flipped this
+					// row's status to "expired" before the recomputed endDate moved back to
+					// today/the future. Without promoting it back to "active" here, the
+					// member stays invisible to every query that gates on status ===
+					// "active" (the inactive-member sweep, member-overview, credit-note
+					// eligibility, etc.) despite having just paid for a covered period.
+					// Only ever promotes an expired row to active — never touches any other
+					// status (e.g. frozen/suspended) — and a non-late upgrade's row is
+					// already "active", so this is a no-op there.
+					const reactivatesExpiredRow = dateFormat(newEndDate) >= dateFormat(new Date());
+
 					for (const membership of memberships) {
 						const share = topUpShareByMemberId.get(membership.memberId) ?? "0.00";
 						await tx
@@ -837,6 +883,9 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 								membershipPlanId: newPlanId,
 								endDate: dateFormat(newEndDate),
 								priceCharged: toDecimalString(toBig(membership.priceCharged).plus(toBig(share))),
+								...(membership.status === "expired" && reactivatesExpiredRow
+									? { status: "active" as const }
+									: {}),
 							})
 							.where(eq(memberMemberships.id, membership.id));
 					}
@@ -875,6 +924,8 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 						}
 					}
 
+					const trimmedLateReason = lateUpgradeReason?.trim() || null;
+
 					await tx.insert(membershipUpgrades).values({
 						originalPaymentId,
 						upgradePaymentId: newPayment.id,
@@ -887,15 +938,29 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 						upgradeDate,
 						notes: notes ?? null,
 						createdByUserId: userId,
+						isLateUpgrade: isLate,
+						daysAfterExpiry: isLate ? daysLate : null,
+						lateUpgradeReason: isLate ? trimmedLateReason : null,
 					});
 
+					// Informational only — the recomputed end date can still land before
+					// today for a sufficiently overdue late upgrade. The upgrade itself is
+					// never blocked on this; the caller just needs to see it clearly.
+					const lateSuffix = isLate
+						? ` LATE UPGRADE (${daysLate} day(s) after expiry). Reason: ${trimmedLateReason}.`
+						: "";
 					await tx.insert(activityLogs).values({
 						userId,
 						action: "upgrade membership",
-						description: `Upgraded receipt ${originalPayment.paymentNo} from ${originalPlan.name} to ${newPlan.name} via top-up receipt ${paymentNo}. Affected member(s): ${coveredMembers.map((member) => member.name).join(", ")}.`,
+						description: `Upgraded receipt ${originalPayment.paymentNo} from ${originalPlan.name} to ${newPlan.name} via top-up receipt ${paymentNo}. Affected member(s): ${coveredMembers.map((member) => member.name).join(", ")}.${lateSuffix}`,
 					});
 
-					return success(newPayment.id);
+					const warning =
+						isLate && dateFormat(newEndDate) < dateFormat(new Date())
+							? `The recomputed membership end date (${dateFormat(newEndDate)}) is still before today — the member may need a new payment to regain access.`
+							: null;
+
+					return success({ id: newPayment.id, warning });
 				});
 
 				return result;

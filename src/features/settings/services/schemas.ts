@@ -58,6 +58,11 @@ export const billingSchema = z.object({
 		.int({ error: "Credit note expiry must be a whole number of months" })
 		.positive({ error: "Credit note expiry must be greater than zero" })
 		.nullish(),
+	lateUpgradeGraceDays: z.coerce
+		.number<number>()
+		.int({ error: "Grace period must be a whole number of days" })
+		.min(0, { error: "Grace period cannot be negative" })
+		.nullish(),
 });
 
 export const biometricSettingsSchema = z.object({

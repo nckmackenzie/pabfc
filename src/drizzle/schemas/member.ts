@@ -162,6 +162,10 @@ export const membershipPlans = pgTable(
 		revenueAccountId: integer("revenue_account_id").references(
 			() => ledgerAccounts.id,
 		),
+		// Per-plan override for how many days after expiry a late upgrade is still
+		// allowed. Null means "use settings.billing.lateUpgradeGraceDays instead" —
+		// see resolveLateUpgradeGraceDays in features/receipts/lib/helpers.ts.
+		lateUpgradeGraceDays: integer("late_upgrade_grace_days"),
 		active,
 		createdAt,
 		updatedAt,

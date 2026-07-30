@@ -82,6 +82,9 @@ function EligibleUpgradeForm({
 		coveredMembers,
 		originalStartDate,
 		originalEndDate,
+		isLate,
+		daysLate,
+		graceDaysAllowed,
 	} = upgradeContext;
 
 	// Only plans at least as long as the current one are sensible upgrade targets —
@@ -96,6 +99,7 @@ function EligibleUpgradeForm({
 			reference: "",
 			upgradeDate: format(new Date(), "yyyy-MM-dd"),
 			notes: "",
+			lateUpgradeReason: "",
 		} as UpgradePaymentSchema,
 		validators: {
 			onSubmit: upgradePaymentSchema,
@@ -116,20 +120,27 @@ function EligibleUpgradeForm({
 							message="The membership has been upgraded successfully."
 						/>
 					));
+					if (result.data.warning) {
+						toast((t) => (
+							<ToastContent t={t} title="Note" message={result.data.warning as string} />
+						));
+					}
 					navigate({
 						to: "/app/receipts/$receiptId/details",
-						params: { receiptId: result.data },
+						params: { receiptId: result.data.id },
 					});
 				},
 			});
 		},
 	});
 
-	const [newPlanId, topUpAmount, reference] = useStore(form.store, (state) => [
+	const [newPlanId, topUpAmount, reference, lateUpgradeReason] = useStore(form.store, (state) => [
 		state.values.newPlanId,
 		state.values.topUpAmount,
 		state.values.reference,
+		state.values.lateUpgradeReason,
 	]);
+	const lateReasonTooShort = isLate && (lateUpgradeReason?.trim().length ?? 0) < 10;
 	const isTopUpDirty = useStore(
 		form.store,
 		(state) => state.fieldMeta.topUpAmount?.isDirty ?? false
@@ -154,19 +165,17 @@ function EligibleUpgradeForm({
 	// so the previewed total matches what upgradePaymentFn will actually charge/post.
 	const topUpTax = useMemo(() => taxCalculator(topUpAmount, taxType), [topUpAmount, taxType]);
 
+	const newEndDateRaw = selectedPlan
+		? computeMembershipEndDate(originalStartDate, selectedPlan.duration, payment.numberOfPeriods)
+		: null;
 	const newMembershipDates = selectedPlan
 		? {
 				startDate: format(parseISO(originalStartDate), "PP"),
-				endDate: format(
-					computeMembershipEndDate(
-						originalStartDate,
-						selectedPlan.duration,
-						payment.numberOfPeriods
-					),
-					"PP"
-				),
+				endDate: format(newEndDateRaw as Date, "PP"),
 			}
 		: { startDate: "", endDate: "" };
+	const willStillBeExpired =
+		!!newEndDateRaw && format(newEndDateRaw, "yyyy-MM-dd") < format(new Date(), "yyyy-MM-dd");
 
 	const memberName = coveredMembers.map((member) => member.name).join(", ");
 
@@ -176,6 +185,13 @@ function EligibleUpgradeForm({
 				title="Upgrade Membership"
 				description={`Convert this membership onto a pricier plan, retroactively from ${format(parseISO(originalStartDate), "PP")}.`}
 			/>
+			{isLate && (
+				<CustomAlert
+					variant="warning"
+					title="This is a late upgrade"
+					description={`This membership expired ${daysLate} day(s) ago (grace period: ${graceDaysAllowed} day(s)). Proceeding will be logged as a late upgrade.`}
+				/>
+			)}
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
@@ -232,6 +248,19 @@ function EligibleUpgradeForm({
 										{(field) => <field.Textarea label="Notes" placeholder="Optional notes" />}
 									</form.AppField>
 								</FieldGroup>
+								{isLate && (
+									<FieldGroup>
+										<form.AppField name="lateUpgradeReason">
+											{(field) => (
+												<field.Textarea
+													label="Reason for late upgrade"
+													placeholder="Explain why this late upgrade is being approved (min. 10 characters)"
+													required
+												/>
+											)}
+										</form.AppField>
+									</FieldGroup>
+								)}
 
 								{submissionError && (
 									<CustomAlert variant="destructive" title="Error" description={submissionError} />
@@ -248,7 +277,14 @@ function EligibleUpgradeForm({
 					</div>
 
 					<div className="lg:col-span-1">
-						<div className="lg:sticky lg:top-6">
+						<div className="lg:sticky lg:top-6 space-y-4">
+							{willStillBeExpired && (
+								<CustomAlert
+									variant="warning"
+									title="Still expired after this upgrade"
+									description={`This will still show as expired as of ${newMembershipDates.endDate} — the member may need a new payment to regain access.`}
+								/>
+							)}
 							<PaymentSummary
 								mode="membership"
 								memberName={memberName}
@@ -273,6 +309,7 @@ function EligibleUpgradeForm({
 						<form.SubmitButton
 							buttonText="Upgrade Membership"
 							isLoading={upgradeMutation.isPending}
+							disabled={lateReasonTooShort}
 						/>
 					</form.AppForm>
 				</div>

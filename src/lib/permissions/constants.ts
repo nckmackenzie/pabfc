@@ -31,6 +31,7 @@ export const PERMISSIONS = [
 	"receipts:delete",
 	"receipts:void",
 	"receipts:top-up",
+	"receipts:top-up-late",
 	"credit-notes:view",
 	"credit-notes:create",
 	"bills:view",

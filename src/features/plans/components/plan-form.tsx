@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { accountQueries } from "@/features/coa/services/queries";
 import { type PlanSchema, planSchema } from "@/features/plans/services/schemas";
+import { lateUpgradeGraceDaysDefaultQuery } from "@/features/settings/services/queries";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { upsertPlan } from "../services/plans.api";
@@ -20,6 +21,7 @@ const defaultValues = {
 	sessionCount: null,
 	active: true,
 	revenueAccountId: "",
+	lateUpgradeGraceDays: null,
 } as PlanSchema;
 
 export function PlanForm({ plan }: { plan?: PlanSchema }) {
@@ -27,6 +29,12 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 		from: "/app/plans",
 		select: (ctx) => ctx.accounts,
 	});
+	// Fetched lazily via useQuery, not route context — the parent /app/plans
+	// beforeLoad must stay free of plans:create/plans:update requirements (other
+	// routes under it, like the plans list, only need plans:view), while this
+	// form is only ever rendered on /app/plans/new or /app/plans/$planId/edit,
+	// both of which already guarantee one of those two permissions individually.
+	const { data: lateUpgradeGraceDaysDefault } = useQuery(lateUpgradeGraceDaysDefaultQuery());
 	const { data: freshAccounts } = useQuery(accountQueries.list({}));
 	const accounts = freshAccounts || contextAccounts;
 	const form = useAppForm({
@@ -41,7 +49,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 					onSuccess: () => {
 						form.reset();
 					},
-				},
+				}
 			);
 		},
 	});
@@ -54,19 +62,13 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 		onReset: () => form.reset(),
 	});
 
-	const [isSessionBased] = useStore(form.store, (state) => [
-		state.values.isSessionBased,
-	]);
+	const [isSessionBased] = useStore(form.store, (state) => [state.values.isSessionBased]);
 
 	return (
 		<div className="space-y-6">
 			<PageHeader
 				title={plan ? "Edit Plan" : "Create Plan"}
-				description={
-					plan
-						? "Update the details of the plan"
-						: "Provide the details of the plan"
-				}
+				description={plan ? "Update the details of the plan" : "Provide the details of the plan"}
 			/>
 			<form
 				onSubmit={(e) => {
@@ -76,13 +78,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 			>
 				<FieldGroup className="grid md:grid-cols-2 gap-4">
 					<form.AppField name="name">
-						{(field) => (
-							<field.Input
-								label="Plan Name"
-								placeholder="Enter plan name"
-								required
-							/>
-						)}
+						{(field) => <field.Input label="Plan Name" placeholder="Enter plan name" required />}
 					</form.AppField>
 					<form.AppField name="duration">
 						{(field) => (
@@ -96,12 +92,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 					</form.AppField>
 					<form.AppField name="price">
 						{(field) => (
-							<field.Input
-								type="number"
-								label="Price"
-								placeholder="Enter price"
-								required
-							/>
+							<field.Input type="number" label="Price" placeholder="Enter price" required />
 						)}
 					</form.AppField>
 					<form.AppField name="memberCount">
@@ -118,12 +109,7 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 						)}
 					</form.AppField>
 					<form.AppField name="description">
-						{(field) => (
-							<field.Textarea
-								label="Description"
-								placeholder="Enter description"
-							/>
-						)}
+						{(field) => <field.Textarea label="Description" placeholder="Enter description" />}
 					</form.AppField>
 					<div className="col-span-2 ">
 						<div className="flex items-center gap-2">
@@ -148,20 +134,26 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 							<field.Select label="Revenue Account" required>
 								{accounts
 									.filter(
-										(account) =>
-											account.type === "revenue" &&
-											account.isActive &&
-											account.isPosting,
+										(account) => account.type === "revenue" && account.isActive && account.isPosting
 									)
 									.map((account) => (
-										<SelectItem
-											key={account.id.toString()}
-											value={account.id.toString()}
-										>
+										<SelectItem key={account.id.toString()} value={account.id.toString()}>
 											{account.name}
 										</SelectItem>
 									))}
 							</field.Select>
+						)}
+					</form.AppField>
+					<form.AppField name="lateUpgradeGraceDays">
+						{(field) => (
+							<field.Input
+								type="number"
+								label="Late Upgrade Grace Period (days)"
+								placeholder={`Default: ${lateUpgradeGraceDaysDefault ?? 3}`}
+								helperText={`Leave blank to use the default of ${lateUpgradeGraceDaysDefault ?? 3} days.`}
+								min={0}
+								step={1}
+							/>
 						)}
 					</form.AppField>
 					{plan && (
