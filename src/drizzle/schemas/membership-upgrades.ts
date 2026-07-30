@@ -1,5 +1,14 @@
 import { relations } from "drizzle-orm";
-import { boolean, date, integer, numeric, pgTable, text, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	date,
+	integer,
+	numeric,
+	pgTable,
+	text,
+	uniqueIndex,
+	varchar,
+} from "drizzle-orm/pg-core";
 import { createdAt, id } from "@/drizzle/schema-helpers";
 import { users } from "./auth";
 import { members, membershipPlans } from "./member";
