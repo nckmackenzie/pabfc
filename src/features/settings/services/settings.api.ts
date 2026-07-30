@@ -240,6 +240,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 					memberCreditsPayableAccountId: data.memberCreditsPayableAccountId ?? undefined,
 					creditForfeitureIncomeAccountId: data.creditForfeitureIncomeAccountId ?? undefined,
 					creditNoteExpiryMonths: data.creditNoteExpiryMonths ?? undefined,
+					lateUpgradeGraceDays: data.lateUpgradeGraceDays ?? undefined,
 				},
 				createdBy: user.id,
 			})
@@ -257,6 +258,7 @@ export const upsertBillingSettings = createServerFn({ method: "POST" })
 						memberCreditsPayableAccountId: data.memberCreditsPayableAccountId ?? undefined,
 						creditForfeitureIncomeAccountId: data.creditForfeitureIncomeAccountId ?? undefined,
 						creditNoteExpiryMonths: data.creditNoteExpiryMonths ?? undefined,
+						lateUpgradeGraceDays: data.lateUpgradeGraceDays ?? undefined,
 					},
 					updatedBy: user.id,
 				},

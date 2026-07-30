@@ -29,6 +29,7 @@ export function BillingForm({ billingSettings }: { billingSettings?: BillingSche
 				memberCreditsPayableAccountId: null,
 				creditForfeitureIncomeAccountId: null,
 				creditNoteExpiryMonths: 12,
+				lateUpgradeGraceDays: 3,
 			} as BillingSchema),
 		validators: {
 			onSubmit: billingSchema,
@@ -167,6 +168,16 @@ export function BillingForm({ billingSettings }: { billingSettings?: BillingSche
 								placeholder="12"
 								type="number"
 								helperText="Months after issuance before an unredeemed credit note balance is written off."
+							/>
+						)}
+					</form.AppField>
+					<form.AppField name="lateUpgradeGraceDays">
+						{(field) => (
+							<field.Input
+								label="Late Upgrade Grace Period (Days)"
+								placeholder="3"
+								type="number"
+								helperText="Default grace period (in days) after a membership expires during which a late upgrade can still be processed by an admin. Individual plans can override this."
 							/>
 						)}
 					</form.AppField>
