@@ -174,7 +174,7 @@ export const getActiveMemberships = createServerFn()
 				activePlanName: sql<string | null>`(
 					SELECT mp.name FROM member_memberships mm
 					INNER JOIN membership_plans mp ON mp.id = mm.membership_plan_id
-					WHERE mm.member_id = ${members.id}
+					WHERE mm.member_id = "members"."id"
 					AND mm.status = 'active'
 					ORDER BY mm.start_date DESC
 					LIMIT 1
