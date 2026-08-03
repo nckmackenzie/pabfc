@@ -4,8 +4,9 @@ import { db } from "@/drizzle/db";
 import {
 	attendanceLogs,
 	biotimeAttendanceSyncState,
+	biotimePersonProfiles,
 	biotimeUnmappedAttendanceTransactions,
-	memberAccessProfiles,
+	employeeGymAccessLogs,
 } from "@/drizzle/schema";
 import { authenticateAccessAgent } from "@/services/access-control";
 
@@ -19,15 +20,11 @@ type BioTimeTransactionUpload = {
 	raw?: unknown;
 };
 
-export const Route = createFileRoute(
-	"/api/access-control/agent/attendance-sync/upload/",
-)({
+export const Route = createFileRoute("/api/access-control/agent/attendance-sync/upload/")({
 	server: {
 		handlers: {
 			POST: async ({ request }) => {
-				const agent = await authenticateAccessAgent(
-					request.headers.get("authorization"),
-				);
+				const agent = await authenticateAccessAgent(request.headers.get("authorization"));
 				if (!agent)
 					return new Response(JSON.stringify({ error: "Unauthorized" }), {
 						status: 401,
@@ -40,8 +37,7 @@ export const Route = createFileRoute(
 				const startTime = body.startTime ? new Date(body.startTime) : null;
 				const endTime = body.endTime ? new Date(body.endTime) : null;
 
-				const transactions = (body.transactions ??
-					[]) as Array<BioTimeTransactionUpload>;
+				const transactions = (body.transactions ?? []) as Array<BioTimeTransactionUpload>;
 				if (!startTime || Number.isNaN(startTime.getTime())) {
 					return new Response(JSON.stringify({ error: "Invalid startTime" }), {
 						status: 400,
@@ -55,17 +51,15 @@ export const Route = createFileRoute(
 				}
 
 				if (startTime > endTime) {
-					return new Response(
-						JSON.stringify({ error: "startTime must be <= endTime" }),
-						{ status: 400 },
-					);
+					return new Response(JSON.stringify({ error: "startTime must be <= endTime" }), {
+						status: 400,
+					});
 				}
 
 				if (!Array.isArray(transactions)) {
-					return new Response(
-						JSON.stringify({ error: "transactions must be an array" }),
-						{ status: 400 },
-					);
+					return new Response(JSON.stringify({ error: "transactions must be an array" }), {
+						status: 400,
+					});
 				}
 
 				const now = new Date();
@@ -82,39 +76,65 @@ export const Route = createFileRoute(
 							);
 						});
 
-						const empCodes = [
-							...new Set(
-								validTransactions.map((txItem) => txItem.empCode.trim()),
-							),
-						];
+						const empCodes = [...new Set(validTransactions.map((txItem) => txItem.empCode.trim()))];
 
-						let memberMap = new Map<string, string>();
+						type PersonMatch =
+							| { kind: "member"; memberId: string }
+							| { kind: "employee"; employeeId: string };
+
+						const personMap = new Map<string, PersonMatch>();
 
 						if (empCodes.length > 0) {
 							const profiles = await tx
 								.select({
-									memberId: memberAccessProfiles.memberId,
-									empCode: memberAccessProfiles.biotimeEmployeeCode,
+									personType: biotimePersonProfiles.personType,
+									empCode: biotimePersonProfiles.biotimeEmployeeCode,
+									memberId: biotimePersonProfiles.memberId,
+									employeeId: biotimePersonProfiles.employeeId,
 								})
-								.from(memberAccessProfiles)
-								.where(
-									inArray(memberAccessProfiles.biotimeEmployeeCode, empCodes),
-								);
+								.from(biotimePersonProfiles)
+								.where(inArray(biotimePersonProfiles.biotimeEmployeeCode, empCodes));
 
-							memberMap = new Map(
-								profiles.map((profile) => [profile.empCode, profile.memberId]),
-							);
+							for (const profile of profiles) {
+								if (profile.personType === "member" && profile.memberId) {
+									personMap.set(profile.empCode, {
+										kind: "member",
+										memberId: profile.memberId,
+									});
+									continue;
+								}
+
+								if (profile.personType === "employee" && profile.employeeId) {
+									personMap.set(profile.empCode, {
+										kind: "employee",
+										employeeId: profile.employeeId,
+									});
+									continue;
+								}
+
+								// personType matched, but the id column it should own is null.
+								// That's a data-integrity problem worth knowing about rather than
+								// silently dropping the punch into "unmapped" without explanation.
+								console.error(
+									`biotime_person_profiles row for emp_code "${profile.empCode}" has ` +
+										`personType "${profile.personType}" but no matching id column set`
+								);
+							}
 						}
 
-						const mappedRows = [];
-						const unmappedRows = [];
+						const mappedRows: (typeof attendanceLogs.$inferInsert)[] = [];
+						const employeeRows: (typeof employeeGymAccessLogs.$inferInsert)[] = [];
+						const unmappedRows: (typeof biotimeUnmappedAttendanceTransactions.$inferInsert)[] = [];
 
 						for (const txItem of validTransactions) {
 							const empCode = txItem.empCode.trim();
-							const memberId = memberMap.get(empCode);
+							const match = personMap.get(empCode);
 							const punchTime = new Date(txItem.punchTime);
+							const notes = txItem.punchStateDisplay
+								? `Imported from BioTime - ${txItem.punchStateDisplay}`
+								: "Imported from BioTime";
 
-							if (!memberId) {
+							if (!match) {
 								unmappedRows.push({
 									biotimeId: txItem.id,
 									empCode,
@@ -127,39 +147,54 @@ export const Route = createFileRoute(
 									createdAt: now,
 									updatedAt: now,
 								});
+								continue;
+							}
 
+							if (match.kind === "employee") {
+								employeeRows.push({
+									employeeId: match.employeeId,
+									punchTime,
+									source: "biotime",
+									deviceId: txItem.terminalSn ?? null,
+									notes,
+									biotimeId: txItem.id,
+									createdAt: now,
+								});
 								continue;
 							}
 
 							mappedRows.push({
-								memberId,
+								memberId: match.memberId,
 								checkInTime: punchTime,
 								checkOutTime: null,
 								source: "biotime",
 								deviceId: txItem.terminalSn ?? null,
-								notes: txItem.punchStateDisplay
-									? `Imported from BioTime - ${txItem.punchStateDisplay}`
-									: "Imported from BioTime",
+								notes,
 								biotimeId: txItem.id,
 								createdAt: now,
 							});
 						}
 
 						let insertedCount = 0;
+						let employeeInsertedCount = 0;
 						let unmappedInsertedCount = 0;
 
 						if (mappedRows.length > 0) {
 							const inserted = await tx
 								.insert(attendanceLogs)
 								.values(mappedRows)
-								.onConflictDoNothing({
-									target: attendanceLogs.biotimeId,
-								})
-								.returning({
-									id: attendanceLogs.id,
-								});
-
+								.onConflictDoNothing({ target: attendanceLogs.biotimeId })
+								.returning({ id: attendanceLogs.id });
 							insertedCount = inserted.length;
+						}
+
+						if (employeeRows.length > 0) {
+							const insertedEmployee = await tx
+								.insert(employeeGymAccessLogs)
+								.values(employeeRows)
+								.onConflictDoNothing({ target: employeeGymAccessLogs.biotimeId })
+								.returning({ id: employeeGymAccessLogs.id });
+							employeeInsertedCount = insertedEmployee.length;
 						}
 
 						if (unmappedRows.length > 0) {
@@ -169,18 +204,17 @@ export const Route = createFileRoute(
 								.onConflictDoNothing({
 									target: biotimeUnmappedAttendanceTransactions.biotimeId,
 								})
-								.returning({
-									id: biotimeUnmappedAttendanceTransactions.id,
-								});
-
+								.returning({ id: biotimeUnmappedAttendanceTransactions.id });
 							unmappedInsertedCount = insertedUnmapped.length;
 						}
 
 						const skippedDuplicateCount =
-							validTransactions.length - insertedCount - unmappedInsertedCount;
+							validTransactions.length -
+							insertedCount -
+							employeeInsertedCount -
+							unmappedInsertedCount;
 
-						const syncState =
-							await tx.query.biotimeAttendanceSyncState.findFirst();
+						const syncState = await tx.query.biotimeAttendanceSyncState.findFirst();
 
 						if (syncState) {
 							await tx
@@ -216,11 +250,11 @@ export const Route = createFileRoute(
 							receivedCount: transactions.length,
 							validCount: validTransactions.length,
 							insertedCount,
+							employeeInsertedCount,
 							unmappedCount: unmappedInsertedCount,
 							skippedDuplicateCount,
 						};
 					});
-
 					return new Response(
 						JSON.stringify({
 							success: true,
@@ -231,7 +265,7 @@ export const Route = createFileRoute(
 							headers: {
 								"Content-Type": "application/json",
 							},
-						},
+						}
 					);
 				} catch (error) {
 					console.error(error);
@@ -245,7 +279,7 @@ export const Route = createFileRoute(
 							headers: {
 								"Content-Type": "application/json",
 							},
-						},
+						}
 					);
 				}
 			},

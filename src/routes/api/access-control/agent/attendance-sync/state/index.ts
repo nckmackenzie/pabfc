@@ -4,27 +4,17 @@ import { db } from "@/drizzle/db";
 import { biotimeAttendanceSyncState } from "@/drizzle/schema";
 import { authenticateAccessAgent } from "@/services/access-control";
 
-const SAFETY_OVERLAP_MINUTES = 10;
+const SYNC_LOOKBACK_DAYS = 30;
 
-function startOfToday() {
-	const now = new Date();
-
-	return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+function subtractDays(date: Date, days: number) {
+	return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
-function subtractMinutes(date: Date, minutes: number) {
-	return new Date(date.getTime() - minutes * 60 * 1000);
-}
-
-export const Route = createFileRoute(
-	"/api/access-control/agent/attendance-sync/state/",
-)({
+export const Route = createFileRoute("/api/access-control/agent/attendance-sync/state/")({
 	server: {
 		handlers: {
 			GET: async ({ request }) => {
-				const agent = await authenticateAccessAgent(
-					request.headers.get("authorization"),
-				);
+				const agent = await authenticateAccessAgent(request.headers.get("authorization"));
 
 				if (!agent)
 					return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -55,12 +45,16 @@ export const Route = createFileRoute(
 						syncState = created;
 					}
 
-					const startTime = syncState.lastSuccessfulSyncAt
-						? subtractMinutes(
-								syncState.lastSuccessfulSyncAt,
-								SAFETY_OVERLAP_MINUTES,
-							)
-						: startOfToday();
+					// Always pull a fixed lookback window from "now" instead of
+					// advancing off lastSuccessfulSyncAt. The BioTime PC/device can go
+					// offline for stretches and only transmits punches once it
+					// reconnects; anchoring the window to the last successful sync
+					// would permanently miss anything that becomes available after the
+					// cursor has already moved past its punch_time. biotime_id is
+					// unique-constrained on every downstream table, so re-fetching the
+					// same window on every poll is safe and cheap - duplicates are
+					// just no-ops.
+					const startTime = subtractDays(now, SYNC_LOOKBACK_DAYS);
 
 					await db
 						.update(biotimeAttendanceSyncState)
@@ -75,7 +69,7 @@ export const Route = createFileRoute(
 							success: true,
 							startTime: startTime.toISOString(),
 							endTime: now.toISOString(),
-							safetyOverlapMinutes: SAFETY_OVERLAP_MINUTES,
+							lookbackDays: SYNC_LOOKBACK_DAYS,
 							lastSuccessfulSyncAt: syncState.lastSuccessfulSyncAt
 								? syncState.lastSuccessfulSyncAt.toISOString()
 								: null,
@@ -85,19 +79,16 @@ export const Route = createFileRoute(
 							headers: {
 								"Content-Type": "application/json",
 							},
-						},
+						}
 					);
 				} catch (error) {
 					console.error(error);
-					return new Response(
-						JSON.stringify({ error: "Internal server error" }),
-						{
-							status: 500,
-							headers: {
-								"Content-Type": "application/json",
-							},
+					return new Response(JSON.stringify({ error: "Internal server error" }), {
+						status: 500,
+						headers: {
+							"Content-Type": "application/json",
 						},
-					);
+					});
 				}
 			},
 		},
