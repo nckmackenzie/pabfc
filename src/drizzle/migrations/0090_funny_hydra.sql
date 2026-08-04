@@ -1,0 +1,1 @@
+ALTER TABLE "biotime_attendance_sync_state" ADD COLUMN "last_employee_inserted_count" integer DEFAULT 0 NOT NULL;
