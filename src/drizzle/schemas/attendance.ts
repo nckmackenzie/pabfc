@@ -38,32 +38,28 @@ export const attendanceLogsRelations = relations(attendanceLogs, ({ one }) => ({
 	}),
 }));
 
-export const biotimeAttendanceSyncState = pgTable(
-	"biotime_attendance_sync_state",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		lastSuccessfulSyncAt: timestamp("last_successful_sync_at", {
-			withTimezone: true,
-		}),
-		lastAttemptedSyncAt: timestamp("last_attempted_sync_at", {
-			withTimezone: true,
-		}),
-		lastFetchedStartTime: timestamp("last_fetched_start_time", {
-			withTimezone: true,
-		}),
-		lastFetchedEndTime: timestamp("last_fetched_end_time", {
-			withTimezone: true,
-		}),
-		lastInsertedCount: integer("last_inserted_count").notNull().default(0),
-		lastSkippedDuplicateCount: integer("last_skipped_duplicate_count")
-			.notNull()
-			.default(0),
-		lastUnmappedCount: integer("last_unmapped_count").notNull().default(0),
-		lastError: text("last_error"),
-		createdAt,
-		updatedAt,
-	},
-);
+export const biotimeAttendanceSyncState = pgTable("biotime_attendance_sync_state", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	lastSuccessfulSyncAt: timestamp("last_successful_sync_at", {
+		withTimezone: true,
+	}),
+	lastAttemptedSyncAt: timestamp("last_attempted_sync_at", {
+		withTimezone: true,
+	}),
+	lastFetchedStartTime: timestamp("last_fetched_start_time", {
+		withTimezone: true,
+	}),
+	lastFetchedEndTime: timestamp("last_fetched_end_time", {
+		withTimezone: true,
+	}),
+	lastInsertedCount: integer("last_inserted_count").notNull().default(0),
+	lastEmployeeInsertedCount: integer("last_employee_inserted_count").notNull().default(0),
+	lastSkippedDuplicateCount: integer("last_skipped_duplicate_count").notNull().default(0),
+	lastUnmappedCount: integer("last_unmapped_count").notNull().default(0),
+	lastError: text("last_error"),
+	createdAt,
+	updatedAt,
+});
 
 export const biotimeUnmappedAttendanceTransactions = pgTable(
 	"biotime_unmapped_attendance_transactions",
@@ -85,12 +81,10 @@ export const biotimeUnmappedAttendanceTransactions = pgTable(
 		updatedAt,
 	},
 	(table) => [
-		uniqueIndex("uq_biotime_unmapped_attendance_biotime_id").on(
-			table.biotimeId,
-		),
+		uniqueIndex("uq_biotime_unmapped_attendance_biotime_id").on(table.biotimeId),
 		index("idx_biotime_unmapped_attendance_emp_code").on(table.empCode),
 		index("idx_biotime_unmapped_attendance_resolved").on(table.resolved),
-	],
+	]
 );
 
 export const attendanceOverview = pgMaterializedView("vw_attendance_details", {
