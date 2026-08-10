@@ -20,6 +20,7 @@ const W = {
 	pin: 60,
 	a: 46,
 	d: 46,
+	nssf: 38,
 	e1: 38,
 	e2: 38,
 	e3: 40,
@@ -264,6 +265,7 @@ export function PayrollP10Pdf({ data }: { data: PayrollP10ReportResponse }) {
 						<HCell w={W.d} center>
 							D
 						</HCell>
+						<HCell w={W.nssf} center />
 						<HCell w={W.e1 + W.e2 + W.e3} center>
 							E — Defined Contribution Retirement Scheme
 						</HCell>
@@ -308,6 +310,9 @@ export function PayrollP10Pdf({ data }: { data: PayrollP10ReportResponse }) {
 						</HCell>
 						<HCell w={W.d} center>
 							Total Gross Pay
+						</HCell>
+						<HCell w={W.nssf} center>
+							NSSF{"\n"}(Employee)
 						</HCell>
 						<HCell w={W.e1} center>
 							E1{"\n"}30% of A
@@ -358,6 +363,7 @@ export function PayrollP10Pdf({ data }: { data: PayrollP10ReportResponse }) {
 								W.pin,
 								W.a,
 								W.d,
+								W.nssf,
 								W.e1,
 								W.e2,
 								W.e3,
@@ -390,6 +396,7 @@ export function PayrollP10Pdf({ data }: { data: PayrollP10ReportResponse }) {
 							</DCell>
 							<DCell w={W.a}>{f(row.basicSalary)}</DCell>
 							<DCell w={W.d}>{f(row.totalGrossPay)}</DCell>
+							<DCell w={W.nssf}>{f(row.nssfEmployee)}</DCell>
 							<DCell w={W.e1}>{f(row.e1ThirtyPctBasic)}</DCell>
 							<DCell w={W.e2}>{f(row.e2ActualPension)}</DCell>
 							<DCell w={W.e3}>{f(row.e3Fixed)}</DCell>
@@ -423,6 +430,9 @@ export function PayrollP10Pdf({ data }: { data: PayrollP10ReportResponse }) {
 						</DCell>
 						<DCell w={W.d} bold>
 							{f(totals.totalGrossPay)}
+						</DCell>
+						<DCell w={W.nssf} bold>
+							{f(totals.nssfEmployee)}
 						</DCell>
 						<DCell w={W.e1} bold>
 							{f(totals.e1ThirtyPctBasic)}

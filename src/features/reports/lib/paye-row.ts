@@ -21,6 +21,7 @@ export type PayeSlipSource = {
 export type PayeComputedRow = {
 	basicSalary: number | null;
 	totalGrossPay: number | null;
+	nssfEmployee: number | null;
 	e1ThirtyPctBasic: number | null;
 	e2ActualPension: number | null;
 	e3Fixed: number | null;
@@ -41,6 +42,7 @@ export function computePayeRowValues(source: PayeSlipSource): PayeComputedRow {
 		return {
 			basicSalary: null,
 			totalGrossPay: null,
+			nssfEmployee: null,
 			e1ThirtyPctBasic: null,
 			e2ActualPension: null,
 			e3Fixed: null,
@@ -60,8 +62,9 @@ export function computePayeRowValues(source: PayeSlipSource): PayeComputedRow {
 	const basicSalary = source.basicSalary;
 	const totalGrossPay = source.grossPay;
 
+	const nssfEmployee = source.nssfEmployee ?? 0;
 	const e1ThirtyPctBasic = r2(basicSalary * 0.3);
-	const e2ActualPension = r2((source.nssfEmployee ?? 0) + (source.pensionEmployeeDeduction ?? 0));
+	const e2ActualPension = r2(nssfEmployee + (source.pensionEmployeeDeduction ?? 0));
 	const e3Fixed = PAYE_E3_FIXED;
 	const eEffective = Math.min(e1ThirtyPctBasic, e2ActualPension, e3Fixed);
 
@@ -76,6 +79,7 @@ export function computePayeRowValues(source: PayeSlipSource): PayeComputedRow {
 	return {
 		basicSalary,
 		totalGrossPay,
+		nssfEmployee,
 		e1ThirtyPctBasic,
 		e2ActualPension,
 		e3Fixed,
