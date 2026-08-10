@@ -16,6 +16,7 @@ export type P10EmployeeRow = {
 	kraPin: string | null;
 	basicSalary: number | null;
 	totalGrossPay: number | null;
+	nssfEmployee: number | null;
 	e1ThirtyPctBasic: number | null;
 	e2ActualPension: number | null;
 	e3Fixed: number | null;
@@ -34,6 +35,7 @@ export type P10EmployeeRow = {
 export type P10Totals = {
 	basicSalary: number;
 	totalGrossPay: number;
+	nssfEmployee: number;
 	e1ThirtyPctBasic: number;
 	e2ActualPension: number;
 	e3Fixed: number;
@@ -85,6 +87,7 @@ export function buildPayrollP10Report(params: {
 			if (row.totalGrossPay === null) return acc;
 			acc.basicSalary += row.basicSalary ?? 0;
 			acc.totalGrossPay += row.totalGrossPay ?? 0;
+			acc.nssfEmployee += row.nssfEmployee ?? 0;
 			acc.e1ThirtyPctBasic += row.e1ThirtyPctBasic ?? 0;
 			acc.e2ActualPension += row.e2ActualPension ?? 0;
 			acc.e3Fixed += row.e3Fixed ?? 0;
@@ -103,6 +106,7 @@ export function buildPayrollP10Report(params: {
 		{
 			basicSalary: 0,
 			totalGrossPay: 0,
+			nssfEmployee: 0,
 			e1ThirtyPctBasic: 0,
 			e2ActualPension: 0,
 			e3Fixed: 0,

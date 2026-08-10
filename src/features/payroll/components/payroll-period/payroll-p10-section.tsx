@@ -26,6 +26,7 @@ type Props = {
 const NUM_COLS = [
 	{ key: "basicSalary", label: "Basic Salary (A)" },
 	{ key: "totalGrossPay", label: "Gross Pay (D)" },
+	{ key: "nssfEmployee", label: "NSSF (Employee)" },
 	{ key: "e1ThirtyPctBasic", label: "E1 (30% of A)" },
 	{ key: "e2ActualPension", label: "E2 (Actual)" },
 	{ key: "e3Fixed", label: "E3 (Fixed)" },

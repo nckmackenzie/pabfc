@@ -84,6 +84,21 @@ describe("buildPayrollP10Report", () => {
 			expect(report.totals.payeTax).toBe(24_700);
 			expect(report.totals.ahlEmployee).toBe(2_400);
 			expect(report.totals.shifEmployee).toBe(4_400);
+			expect(report.totals.nssfEmployee).toBe(8_640);
+		});
+
+		it("keeps NSSF employee contribution visible separately from the combined E2 pension figure", () => {
+			const slips = [
+				makeSlip("EMP-001", {
+					nssfEmployee: 4_320,
+					pensionEmployeeDeduction: 10_000,
+				}),
+			];
+
+			const report = buildPayrollP10Report({ period, slips });
+
+			expect(report.rows[0]!.nssfEmployee).toBe(4_320);
+			expect(report.rows[0]!.e2ActualPension).toBe(14_320);
 		});
 
 		it("totals chargeable pay matches sum of individual chargeable pays", () => {
