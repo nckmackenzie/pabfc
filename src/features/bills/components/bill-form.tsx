@@ -59,7 +59,7 @@ const defaultValues = {
 export function BillForm({ loaderVendors, loaderAccounts, bill, isEdit }: BillForm) {
 	const [{ data: accounts }, { data: vendors }] = useQueries({
 		queries: [
-			accountQueries.activeChildAccountsByAccountType(["expense", "asset"]),
+			accountQueries.activePostingAccountsByAccountType(["expense", "asset"]),
 			supplierQueries.active(),
 		],
 	});

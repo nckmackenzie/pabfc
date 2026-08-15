@@ -1,10 +1,11 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gt, ilike, or, type SQL, sql } from "drizzle-orm";
+import { and, eq, gt, ilike, inArray, or, type SQL, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
-import { billItems, bills, vwInvoices } from "@/drizzle/schema";
+import { billItems, bills, ledgerAccounts, vwInvoices } from "@/drizzle/schema";
 import { billSchema, billValidateSearch } from "@/features/bills/services/schemas";
+import { findInvalidPostingAccountIdsByType } from "@/features/coa/services/account-option-filter";
 import { taxCalculator } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
@@ -119,6 +120,34 @@ export const upsertBill = createServerFn()
 				},
 				{ subTotal: 0, tax: 0, total: 0 }
 			);
+
+			const selectableAccounts = await db.query.ledgerAccounts.findMany({
+				columns: {
+					id: true,
+					name: true,
+					type: true,
+					isActive: true,
+					isPosting: true,
+					parentId: true,
+				},
+				where: inArray(
+					ledgerAccounts.id,
+					billItemsValues.map((line) => line.accountId)
+				),
+			});
+
+			const invalidBillAccountIds = findInvalidPostingAccountIdsByType(
+				selectableAccounts,
+				billItemsValues.map((line) => line.accountId),
+				["expense", "asset"]
+			);
+
+			if (invalidBillAccountIds.length > 0) {
+				return failure({
+					type: "ValidationError",
+					message: "Selected bill accounts must be active posting asset or expense accounts.",
+				});
+			}
 
 			const accountsPayableId = await createOrGetAccountId("accounts payable", "liability");
 

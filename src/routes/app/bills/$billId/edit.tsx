@@ -15,7 +15,7 @@ export const Route = createFileRoute("/app/bills/$billId/edit")({
 		const [vendors, accounts, bill] = await Promise.all([
 			queryClient.ensureQueryData(supplierQueries.active()),
 			queryClient.ensureQueryData(
-				accountQueries.activeChildAccountsByAccountType(["expense", "asset"])
+				accountQueries.activePostingAccountsByAccountType(["expense", "asset"])
 			),
 			queryClient.ensureQueryData(billQueries.detail(billId)),
 		]);

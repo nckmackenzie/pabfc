@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/expenses")({
 	beforeLoad: async ({ context: { queryClient } }) => {
 		const [accounts, payees, banks, cashEquivalentAccounts] = await Promise.all([
 			queryClient.ensureQueryData(
-				accountQueries.activeChildAccountsByAccountType(["expense", "asset"])
+				accountQueries.activePostingAccountsByAccountType(["expense", "asset"])
 			),
 			queryClient.ensureQueryData(payeeQueries.list()),
 			queryClient.ensureQueryData(bankQueries.list()),
