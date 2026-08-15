@@ -8,6 +8,7 @@ import {
 	getChildrenAccountByParentName,
 	getPotentialParentAccounts,
 } from "@/features/coa/services/coa.api";
+import { filterActivePostingAccountsByType } from "@/features/coa/services/account-option-filter";
 import type { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 
@@ -45,15 +46,12 @@ export const accountQueries = {
 					}));
 			},
 		}),
-	activeChildAccountsByAccountType: (accountTypes: Array<AccountType>) =>
+	activePostingAccountsByAccountType: (accountTypes: Array<AccountType>) =>
 		queryOptions({
 			queryKey: [...accountQueries.all, "active-accounts", accountTypes],
 			queryFn: async () => {
 				const accounts = await getAccounts({ data: {} });
-				return accounts
-					.filter(
-						(account) => account.parentId && account.isActive && accountTypes.includes(account.type)
-					)
+				return filterActivePostingAccountsByType(accounts, accountTypes)
 					.map(({ id, name }) => ({
 						value: id.toString(),
 						label: toTitleCase(name),

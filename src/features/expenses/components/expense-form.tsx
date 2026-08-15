@@ -261,8 +261,8 @@ export function ExpenseForm({ expenseNo, expense, isView }: ExpenseFormProps) {
 															disabled={isView}
 														>
 															{accounts.map((account) => (
-																<SelectItem key={account.id} value={account.id.toString()}>
-																	{account.name}
+																<SelectItem key={account.value} value={account.value}>
+																	{account.label}
 																</SelectItem>
 															))}
 														</field.Select>

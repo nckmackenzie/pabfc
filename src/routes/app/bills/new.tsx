@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app/bills/new")({
 		const [vendors, accounts, bill] = await Promise.all([
 			queryClient.ensureQueryData(supplierQueries.active()),
 			queryClient.ensureQueryData(
-				accountQueries.activeChildAccountsByAccountType(["expense", "asset"])
+				accountQueries.activePostingAccountsByAccountType(["expense", "asset"])
 			),
 			cloneFrom ? queryClient.ensureQueryData(billQueries.detail(cloneFrom)) : undefined,
 		]);

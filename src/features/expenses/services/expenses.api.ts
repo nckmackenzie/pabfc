@@ -5,6 +5,7 @@ import {
 	desc,
 	eq,
 	gte,
+	inArray,
 	ilike,
 	lte,
 	or,
@@ -25,6 +26,7 @@ import {
 	expenseSchema,
 	expenseValidateSearch,
 } from "@/features/expenses/services/schemas";
+import { findInvalidPostingAccountIdsByType } from "@/features/coa/services/account-option-filter";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
 import { normalizeDateRange } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -159,6 +161,7 @@ export const createExpense = createServerFn({ method: "POST" })
 
 			const { subTotal, taxAmount, grandTotal, lines } =
 				calculateExpenseRequest(details);
+			const expenseAccountIds = lines.map((line) => parseInt(line.accountId, 10));
 
 			try {
 				const vatAccountId = await createOrGetAccountId("vat input", "asset");
@@ -167,6 +170,31 @@ export const createExpense = createServerFn({ method: "POST" })
 					return failure({
 						type: "ApplicationError",
 						message: "VAT Account not found. Define one in settings.",
+					});
+				}
+
+				const selectableAccounts = await db.query.ledgerAccounts.findMany({
+					columns: {
+						id: true,
+						name: true,
+						type: true,
+						isActive: true,
+						isPosting: true,
+						parentId: true,
+					},
+					where: inArray(ledgerAccounts.id, expenseAccountIds),
+				});
+
+				const invalidExpenseAccountIds = findInvalidPostingAccountIdsByType(
+					selectableAccounts,
+					expenseAccountIds,
+					["expense", "asset"]
+				);
+
+				if (invalidExpenseAccountIds.length > 0) {
+					return failure({
+						type: "ValidationError",
+						message: "Selected expense accounts must be active posting asset or expense accounts.",
 					});
 				}
 
