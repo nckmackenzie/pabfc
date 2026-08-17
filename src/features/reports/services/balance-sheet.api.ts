@@ -50,10 +50,7 @@ function balanceSheetRollupCtes(rootFilter: SQL, startDate: string, asOfDate: st
                 a.id AS node_id
             FROM ledger_accounts a
             WHERE a.type IN ('asset', 'liability', 'equity')
-                AND (
-                a.is_posting = false
-                OR (a.is_posting = true AND ${rootFilter})
-                )
+                AND ${rootFilter}
 
             UNION ALL
 

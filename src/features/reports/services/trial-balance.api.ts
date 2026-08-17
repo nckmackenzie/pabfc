@@ -48,14 +48,7 @@ async function getRolledUpBalances(rootFilter: SQL, startDate: string, asOfDate:
 
 			SELECT a.id AS reporting_id, a.id AS node_id
 			FROM ledger_accounts a
-			WHERE a.is_posting = false
-
-			UNION ALL
-
-			SELECT a.id AS reporting_id, a.id AS node_id
-			FROM ledger_accounts a
-			WHERE a.is_posting = true
-				AND ${rootFilter}
+			WHERE ${rootFilter}
 
 			UNION ALL
 
