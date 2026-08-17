@@ -1,15 +1,24 @@
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { DownloadIcon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrialBalancePdf } from "@/features/reports/components/downloadable-trial-balance";
+import {
+	ReportAccountLabel,
+	ReportAmountButton,
+	ReportRowEmpty,
+	ReportRowError,
+	ReportRowLoading,
+} from "@/features/reports/components/report-drilldown-rows";
 import { TrialBalanceDrillDown } from "@/features/reports/components/trial-balance-drilldown";
 // import { isTrialBalanced } from "@/features/reports/lib/report-balance-checks";
 import {
 	getTrialBalance,
-	type TrialBalanceParentRow,
+	getTrialBalanceChildren,
+	type TrialBalanceRow,
 } from "@/features/reports/services/trial-balance.api";
 import { useFilters } from "@/hooks/use-filters";
 import { useSheet } from "@/integrations/sheet-provider";
@@ -17,6 +26,14 @@ import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 const route = getRouteApi("/app/reports/finance/trial-balance/");
+
+function trialBalanceChildrenQueryOptions(id: number, asOfDate: string) {
+	return queryOptions({
+		queryKey: ["trial-balance-children", { id, asOfDate }],
+		queryFn: () => getTrialBalanceChildren({ data: { id, asOfDate } }),
+		staleTime: 0,
+	});
+}
 
 export function TrialBalance() {
 	const { filters } = useFilters(route.id);
@@ -123,11 +140,24 @@ export function TrialBalance() {
 	);
 }
 
-function TrialBalanceItem({ row, asOfDate }: { row: TrialBalanceParentRow; asOfDate: string }) {
+function TrialBalanceItem({
+	row,
+	asOfDate,
+	depth = 0,
+}: {
+	row: TrialBalanceRow;
+	asOfDate: string;
+	depth?: number;
+}) {
 	const { setOpen } = useSheet();
+	const [isExpanded, setIsExpanded] = useState(false);
 	const hasDebit = Number(row.debit_balance) > 0;
 	const hasCredit = Number(row.credit_balance) > 0;
 	const label = row.code ? `${row.code} - ${row.name}` : row.name;
+
+	function toggleExpanded() {
+		setIsExpanded((expanded) => !expanded);
+	}
 
 	function handleOpenDrillDown() {
 		setOpen(<TrialBalanceDrillDown id={row.id} asOfDate={asOfDate} />, {
@@ -137,32 +167,84 @@ function TrialBalanceItem({ row, asOfDate }: { row: TrialBalanceParentRow; asOfD
 		});
 	}
 
+	// Rows that have children drill down inline, one level at a time. Only a true
+	// posting leaf falls through to the transaction listing sheet.
+	function handleAmountClick() {
+		if (row.hasChildren) {
+			toggleExpanded();
+			return;
+		}
+
+		handleOpenDrillDown();
+	}
+
 	return (
-		<div className="grid grid-cols-12 gap-4 py-1.5 items-center hover:bg-muted/50 transition-colors">
-			<div className="col-span-8">{label}</div>
-			<div className="col-span-2 text-right tabular-nums">
-				{hasDebit ? (
-					<button
-						type="button"
-						className="font-medium cursor-pointer text-blue-500 hover:text-blue-600 hover:underline transition-all"
-						onClick={handleOpenDrillDown}
-					>
-						{currencyFormatter(Number(row.debit_balance), false)}
-					</button>
-				) : undefined}
+		<>
+			<div className="grid grid-cols-12 gap-4 py-1.5 items-center hover:bg-muted/50 transition-colors">
+				<div className="col-span-8">
+					<ReportAccountLabel
+						label={label}
+						depth={depth}
+						isExpandable={row.hasChildren}
+						isExpanded={isExpanded}
+						onToggle={toggleExpanded}
+					/>
+				</div>
+				<div className="col-span-2 text-right tabular-nums">
+					{hasDebit ? (
+						<ReportAmountButton
+							amount={currencyFormatter(Number(row.debit_balance), false)}
+							onClick={handleAmountClick}
+						/>
+					) : undefined}
+				</div>
+				<div className="col-span-2 text-right tabular-nums">
+					{hasCredit ? (
+						<ReportAmountButton
+							amount={currencyFormatter(Number(row.credit_balance), false)}
+							onClick={handleAmountClick}
+						/>
+					) : undefined}
+				</div>
 			</div>
-			<div className="col-span-2 text-right tabular-nums">
-				{hasCredit ? (
-					<button
-						type="button"
-						className="font-medium cursor-pointer text-blue-500 hover:text-blue-600 hover:underline transition-all"
-						onClick={handleOpenDrillDown}
-					>
-						{currencyFormatter(Number(row.credit_balance), false)}
-					</button>
-				) : undefined}
-			</div>
-		</div>
+			{row.hasChildren && isExpanded ? (
+				<TrialBalanceChildRows parentId={row.id} asOfDate={asOfDate} depth={depth + 1} />
+			) : undefined}
+		</>
+	);
+}
+
+function TrialBalanceChildRows({
+	parentId,
+	asOfDate,
+	depth,
+}: {
+	parentId: number;
+	asOfDate: string;
+	depth: number;
+}) {
+	const { data, isPending, isError, error, refetch } = useQuery(
+		trialBalanceChildrenQueryOptions(parentId, asOfDate)
+	);
+
+	if (isPending) {
+		return <ReportRowLoading depth={depth} />;
+	}
+
+	if (isError) {
+		return <ReportRowError depth={depth} message={error.message} onRetry={() => refetch()} />;
+	}
+
+	if (data.length === 0) {
+		return <ReportRowEmpty depth={depth} message="No child accounts with a balance." />;
+	}
+
+	return (
+		<>
+			{data.map((child) => (
+				<TrialBalanceItem key={child.id} row={child} asOfDate={asOfDate} depth={depth} />
+			))}
+		</>
 	);
 }
 

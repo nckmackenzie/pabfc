@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import { and, asc, eq, gte, ilike, inArray, lte, or, type SQL, sql } from "drizzle-orm";
 import z from "zod";
 import { db } from "@/drizzle/db";
 import { journalEntries, journalLines, ledgerAccounts } from "@/drizzle/schema";
+import { resolveFinancialYearStart } from "@/features/reports/services/financial-year";
 import { trialBalanceReportFormSchema } from "@/features/reports/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -13,6 +14,8 @@ export type BalanceSheetRow = {
 	code: string | null;
 	name: string;
 	type: "asset" | "liability" | "equity";
+	isPosting: boolean;
+	hasChildren: boolean;
 	total: string;
 	is_computed: number;
 	computed_key: string | null;
@@ -29,6 +32,99 @@ export type BalanceSheetDrillDownRow = {
 	reference: string | null;
 };
 
+/**
+ * Common table expressions that roll every reporting node matched by
+ * `rootFilter` up over its own subtree of posting accounts, respecting each
+ * posting account's normal balance.
+ *
+ * `rootFilter` must be expressed against the `a` alias so the same fragment can
+ * seed the recursion and filter the reporting rows: `sql`a.parent_id IS NULL``
+ * for the top level of the statement, `sql`a.parent_id = ${id}`` for the direct
+ * children of a single account.
+ */
+function balanceSheetRollupCtes(rootFilter: SQL, startDate: string, asOfDate: string) {
+	return sql`
+        reporting AS (
+            SELECT
+                a.id AS reporting_id,
+                a.id AS node_id
+            FROM ledger_accounts a
+            WHERE a.type IN ('asset', 'liability', 'equity')
+                AND ${rootFilter}
+
+            UNION ALL
+
+            SELECT
+                r.reporting_id,
+                c.id AS node_id
+            FROM reporting r
+            JOIN ledger_accounts c
+                ON c.parent_id = r.node_id
+            ),
+        posting_nodes AS (
+            SELECT
+                r.reporting_id,
+                a.id AS posting_id,
+                a.normal_balance AS posting_normal_balance
+            FROM reporting r
+            JOIN ledger_accounts a
+                ON a.id = r.node_id
+            WHERE a.is_posting = true
+            ),
+        posting_balances AS (
+            SELECT
+                jl.account_id,
+                COALESCE(SUM(CASE WHEN jl.dc = 'debit'  THEN jl.amount ELSE 0 END), 0) AS debits,
+                COALESCE(SUM(CASE WHEN jl.dc = 'credit' THEN jl.amount ELSE 0 END), 0) AS credits
+            FROM journal_lines jl
+            JOIN journal_entries je
+                ON je.id = jl.journal_entry_id
+            WHERE je.entry_date BETWEEN ${startDate} AND ${asOfDate}
+            GROUP BY jl.account_id
+            ),
+        rolled_up_bs AS (
+            SELECT
+                pn.reporting_id,
+                COALESCE(SUM(
+                    CASE
+                        WHEN pn.posting_normal_balance = 'credit'
+                            THEN COALESCE(pb.credits, 0) - COALESCE(pb.debits, 0)
+                        ELSE
+                            COALESCE(pb.debits, 0) - COALESCE(pb.credits, 0)
+                    END
+                ), 0) AS total
+            FROM posting_nodes pn
+            LEFT JOIN posting_balances pb
+                ON pb.account_id = pn.posting_id
+            GROUP BY pn.reporting_id
+            )`;
+}
+
+/** Selects the non-zero reporting rows produced by `balanceSheetRollupCtes`. */
+function balanceSheetAccountRowsSelect(rootFilter: SQL) {
+	return sql`
+        SELECT
+            a.id,
+            a.code,
+            a.name,
+            a.type,
+            a.is_posting AS "isPosting",
+            EXISTS (
+                SELECT 1
+                FROM ledger_accounts child
+                WHERE child.parent_id = a.id
+            ) AS "hasChildren",
+            COALESCE(ru.total, 0) AS total,
+            0 AS is_computed,
+            NULL::text AS computed_key
+        FROM ledger_accounts a
+        LEFT JOIN rolled_up_bs ru
+            ON ru.reporting_id = a.id
+        WHERE a.type IN ('asset', 'liability', 'equity')
+            AND ${rootFilter}
+            AND COALESCE(ru.total, 0) <> 0`;
+}
+
 export const getBalanceSheetReport = createServerFn()
 	.middleware([authMiddleware])
 	.validator(trialBalanceReportFormSchema)
@@ -36,73 +132,10 @@ export const getBalanceSheetReport = createServerFn()
 		await requirePermission("reports:balance-sheet");
 		const { asOfDate } = data;
 
-		const financialYear = await db.query.financialYears.findFirst({
-			columns: { startDate: true },
-			where: (financialYears, { and, gte, lte }) =>
-				and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
-		});
+		const startDate = await resolveFinancialYearStart(asOfDate);
 
-		if (!financialYear) {
-			throw new ApplicationError("Financial year not found");
-		}
 		const res = await db.execute(sql`
-           WITH RECURSIVE reporting AS (
-                SELECT
-                    a.id AS reporting_id,
-                    a.id AS node_id
-                FROM ledger_accounts a
-                WHERE a.type IN ('asset', 'liability', 'equity')
-                    AND (
-                    a.is_posting = false
-                    OR (a.is_posting = true AND a.parent_id IS NULL)
-                    )
-
-                UNION ALL
-
-                SELECT
-                    r.reporting_id,
-                    c.id AS node_id
-                FROM reporting r
-                JOIN ledger_accounts c
-                    ON c.parent_id = r.node_id
-                ),
-            posting_nodes AS (
-                SELECT
-                    r.reporting_id,
-                    a.id AS posting_id,
-                    a.normal_balance AS posting_normal_balance
-                FROM reporting r
-                JOIN ledger_accounts a
-                    ON a.id = r.node_id
-                WHERE a.is_posting = true
-                ),
-            posting_balances AS (
-                SELECT
-                    jl.account_id,
-                    COALESCE(SUM(CASE WHEN jl.dc = 'debit'  THEN jl.amount ELSE 0 END), 0) AS debits,
-                    COALESCE(SUM(CASE WHEN jl.dc = 'credit' THEN jl.amount ELSE 0 END), 0) AS credits
-                FROM journal_lines jl
-                JOIN journal_entries je
-                    ON je.id = jl.journal_entry_id
-                WHERE je.entry_date BETWEEN ${financialYear.startDate} AND ${asOfDate}
-                GROUP BY jl.account_id
-                ),
-            rolled_up_bs AS (
-                SELECT
-                    pn.reporting_id,
-                    COALESCE(SUM(
-                        CASE
-                            WHEN pn.posting_normal_balance = 'credit'
-                                THEN COALESCE(pb.credits, 0) - COALESCE(pb.debits, 0)
-                            ELSE
-                                COALESCE(pb.debits, 0) - COALESCE(pb.credits, 0)
-                        END
-                    ), 0) AS total
-                FROM posting_nodes pn
-                LEFT JOIN posting_balances pb
-                    ON pb.account_id = pn.posting_id
-                GROUP BY pn.reporting_id
-                ),
+            WITH RECURSIVE ${balanceSheetRollupCtes(sql`a.parent_id IS NULL`, startDate, asOfDate)},
 
             pl_accounts AS (
                 SELECT
@@ -121,7 +154,7 @@ export const getBalanceSheetReport = createServerFn()
                 FROM journal_lines jl
                 JOIN journal_entries je
                     ON je.id = jl.journal_entry_id
-                WHERE je.entry_date BETWEEN ${financialYear.startDate} AND ${asOfDate}
+                WHERE je.entry_date BETWEEN ${startDate} AND ${asOfDate}
                 GROUP BY jl.account_id
                 ),
             pl_balances AS (
@@ -149,20 +182,7 @@ export const getBalanceSheetReport = createServerFn()
                 FROM pl_balances
                 )
 
-            SELECT
-                r.id,
-                r.code,
-                r.name,
-                r.type,
-                COALESCE(ru.total, 0) AS total,
-                0 AS is_computed,
-                NULL::text AS computed_key
-            FROM ledger_accounts r
-            LEFT JOIN rolled_up_bs ru
-                ON ru.reporting_id = r.id
-            WHERE r.type IN ('asset', 'liability', 'equity')
-                AND r.parent_id IS NULL
-                AND COALESCE(ru.total, 0) <> 0
+            ${balanceSheetAccountRowsSelect(sql`a.parent_id IS NULL`)}
 
             UNION ALL
 
@@ -171,9 +191,31 @@ export const getBalanceSheetReport = createServerFn()
                 NULL::text AS code,
                 'Current Year Earnings' AS name,
                 'equity' AS type,
+                false AS "isPosting",
+                false AS "hasChildren",
                 (SELECT net_income FROM pl_net_income) AS total,
                 1 AS is_computed,
                 'CURRENT_YEAR_EARNINGS' AS computed_key
+
+            ORDER BY type, is_computed, code NULLS LAST, name;
+        `);
+
+		return res.rows as Array<BalanceSheetRow>;
+	});
+
+export const getBalanceSheetChildren = createServerFn()
+	.middleware([authMiddleware])
+	.validator(z.object({ id: z.number(), asOfDate: z.iso.date() }))
+	.handler(async ({ data }) => {
+		await requirePermission("reports:balance-sheet");
+		const { id, asOfDate } = data;
+
+		const startDate = await resolveFinancialYearStart(asOfDate);
+
+		const res = await db.execute(sql`
+            WITH RECURSIVE ${balanceSheetRollupCtes(sql`a.parent_id = ${id}`, startDate, asOfDate)}
+
+            ${balanceSheetAccountRowsSelect(sql`a.parent_id = ${id}`)}
 
             ORDER BY type, is_computed, code NULLS LAST, name;
         `);
@@ -203,15 +245,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 			throw new ApplicationError("Account not found");
 		}
 
-		const financialYear = await db.query.financialYears.findFirst({
-			columns: { startDate: true },
-			where: (financialYears, { and, gte, lte }) =>
-				and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
-		});
-
-		if (!financialYear) {
-			throw new ApplicationError("Financial year not found");
-		}
+		const startDate = await resolveFinancialYearStart(asOfDate);
 
 		const accountTree = await db.execute<{ id: number }>(sql`
 			WITH RECURSIVE account_tree AS (
@@ -250,7 +284,7 @@ export const getBalanceSheetDrillDown = createServerFn()
 			.where(
 				and(
 					inArray(journalLines.accountId, accountIds),
-					gte(journalEntries.entryDate, financialYear.startDate),
+					gte(journalEntries.entryDate, startDate),
 					lte(journalEntries.entryDate, asOfDate),
 					q
 						? or(

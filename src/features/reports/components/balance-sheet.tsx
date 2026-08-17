@@ -1,14 +1,23 @@
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { DownloadIcon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BalanceSheetDrillDown } from "@/features/reports/components/balance-sheet-drilldown";
 import { BalanceSheetPdf } from "@/features/reports/components/downloadable-balance-sheet";
+import {
+	ReportAccountLabel,
+	ReportAmountButton,
+	ReportRowEmpty,
+	ReportRowError,
+	ReportRowLoading,
+} from "@/features/reports/components/report-drilldown-rows";
 // import { isBalanceSheetBalanced } from "@/features/reports/lib/report-balance-checks";
 import {
 	type BalanceSheetRow,
+	getBalanceSheetChildren,
 	getBalanceSheetReport,
 } from "@/features/reports/services/balance-sheet.api";
 import { useFilters } from "@/hooks/use-filters";
@@ -17,6 +26,14 @@ import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 const route = getRouteApi("/app/reports/finance/balance-sheet/");
+
+function balanceSheetChildrenQueryOptions(id: number, asOfDate: string) {
+	return queryOptions({
+		queryKey: ["balance-sheet-children", { id, asOfDate }],
+		queryFn: () => getBalanceSheetChildren({ data: { id, asOfDate } }),
+		staleTime: 0,
+	});
+}
 
 export function BalanceSheet() {
 	const { filters } = useFilters(route.id);
@@ -157,10 +174,24 @@ function Section({
 	);
 }
 
-function BalanceSheetRowItem({ row, asOfDate }: { row: BalanceSheetRow; asOfDate: string }) {
+function BalanceSheetRowItem({
+	row,
+	asOfDate,
+	depth = 0,
+}: {
+	row: BalanceSheetRow;
+	asOfDate: string;
+	depth?: number;
+}) {
 	const { setOpen } = useSheet();
+	const [isExpanded, setIsExpanded] = useState(false);
 	const canDrillDown = Boolean(row.id) && row.is_computed === 0;
+	const isExpandable = canDrillDown && row.hasChildren;
 	const label = reportLabel(row);
+
+	function toggleExpanded() {
+		setIsExpanded((expanded) => !expanded);
+	}
 
 	function handleOpenDrillDown() {
 		if (!row.id) {
@@ -174,21 +205,81 @@ function BalanceSheetRowItem({ row, asOfDate }: { row: BalanceSheetRow; asOfDate
 		});
 	}
 
+	// Rows that have children drill down inline, one level at a time. Only a true
+	// posting leaf falls through to the transaction listing sheet.
+	function handleAmountClick() {
+		if (isExpandable) {
+			toggleExpanded();
+			return;
+		}
+
+		handleOpenDrillDown();
+	}
+
 	return (
-		<div className="flex justify-between items-center py-1">
-			<span className={row.is_computed ? "italic" : undefined}>{label}</span>
-			{canDrillDown ? (
-				<button
-					type="button"
-					className="cursor-pointer text-blue-500 transition-all hover:text-blue-600 hover:underline"
-					onClick={handleOpenDrillDown}
-				>
-					{formatStatementAmount(Number(row.total))}
-				</button>
-			) : (
-				<span>{formatStatementAmount(Number(row.total))}</span>
-			)}
-		</div>
+		<>
+			<div className="flex justify-between items-center py-1">
+				<ReportAccountLabel
+					label={label}
+					depth={depth}
+					isExpandable={isExpandable}
+					isExpanded={isExpanded}
+					onToggle={toggleExpanded}
+					className={row.is_computed ? "italic" : undefined}
+				/>
+				{canDrillDown ? (
+					<ReportAmountButton
+						amount={formatStatementAmount(Number(row.total))}
+						onClick={handleAmountClick}
+						className="font-normal"
+					/>
+				) : (
+					<span>{formatStatementAmount(Number(row.total))}</span>
+				)}
+			</div>
+			{isExpandable && isExpanded && row.id ? (
+				<BalanceSheetChildRows parentId={row.id} asOfDate={asOfDate} depth={depth + 1} />
+			) : undefined}
+		</>
+	);
+}
+
+function BalanceSheetChildRows({
+	parentId,
+	asOfDate,
+	depth,
+}: {
+	parentId: number;
+	asOfDate: string;
+	depth: number;
+}) {
+	const { data, isPending, isError, error, refetch } = useQuery(
+		balanceSheetChildrenQueryOptions(parentId, asOfDate)
+	);
+
+	if (isPending) {
+		return <ReportRowLoading depth={depth} />;
+	}
+
+	if (isError) {
+		return <ReportRowError depth={depth} message={error.message} onRetry={() => refetch()} />;
+	}
+
+	if (data.length === 0) {
+		return <ReportRowEmpty depth={depth} message="No child accounts with a balance." />;
+	}
+
+	return (
+		<>
+			{data.map((child) => (
+				<BalanceSheetRowItem
+					key={`${child.type}-${child.id ?? child.name}`}
+					row={child}
+					asOfDate={asOfDate}
+					depth={depth}
+				/>
+			))}
+		</>
 	);
 }
 
