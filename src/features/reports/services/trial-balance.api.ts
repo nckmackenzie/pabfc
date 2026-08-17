@@ -4,6 +4,7 @@ import z from "zod";
 import { db } from "@/drizzle/db";
 import { journalEntries, journalLines, ledgerAccounts } from "@/drizzle/schema";
 import type { AccountType } from "@/drizzle/schemas/chart-of-accounts";
+import { resolveFinancialYearStart } from "@/features/reports/services/financial-year";
 import { trialBalanceReportFormSchema } from "@/features/reports/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -32,20 +33,6 @@ export type TrialBalanceDrillDownRow = {
 	source: string | null;
 	reference: string | null;
 };
-
-async function resolveFinancialYearStart(asOfDate: string) {
-	const financialYear = await db.query.financialYears.findFirst({
-		columns: { startDate: true },
-		where: (financialYears, { and, gte, lte }) =>
-			and(lte(financialYears.startDate, asOfDate), gte(financialYears.endDate, asOfDate)),
-	});
-
-	if (!financialYear) {
-		throw new ApplicationError("Financial year not found");
-	}
-
-	return financialYear.startDate;
-}
 
 /**
  * Rolls every reporting node matched by `rootFilter` up over its own subtree of
