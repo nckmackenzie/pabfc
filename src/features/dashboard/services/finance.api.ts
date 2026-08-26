@@ -1,30 +1,70 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	bills,
 	expenseHeaders,
 	membershipPlans,
+	members,
+	payees,
 	payments,
 } from "@/drizzle/schema";
-import { getFinanceStatDates, getStatDates } from "@/features/dashboard/lib/helpers";
+import {
+	buildFinanceChartData,
+	getCurrentFinanceExpenseFilterParams,
+	getCurrentFinancePaymentFilterParams,
+	getFinanceExpenseFilterParams,
+	mergeRecentFinanceTransactions,
+	shouldUseFinanceMockData,
+} from "@/features/dashboard/lib/finance-data";
+import { getFinanceStatDates } from "@/features/dashboard/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { expenseFilters, paymentFilters } from "@/lib/query-helpers";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
-const { startOfLast30Days } = getStatDates();
+
+async function getFinanceMockDataIfNeeded(
+	currentPaymentFilters: ReturnType<typeof getCurrentFinancePaymentFilterParams>,
+	currentExpenseFilters: ReturnType<typeof getCurrentFinanceExpenseFilterParams>
+) {
+	const isProduction = process.env.APP_ENV === "production";
+	if (isProduction) return null;
+
+	const [[paymentData], [expenseData]] = await Promise.all([
+		db
+			.select({ count: sql<number>`count(*)` })
+			.from(payments)
+			.where(paymentFilters(currentPaymentFilters)),
+		db
+			.select({ count: sql<number>`count(*)` })
+			.from(expenseHeaders)
+			.where(expenseFilters(currentExpenseFilters)),
+	]);
+
+	if (
+		!shouldUseFinanceMockData(isProduction, Number(paymentData.count), Number(expenseData.count))
+	) {
+		return null;
+	}
+
+	const { getMockFinanceData } = await import("@/features/dashboard/lib/finance-mock-data");
+	return getMockFinanceData();
+}
 
 export const getFinanceStats = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:finance");
-		const {
-			currentPeriodStart,
-			currentPeriodEnd,
+		const now = new Date();
+		const { previousPeriodStart, previousPeriodEnd } = getFinanceStatDates(now);
+		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
+		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
+		const previousExpenseFilters = getFinanceExpenseFilterParams(
 			previousPeriodStart,
-			previousPeriodEnd,
-		} = getFinanceStatDates();
+			previousPeriodEnd
+		);
+		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
+		if (mockData) return mockData;
 
 		const [
 			totalRevenue,
@@ -40,13 +80,7 @@ export const getFinanceStats = createServerFn()
 					totalRevenue: sql<number>`coalesce(sum(${payments.amount}), 0)`,
 				})
 				.from(payments)
-				.where(
-					paymentFilters({
-						dateFrom: currentPeriodStart,
-						dateTo: currentPeriodEnd,
-						status: "completed",
-					}),
-				),
+				.where(paymentFilters(currentPaymentFilters)),
 			db
 				.select({
 					totalRevenuePreviousPeriod: sql<number>`coalesce(sum(${payments.amount}), 0)`,
@@ -57,67 +91,32 @@ export const getFinanceStats = createServerFn()
 						dateFrom: previousPeriodStart,
 						dateTo: previousPeriodEnd,
 						status: "completed",
-					}),
+					})
 				),
 			db
 				.select({
 					totalExpenses: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
 				})
 				.from(expenseHeaders)
-				.where(
-					expenseFilters({
-						dateFrom: currentPeriodStart,
-						dateTo: currentPeriodEnd,
-					}),
-				),
+				.where(expenseFilters(currentExpenseFilters)),
 			db
 				.select({
 					totalExpensesPreviousPeriod: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
 				})
 				.from(expenseHeaders)
-				.where(
-					expenseFilters({
-						dateFrom: previousPeriodStart,
-						dateTo: previousPeriodEnd,
-					}),
-				),
+				.where(expenseFilters(previousExpenseFilters)),
 			db
 				.select({
 					totalOverdueBills: sql<number>`coalesce(sum(${bills.total}), 0)`,
 				})
 				.from(bills)
 				.where(eq(bills.status, "overdue")),
-			// db
-			// 	.select({
-			// 		planName: membershipPlans.name,
-			// 		amount: sql<number>`coalesce(sum(${payments.amount}), 0)`.as(
-			// 			"total_amount",
-			// 		),
-			// 	})
-			// 	.from(payments)
-			// 	.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
-			// 	.where(
-			// 		paymentFilters({
-			// 			dateFrom: startOfLast30Days,
-			// 			dateTo: new Date(),
-			// 			status: "completed",
-			// 		}),
-			// 	)
-			// 	.groupBy(membershipPlans.name, payments.planId)
-			// 	.orderBy(desc(sql`total_amount`))
-			// 	.limit(1),
 			db
 				.select({
 					totalDiscountedRevenue: sql<number>`coalesce(sum(${payments.discountedAmount}), 0)`,
 				})
 				.from(payments)
-				.where(
-					paymentFilters({
-						dateFrom: currentPeriodStart,
-						dateTo: currentPeriodEnd,
-						status: "completed",
-					}),
-				),
+				.where(paymentFilters(currentPaymentFilters)),
 			db
 				.select({
 					totalDiscountedRevenuePreviousPeriod: sql<number>`coalesce(sum(${payments.discountedAmount}), 0)`,
@@ -128,7 +127,7 @@ export const getFinanceStats = createServerFn()
 						dateFrom: previousPeriodStart,
 						dateTo: previousPeriodEnd,
 						status: "completed",
-					}),
+					})
 				),
 		]);
 
@@ -136,34 +135,17 @@ export const getFinanceStats = createServerFn()
 		// but the values now represent MTD and previous-month-to-date ranges.
 		const stats = {
 			totalRevenueLast30Days: totalRevenue[0].totalRevenue,
-			totalRevenuePreviousPeriod:
-				totalRevenuePreviousPeriod[0].totalRevenuePreviousPeriod,
+			totalRevenuePreviousPeriod: totalRevenuePreviousPeriod[0].totalRevenuePreviousPeriod,
 			totalExpensesLast30Days: totalExpenses[0].totalExpenses,
-			totalExpensesPreviousPeriod:
-				totalExpensesPreviousPeriod[0].totalExpensesPreviousPeriod,
-			// topPlan: topPlan.length > 0 ? topPlan[0] : null,
+			totalExpensesPreviousPeriod: totalExpensesPreviousPeriod[0].totalExpensesPreviousPeriod,
 			totalOverdueBills: totalOverdueBills[0].totalOverdueBills,
 			totalDiscountedRevenue: totalDiscountedRevenue[0].totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod:
-				totalDiscountedRevenuePreviousPeriod[0]
-					.totalDiscountedRevenuePreviousPeriod,
-			// TODO: Add real chart data queries here when available
-			revenueExpensesChartData: [], // Placeholder for real implementation
-			planDistribution: [], // Placeholder for real implementation
-			recentActivities: [], // Placeholder for real implementation
+				totalDiscountedRevenuePreviousPeriod[0].totalDiscountedRevenuePreviousPeriod,
+			revenueExpensesChartData: [],
+			planDistribution: [],
+			recentActivities: [],
 		};
-
-		const isProduction = process.env.APP_ENV === "production";
-		const hasNoData =
-			+stats.totalRevenueLast30Days === 0 &&
-			+stats.totalExpensesLast30Days === 0;
-
-		if (!isProduction && hasNoData) {
-			const { getMockFinanceData } = await import(
-				"@/features/dashboard/lib/finance-mock-data"
-			);
-			return getMockFinanceData();
-		}
 
 		return stats;
 	});
@@ -172,17 +154,30 @@ export const getFinanceChartData = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:finance");
-
-		// TODO: GET ACTUAL DATA
-		const chartData: any[] = [];
-
-		const isProduction = process.env.APP_ENV === "production";
-		if (!isProduction && chartData.length === 0) {
-			const { getMockFinanceData } = await import(
-				"@/features/dashboard/lib/finance-mock-data"
-			);
-			return getMockFinanceData().revenueExpensesChartData;
-		}
+		const now = new Date();
+		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
+		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
+		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
+		if (mockData) return mockData.revenueExpensesChartData;
+		const [revenueRows, expenseRows] = await Promise.all([
+			db
+				.select({
+					date: sql<string>`to_char(${payments.paymentDate} at time zone 'Africa/Nairobi', 'YYYY-MM-DD')`,
+					amount: sql<number>`coalesce(sum(${payments.amount}), 0)`,
+				})
+				.from(payments)
+				.where(paymentFilters(currentPaymentFilters))
+				.groupBy(sql`to_char(${payments.paymentDate} at time zone 'Africa/Nairobi', 'YYYY-MM-DD')`),
+			db
+				.select({
+					date: expenseHeaders.expenseDate,
+					amount: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
+				})
+				.from(expenseHeaders)
+				.where(expenseFilters(currentExpenseFilters))
+				.groupBy(expenseHeaders.expenseDate),
+		]);
+		const chartData = buildFinanceChartData(revenueRows, expenseRows);
 
 		return chartData;
 	});
@@ -191,17 +186,51 @@ export const getRecentTransactions = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:finance");
-
-		// TODO: GET ACTUAL DATA Placeholder for real query
-		const recentActivities: any[] = [];
-
-		const isProduction = process.env.APP_ENV === "production";
-		if (!isProduction && recentActivities.length === 0) {
-			const { getMockFinanceData } = await import(
-				"@/features/dashboard/lib/finance-mock-data"
-			);
-			return getMockFinanceData().recentActivities.slice(0, 10);
-		}
+		const now = new Date();
+		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
+		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
+		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
+		if (mockData) return mockData.recentActivities;
+		const [incomeRows, expenseRows] = await Promise.all([
+			db
+				.select({
+					date: payments.paymentDate,
+					amount: payments.amount,
+					reference: sql<string>`coalesce(${payments.reference}, ${payments.paymentNo})`,
+					entity: sql<string>`concat(${members.firstName}, ' ', ${members.lastName})`,
+					status: payments.status,
+				})
+				.from(payments)
+				.innerJoin(members, eq(payments.memberId, members.id))
+				.where(paymentFilters(currentPaymentFilters))
+				.orderBy(desc(payments.paymentDate))
+				.limit(10),
+			db
+				.select({
+					date: expenseHeaders.expenseDate,
+					amount: expenseHeaders.totalAmount,
+					reference: sql<string>`coalesce(${expenseHeaders.reference}, concat('EXP-', ${expenseHeaders.expenseNo}::text))`,
+					entity: payees.name,
+				})
+				.from(expenseHeaders)
+				.innerJoin(payees, eq(expenseHeaders.payeeId, payees.id))
+				.where(expenseFilters(currentExpenseFilters))
+				.orderBy(desc(expenseHeaders.expenseDate))
+				.limit(10),
+		]);
+		const recentActivities = mergeRecentFinanceTransactions(
+			incomeRows.map((row) => ({
+				...row,
+				type: "income" as const,
+				amount: Number(row.amount),
+			})),
+			expenseRows.map((row) => ({
+				...row,
+				type: "expense" as const,
+				amount: Number(row.amount),
+				status: "completed",
+			}))
+		);
 
 		return recentActivities;
 	});
@@ -210,33 +239,22 @@ export const getPlanDistribution = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:finance");
+		const now = new Date();
+		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
+		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
+		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
+		if (mockData) return mockData.planDistribution;
 
 		const planDistribution = await db
 			.select({
-				planName: membershipPlans.name,
-				amount: sql<number>`coalesce(sum(${payments.amount}), 0)`.as(
-					"total_amount",
-				),
+				planName: sql<string>`coalesce(${membershipPlans.name}, 'Unassigned')`,
+				amount: sql<number>`coalesce(sum(${payments.amount}), 0)`.as("total_amount"),
 			})
 			.from(payments)
-			.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
-			.where(
-				and(
-					gte(payments.paymentDate, startOfLast30Days),
-					lte(payments.paymentDate, new Date()),
-					eq(payments.status, "completed"),
-				),
-			)
+			.leftJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
+			.where(paymentFilters(currentPaymentFilters))
 			.groupBy(membershipPlans.name, payments.planId)
 			.orderBy(desc(sql`total_amount`));
-
-		const isProduction = process.env.APP_ENV === "production";
-		if (!isProduction && planDistribution.length === 0) {
-			const { getMockFinanceData } = await import(
-				"@/features/dashboard/lib/finance-mock-data"
-			);
-			return getMockFinanceData().planDistribution;
-		}
 
 		return planDistribution.map(({ amount, planName }, index) => ({
 			name: toTitleCase(planName.toLowerCase()),
