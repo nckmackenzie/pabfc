@@ -40,14 +40,10 @@ describe("getFinanceStatDates", () => {
 
 		const dates = getFinanceStatDates();
 
-		expect(format(dates.currentPeriodStart, "yyyy-MM-dd")).toBe("2026-07-01");
-		expect(format(dates.currentPeriodEnd, "yyyy-MM-dd")).toBe("2026-07-14");
-		expect(format(dates.previousPeriodStart, "yyyy-MM-dd")).toBe("2026-06-01");
-		expect(format(dates.previousPeriodEnd, "yyyy-MM-dd")).toBe("2026-06-14");
-		expect(dates.previousPeriodEnd.getHours()).toBe(dates.currentPeriodEnd.getHours());
-		expect(dates.previousPeriodEnd.getMinutes()).toBe(
-			dates.currentPeriodEnd.getMinutes(),
-		);
+		expect(dates.currentPeriodStart.toISOString()).toBe("2026-06-30T21:00:00.000Z");
+		expect(dates.currentPeriodEnd).toEqual(new Date("2026-07-14T09:30:00.000Z"));
+		expect(dates.previousPeriodStart.toISOString()).toBe("2026-05-31T21:00:00.000Z");
+		expect(dates.previousPeriodEnd.toISOString()).toBe("2026-06-14T09:30:00.000Z");
 	});
 
 	it("caps the previous-period end to the last day of a shorter month", () => {
@@ -56,10 +52,10 @@ describe("getFinanceStatDates", () => {
 
 		const dates = getFinanceStatDates();
 
-		expect(format(dates.currentPeriodStart, "yyyy-MM-dd")).toBe("2026-03-01");
-		expect(format(dates.currentPeriodEnd, "yyyy-MM-dd")).toBe("2026-03-31");
-		expect(format(dates.previousPeriodStart, "yyyy-MM-dd")).toBe("2026-02-01");
-		expect(format(dates.previousPeriodEnd, "yyyy-MM-dd")).toBe("2026-02-28");
+		expect(dates.currentPeriodStart.toISOString()).toBe("2026-02-28T21:00:00.000Z");
+		expect(dates.currentPeriodEnd).toEqual(new Date("2026-03-31T09:30:00.000Z"));
+		expect(dates.previousPeriodStart.toISOString()).toBe("2026-01-31T21:00:00.000Z");
+		expect(dates.previousPeriodEnd.toISOString()).toBe("2026-02-28T09:30:00.000Z");
 	});
 
 	it("handles year boundaries when comparing January against December", () => {
@@ -68,10 +64,10 @@ describe("getFinanceStatDates", () => {
 
 		const dates = getFinanceStatDates();
 
-		expect(format(dates.currentPeriodStart, "yyyy-MM-dd")).toBe("2026-01-01");
-		expect(format(dates.currentPeriodEnd, "yyyy-MM-dd")).toBe("2026-01-14");
-		expect(format(dates.previousPeriodStart, "yyyy-MM-dd")).toBe("2025-12-01");
-		expect(format(dates.previousPeriodEnd, "yyyy-MM-dd")).toBe("2025-12-14");
+		expect(dates.currentPeriodStart.toISOString()).toBe("2025-12-31T21:00:00.000Z");
+		expect(dates.currentPeriodEnd).toEqual(new Date("2026-01-14T09:30:00.000Z"));
+		expect(dates.previousPeriodStart.toISOString()).toBe("2025-11-30T21:00:00.000Z");
+		expect(dates.previousPeriodEnd.toISOString()).toBe("2025-12-14T09:30:00.000Z");
 	});
 
 	it("preserves the current timestamp on the previous comparison day", () => {
@@ -80,16 +76,7 @@ describe("getFinanceStatDates", () => {
 
 		const dates = getFinanceStatDates();
 
-		expect(dates.previousPeriodEnd.getHours()).toBe(dates.currentPeriodEnd.getHours());
-		expect(dates.previousPeriodEnd.getMinutes()).toBe(
-			dates.currentPeriodEnd.getMinutes(),
-		);
-		expect(dates.previousPeriodEnd.getSeconds()).toBe(
-			dates.currentPeriodEnd.getSeconds(),
-		);
-		expect(dates.previousPeriodEnd.getMilliseconds()).toBe(
-			dates.currentPeriodEnd.getMilliseconds(),
-		);
+		expect(dates.previousPeriodEnd.toISOString()).toBe("2026-06-14T09:30:45.123Z");
 	});
 });
 

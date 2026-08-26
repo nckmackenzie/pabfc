@@ -1,22 +1,8 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-	Area,
-	AreaChart,
-	CartesianGrid,
-	Label,
-	Pie,
-	PieChart,
-	XAxis,
-} from "recharts";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Area, AreaChart, CartesianGrid, Label, Pie, PieChart, XAxis } from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	type ChartConfig,
 	ChartContainer,
@@ -52,9 +38,7 @@ export function FinanceAreaChart() {
 		<Card>
 			<CardHeader>
 				<CardTitle>Revenue vs Expenses</CardTitle>
-				<CardDescription>
-					Showing revenue and expenses for the last 30 days
-				</CardDescription>
+				<CardDescription>Showing revenue and expenses month to date</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<ChartContainer config={areaChartConfig}>
@@ -72,7 +56,7 @@ export function FinanceAreaChart() {
 							tickLine={false}
 							axisLine={false}
 							tickMargin={8}
-							tickFormatter={(value) => value.slice(0, 3)}
+							// tickFormatter={(value) => value.slice(0, 3)}
 						/>
 						<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
 						<Area
@@ -135,25 +119,13 @@ export function FinancePieChart() {
 		<Card className="flex flex-col">
 			<CardHeader className="items-center pb-0">
 				<CardTitle>Plan Distribution</CardTitle>
-				<CardDescription>Revenue share by plan</CardDescription>
+				<CardDescription>Month-to-date revenue share by plan</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 pb-0">
-				<ChartContainer
-					config={pieChartConfig}
-					className="mx-auto aspect-square max-h-[250px]"
-				>
+				<ChartContainer config={pieChartConfig} className="mx-auto aspect-square max-h-62.5">
 					<PieChart>
-						<ChartTooltip
-							cursor={false}
-							content={<ChartTooltipContent hideLabel />}
-						/>
-						<Pie
-							data={data}
-							dataKey="value"
-							nameKey="name"
-							innerRadius={60}
-							strokeWidth={5}
-						>
+						<ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+						<Pie data={data} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
 							<Label
 								content={({ viewBox }) => {
 									if (viewBox && "cx" in viewBox && "cy" in viewBox) {

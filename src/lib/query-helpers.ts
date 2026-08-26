@@ -14,8 +14,8 @@ type PaymentFiltersProps = QuerySql & {
 };
 
 type ExpenseFiltersProps = {
-	dateFrom: Date;
-	dateTo: Date;
+	dateFrom: Date | string;
+	dateTo: Date | string;
 };
 
 export function paymentFilters({
@@ -44,7 +44,11 @@ export function paymentFilters({
 export function expenseFilters({ dateFrom, dateTo }: ExpenseFiltersProps) {
 	const filters: Array<SQL> = [];
 
-	filters.push(gte(expenseHeaders.expenseDate, dateFormat(dateFrom)));
-	filters.push(lte(expenseHeaders.expenseDate, dateFormat(dateTo)));
+	filters.push(
+		gte(expenseHeaders.expenseDate, typeof dateFrom === "string" ? dateFrom : dateFormat(dateFrom))
+	);
+	filters.push(
+		lte(expenseHeaders.expenseDate, typeof dateTo === "string" ? dateTo : dateFormat(dateTo))
+	);
 	return and(...filters);
 }
