@@ -56,7 +56,7 @@ export function FinanceAreaChart() {
 							tickLine={false}
 							axisLine={false}
 							tickMargin={8}
-							tickFormatter={(value) => value.slice(0, 3)}
+							// tickFormatter={(value) => value.slice(0, 3)}
 						/>
 						<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
 						<Area
@@ -122,7 +122,7 @@ export function FinancePieChart() {
 				<CardDescription>Month-to-date revenue share by plan</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 pb-0">
-				<ChartContainer config={pieChartConfig} className="mx-auto aspect-square max-h-[250px]">
+				<ChartContainer config={pieChartConfig} className="mx-auto aspect-square max-h-62.5">
 					<PieChart>
 						<ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
 						<Pie data={data} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>

@@ -245,6 +245,8 @@ export const getPlanDistribution = createServerFn()
 		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
 		if (mockData) return mockData.planDistribution;
 
+		const CHART_COLOR_COUNT = 5;
+
 		const planDistribution = await db
 			.select({
 				planName: sql<string>`coalesce(${membershipPlans.name}, 'Unassigned')`,
@@ -259,6 +261,7 @@ export const getPlanDistribution = createServerFn()
 		return planDistribution.map(({ amount, planName }, index) => ({
 			name: toTitleCase(planName.toLowerCase()),
 			value: Number(amount),
-			fill: `var(--chart-${index + 1})`,
+			// fill: `var(--chart-${index + 1})`,
+			fill: `var(--chart-${(index % CHART_COLOR_COUNT) + 1})`,
 		}));
 	});
