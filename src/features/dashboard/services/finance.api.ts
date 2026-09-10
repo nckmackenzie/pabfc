@@ -1,13 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	bills,
 	expenseHeaders,
+	journalEntries,
+	journalLines,
+	ledgerAccounts,
 	membershipPlans,
 	members,
 	payees,
 	payments,
+	vendors,
+	vwInvoices,
 } from "@/drizzle/schema";
 import {
 	buildFinanceChartData,
@@ -19,7 +24,14 @@ import {
 } from "@/features/dashboard/lib/finance-data";
 import { getFinanceStatDates } from "@/features/dashboard/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
-import { expenseFilters, paymentFilters } from "@/lib/query-helpers";
+import {
+	expenseFilters,
+	expenseJournalFilters,
+	journalLineNetAmount,
+	journalLineNetTotal,
+	overdueBillFilters,
+	paymentFilters,
+} from "@/lib/query-helpers";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
@@ -49,6 +61,36 @@ async function getFinanceMockDataIfNeeded(
 
 	const { getMockFinanceData } = await import("@/features/dashboard/lib/finance-mock-data");
 	return getMockFinanceData();
+}
+
+type ExpenseJournalDateRange = ReturnType<typeof getFinanceExpenseFilterParams>;
+
+/**
+ * Net expense recognised on the ledger for a period. Sourced from journal lines
+ * on expense-type accounts so expenses, bills and payroll are all counted once,
+ * on an accrual basis, and reversals net themselves out.
+ */
+async function getExpenseJournalTotal(range: ExpenseJournalDateRange) {
+	const [row] = await db
+		.select({ total: journalLineNetTotal })
+		.from(journalLines)
+		.innerJoin(journalEntries, eq(journalEntries.id, journalLines.journalEntryId))
+		.innerJoin(ledgerAccounts, eq(ledgerAccounts.id, journalLines.accountId))
+		.where(expenseJournalFilters(range));
+
+	return Number(row.total);
+}
+
+/** Outstanding balance across every bill that is past due, point in time. */
+async function getOverdueBillsTotal() {
+	const [row] = await db
+		.select({
+			total: sql<string>`coalesce(sum(${vwInvoices.balance}), 0)`,
+		})
+		.from(vwInvoices)
+		.where(overdueBillFilters());
+
+	return Number(row.total);
 }
 
 export const getFinanceStats = createServerFn()
@@ -93,24 +135,9 @@ export const getFinanceStats = createServerFn()
 						status: "completed",
 					})
 				),
-			db
-				.select({
-					totalExpenses: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
-				})
-				.from(expenseHeaders)
-				.where(expenseFilters(currentExpenseFilters)),
-			db
-				.select({
-					totalExpensesPreviousPeriod: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
-				})
-				.from(expenseHeaders)
-				.where(expenseFilters(previousExpenseFilters)),
-			db
-				.select({
-					totalOverdueBills: sql<number>`coalesce(sum(${bills.total}), 0)`,
-				})
-				.from(bills)
-				.where(eq(bills.status, "overdue")),
+			getExpenseJournalTotal(currentExpenseFilters),
+			getExpenseJournalTotal(previousExpenseFilters),
+			getOverdueBillsTotal(),
 			db
 				.select({
 					totalDiscountedRevenue: sql<number>`coalesce(sum(${payments.discountedAmount}), 0)`,
@@ -136,9 +163,9 @@ export const getFinanceStats = createServerFn()
 		const stats = {
 			totalRevenueLast30Days: totalRevenue[0].totalRevenue,
 			totalRevenuePreviousPeriod: totalRevenuePreviousPeriod[0].totalRevenuePreviousPeriod,
-			totalExpensesLast30Days: totalExpenses[0].totalExpenses,
-			totalExpensesPreviousPeriod: totalExpensesPreviousPeriod[0].totalExpensesPreviousPeriod,
-			totalOverdueBills: totalOverdueBills[0].totalOverdueBills,
+			totalExpensesLast30Days: totalExpenses,
+			totalExpensesPreviousPeriod,
+			totalOverdueBills,
 			totalDiscountedRevenue: totalDiscountedRevenue[0].totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod:
 				totalDiscountedRevenuePreviousPeriod[0].totalDiscountedRevenuePreviousPeriod,
@@ -263,5 +290,88 @@ export const getPlanDistribution = createServerFn()
 			value: Number(amount),
 			// fill: `var(--chart-${index + 1})`,
 			fill: `var(--chart-${(index % CHART_COLOR_COUNT) + 1})`,
+		}));
+	});
+
+/**
+ * Drill-down behind the Expenses stat card. Deliberately shares
+ * `expenseJournalFilters` with `getExpenseJournalTotal` so the rows listed here
+ * always sum to the figure shown on the card.
+ */
+export const getExpenseMtdBreakdown = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:finance");
+		const now = new Date();
+		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
+		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
+		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
+		if (mockData) return [];
+
+		const rows = await db
+			.select({
+				id: journalLines.id,
+				date: journalEntries.entryDate,
+				account: ledgerAccounts.name,
+				source: journalEntries.source,
+				entity: sql<string | null>`coalesce(${payees.name}, ${vendors.name})`,
+				reference: sql<
+					string | null
+				>`coalesce(${journalEntries.reference}, ${bills.invoiceNo}, ${expenseHeaders.reference}, ${journalLines.memo}, ${journalEntries.description})`,
+				amount: journalLineNetAmount,
+			})
+			.from(journalLines)
+			.innerJoin(journalEntries, eq(journalEntries.id, journalLines.journalEntryId))
+			.innerJoin(ledgerAccounts, eq(ledgerAccounts.id, journalLines.accountId))
+			.leftJoin(
+				expenseHeaders,
+				and(eq(journalEntries.source, "expenses"), eq(expenseHeaders.id, journalEntries.sourceId))
+			)
+			.leftJoin(payees, eq(payees.id, expenseHeaders.payeeId))
+			.leftJoin(
+				bills,
+				and(eq(journalEntries.source, "bills"), eq(bills.id, journalEntries.sourceId))
+			)
+			.leftJoin(vendors, eq(vendors.id, bills.vendorId))
+			.where(expenseJournalFilters(currentExpenseFilters))
+			.orderBy(desc(journalEntries.entryDate), asc(journalLines.lineNumber));
+
+		return rows.map((row) => ({ ...row, amount: Number(row.amount) }));
+	});
+
+/**
+ * Drill-down behind the Overdue Bills stat card. Shares `overdueBillFilters`
+ * with `getOverdueBillsTotal` and reports each bill's remaining balance rather
+ * than its original total, so the rows reconcile with the card.
+ */
+export const getOverdueBillsBreakdown = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:finance");
+		const now = new Date();
+		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
+		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
+		// Mirrors the mocked `totalOverdueBills` so the card and this sheet agree.
+		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
+		if (mockData) return [];
+
+		const rows = await db
+			.select({
+				id: vwInvoices.id,
+				vendor: vwInvoices.name,
+				invoiceNo: vwInvoices.invoiceNo,
+				dueDate: vwInvoices.dueDate,
+				daysOverdue: sql<number>`(current_date - ${vwInvoices.dueDate})::int`,
+				total: vwInvoices.total,
+				balance: vwInvoices.balance,
+			})
+			.from(vwInvoices)
+			.where(overdueBillFilters())
+			.orderBy(asc(vwInvoices.dueDate), asc(vwInvoices.name));
+
+		return rows.map((row) => ({
+			...row,
+			total: Number(row.total),
+			balance: Number(row.balance),
 		}));
 	});

@@ -6,17 +6,15 @@ import {
 	HandCoinsIcon,
 } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
+import { ExpenseMtdSheet } from "@/features/dashboard/components/expense-mtd-sheet";
+import { OverdueBillsSheet } from "@/features/dashboard/components/overdue-bills-sheet";
 import {
 	KPICard,
 	StatCardsSkeleton,
 } from "@/features/dashboard/components/stat-cards";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
-import {
-	currencyFormatter,
-	dateFormat,
-	percentageChangeCalculator,
-} from "@/lib/helpers";
-import { getFinanceStatDates } from "../lib/helpers";
+import { useSheet } from "@/integrations/sheet-provider";
+import { currencyFormatter, percentageChangeCalculator } from "@/lib/helpers";
 import { FinanceAreaChart, FinancePieChart } from "./finance-charts";
 import { FinanceRecentTransactions } from "./finance-recent-transactions";
 
@@ -67,6 +65,7 @@ export function FinanceDashboard() {
 }
 
 function FinanceStatCards() {
+	const { setOpen } = useSheet();
 	const {
 		data: {
 			totalExpensesLast30Days,
@@ -78,7 +77,25 @@ function FinanceStatCards() {
 			totalDiscountedRevenuePreviousPeriod,
 		},
 	} = useSuspenseQuery(dashboardQueries.financeStats());
-	const { currentPeriodStart, currentPeriodEnd } = getFinanceStatDates();
+
+	function showExpenseBreakdown() {
+		setOpen(<ExpenseMtdSheet />, {
+			title: "Expenses",
+			description:
+				"Everything posted to an expense account month to date, including bills and payroll.",
+			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
+
+	function showOverdueBills() {
+		setOpen(<OverdueBillsSheet />, {
+			title: "Overdue Bills",
+			description:
+				"Bills past their due date, showing the balance still outstanding on each.",
+			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
+
 	return (
 		<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 			<KPICard
@@ -102,13 +119,7 @@ function FinanceStatCards() {
 					totalExpensesPreviousPeriod,
 				)}
 				variant="destructive"
-				link={{
-					to: "/app/expenses",
-					search: {
-						from: dateFormat(currentPeriodStart),
-						to: dateFormat(currentPeriodEnd),
-					},
-				}}
+				onViewDetails={showExpenseBreakdown}
 			/>
 			<KPICard
 				title="Overdue Bills"
@@ -116,7 +127,7 @@ function FinanceStatCards() {
 				subtitle="Overdue bills"
 				icon={ArrowUpWideNarrowIcon}
 				variant="destructive"
-				link={{ to: "/app/bills", search: { status: "overdue" } }}
+				onViewDetails={showOverdueBills}
 			/>
 			<KPICard
 				title="Discounted Revenue"

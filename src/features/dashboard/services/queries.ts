@@ -11,7 +11,11 @@ import {
 	getExpiringMemberships,
 	getTodaysAttendances,
 } from "@/features/dashboard/services/dashboard.api";
-import { getFinanceStats } from "@/features/dashboard/services/finance.api";
+import {
+	getExpenseMtdBreakdown,
+	getFinanceStats,
+	getOverdueBillsBreakdown,
+} from "@/features/dashboard/services/finance.api";
 
 export const dashboardQueries = {
 	all: ["dashboard"] as const,
@@ -50,6 +54,16 @@ export const dashboardQueries = {
 		queryOptions({
 			queryKey: [...dashboardQueries.all, "finance-stats"],
 			queryFn: () => getFinanceStats(),
+		}),
+	expenseMtdBreakdown: () =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "expense-mtd-breakdown"],
+			queryFn: () => getExpenseMtdBreakdown(),
+		}),
+	overdueBillsBreakdown: () =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "overdue-bills-breakdown"],
+			queryFn: () => getOverdueBillsBreakdown(),
 		}),
 	accessControl: (filters: AccessControlDashboardFilters) =>
 		queryOptions({
