@@ -14,7 +14,6 @@ import {
 import { runPaymentPostCommitTasks } from "@/features/payments/services/payment-post-commit";
 import { paymentFormSchema } from "@/features/payments/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
-import { inngest } from "@/lib/inngest/client";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
@@ -313,17 +312,6 @@ export const createPayment = createServerFn({ method: "POST" })
 								},
 							}),
 					},
-					{
-						name: "invoice status event",
-						run: async () => {
-							await inngest.send({
-								name: "app/bills.update.invoice.status",
-								data: {
-									paidInvoiceIds: paidBills.map((bill) => bill.billId),
-								},
-							});
-						},
-					},
 				]);
 
 				return success(undefined);
@@ -381,13 +369,6 @@ export const deletePayment = createServerFn({ method: "POST" })
 						action: "delete payment",
 						userId,
 						description: `Deleted payment no ${payment.paymentNo}`,
-					},
-				});
-
-				await inngest.send({
-					name: "app/bills.update.invoice.status",
-					data: {
-						paidInvoiceIds: [payment.id],
 					},
 				});
 

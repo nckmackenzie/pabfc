@@ -1,9 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, gt, gte, isNotNull, lt, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { vwInvoices } from "@/drizzle/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { requirePermission } from "@/lib/permissions/permissions";
+import {
+	outstandingBillFilters,
+	overdueBillFilters,
+} from "@/lib/query-helpers";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { invoiceReportFormSchema } from "./schema";
 
@@ -77,13 +81,7 @@ const getOverdueInvoicesReport = async () => {
 			balance: vwInvoices.balance,
 		})
 		.from(vwInvoices)
-		.where(
-			and(
-				isNotNull(vwInvoices.dueDate),
-				lt(vwInvoices.dueDate, sql`current_date`),
-				gt(vwInvoices.balance, "0"),
-			),
-		)
+		.where(overdueBillFilters())
 		.orderBy(asc(vwInvoices.dueDate), asc(vwInvoices.name));
 };
 
@@ -114,7 +112,7 @@ const getAgeingSummaryReport = async () => {
 			total: sql<string>`coalesce(sum(${vwInvoices.balance}), 0)`.as("total"),
 		})
 		.from(vwInvoices)
-		.where(gt(vwInvoices.balance, "0"))
+		.where(outstandingBillFilters())
 		.groupBy(vwInvoices.vendorId, vwInvoices.name)
 		.orderBy(asc(vwInvoices.name));
 };

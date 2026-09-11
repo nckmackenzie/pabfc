@@ -1,6 +1,6 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gt, ilike, inArray, or, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ilike, inArray, or, type SQL, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
 import { billItems, bills, ledgerAccounts, vwInvoices } from "@/drizzle/schema";
@@ -35,12 +35,18 @@ export const getBills = createServerFn()
 			if (searchFilters) filters.push(searchFilters);
 		}
 		if (status && status !== "all") {
-			filters.push(eq(vwInvoices.status, status));
+			// Filter on the derived label rather than the stored workflow status,
+			// so "overdue" and "partially-paid" reflect the payment lines.
+			filters.push(eq(vwInvoices.displayStatus, status));
 		}
+		// The view carries its own ORDER BY, but a live view's ordering is not
+		// guaranteed to survive the outer query the way matview storage did, so
+		// the list states the order it wants.
 		return await db
 			.select()
 			.from(vwInvoices)
 			.where(and(...filters))
+			.orderBy(desc(vwInvoices.invoiceDate), desc(vwInvoices.invoiceNo))
 			.limit(100);
 	});
 

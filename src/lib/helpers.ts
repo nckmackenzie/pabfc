@@ -279,6 +279,23 @@ export function roundDecimal(value: NumericValue, decimals = 2) {
 	return Number(toBig(value).round(decimals, Big.roundHalfUp).toFixed(decimals));
 }
 
+/**
+ * Renders a duration held in minutes as "1h 23m" / "45m". `vw_attendance_details`
+ * reports session length as numeric minutes, so averages of it arrive here as a
+ * string. Anything non-positive or unparseable renders as "0m".
+ */
+export function formatMinutesDuration(value: NumericValue) {
+	const totalMinutes = Math.round(toNumber(value));
+	if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return "0m";
+
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+
+	if (hours === 0) return `${minutes}m`;
+	if (minutes === 0) return `${hours}h`;
+	return `${hours}h ${minutes}m`;
+}
+
 export function normalizeText(value: string | null | undefined): string | null {
 	if (value === null || value === undefined) return null;
 	const trimmed = value.trim();

@@ -14,7 +14,10 @@ import { ExpiredMembershipsSheet } from "@/features/dashboard/components/expired
 import { ExpiringSoonSheet } from "@/features/dashboard/components/expiring-soon-sheet";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { useSheet } from "@/integrations/sheet-provider";
-import { percentageChangeCalculator } from "@/lib/helpers";
+import {
+	formatMinutesDuration,
+	percentageChangeCalculator,
+} from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 
 export function StatCards() {
@@ -88,7 +91,7 @@ export function StatCards() {
 			<KPICard
 				title="Check-ins"
 				value={totalAttendance}
-				subtitle={`${averageAttendanceDuration} average session duration`}
+				subtitle={`${formatMinutesDuration(averageAttendanceDuration)} average session duration`}
 				icon={DoorOpenIcon}
 				trend={percentageChangeCalculator(
 					totalAttendance,

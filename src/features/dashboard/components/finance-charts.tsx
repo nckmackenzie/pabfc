@@ -1,6 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, Label, Pie, PieChart, XAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -85,25 +86,9 @@ export function FinanceAreaChart() {
 
 // --- Pie Chart ---
 
-const pieChartConfig = {
-	plans: {
-		label: "Plans",
-	},
-	basic: {
-		label: "Basic",
-		color: "var(--chart-1)",
-	},
-	pro: {
-		label: "Pro",
-		color: "var(--chart-2)",
-	},
-	elite: {
-		label: "Elite",
-		color: "var(--chart-3)",
-	},
-	student: {
-		label: "Student",
-		color: "var(--chart-4)",
+const basePieChartConfig = {
+	value: {
+		label: "Revenue",
 	},
 } satisfies ChartConfig;
 
@@ -112,6 +97,21 @@ export function FinancePieChart() {
 		queryKey: [...dashboardQueries.all, "plan-distribution"],
 		queryFn: () => getPlanDistribution(),
 	});
+
+	// Plans are configurable, so the legend has to be keyed off whatever plan
+	// names come back rather than a fixed list. Each swatch takes its colour from
+	// the slice's own `fill`, which keeps legend and pie in step.
+	const pieChartConfig = useMemo<ChartConfig>(
+		() =>
+			data.reduce<ChartConfig>(
+				(config, { name }) => {
+					config[name] = { label: name };
+					return config;
+				},
+				{ ...basePieChartConfig }
+			),
+		[data]
+	);
 
 	const totalRevenue = data.reduce((acc, curr) => acc + curr.value, 0);
 
@@ -156,6 +156,10 @@ export function FinancePieChart() {
 								}}
 							/>
 						</Pie>
+						<ChartLegend
+							content={<ChartLegendContent nameKey="name" />}
+							className="-translate-y-2 flex-wrap gap-2"
+						/>
 					</PieChart>
 				</ChartContainer>
 			</CardContent>

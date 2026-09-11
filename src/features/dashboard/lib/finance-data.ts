@@ -6,6 +6,16 @@ export type FinanceChartRow = {
 	amount: number | string;
 };
 
+export type ExpenseBreakdownRow = {
+	id: number;
+	date: string;
+	account: string;
+	source: string | null;
+	entity: string | null;
+	reference: string | null;
+	amount: number;
+};
+
 export type RecentFinanceTransaction = {
 	date: Date | string;
 	type: "income" | "expense";
@@ -158,10 +168,27 @@ export function buildFinanceMockData(today = new Date()) {
 			fill: "var(--chart-4)",
 		},
 	];
+	const mockExpenseReference = (day: number) =>
+		`EXP-${currentYear}${String(currentMonth).padStart(2, "0")}${String(day).padStart(2, "0")}`;
+	const mockCalendarDate = (day: number) =>
+		`${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+	// Mirrors the real drill-down: one row per posting, summing to
+	// `totalExpensesLast30Days`, so the card and the sheet agree under mock data.
+	const expenseBreakdown: ExpenseBreakdownRow[] = currentDays
+		.map((day) => ({
+			id: day,
+			date: mockCalendarDate(day),
+			account: "Sample Expense Account",
+			source: "expenses" as string | null,
+			entity: "Sample Payee" as string | null,
+			reference: mockExpenseReference(day) as string | null,
+			amount: expensesForDay(day),
+		}))
+		.reverse();
 	const recentActivities: RecentFinanceTransaction[] = currentDays
 		.flatMap((day) => [
 			{
-				date: `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+				date: mockCalendarDate(day),
 				type: "income" as const,
 				amount: revenueForDay(day),
 				reference: `PAY-${currentYear}${String(currentMonth).padStart(2, "0")}${String(day).padStart(2, "0")}`,
@@ -169,10 +196,10 @@ export function buildFinanceMockData(today = new Date()) {
 				status: "completed",
 			},
 			{
-				date: `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+				date: mockCalendarDate(day),
 				type: "expense" as const,
 				amount: expensesForDay(day),
-				reference: `EXP-${currentYear}${String(currentMonth).padStart(2, "0")}${String(day).padStart(2, "0")}`,
+				reference: mockExpenseReference(day),
 				entity: "Sample Payee",
 				status: "completed",
 			},
@@ -191,5 +218,6 @@ export function buildFinanceMockData(today = new Date()) {
 		revenueExpensesChartData,
 		planDistribution,
 		recentActivities,
+		expenseBreakdown,
 	};
 }

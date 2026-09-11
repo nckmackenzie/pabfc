@@ -1,4 +1,3 @@
-import { updatePaidInvoiceStatus } from "@/lib/inngest/functions/bills";
 import {
 	sendMembershipReminder,
 	sendPasswordResetTemporaryPassword,
@@ -13,7 +12,6 @@ export const functions = [
 	createPayment,
 	sendSmsBroadcast,
 	sendTestSmsToUser,
-	updatePaidInvoiceStatus,
 	sendRegistrationLink,
 	sendUserPassword,
 	sendPasswordResetTemporaryPassword,

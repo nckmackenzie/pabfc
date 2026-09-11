@@ -1,0 +1,136 @@
+import { QueryBuilder } from "drizzle-orm/pg-core";
+import { describe, expect, it } from "vitest";
+import {
+	journalEntries,
+	journalLines,
+	ledgerAccounts,
+	vwInvoices,
+} from "@/drizzle/schema";
+import {
+	expenseJournalFilters,
+	journalLineNetTotal,
+	outstandingBillFilters,
+	overdueBillFilters,
+} from "@/lib/query-helpers";
+
+const qb = new QueryBuilder();
+
+function expenseJournalQuery(range: {
+	dateFrom: Date | string;
+	dateTo: Date | string;
+}) {
+	return qb
+		.select({ total: journalLineNetTotal })
+		.from(journalLines)
+		.innerJoin(
+			journalEntries,
+			eq(journalEntries.id, journalLines.journalEntryId),
+		)
+		.innerJoin(ledgerAccounts, eq(ledgerAccounts.id, journalLines.accountId))
+		.where(expenseJournalFilters(range))
+		.toSQL();
+}
+
+import { eq } from "drizzle-orm";
+
+describe("expenseJournalFilters", () => {
+	it("restricts to expense-type ledger accounts", () => {
+		const { sql, params } = expenseJournalQuery({
+			dateFrom: "2026-06-01",
+			dateTo: "2026-06-30",
+		});
+
+		expect(sql).toContain('"ledger_accounts"."type" = $1');
+		expect(params[0]).toBe("expense");
+	});
+
+	it("bounds the journal entry date to the requested range", () => {
+		const { sql, params } = expenseJournalQuery({
+			dateFrom: "2026-06-01",
+			dateTo: "2026-06-30",
+		});
+
+		expect(sql).toContain('"journal_entries"."entry_date" >= $2');
+		expect(sql).toContain('"journal_entries"."entry_date" <= $3');
+		expect(params.slice(1)).toEqual(["2026-06-01", "2026-06-30"]);
+	});
+
+	it("normalizes Date inputs to calendar dates", () => {
+		const { params } = expenseJournalQuery({
+			dateFrom: new Date(2026, 5, 1, 13, 45),
+			dateTo: new Date(2026, 5, 30, 13, 45),
+		});
+
+		expect(params.slice(1)).toEqual(["2026-06-01", "2026-06-30"]);
+	});
+
+	it("nets credits against debits rather than summing debits only", () => {
+		const { sql } = expenseJournalQuery({
+			dateFrom: "2026-06-01",
+			dateTo: "2026-06-30",
+		});
+
+		expect(sql).toContain(
+			`case when "journal_lines"."dc" = 'debit' then "journal_lines"."amount" else -"journal_lines"."amount" end`,
+		);
+	});
+});
+
+describe("overdueBillFilters", () => {
+	const overdueQuery = () =>
+		qb
+			.select({ balance: vwInvoices.balance })
+			.from(vwInvoices)
+			.where(overdueBillFilters())
+			.toSQL();
+
+	it("selects on the view's derived overdue flag", () => {
+		const { sql, params } = overdueQuery();
+
+		expect(sql).toContain('"vw_invoices"."is_overdue" = $1');
+		expect(params).toEqual([true]);
+	});
+
+	it("does not depend on the stored workflow status", () => {
+		const { sql } = overdueQuery();
+
+		expect(sql).not.toContain('"status"');
+	});
+
+	it("applies no invoice or entry date range", () => {
+		const { sql } = overdueQuery();
+
+		expect(sql).not.toContain("invoice_date");
+	});
+});
+
+describe("outstandingBillFilters", () => {
+	const outstandingQuery = () =>
+		qb
+			.select({ balance: vwInvoices.balance })
+			.from(vwInvoices)
+			.where(outstandingBillFilters())
+			.toSQL();
+
+	it("keeps only payable bills that still owe money", () => {
+		const { sql, params } = outstandingQuery();
+
+		expect(sql).toContain('"vw_invoices"."is_payable" = $1');
+		expect(sql).toContain('"vw_invoices"."balance" > $2');
+		expect(params).toEqual([true, "0"]);
+	});
+
+	// The ageing report buckets outstanding money and the overdue report lists
+	// the late part of it. Both must exclude draft/cancelled bills or the two AP
+	// reports stop reconciling.
+	it("shares the payability rule with the overdue filter", () => {
+		expect(outstandingQuery().sql).toContain("is_payable");
+		expect(
+			qb
+				.select({ balance: vwInvoices.balance })
+				.from(vwInvoices)
+				.where(overdueBillFilters())
+				.toSQL().sql,
+		).toContain("is_overdue");
+	});
+});

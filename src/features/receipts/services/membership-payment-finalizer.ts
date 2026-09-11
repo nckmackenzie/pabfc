@@ -78,11 +78,6 @@ type FinalizeMembershipPaymentParams = {
 	};
 };
 
-export async function refreshMembersOverview(tx?: Transaction) {
-	const connection = tx ?? db;
-	await connection.execute(sql`REFRESH MATERIALIZED VIEW vw_member_overview`);
-}
-
 export async function finalizeMembershipPayment({
 	tx,
 	payment,
@@ -379,8 +374,6 @@ export async function finalizeMembershipPayment({
 		await tx.insert(activityLogs).values(activityLog);
 	}
 
-	// await refreshMembersOverview(tx);
-
 	return success(undefined);
 }
 
@@ -397,7 +390,5 @@ export async function runMembershipMaintenance() {
 			.update(memberMemberships)
 			.set({ status: "active" })
 			.where(and(eq(memberMemberships.status, "pending"), lte(memberMemberships.startDate, today)));
-
-		await refreshMembersOverview(tx);
 	});
 }
