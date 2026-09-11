@@ -17,19 +17,32 @@ import {
 import { createdAt, updatedAt } from "../schema-helpers";
 import { members } from "./member";
 
-export const attendanceLogs = pgTable("attendance_logs", {
-	id: bigserial("id", { mode: "bigint" }).primaryKey(),
-	memberId: varchar("member_id")
-		.notNull()
-		.references(() => members.id),
-	checkInTime: timestamp("check_in_time", { withTimezone: true }).notNull(),
-	checkOutTime: timestamp("check_out_time", { withTimezone: true }),
-	source: varchar("source", { length: 30 }), // 'reception','turnstile','kiosk','mobile_app'
-	deviceId: varchar("device_id", { length: 100 }),
-	notes: text("notes"),
-	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-	biotimeId: integer("biotime_id").unique(),
-});
+export const attendanceLogs = pgTable(
+	"attendance_logs",
+	{
+		id: bigserial("id", { mode: "bigint" }).primaryKey(),
+		memberId: varchar("member_id")
+			.notNull()
+			.references(() => members.id),
+		checkInTime: timestamp("check_in_time", { withTimezone: true }).notNull(),
+		checkOutTime: timestamp("check_out_time", { withTimezone: true }),
+		source: varchar("source", { length: 30 }), // 'reception','turnstile','kiosk','mobile_app'
+		deviceId: varchar("device_id", { length: 100 }),
+		notes: text("notes"),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+		biotimeId: integer("biotime_id").unique(),
+	},
+	(table) => [
+		// vw_member_overview takes max(check_in_time) per member and the dashboard
+		// filters vw_attendance_details by check_in_time. Both are per-read now that
+		// those views are live rather than materialized.
+		index("idx_attendance_logs_member_id_check_in_time").on(
+			table.memberId,
+			table.checkInTime.desc()
+		),
+		index("idx_attendance_logs_check_in_time").on(table.checkInTime),
+	]
+);
 
 export const attendanceLogsRelations = relations(attendanceLogs, ({ one }) => ({
 	member: one(members, {
@@ -92,7 +105,8 @@ export const attendanceOverview = pgView("vw_attendance_details", {
 	memberName: varchar("member_name").notNull(),
 	image: varchar("image"),
 	checkInTime: timestamp("check_in_time").notNull(),
-	checkOutTime: timestamp("check_out_time").notNull(),
+	checkOutTime: timestamp("check_out_time"),
+	/** Session length in minutes. Null until the member checks out. */
 	duration: numeric("duration"),
 	activePlanName: varchar("active_plan_name"),
 	nextRenewalDate: timestamp("next_renewal_date"),

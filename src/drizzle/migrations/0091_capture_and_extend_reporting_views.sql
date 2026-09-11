@@ -3,10 +3,36 @@
 -- not read bills, payments or attendance. Capture all three here, and extend
 -- vw_invoices with the payment state that bills.status used to store.
 --
--- CREATE OR REPLACE VIEW only permits appending columns, so vw_invoices keeps
--- its existing column order and gains is_overdue/display_status at the end.
+-- On every provisioned environment these three names are MATERIALIZED views.
+-- Postgres refuses `CREATE OR REPLACE VIEW` over a materialized view, and also
+-- refuses to change an existing view column's type, so each name is dropped by
+-- whatever relkind it currently holds before being recreated as a live view.
+DO $$
+DECLARE
+	target_name text;
+	relation_kind "char";
+BEGIN
+	FOREACH target_name IN ARRAY ARRAY['vw_invoices', 'vw_member_overview', 'vw_attendance_details']
+	LOOP
+		relation_kind := NULL;
 
-CREATE OR REPLACE VIEW vw_invoices AS
+		SELECT c.relkind
+		INTO relation_kind
+		FROM pg_class c
+			JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'public'
+			AND c.relname = target_name;
+
+		IF relation_kind = 'm' THEN
+			EXECUTE format('DROP MATERIALIZED VIEW %I CASCADE', target_name);
+		ELSIF relation_kind = 'v' THEN
+			EXECUTE format('DROP VIEW %I CASCADE', target_name);
+		END IF;
+	END LOOP;
+END $$;
+--> statement-breakpoint
+
+CREATE VIEW vw_invoices AS
 SELECT
 	b.id,
 	b.invoice_date,
@@ -26,6 +52,10 @@ SELECT
 		AND b.total - COALESCE(sum(bpl.amount), 0::numeric) > 0::numeric
 		AND b.status <> ALL (ARRAY['draft'::bill_status, 'cancelled'::bill_status])
 	) AS is_overdue,
+	-- Payable at all: excludes the workflow states that can never carry a
+	-- balance owing. Reports that bucket outstanding money (ageing) and reports
+	-- that list late money (overdue) both filter on this, so they reconcile.
+	(b.status <> ALL (ARRAY['draft'::bill_status, 'cancelled'::bill_status])) AS is_payable,
 	-- The single label the UI shows. Payment state and lateness are derived from
 	-- the payment lines on every read, so they cannot drift; b.status supplies
 	-- only the workflow state it still owns.
@@ -43,7 +73,7 @@ GROUP BY b.id, b.invoice_date, b.due_date, b.invoice_no, v.name, b.total
 ORDER BY b.invoice_date DESC, b.invoice_no DESC;
 --> statement-breakpoint
 
-CREATE OR REPLACE VIEW vw_member_overview AS
+CREATE VIEW vw_member_overview AS
 SELECT
 	m.id,
 	m.member_no,
@@ -88,14 +118,17 @@ FROM members m
 WHERE m.deleted_at IS NULL;
 --> statement-breakpoint
 
-CREATE OR REPLACE VIEW vw_attendance_details AS
+CREATE VIEW vw_attendance_details AS
 SELECT
 	al.id,
 	(m.first_name::text || ' '::text) || m.last_name::text AS member_name,
 	m.image,
 	al.check_in_time,
 	al.check_out_time,
-	al.check_out_time - al.check_in_time AS duration,
+	-- Minutes, as a number. Subtracting the timestamps directly yields an
+	-- interval, which `duration` is not typed for and which averages into an
+	-- object the UI cannot format.
+	round(extract(epoch FROM (al.check_out_time - al.check_in_time)) / 60.0, 2) AS duration,
 	am.plan_name AS active_plan_name,
 	am.end_date AS next_renewal_date
 FROM attendance_logs al
@@ -113,9 +146,25 @@ FROM attendance_logs al
 	) am ON true;
 --> statement-breakpoint
 
+-- The live views replace precomputed matview storage, so the per-row lookups
+-- they now run on every read need supporting indexes. `attendance_logs` had
+-- none: vw_member_overview takes max(check_in_time) per member, and the
+-- dashboard filters vw_attendance_details by check_in_time.
+CREATE INDEX IF NOT EXISTS "idx_attendance_logs_member_id_check_in_time" ON "attendance_logs" USING btree ("member_id","check_in_time" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_attendance_logs_check_in_time" ON "attendance_logs" USING btree ("check_in_time");--> statement-breakpoint
+-- vw_member_overview's active-plan LATERAL filters on member_id + status and
+-- orders by end_date; vw_invoices aggregates only the credit payment lines.
+CREATE INDEX IF NOT EXISTS "idx_member_membership_member_id_status_end_date" ON "member_memberships" USING btree ("member_id","status","end_date" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_bill_payment_lines_bill_id_dc" ON "bill_payment_lines" USING btree ("bill_id","dc");--> statement-breakpoint
+
 -- bills.status is now workflow state only. Rows whose status was overwritten by
 -- the payment/overdue jobs are returned to the workflow state they were created
 -- with; their payment state is derived from the payment lines instead.
+--
+-- No information is lost: 'paid', 'partially-paid' and 'overdue' are all fully
+-- recomputed by vw_invoices from bill_payment_lines and due_date, so this is
+-- reversible from the data itself. The workflow states the column still owns
+-- ('draft', 'approved', 'cancelled') are deliberately left untouched.
 UPDATE bills
 SET status = 'pending'
 WHERE status = ANY (ARRAY['paid'::bill_status, 'partially-paid'::bill_status, 'overdue'::bill_status]);

@@ -223,6 +223,8 @@ export const billPaymentLines = pgTable(
 	(table) => [
 		index("idx_bill_payment_lines_bill_payment_id").on(table.billPaymentId),
 		index("idx_bill_payment_lines_bill_id").on(table.billId),
+		// vw_invoices aggregates only the credit lines per bill, on every read.
+		index("idx_bill_payment_lines_bill_id_dc").on(table.billId, table.dc),
 	],
 );
 
@@ -271,5 +273,6 @@ export const vwInvoices = pgView("vw_invoices", {
 	balance: numeric("balance", { precision: 10, scale: 2 }).notNull(),
 	status: billStatusEnum("status").notNull(),
 	isOverdue: boolean("is_overdue").notNull(),
+	isPayable: boolean("is_payable").notNull(),
 	displayStatus: billStatusEnum("display_status").notNull(),
 }).existing();

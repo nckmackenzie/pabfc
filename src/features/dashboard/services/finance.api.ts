@@ -65,11 +65,14 @@ async function getFinanceMockDataIfNeeded(
 
 type ExpenseJournalDateRange = ReturnType<typeof getFinanceExpenseFilterParams>;
 
-/**
- * Net expense recognised on the ledger for a period. Sourced from journal lines
- * on expense-type accounts so expenses, bills and payroll are all counted once,
- * on an accrual basis, and reversals net themselves out.
- */
+// Every expense figure on this dashboard - the stat card, the chart series, the
+// recent transactions list and the drill-down sheet - is read through the three
+// functions below, which all apply `expenseJournalFilters` over the same join
+// chain. Expenses, bills and payroll all post to expense-type accounts, so
+// journal lines capture every source exactly once, on an accrual basis, and
+// reversals net themselves out.
+
+/** Net expense recognised on the ledger for a period. */
 async function getExpenseJournalTotal(range: ExpenseJournalDateRange) {
 	const [row] = await db
 		.select({ total: journalLineNetTotal })
@@ -79,6 +82,56 @@ async function getExpenseJournalTotal(range: ExpenseJournalDateRange) {
 		.where(expenseJournalFilters(range));
 
 	return Number(row.total);
+}
+
+/** Net expense per calendar day, for the revenue/expenses chart series. */
+async function getExpenseJournalDailyTotals(range: ExpenseJournalDateRange) {
+	return db
+		.select({
+			date: journalEntries.entryDate,
+			amount: journalLineNetTotal,
+		})
+		.from(journalLines)
+		.innerJoin(journalEntries, eq(journalEntries.id, journalLines.journalEntryId))
+		.innerJoin(ledgerAccounts, eq(ledgerAccounts.id, journalLines.accountId))
+		.where(expenseJournalFilters(range))
+		.groupBy(journalEntries.entryDate);
+}
+
+/**
+ * Individual expense postings for a period, newest first. `limit` is for the
+ * recent-transactions list; omit it for the full drill-down.
+ */
+async function getExpenseJournalLines(range: ExpenseJournalDateRange, limit?: number) {
+	const query = db
+		.select({
+			id: journalLines.id,
+			date: journalEntries.entryDate,
+			account: ledgerAccounts.name,
+			source: journalEntries.source,
+			entity: sql<string | null>`coalesce(${payees.name}, ${vendors.name})`,
+			reference: sql<
+				string | null
+			>`coalesce(${journalEntries.reference}, ${bills.invoiceNo}, ${expenseHeaders.reference}, ${journalLines.memo}, ${journalEntries.description})`,
+			amount: journalLineNetAmount,
+		})
+		.from(journalLines)
+		.innerJoin(journalEntries, eq(journalEntries.id, journalLines.journalEntryId))
+		.innerJoin(ledgerAccounts, eq(ledgerAccounts.id, journalLines.accountId))
+		.leftJoin(
+			expenseHeaders,
+			and(eq(journalEntries.source, "expenses"), eq(expenseHeaders.id, journalEntries.sourceId))
+		)
+		.leftJoin(payees, eq(payees.id, expenseHeaders.payeeId))
+		.leftJoin(bills, and(eq(journalEntries.source, "bills"), eq(bills.id, journalEntries.sourceId)))
+		.leftJoin(vendors, eq(vendors.id, bills.vendorId))
+		.where(expenseJournalFilters(range))
+		.orderBy(desc(journalEntries.entryDate), asc(journalLines.lineNumber))
+		.$dynamic();
+
+	const rows = await (limit ? query.limit(limit) : query);
+
+	return rows.map((row) => ({ ...row, amount: Number(row.amount) }));
 }
 
 /** Outstanding balance across every bill that is past due, point in time. */
@@ -195,14 +248,9 @@ export const getFinanceChartData = createServerFn()
 				.from(payments)
 				.where(paymentFilters(currentPaymentFilters))
 				.groupBy(sql`to_char(${payments.paymentDate} at time zone 'Africa/Nairobi', 'YYYY-MM-DD')`),
-			db
-				.select({
-					date: expenseHeaders.expenseDate,
-					amount: sql<number>`coalesce(sum(${expenseHeaders.totalAmount}), 0)`,
-				})
-				.from(expenseHeaders)
-				.where(expenseFilters(currentExpenseFilters))
-				.groupBy(expenseHeaders.expenseDate),
+			// Same ledger basis as the Expenses stat card, so the card total and
+			// the chart series always describe the same money.
+			getExpenseJournalDailyTotals(currentExpenseFilters),
 		]);
 		const chartData = buildFinanceChartData(revenueRows, expenseRows);
 
@@ -232,18 +280,8 @@ export const getRecentTransactions = createServerFn()
 				.where(paymentFilters(currentPaymentFilters))
 				.orderBy(desc(payments.paymentDate))
 				.limit(10),
-			db
-				.select({
-					date: expenseHeaders.expenseDate,
-					amount: expenseHeaders.totalAmount,
-					reference: sql<string>`coalesce(${expenseHeaders.reference}, concat('EXP-', ${expenseHeaders.expenseNo}::text))`,
-					entity: payees.name,
-				})
-				.from(expenseHeaders)
-				.innerJoin(payees, eq(expenseHeaders.payeeId, payees.id))
-				.where(expenseFilters(currentExpenseFilters))
-				.orderBy(desc(expenseHeaders.expenseDate))
-				.limit(10),
+			// Same ledger basis as the Expenses stat card and chart series.
+			getExpenseJournalLines(currentExpenseFilters, 10),
 		]);
 		const recentActivities = mergeRecentFinanceTransactions(
 			incomeRows.map((row) => ({
@@ -252,9 +290,11 @@ export const getRecentTransactions = createServerFn()
 				amount: Number(row.amount),
 			})),
 			expenseRows.map((row) => ({
-				...row,
+				date: row.date,
+				reference: row.reference ?? row.account,
+				entity: row.entity ?? toTitleCase(row.source ?? "journal"),
 				type: "expense" as const,
-				amount: Number(row.amount),
+				amount: row.amount,
 				status: "completed",
 			}))
 		);
@@ -294,9 +334,10 @@ export const getPlanDistribution = createServerFn()
 	});
 
 /**
- * Drill-down behind the Expenses stat card. Deliberately shares
- * `expenseJournalFilters` with `getExpenseJournalTotal` so the rows listed here
- * always sum to the figure shown on the card.
+ * Drill-down behind the Expenses stat card. Lists the same postings that
+ * `getExpenseJournalTotal` sums, so the rows always reconcile with the figure on
+ * the card - including under mock data, where the mock supplies the postings
+ * behind its own `totalExpensesLast30Days`.
  */
 export const getExpenseMtdBreakdown = createServerFn()
 	.middleware([authMiddleware])
@@ -306,37 +347,9 @@ export const getExpenseMtdBreakdown = createServerFn()
 		const currentPaymentFilters = getCurrentFinancePaymentFilterParams(now);
 		const currentExpenseFilters = getCurrentFinanceExpenseFilterParams(now);
 		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
-		if (mockData) return [];
+		if (mockData) return mockData.expenseBreakdown;
 
-		const rows = await db
-			.select({
-				id: journalLines.id,
-				date: journalEntries.entryDate,
-				account: ledgerAccounts.name,
-				source: journalEntries.source,
-				entity: sql<string | null>`coalesce(${payees.name}, ${vendors.name})`,
-				reference: sql<
-					string | null
-				>`coalesce(${journalEntries.reference}, ${bills.invoiceNo}, ${expenseHeaders.reference}, ${journalLines.memo}, ${journalEntries.description})`,
-				amount: journalLineNetAmount,
-			})
-			.from(journalLines)
-			.innerJoin(journalEntries, eq(journalEntries.id, journalLines.journalEntryId))
-			.innerJoin(ledgerAccounts, eq(ledgerAccounts.id, journalLines.accountId))
-			.leftJoin(
-				expenseHeaders,
-				and(eq(journalEntries.source, "expenses"), eq(expenseHeaders.id, journalEntries.sourceId))
-			)
-			.leftJoin(payees, eq(payees.id, expenseHeaders.payeeId))
-			.leftJoin(
-				bills,
-				and(eq(journalEntries.source, "bills"), eq(bills.id, journalEntries.sourceId))
-			)
-			.leftJoin(vendors, eq(vendors.id, bills.vendorId))
-			.where(expenseJournalFilters(currentExpenseFilters))
-			.orderBy(desc(journalEntries.entryDate), asc(journalLines.lineNumber));
-
-		return rows.map((row) => ({ ...row, amount: Number(row.amount) }));
+		return getExpenseJournalLines(currentExpenseFilters);
 	});
 
 /**

@@ -214,6 +214,14 @@ export const memberMemberships = pgTable(
 		index("idx_member_membership_membership_plan_id").on(
 			table.membershipPlanId,
 		),
+		// vw_member_overview resolves each member's active plan with a LATERAL
+		// that filters on member_id + status and orders by end_date, on every
+		// read now that the view is live rather than materialized.
+		index("idx_member_membership_member_id_status_end_date").on(
+			table.memberId,
+			table.status,
+			table.endDate.desc(),
+		),
 	],
 );
 

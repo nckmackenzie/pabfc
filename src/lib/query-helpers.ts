@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, type SQL, sql } from "drizzle-orm";
+import { and, eq, gt, gte, lte, type SQL, sql } from "drizzle-orm";
 import {
 	expenseHeaders,
 	journalEntries,
@@ -89,4 +89,13 @@ export function expenseJournalFilters({ dateFrom, dateTo }: DateRangeFiltersProp
  */
 export function overdueBillFilters() {
 	return eq(vwInvoices.isOverdue, true);
+}
+
+/**
+ * Bills that still owe money and are actually payable. `isOverdue` is a subset
+ * of this, so AP reports that bucket outstanding money (ageing) and reports
+ * that list only late money (overdue) share the same population and reconcile.
+ */
+export function outstandingBillFilters() {
+	return and(eq(vwInvoices.isPayable, true), gt(vwInvoices.balance, "0"));
 }

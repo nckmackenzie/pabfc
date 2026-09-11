@@ -112,12 +112,47 @@ describe("mergeRecentFinanceTransactions", () => {
 });
 
 describe("buildFinanceMockData", () => {
+	const MOCK_TODAY = new Date("2026-08-26T10:15:30.000Z");
+
 	it("keeps mock plan distribution equal to mock membership revenue", () => {
-		const data = buildFinanceMockData(new Date("2026-08-26T10:15:30.000Z"));
+		const data = buildFinanceMockData(MOCK_TODAY);
 
 		expect(data.planDistribution.reduce((total, plan) => total + plan.value, 0)).toBe(
 			data.totalRevenueLast30Days
 		);
 		expect(data.revenueExpensesChartData).toHaveLength(26);
+	});
+
+	// The Expenses stat card reads `totalExpensesLast30Days` and its drill-down
+	// sheet reads `expenseBreakdown`. Under mock data the sheet used to come back
+	// empty while the card still showed a figure.
+	it("keeps the mock expense breakdown equal to the mock expenses total", () => {
+		const data = buildFinanceMockData(MOCK_TODAY);
+
+		expect(data.expenseBreakdown.length).toBeGreaterThan(0);
+		expect(data.expenseBreakdown.reduce((total, row) => total + row.amount, 0)).toBe(
+			data.totalExpensesLast30Days
+		);
+	});
+
+	it("matches the mock expense breakdown to the chart series day for day", () => {
+		const data = buildFinanceMockData(MOCK_TODAY);
+
+		expect(data.expenseBreakdown).toHaveLength(data.revenueExpensesChartData.length);
+		expect([...data.expenseBreakdown].reverse().map((row) => row.amount)).toEqual(
+			data.revenueExpensesChartData.map((row) => row.expenses)
+		);
+	});
+
+	it("lists mock expense breakdown rows newest first", () => {
+		const dates = buildFinanceMockData(MOCK_TODAY).expenseBreakdown.map((row) => row.date);
+
+		expect(dates).toEqual([...dates].sort().reverse());
+	});
+
+	// `getOverdueBillsBreakdown` returns no rows under mock data, so the card it
+	// sits behind has to read zero.
+	it("reports no overdue bills, matching its empty breakdown", () => {
+		expect(buildFinanceMockData(MOCK_TODAY).totalOverdueBills).toBe(0);
 	});
 });

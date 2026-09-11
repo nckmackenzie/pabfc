@@ -92,9 +92,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_access_control_agents_status": {
           "name": "idx_access_control_agents_status",
@@ -107,9 +107,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -180,24 +180,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "access_control_sync_attempts_job_id_access_control_sync_jobs_id_fk": {
           "name": "access_control_sync_attempts_job_id_access_control_sync_jobs_id_fk",
           "tableFrom": "access_control_sync_attempts",
+          "tableTo": "access_control_sync_jobs",
           "columnsFrom": [
             "job_id"
           ],
-          "tableTo": "access_control_sync_jobs",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -335,9 +335,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_access_sync_jobs_status": {
           "name": "idx_access_sync_jobs_status",
@@ -350,9 +350,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_access_sync_jobs_member": {
           "name": "idx_access_sync_jobs_member",
@@ -365,50 +365,50 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "access_control_sync_jobs_member_id_members_id_fk": {
           "name": "access_control_sync_jobs_member_id_members_id_fk",
           "tableFrom": "access_control_sync_jobs",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "access_control_sync_jobs_biotime_person_profile_id_biotime_person_profiles_id_fk": {
           "name": "access_control_sync_jobs_biotime_person_profile_id_biotime_person_profiles_id_fk",
           "tableFrom": "access_control_sync_jobs",
+          "tableTo": "biotime_person_profiles",
           "columnsFrom": [
             "biotime_person_profile_id"
           ],
-          "tableTo": "biotime_person_profiles",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "access_control_sync_jobs_employee_id_employees_id_fk": {
           "name": "access_control_sync_jobs_employee_id_employees_id_fk",
           "tableFrom": "access_control_sync_jobs",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -585,9 +585,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_biotime_person_profiles_biotime_id": {
           "name": "uq_biotime_person_profiles_biotime_id",
@@ -600,9 +600,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_biotime_person_profiles_type": {
           "name": "idx_biotime_person_profiles_type",
@@ -615,9 +615,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_biotime_person_profiles_member": {
           "name": "idx_biotime_person_profiles_member",
@@ -630,9 +630,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_biotime_person_profiles_employee": {
           "name": "idx_biotime_person_profiles_employee",
@@ -645,9 +645,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_biotime_person_profiles_status": {
           "name": "idx_biotime_person_profiles_status",
@@ -660,37 +660,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "biotime_person_profiles_member_id_members_id_fk": {
           "name": "biotime_person_profiles_member_id_members_id_fk",
           "tableFrom": "biotime_person_profiles",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "biotime_person_profiles_employee_id_employees_id_fk": {
           "name": "biotime_person_profiles_employee_id_employees_id_fk",
           "tableFrom": "biotime_person_profiles",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -866,25 +866,25 @@
         "employee_gym_access_logs_employee_id_employees_id_fk": {
           "name": "employee_gym_access_logs_employee_id_employees_id_fk",
           "tableFrom": "employee_gym_access_logs",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "employee_gym_access_logs_biotime_id_unique": {
           "name": "employee_gym_access_logs_biotime_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "biotime_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -975,41 +975,41 @@
         "addon_invoice_lines_addon_invoice_id_addon_invoices_id_fk": {
           "name": "addon_invoice_lines_addon_invoice_id_addon_invoices_id_fk",
           "tableFrom": "addon_invoice_lines",
+          "tableTo": "addon_invoices",
           "columnsFrom": [
             "addon_invoice_id"
           ],
-          "tableTo": "addon_invoices",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "addon_invoice_lines_addon_id_addons_id_fk": {
           "name": "addon_invoice_lines_addon_id_addons_id_fk",
           "tableFrom": "addon_invoice_lines",
+          "tableTo": "addons",
           "columnsFrom": [
             "addon_id"
           ],
-          "tableTo": "addons",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "addon_invoice_lines_revenue_account_id_ledger_accounts_id_fk": {
           "name": "addon_invoice_lines_revenue_account_id_ledger_accounts_id_fk",
           "tableFrom": "addon_invoice_lines",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "revenue_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1172,38 +1172,38 @@
         "addon_invoices_member_id_members_id_fk": {
           "name": "addon_invoices_member_id_members_id_fk",
           "tableFrom": "addon_invoices",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "addon_invoices_payment_id_payments_id_fk": {
           "name": "addon_invoices_payment_id_payments_id_fk",
           "tableFrom": "addon_invoices",
+          "tableTo": "payments",
           "columnsFrom": [
             "payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "addon_invoices_invoice_no_unique": {
           "name": "addon_invoices_invoice_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "invoice_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -1278,15 +1278,15 @@
         "addons_revenue_account_id_ledger_accounts_id_fk": {
           "name": "addons_revenue_account_id_ledger_accounts_id_fk",
           "tableFrom": "addons",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "revenue_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1355,30 +1355,67 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_attendance_logs_member_id_check_in_time": {
+          "name": "idx_attendance_logs_member_id_check_in_time",
+          "columns": [
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "check_in_time",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_attendance_logs_check_in_time": {
+          "name": "idx_attendance_logs_check_in_time",
+          "columns": [
+            {
+              "expression": "check_in_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "attendance_logs_member_id_members_id_fk": {
           "name": "attendance_logs_member_id_members_id_fk",
           "tableFrom": "attendance_logs",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "attendance_logs_biotime_id_unique": {
           "name": "attendance_logs_biotime_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "biotime_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -1576,9 +1613,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_biotime_unmapped_attendance_emp_code": {
           "name": "idx_biotime_unmapped_attendance_emp_code",
@@ -1591,9 +1628,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_biotime_unmapped_attendance_resolved": {
           "name": "idx_biotime_unmapped_attendance_resolved",
@@ -1606,9 +1643,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -1684,24 +1721,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "activity_logs_user_id_users_id_fk": {
           "name": "activity_logs_user_id_users_id_fk",
           "tableFrom": "activity_logs",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1806,24 +1843,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "accounts_user_id_users_id_fk": {
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1954,9 +1991,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "login_attempts_ip_address_idx": {
           "name": "login_attempts_ip_address_idx",
@@ -1969,9 +2006,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "login_attempts_attempted_at_idx": {
           "name": "login_attempts_attempted_at_idx",
@@ -1984,24 +2021,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "login_attempts_user_id_users_id_fk": {
           "name": "login_attempts_user_id_users_id_fk",
           "tableFrom": "login_attempts",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2071,9 +2108,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "password_reset_attempts_identifier_hash_idx": {
           "name": "password_reset_attempts_identifier_hash_idx",
@@ -2086,9 +2123,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "password_reset_attempts_ip_address_idx": {
           "name": "password_reset_attempts_ip_address_idx",
@@ -2101,9 +2138,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "password_reset_attempts_created_at_idx": {
           "name": "password_reset_attempts_created_at_idx",
@@ -2116,24 +2153,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "password_reset_attempts_user_id_users_id_fk": {
           "name": "password_reset_attempts_user_id_users_id_fk",
           "tableFrom": "password_reset_attempts",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2240,9 +2277,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "password_reset_challenges_identifier_hash_idx": {
           "name": "password_reset_challenges_identifier_hash_idx",
@@ -2255,9 +2292,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "password_reset_challenges_ip_address_idx": {
           "name": "password_reset_challenges_ip_address_idx",
@@ -2270,9 +2307,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "password_reset_challenges_expires_at_idx": {
           "name": "password_reset_challenges_expires_at_idx",
@@ -2285,24 +2322,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "password_reset_challenges_user_id_users_id_fk": {
           "name": "password_reset_challenges_user_id_users_id_fk",
           "tableFrom": "password_reset_challenges",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2359,10 +2396,10 @@
       "uniqueConstraints": {
         "permissions_key_unique": {
           "name": "permissions_key_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "key"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -2526,34 +2563,34 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "sessions_user_id_users_id_fk": {
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "sessions_token_unique": {
           "name": "sessions_token_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "token"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -2594,15 +2631,15 @@
         "two_factors_user_id_users_id_fk": {
           "name": "two_factors_user_id_users_id_fk",
           "tableFrom": "two_factors",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2790,9 +2827,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "users_contact_idx": {
           "name": "users_contact_idx",
@@ -2805,9 +2842,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -2815,17 +2852,17 @@
       "uniqueConstraints": {
         "users_username_unique": {
           "name": "users_username_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "username"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "users_member_id_unique": {
           "name": "users_member_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "member_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -2887,9 +2924,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -2953,9 +2990,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "bank_accounts_account_number_idx": {
           "name": "bank_accounts_account_number_idx",
@@ -2968,24 +3005,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "bank_accounts_account_id_ledger_accounts_id_fk": {
           "name": "bank_accounts_account_id_ledger_accounts_id_fk",
           "tableFrom": "bank_accounts",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3092,9 +3129,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "bank_postings_transaction_date_idx": {
           "name": "bank_postings_transaction_date_idx",
@@ -3107,9 +3144,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "bank_postings_reference_idx": {
           "name": "bank_postings_reference_idx",
@@ -3122,37 +3159,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "bank_postings_bank_id_bank_accounts_id_fk": {
           "name": "bank_postings_bank_id_bank_accounts_id_fk",
           "tableFrom": "bank_postings",
+          "tableTo": "bank_accounts",
           "columnsFrom": [
             "bank_id"
           ],
-          "tableTo": "bank_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "bank_postings_counter_account_id_ledger_accounts_id_fk": {
           "name": "bank_postings_counter_account_id_ledger_accounts_id_fk",
           "tableFrom": "bank_postings",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "counter_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3261,37 +3298,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "bill_items_bill_id_bills_id_fk": {
           "name": "bill_items_bill_id_bills_id_fk",
           "tableFrom": "bill_items",
+          "tableTo": "bills",
           "columnsFrom": [
             "bill_id"
           ],
-          "tableTo": "bills",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "bill_items_expense_account_id_ledger_accounts_id_fk": {
           "name": "bill_items_expense_account_id_ledger_accounts_id_fk",
           "tableFrom": "bill_items",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "expense_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3361,9 +3398,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bill_payment_lines_bill_id": {
           "name": "idx_bill_payment_lines_bill_id",
@@ -3376,37 +3413,58 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
+        },
+        "idx_bill_payment_lines_bill_id_dc": {
+          "name": "idx_bill_payment_lines_bill_id_dc",
+          "columns": [
+            {
+              "expression": "bill_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dc",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
         "bill_payment_lines_bill_payment_id_bill_payments_id_fk": {
           "name": "bill_payment_lines_bill_payment_id_bill_payments_id_fk",
           "tableFrom": "bill_payment_lines",
+          "tableTo": "bill_payments",
           "columnsFrom": [
             "bill_payment_id"
           ],
-          "tableTo": "bill_payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "bill_payment_lines_bill_id_bills_id_fk": {
           "name": "bill_payment_lines_bill_id_bills_id_fk",
           "tableFrom": "bill_payment_lines",
+          "tableTo": "bills",
           "columnsFrom": [
             "bill_id"
           ],
-          "tableTo": "bills",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3506,9 +3564,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bill_payments_payment_date": {
           "name": "idx_bill_payments_payment_date",
@@ -3521,9 +3579,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bill_payments_reference": {
           "name": "idx_bill_payments_reference",
@@ -3536,63 +3594,63 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "bill_payments_vendor_id_vendors_id_fk": {
           "name": "bill_payments_vendor_id_vendors_id_fk",
           "tableFrom": "bill_payments",
+          "tableTo": "vendors",
           "columnsFrom": [
             "vendor_id"
           ],
-          "tableTo": "vendors",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "bill_payments_bank_id_bank_accounts_id_fk": {
           "name": "bill_payments_bank_id_bank_accounts_id_fk",
           "tableFrom": "bill_payments",
+          "tableTo": "bank_accounts",
           "columnsFrom": [
             "bank_id"
           ],
-          "tableTo": "bank_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "bill_payments_crediting_account_id_ledger_accounts_id_fk": {
           "name": "bill_payments_crediting_account_id_ledger_accounts_id_fk",
           "tableFrom": "bill_payments",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "crediting_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "bill_payments_created_by_users_id_fk": {
           "name": "bill_payments_created_by_users_id_fk",
           "tableFrom": "bill_payments",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3726,9 +3784,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bills_invoice_no": {
           "name": "idx_bills_invoice_no",
@@ -3741,9 +3799,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bills_invoice_date": {
           "name": "idx_bills_invoice_date",
@@ -3756,9 +3814,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bills_due_date": {
           "name": "idx_bills_due_date",
@@ -3771,9 +3829,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_bills_status": {
           "name": "idx_bills_status",
@@ -3786,47 +3844,47 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "bills_vendor_id_vendors_id_fk": {
           "name": "bills_vendor_id_vendors_id_fk",
           "tableFrom": "bills",
+          "tableTo": "vendors",
           "columnsFrom": [
             "vendor_id"
           ],
-          "tableTo": "vendors",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "bills_created_by_users_id_fk": {
           "name": "bills_created_by_users_id_fk",
           "tableFrom": "bills",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "bills_invoice_no_unique": {
           "name": "bills_invoice_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "invoice_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -3886,28 +3944,28 @@
         "recurring_bills_schedules_vendor_id_vendors_id_fk": {
           "name": "recurring_bills_schedules_vendor_id_vendors_id_fk",
           "tableFrom": "recurring_bills_schedules",
+          "tableTo": "vendors",
           "columnsFrom": [
             "vendor_id"
           ],
-          "tableTo": "vendors",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "recurring_bills_schedules_bill_id_bills_id_fk": {
           "name": "recurring_bills_schedules_bill_id_bills_id_fk",
           "tableFrom": "recurring_bills_schedules",
+          "tableTo": "bills",
           "columnsFrom": [
             "bill_id"
           ],
-          "tableTo": "bills",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3983,9 +4041,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_vendors_tax_pin": {
           "name": "idx_vendors_tax_pin",
@@ -3998,9 +4056,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_vendors_email": {
           "name": "idx_vendors_email",
@@ -4013,9 +4071,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_vendors_phone": {
           "name": "idx_vendors_phone",
@@ -4028,9 +4086,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -4038,10 +4096,10 @@
       "uniqueConstraints": {
         "vendors_tax_pin_unique": {
           "name": "vendors_tax_pin_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "tax_pin"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -4170,28 +4228,28 @@
         "journal_lines_journal_entry_id_journal_entries_id_fk": {
           "name": "journal_lines_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "journal_lines",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "journal_lines_account_id_ledger_accounts_id_fk": {
           "name": "journal_lines_account_id_ledger_accounts_id_fk",
           "tableFrom": "journal_lines",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4289,9 +4347,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_accounts_name": {
           "name": "idx_accounts_name",
@@ -4304,9 +4362,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -4314,10 +4372,10 @@
       "uniqueConstraints": {
         "ledger_accounts_code_unique": {
           "name": "ledger_accounts_code_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "code"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -4385,50 +4443,50 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "credit_note_redemptions_credit_note_id_credit_notes_id_fk": {
           "name": "credit_note_redemptions_credit_note_id_credit_notes_id_fk",
           "tableFrom": "credit_note_redemptions",
+          "tableTo": "credit_notes",
           "columnsFrom": [
             "credit_note_id"
           ],
-          "tableTo": "credit_notes",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "credit_note_redemptions_payment_id_payments_id_fk": {
           "name": "credit_note_redemptions_payment_id_payments_id_fk",
           "tableFrom": "credit_note_redemptions",
+          "tableTo": "payments",
           "columnsFrom": [
             "payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "credit_note_redemptions_addon_invoice_id_addon_invoices_id_fk": {
           "name": "credit_note_redemptions_addon_invoice_id_addon_invoices_id_fk",
           "tableFrom": "credit_note_redemptions",
+          "tableTo": "addon_invoices",
           "columnsFrom": [
             "addon_invoice_id"
           ],
-          "tableTo": "addon_invoices",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4572,9 +4630,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_credit_notes_original_membership_id": {
           "name": "uq_credit_notes_original_membership_id",
@@ -4587,73 +4645,73 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "credit_notes_member_id_members_id_fk": {
           "name": "credit_notes_member_id_members_id_fk",
           "tableFrom": "credit_notes",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "credit_notes_original_payment_id_payments_id_fk": {
           "name": "credit_notes_original_payment_id_payments_id_fk",
           "tableFrom": "credit_notes",
+          "tableTo": "payments",
           "columnsFrom": [
             "original_payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "credit_notes_original_membership_id_member_memberships_id_fk": {
           "name": "credit_notes_original_membership_id_member_memberships_id_fk",
           "tableFrom": "credit_notes",
+          "tableTo": "member_memberships",
           "columnsFrom": [
             "original_membership_id"
           ],
-          "tableTo": "member_memberships",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "credit_notes_issued_by_user_id_users_id_fk": {
           "name": "credit_notes_issued_by_user_id_users_id_fk",
           "tableFrom": "credit_notes",
+          "tableTo": "users",
           "columnsFrom": [
             "issued_by_user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "credit_notes_credit_note_no_unique": {
           "name": "credit_notes_credit_note_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "credit_note_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -4714,15 +4772,15 @@
         "expense_attachments_expense_header_id_expense_headers_id_fk": {
           "name": "expense_attachments_expense_header_id_expense_headers_id_fk",
           "tableFrom": "expense_attachments",
+          "tableTo": "expense_headers",
           "columnsFrom": [
             "expense_header_id"
           ],
-          "tableTo": "expense_headers",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4825,28 +4883,28 @@
         "expense_details_expense_header_id_expense_headers_id_fk": {
           "name": "expense_details_expense_header_id_expense_headers_id_fk",
           "tableFrom": "expense_details",
+          "tableTo": "expense_headers",
           "columnsFrom": [
             "expense_header_id"
           ],
-          "tableTo": "expense_headers",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "expense_details_account_id_ledger_accounts_id_fk": {
           "name": "expense_details_account_id_ledger_accounts_id_fk",
           "tableFrom": "expense_details",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4966,9 +5024,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "expenses_reference_idx": {
           "name": "expenses_reference_idx",
@@ -4981,9 +5039,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "expense_expense_date_idx": {
           "name": "expense_expense_date_idx",
@@ -4996,63 +5054,63 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "expense_headers_payee_id_payees_id_fk": {
           "name": "expense_headers_payee_id_payees_id_fk",
           "tableFrom": "expense_headers",
+          "tableTo": "payees",
           "columnsFrom": [
             "payee_id"
           ],
-          "tableTo": "payees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "expense_headers_bank_id_bank_accounts_id_fk": {
           "name": "expense_headers_bank_id_bank_accounts_id_fk",
           "tableFrom": "expense_headers",
+          "tableTo": "bank_accounts",
           "columnsFrom": [
             "bank_id"
           ],
-          "tableTo": "bank_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "expense_headers_crediting_account_id_ledger_accounts_id_fk": {
           "name": "expense_headers_crediting_account_id_ledger_accounts_id_fk",
           "tableFrom": "expense_headers",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "crediting_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "expense_headers_created_by_user_id_users_id_fk": {
           "name": "expense_headers_created_by_user_id_users_id_fk",
           "tableFrom": "expense_headers",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by_user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -5167,9 +5225,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "financial_years_start_date_idx": {
           "name": "financial_years_start_date_idx",
@@ -5182,9 +5240,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -5350,9 +5408,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_member_access_profiles_biotime_employee_code": {
           "name": "uq_member_access_profiles_biotime_employee_code",
@@ -5365,9 +5423,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_member_access_profiles_biotime_employee_id": {
           "name": "uq_member_access_profiles_biotime_employee_id",
@@ -5380,9 +5438,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_member_access_profiles_status": {
           "name": "idx_member_access_profiles_status",
@@ -5395,24 +5453,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "member_access_profiles_member_id_members_id_fk": {
           "name": "member_access_profiles_member_id_members_id_fk",
           "tableFrom": "member_access_profiles",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -5551,9 +5609,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_member_membership_membership_plan_id": {
           "name": "idx_member_membership_membership_plan_id",
@@ -5566,37 +5624,64 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
+        },
+        "idx_member_membership_member_id_status_end_date": {
+          "name": "idx_member_membership_member_id_status_end_date",
+          "columns": [
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "end_date",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
         "member_memberships_member_id_members_id_fk": {
           "name": "member_memberships_member_id_members_id_fk",
           "tableFrom": "member_memberships",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "member_memberships_membership_plan_id_membership_plans_id_fk": {
           "name": "member_memberships_membership_plan_id_membership_plans_id_fk",
           "tableFrom": "member_memberships",
+          "tableTo": "membership_plans",
           "columnsFrom": [
             "membership_plan_id"
           ],
-          "tableTo": "membership_plans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "restrict"
+          "onDelete": "restrict",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -5659,25 +5744,25 @@
         "member_registration_links_member_id_members_id_fk": {
           "name": "member_registration_links_member_id_members_id_fk",
           "tableFrom": "member_registration_links",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "member_registration_links_short_code_unique": {
           "name": "member_registration_links_short_code_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "short_code"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -5871,9 +5956,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_member_last_name": {
           "name": "idx_member_last_name",
@@ -5886,9 +5971,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_member_status": {
           "name": "idx_member_status",
@@ -5901,9 +5986,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -5911,31 +5996,31 @@
       "uniqueConstraints": {
         "members_member_no_unique": {
           "name": "members_member_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "member_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "members_email_unique": {
           "name": "members_email_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "members_contact_unique": {
           "name": "members_contact_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "contact"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "members_id_number_unique": {
           "name": "members_id_number_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "id_number"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -6056,24 +6141,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "membership_plans_revenue_account_id_ledger_accounts_id_fk": {
           "name": "membership_plans_revenue_account_id_ledger_accounts_id_fk",
           "tableFrom": "membership_plans",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "revenue_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6197,9 +6282,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_membership_upgrades_upgrade_payment_id": {
           "name": "uq_membership_upgrades_upgrade_payment_id",
@@ -6212,89 +6297,89 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "membership_upgrades_original_payment_id_payments_id_fk": {
           "name": "membership_upgrades_original_payment_id_payments_id_fk",
           "tableFrom": "membership_upgrades",
+          "tableTo": "payments",
           "columnsFrom": [
             "original_payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "membership_upgrades_upgrade_payment_id_payments_id_fk": {
           "name": "membership_upgrades_upgrade_payment_id_payments_id_fk",
           "tableFrom": "membership_upgrades",
+          "tableTo": "payments",
           "columnsFrom": [
             "upgrade_payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "membership_upgrades_member_id_members_id_fk": {
           "name": "membership_upgrades_member_id_members_id_fk",
           "tableFrom": "membership_upgrades",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "membership_upgrades_original_plan_id_membership_plans_id_fk": {
           "name": "membership_upgrades_original_plan_id_membership_plans_id_fk",
           "tableFrom": "membership_upgrades",
+          "tableTo": "membership_plans",
           "columnsFrom": [
             "original_plan_id"
           ],
-          "tableTo": "membership_plans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "membership_upgrades_new_plan_id_membership_plans_id_fk": {
           "name": "membership_upgrades_new_plan_id_membership_plans_id_fk",
           "tableFrom": "membership_upgrades",
+          "tableTo": "membership_plans",
           "columnsFrom": [
             "new_plan_id"
           ],
-          "tableTo": "membership_plans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "membership_upgrades_created_by_user_id_users_id_fk": {
           "name": "membership_upgrades_created_by_user_id_users_id_fk",
           "tableFrom": "membership_upgrades",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by_user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6393,67 +6478,67 @@
         "customer_invoice_lines_invoice_id_customer_invoices_id_fk": {
           "name": "customer_invoice_lines_invoice_id_customer_invoices_id_fk",
           "tableFrom": "customer_invoice_lines",
+          "tableTo": "customer_invoices",
           "columnsFrom": [
             "invoice_id"
           ],
-          "tableTo": "customer_invoices",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "customer_invoice_lines_plan_id_membership_plans_id_fk": {
           "name": "customer_invoice_lines_plan_id_membership_plans_id_fk",
           "tableFrom": "customer_invoice_lines",
+          "tableTo": "membership_plans",
           "columnsFrom": [
             "plan_id"
           ],
-          "tableTo": "membership_plans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "customer_invoice_lines_membership_id_member_memberships_id_fk": {
           "name": "customer_invoice_lines_membership_id_member_memberships_id_fk",
           "tableFrom": "customer_invoice_lines",
+          "tableTo": "member_memberships",
           "columnsFrom": [
             "membership_id"
           ],
-          "tableTo": "member_memberships",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "customer_invoice_lines_revenue_account_id_ledger_accounts_id_fk": {
           "name": "customer_invoice_lines_revenue_account_id_ledger_accounts_id_fk",
           "tableFrom": "customer_invoice_lines",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "revenue_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "customer_invoice_lines_tax_account_id_ledger_accounts_id_fk": {
           "name": "customer_invoice_lines_tax_account_id_ledger_accounts_id_fk",
           "tableFrom": "customer_invoice_lines",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "tax_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6581,25 +6666,25 @@
         "customer_invoices_member_id_members_id_fk": {
           "name": "customer_invoices_member_id_members_id_fk",
           "tableFrom": "customer_invoices",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "customer_invoices_invoice_no_unique": {
           "name": "customer_invoices_invoice_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "invoice_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -6735,41 +6820,41 @@
         "mpesa_stk_requests_member_id_members_id_fk": {
           "name": "mpesa_stk_requests_member_id_members_id_fk",
           "tableFrom": "mpesa_stk_requests",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "mpesa_stk_requests_invoice_id_customer_invoices_id_fk": {
           "name": "mpesa_stk_requests_invoice_id_customer_invoices_id_fk",
           "tableFrom": "mpesa_stk_requests",
+          "tableTo": "customer_invoices",
           "columnsFrom": [
             "invoice_id"
           ],
-          "tableTo": "customer_invoices",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "mpesa_stk_requests_payment_id_payments_id_fk": {
           "name": "mpesa_stk_requests_payment_id_payments_id_fk",
           "tableFrom": "mpesa_stk_requests",
+          "tableTo": "payments",
           "columnsFrom": [
             "payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6812,28 +6897,28 @@
         "payment_applications_payment_id_payments_id_fk": {
           "name": "payment_applications_payment_id_payments_id_fk",
           "tableFrom": "payment_applications",
+          "tableTo": "payments",
           "columnsFrom": [
             "payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payment_applications_invoice_id_customer_invoices_id_fk": {
           "name": "payment_applications_invoice_id_customer_invoices_id_fk",
           "tableFrom": "payment_applications",
+          "tableTo": "customer_invoices",
           "columnsFrom": [
             "invoice_id"
           ],
-          "tableTo": "customer_invoices",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6890,9 +6975,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payment_members_member_id": {
           "name": "idx_payment_members_member_id",
@@ -6905,37 +6990,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payment_members_payment_id_payments_id_fk": {
           "name": "payment_members_payment_id_payments_id_fk",
           "tableFrom": "payment_members",
+          "tableTo": "payments",
           "columnsFrom": [
             "payment_id"
           ],
-          "tableTo": "payments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payment_members_member_id_members_id_fk": {
           "name": "payment_members_member_id_members_id_fk",
           "tableFrom": "payment_members",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "restrict"
+          "onDelete": "restrict",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7131,64 +7216,64 @@
         "payments_member_id_members_id_fk": {
           "name": "payments_member_id_members_id_fk",
           "tableFrom": "payments",
+          "tableTo": "members",
           "columnsFrom": [
             "member_id"
           ],
-          "tableTo": "members",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "payments_plan_id_membership_plans_id_fk": {
           "name": "payments_plan_id_membership_plans_id_fk",
           "tableFrom": "payments",
+          "tableTo": "membership_plans",
           "columnsFrom": [
             "plan_id"
           ],
-          "tableTo": "membership_plans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "payments_created_by_user_id_users_id_fk": {
           "name": "payments_created_by_user_id_users_id_fk",
           "tableFrom": "payments",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by_user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "payments_voided_by_user_id_users_id_fk": {
           "name": "payments_voided_by_user_id_users_id_fk",
           "tableFrom": "payments",
+          "tableTo": "users",
           "columnsFrom": [
             "voided_by_user_id"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "payments_payment_no_unique": {
           "name": "payments_payment_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "payment_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -7265,28 +7350,28 @@
         "settings_created_by_users_id_fk": {
           "name": "settings_created_by_users_id_fk",
           "tableFrom": "settings",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "settings_updated_by_users_id_fk": {
           "name": "settings_updated_by_users_id_fk",
           "tableFrom": "settings",
+          "tableTo": "users",
           "columnsFrom": [
             "updated_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7376,15 +7461,15 @@
         "sms_broadcasts_sms_template_id_sms_templates_id_fk": {
           "name": "sms_broadcasts_sms_template_id_sms_templates_id_fk",
           "tableFrom": "sms_broadcasts",
+          "tableTo": "sms_templates",
           "columnsFrom": [
             "sms_template_id"
           ],
-          "tableTo": "sms_templates",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7433,15 +7518,15 @@
         "sms_logs_template_id_sms_templates_id_fk": {
           "name": "sms_logs_template_id_sms_templates_id_fk",
           "tableFrom": "sms_logs",
+          "tableTo": "sms_templates",
           "columnsFrom": [
             "template_id"
           ],
-          "tableTo": "sms_templates",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7512,9 +7597,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -7762,9 +7847,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_employees_phone": {
           "name": "idx_employees_phone",
@@ -7777,9 +7862,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_first_name_last_name": {
           "name": "idx_first_name_last_name",
@@ -7798,83 +7883,83 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "employees_department_id_departments_id_fk": {
           "name": "employees_department_id_departments_id_fk",
           "tableFrom": "employees",
+          "tableTo": "departments",
           "columnsFrom": [
             "department_id"
           ],
-          "tableTo": "departments",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "employees_employee_no_unique": {
           "name": "employees_employee_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "employee_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_national_id_unique": {
           "name": "employees_national_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "national_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_kra_pin_unique": {
           "name": "employees_kra_pin_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "kra_pin"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_nssf_no_unique": {
           "name": "employees_nssf_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "nssf_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_shif_no_unique": {
           "name": "employees_shif_no_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "shif_no"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_helb_ref_unique": {
           "name": "employees_helb_ref_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "helb_ref"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_phone_unique": {
           "name": "employees_phone_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "phone"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "employees_email_unique": {
           "name": "employees_email_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -7983,9 +8068,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_employee_leave_balances_employee": {
           "name": "idx_employee_leave_balances_employee",
@@ -7998,9 +8083,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_employee_leave_balances_year": {
           "name": "idx_employee_leave_balances_year",
@@ -8013,24 +8098,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "employee_leave_balances_employee_id_employees_id_fk": {
           "name": "employee_leave_balances_employee_id_employees_id_fk",
           "tableFrom": "employee_leave_balances",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -8126,9 +8211,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_leave_balance_adjustments_year": {
           "name": "idx_leave_balance_adjustments_year",
@@ -8141,37 +8226,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "leave_balance_adjustments_employee_id_employees_id_fk": {
           "name": "leave_balance_adjustments_employee_id_employees_id_fk",
           "tableFrom": "leave_balance_adjustments",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "leave_balance_adjustments_performed_by_users_id_fk": {
           "name": "leave_balance_adjustments_performed_by_users_id_fk",
           "tableFrom": "leave_balance_adjustments",
+          "tableTo": "users",
           "columnsFrom": [
             "performed_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -8304,10 +8389,10 @@
       "uniqueConstraints": {
         "leave_entitlements_leave_type_unique": {
           "name": "leave_entitlements_leave_type_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "leave_type"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -8464,9 +8549,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_leave_requests_status": {
           "name": "idx_leave_requests_status",
@@ -8479,9 +8564,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_leave_requests_year": {
           "name": "idx_leave_requests_year",
@@ -8494,9 +8579,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_leave_requests_dates": {
           "name": "idx_leave_requests_dates",
@@ -8515,63 +8600,63 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "leave_requests_employee_id_employees_id_fk": {
           "name": "leave_requests_employee_id_employees_id_fk",
           "tableFrom": "leave_requests",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "leave_requests_requested_by_users_id_fk": {
           "name": "leave_requests_requested_by_users_id_fk",
           "tableFrom": "leave_requests",
+          "tableTo": "users",
           "columnsFrom": [
             "requested_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "leave_requests_approved_by_users_id_fk": {
           "name": "leave_requests_approved_by_users_id_fk",
           "tableFrom": "leave_requests",
+          "tableTo": "users",
           "columnsFrom": [
             "approved_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "leave_requests_cancelled_by_users_id_fk": {
           "name": "leave_requests_cancelled_by_users_id_fk",
           "tableFrom": "leave_requests",
+          "tableTo": "users",
           "columnsFrom": [
             "cancelled_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -8629,9 +8714,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -8639,10 +8724,10 @@
       "uniqueConstraints": {
         "public_holidays_holiday_date_unique": {
           "name": "public_holidays_holiday_date_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "holiday_date"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -8879,9 +8964,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_employee_loans_employee_status": {
           "name": "idx_employee_loans_employee_status",
@@ -8900,9 +8985,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_employee_loans_disbursement_account_id": {
           "name": "idx_employee_loans_disbursement_account_id",
@@ -8915,115 +9000,115 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "employee_loans_employee_id_employees_id_fk": {
           "name": "employee_loans_employee_id_employees_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "employee_loans_approved_by_users_id_fk": {
           "name": "employee_loans_approved_by_users_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "users",
           "columnsFrom": [
             "approved_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "employee_loans_disbursement_account_id_ledger_accounts_id_fk": {
           "name": "employee_loans_disbursement_account_id_ledger_accounts_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "disbursement_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "employee_loans_disbursement_journal_entry_id_journal_entries_id_fk": {
           "name": "employee_loans_disbursement_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "disbursement_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "employee_loans_rejected_by_users_id_fk": {
           "name": "employee_loans_rejected_by_users_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "users",
           "columnsFrom": [
             "rejected_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "employee_loans_paused_by_users_id_fk": {
           "name": "employee_loans_paused_by_users_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "users",
           "columnsFrom": [
             "paused_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "employee_loans_resumed_by_users_id_fk": {
           "name": "employee_loans_resumed_by_users_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "users",
           "columnsFrom": [
             "resumed_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "employee_loans_settlement_journal_entry_id_journal_entries_id_fk": {
           "name": "employee_loans_settlement_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "employee_loans",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "settlement_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9169,9 +9254,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_loan_repayments_employee_period": {
           "name": "idx_loan_repayments_employee_period",
@@ -9196,9 +9281,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_loan_repayments_payroll_slip_id": {
           "name": "idx_loan_repayments_payroll_slip_id",
@@ -9211,63 +9296,63 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "loan_repayments_loan_id_employee_loans_id_fk": {
           "name": "loan_repayments_loan_id_employee_loans_id_fk",
           "tableFrom": "loan_repayments",
+          "tableTo": "employee_loans",
           "columnsFrom": [
             "loan_id"
           ],
-          "tableTo": "employee_loans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "loan_repayments_employee_id_employees_id_fk": {
           "name": "loan_repayments_employee_id_employees_id_fk",
           "tableFrom": "loan_repayments",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "loan_repayments_payroll_slip_id_payroll_slips_id_fk": {
           "name": "loan_repayments_payroll_slip_id_payroll_slips_id_fk",
           "tableFrom": "loan_repayments",
+          "tableTo": "payroll_slips",
           "columnsFrom": [
             "payroll_slip_id"
           ],
-          "tableTo": "payroll_slips",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "loan_repayments_journal_entry_id_journal_entries_id_fk": {
           "name": "loan_repayments_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "loan_repayments",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9452,9 +9537,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_overtime_records_period_status": {
           "name": "idx_overtime_records_period_status",
@@ -9479,9 +9564,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_overtime_records_payroll_slip_id": {
           "name": "idx_overtime_records_payroll_slip_id",
@@ -9494,9 +9579,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_overtime_records_employee_period": {
           "name": "uq_overtime_records_employee_period",
@@ -9521,63 +9606,63 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "overtime_records_employee_id_employees_id_fk": {
           "name": "overtime_records_employee_id_employees_id_fk",
           "tableFrom": "overtime_records",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "overtime_records_payroll_period_id_payroll_periods_id_fk": {
           "name": "overtime_records_payroll_period_id_payroll_periods_id_fk",
           "tableFrom": "overtime_records",
+          "tableTo": "payroll_periods",
           "columnsFrom": [
             "payroll_period_id"
           ],
-          "tableTo": "payroll_periods",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "overtime_records_approved_by_users_id_fk": {
           "name": "overtime_records_approved_by_users_id_fk",
           "tableFrom": "overtime_records",
+          "tableTo": "users",
           "columnsFrom": [
             "approved_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "overtime_records_created_by_users_id_fk": {
           "name": "overtime_records_created_by_users_id_fk",
           "tableFrom": "overtime_records",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9651,34 +9736,34 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_account_mappings_account_id_ledger_accounts_id_fk": {
           "name": "payroll_account_mappings_account_id_ledger_accounts_id_fk",
           "tableFrom": "payroll_account_mappings",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "payroll_account_mappings_role_unique": {
           "name": "payroll_account_mappings_role_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "role"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -9764,9 +9849,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_deductions_period_type": {
           "name": "idx_payroll_deductions_period_type",
@@ -9785,9 +9870,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_deductions_loan": {
           "name": "idx_payroll_deductions_loan",
@@ -9800,9 +9885,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_deductions_advance": {
           "name": "idx_payroll_deductions_advance",
@@ -9815,76 +9900,76 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_deductions_payroll_slip_id_payroll_slips_id_fk": {
           "name": "payroll_deductions_payroll_slip_id_payroll_slips_id_fk",
           "tableFrom": "payroll_deductions",
+          "tableTo": "payroll_slips",
           "columnsFrom": [
             "payroll_slip_id"
           ],
-          "tableTo": "payroll_slips",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_deductions_payroll_period_id_payroll_periods_id_fk": {
           "name": "payroll_deductions_payroll_period_id_payroll_periods_id_fk",
           "tableFrom": "payroll_deductions",
+          "tableTo": "payroll_periods",
           "columnsFrom": [
             "payroll_period_id"
           ],
-          "tableTo": "payroll_periods",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_deductions_employee_id_employees_id_fk": {
           "name": "payroll_deductions_employee_id_employees_id_fk",
           "tableFrom": "payroll_deductions",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_deductions_loan_id_employee_loans_id_fk": {
           "name": "payroll_deductions_loan_id_employee_loans_id_fk",
           "tableFrom": "payroll_deductions",
+          "tableTo": "employee_loans",
           "columnsFrom": [
             "loan_id"
           ],
-          "tableTo": "employee_loans",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_deductions_advance_id_salary_advances_id_fk": {
           "name": "payroll_deductions_advance_id_salary_advances_id_fk",
           "tableFrom": "payroll_deductions",
+          "tableTo": "salary_advances",
           "columnsFrom": [
             "advance_id"
           ],
-          "tableTo": "salary_advances",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -9966,9 +10051,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_period_bonuses_employee": {
           "name": "idx_payroll_period_bonuses_employee",
@@ -9981,9 +10066,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_payroll_period_bonuses_period_employee": {
           "name": "uq_payroll_period_bonuses_period_employee",
@@ -10002,50 +10087,50 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_period_bonuses_payroll_period_id_payroll_periods_id_fk": {
           "name": "payroll_period_bonuses_payroll_period_id_payroll_periods_id_fk",
           "tableFrom": "payroll_period_bonuses",
+          "tableTo": "payroll_periods",
           "columnsFrom": [
             "payroll_period_id"
           ],
-          "tableTo": "payroll_periods",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_period_bonuses_employee_id_employees_id_fk": {
           "name": "payroll_period_bonuses_employee_id_employees_id_fk",
           "tableFrom": "payroll_period_bonuses",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_period_bonuses_created_by_users_id_fk": {
           "name": "payroll_period_bonuses_created_by_users_id_fk",
           "tableFrom": "payroll_period_bonuses",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -10134,9 +10219,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_period_other_deductions_employee": {
           "name": "idx_payroll_period_other_deductions_employee",
@@ -10149,9 +10234,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_period_other_deductions_type": {
           "name": "idx_payroll_period_other_deductions_type",
@@ -10164,9 +10249,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_payroll_period_other_deductions_period_employee": {
           "name": "uq_payroll_period_other_deductions_period_employee",
@@ -10185,50 +10270,50 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_period_other_deductions_payroll_period_id_payroll_periods_id_fk": {
           "name": "payroll_period_other_deductions_payroll_period_id_payroll_periods_id_fk",
           "tableFrom": "payroll_period_other_deductions",
+          "tableTo": "payroll_periods",
           "columnsFrom": [
             "payroll_period_id"
           ],
-          "tableTo": "payroll_periods",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_period_other_deductions_employee_id_employees_id_fk": {
           "name": "payroll_period_other_deductions_employee_id_employees_id_fk",
           "tableFrom": "payroll_period_other_deductions",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_period_other_deductions_created_by_users_id_fk": {
           "name": "payroll_period_other_deductions_created_by_users_id_fk",
           "tableFrom": "payroll_period_other_deductions",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -10515,10 +10600,10 @@
             }
           ],
           "isUnique": true,
-          "with": {},
-          "method": "btree",
           "where": "\"payroll_periods\".\"status\" <> 'cancelled'",
-          "concurrently": false
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         },
         "idx_payroll_periods_status": {
           "name": "idx_payroll_periods_status",
@@ -10531,9 +10616,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_periods_pay_date": {
           "name": "idx_payroll_periods_pay_date",
@@ -10546,9 +10631,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_periods_year": {
           "name": "idx_payroll_periods_year",
@@ -10561,89 +10646,89 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_periods_approved_by_users_id_fk": {
           "name": "payroll_periods_approved_by_users_id_fk",
           "tableFrom": "payroll_periods",
+          "tableTo": "users",
           "columnsFrom": [
             "approved_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_periods_cancelled_by_users_id_fk": {
           "name": "payroll_periods_cancelled_by_users_id_fk",
           "tableFrom": "payroll_periods",
+          "tableTo": "users",
           "columnsFrom": [
             "cancelled_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_periods_disbursement_journal_entry_id_journal_entries_id_fk": {
           "name": "payroll_periods_disbursement_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "payroll_periods",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "disbursement_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_periods_remittance_journal_entry_id_journal_entries_id_fk": {
           "name": "payroll_periods_remittance_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "payroll_periods",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "remittance_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_periods_payroll_journal_entry_id_journal_entries_id_fk": {
           "name": "payroll_periods_payroll_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "payroll_periods",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "payroll_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_periods_created_by_users_id_fk": {
           "name": "payroll_periods_created_by_users_id_fk",
           "tableFrom": "payroll_periods",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -10732,9 +10817,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_remittance_line_items_journal_entry": {
           "name": "idx_payroll_remittance_line_items_journal_entry",
@@ -10747,37 +10832,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_remittance_line_items_journal_entry_id_journal_entries_id_fk": {
           "name": "payroll_remittance_line_items_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "payroll_remittance_line_items",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_remittance_line_items_payroll_period_id_payroll_periods_id_fk": {
           "name": "payroll_remittance_line_items_payroll_period_id_payroll_periods_id_fk",
           "tableFrom": "payroll_remittance_line_items",
+          "tableTo": "payroll_periods",
           "columnsFrom": [
             "payroll_period_id"
           ],
-          "tableTo": "payroll_periods",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -11277,9 +11362,9 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_slips_period": {
           "name": "idx_payroll_slips_period",
@@ -11292,9 +11377,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_slips_employee": {
           "name": "idx_payroll_slips_employee",
@@ -11307,9 +11392,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_payroll_slips_overtime_record": {
           "name": "idx_payroll_slips_overtime_record",
@@ -11322,89 +11407,89 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "payroll_slips_payroll_period_id_payroll_periods_id_fk": {
           "name": "payroll_slips_payroll_period_id_payroll_periods_id_fk",
           "tableFrom": "payroll_slips",
+          "tableTo": "payroll_periods",
           "columnsFrom": [
             "payroll_period_id"
           ],
-          "tableTo": "payroll_periods",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_slips_employee_id_employees_id_fk": {
           "name": "payroll_slips_employee_id_employees_id_fk",
           "tableFrom": "payroll_slips",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "payroll_slips_salary_structure_id_salary_structures_id_fk": {
           "name": "payroll_slips_salary_structure_id_salary_structures_id_fk",
           "tableFrom": "payroll_slips",
+          "tableTo": "salary_structures",
           "columnsFrom": [
             "salary_structure_id"
           ],
-          "tableTo": "salary_structures",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "restrict"
+          "onDelete": "restrict",
+          "onUpdate": "no action"
         },
         "payroll_slips_overtime_record_id_overtime_records_id_fk": {
           "name": "payroll_slips_overtime_record_id_overtime_records_id_fk",
           "tableFrom": "payroll_slips",
+          "tableTo": "overtime_records",
           "columnsFrom": [
             "overtime_record_id"
           ],
-          "tableTo": "overtime_records",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_slips_approved_by_users_id_fk": {
           "name": "payroll_slips_approved_by_users_id_fk",
           "tableFrom": "payroll_slips",
+          "tableTo": "users",
           "columnsFrom": [
             "approved_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "payroll_slips_cancelled_by_users_id_fk": {
           "name": "payroll_slips_cancelled_by_users_id_fk",
           "tableFrom": "payroll_slips",
+          "tableTo": "users",
           "columnsFrom": [
             "cancelled_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -11516,9 +11601,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_advance_recoveries_employee_period": {
           "name": "idx_salary_advance_recoveries_employee_period",
@@ -11543,9 +11628,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_advance_recoveries_payroll_slip_id": {
           "name": "idx_salary_advance_recoveries_payroll_slip_id",
@@ -11558,9 +11643,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "uq_salary_advance_recoveries_advance_period": {
           "name": "uq_salary_advance_recoveries_advance_period",
@@ -11585,63 +11670,63 @@
             }
           ],
           "isUnique": true,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "salary_advance_recoveries_advance_id_salary_advances_id_fk": {
           "name": "salary_advance_recoveries_advance_id_salary_advances_id_fk",
           "tableFrom": "salary_advance_recoveries",
+          "tableTo": "salary_advances",
           "columnsFrom": [
             "advance_id"
           ],
-          "tableTo": "salary_advances",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "salary_advance_recoveries_employee_id_employees_id_fk": {
           "name": "salary_advance_recoveries_employee_id_employees_id_fk",
           "tableFrom": "salary_advance_recoveries",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "salary_advance_recoveries_payroll_slip_id_payroll_slips_id_fk": {
           "name": "salary_advance_recoveries_payroll_slip_id_payroll_slips_id_fk",
           "tableFrom": "salary_advance_recoveries",
+          "tableTo": "payroll_slips",
           "columnsFrom": [
             "payroll_slip_id"
           ],
-          "tableTo": "payroll_slips",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "salary_advance_recoveries_clearing_journal_entry_id_journal_entries_id_fk": {
           "name": "salary_advance_recoveries_clearing_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "salary_advance_recoveries",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "clearing_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -11858,9 +11943,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_advances_employee_status": {
           "name": "idx_salary_advances_employee_status",
@@ -11879,9 +11964,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_advances_disbursement_account_id": {
           "name": "idx_salary_advances_disbursement_account_id",
@@ -11894,9 +11979,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_advances_status": {
           "name": "idx_salary_advances_status",
@@ -11909,89 +11994,89 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "salary_advances_employee_id_employees_id_fk": {
           "name": "salary_advances_employee_id_employees_id_fk",
           "tableFrom": "salary_advances",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "salary_advances_approved_by_users_id_fk": {
           "name": "salary_advances_approved_by_users_id_fk",
           "tableFrom": "salary_advances",
+          "tableTo": "users",
           "columnsFrom": [
             "approved_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "salary_advances_disbursement_account_id_ledger_accounts_id_fk": {
           "name": "salary_advances_disbursement_account_id_ledger_accounts_id_fk",
           "tableFrom": "salary_advances",
+          "tableTo": "ledger_accounts",
           "columnsFrom": [
             "disbursement_account_id"
           ],
-          "tableTo": "ledger_accounts",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "salary_advances_disbursement_journal_entry_id_journal_entries_id_fk": {
           "name": "salary_advances_disbursement_journal_entry_id_journal_entries_id_fk",
           "tableFrom": "salary_advances",
+          "tableTo": "journal_entries",
           "columnsFrom": [
             "disbursement_journal_entry_id"
           ],
-          "tableTo": "journal_entries",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "salary_advances_rejected_by_users_id_fk": {
           "name": "salary_advances_rejected_by_users_id_fk",
           "tableFrom": "salary_advances",
+          "tableTo": "users",
           "columnsFrom": [
             "rejected_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         },
         "salary_advances_cancelled_by_users_id_fk": {
           "name": "salary_advances_cancelled_by_users_id_fk",
           "tableFrom": "salary_advances",
+          "tableTo": "users",
           "columnsFrom": [
             "cancelled_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -12229,9 +12314,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_structures_employee_effective_from": {
           "name": "idx_salary_structures_employee_effective_from",
@@ -12250,9 +12335,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_structures_employee_effective_to": {
           "name": "idx_salary_structures_employee_effective_to",
@@ -12271,9 +12356,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_salary_structures_employee_active": {
           "name": "idx_salary_structures_employee_active",
@@ -12292,37 +12377,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "salary_structures_employee_id_employees_id_fk": {
           "name": "salary_structures_employee_id_employees_id_fk",
           "tableFrom": "salary_structures",
+          "tableTo": "employees",
           "columnsFrom": [
             "employee_id"
           ],
-          "tableTo": "employees",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "salary_structures_created_by_users_id_fk": {
           "name": "salary_structures_created_by_users_id_fk",
           "tableFrom": "salary_structures",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -12440,9 +12525,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_statutory_rates_category_effective_to": {
           "name": "idx_statutory_rates_category_effective_to",
@@ -12461,9 +12546,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "idx_statutory_rates_effective_from": {
           "name": "idx_statutory_rates_effective_from",
@@ -12476,24 +12561,24 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "statutory_rates_created_by_users_id_fk": {
           "name": "statutory_rates_created_by_users_id_fk",
           "tableFrom": "statutory_rates",
+          "tableTo": "users",
           "columnsFrom": [
             "created_by"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -12973,10 +13058,11 @@
     }
   },
   "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
   "views": {
     "public.vw_attendance_details": {
-      "name": "vw_attendance_details",
-      "schema": "public",
       "columns": {
         "id": {
           "name": "id",
@@ -13006,7 +13092,7 @@
           "name": "check_out_time",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "duration": {
           "name": "duration",
@@ -13027,12 +13113,12 @@
           "notNull": false
         }
       },
-      "materialized": true,
-      "isExisting": true
+      "name": "vw_attendance_details",
+      "schema": "public",
+      "isExisting": true,
+      "materialized": false
     },
     "public.vw_invoices": {
-      "name": "vw_invoices",
-      "schema": "public",
       "columns": {
         "id": {
           "name": "id",
@@ -13094,14 +13180,33 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_overdue": {
+          "name": "is_overdue",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_payable": {
+          "name": "is_payable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_status": {
+          "name": "display_status",
+          "type": "bill_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
         }
       },
-      "materialized": true,
-      "isExisting": true
+      "name": "vw_invoices",
+      "schema": "public",
+      "isExisting": true,
+      "materialized": false
     },
     "public.vw_member_overview": {
-      "name": "vw_member_overview",
-      "schema": "public",
       "columns": {
         "id": {
           "name": "id",
@@ -13223,13 +13328,12 @@
           "default": "now()"
         }
       },
-      "materialized": true,
-      "isExisting": true
+      "name": "vw_member_overview",
+      "schema": "public",
+      "isExisting": true,
+      "materialized": false
     }
   },
-  "sequences": {},
-  "roles": {},
-  "policies": {},
   "_meta": {
     "columns": {},
     "schemas": {},

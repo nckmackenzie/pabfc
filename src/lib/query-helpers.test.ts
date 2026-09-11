@@ -9,6 +9,7 @@ import {
 import {
 	expenseJournalFilters,
 	journalLineNetTotal,
+	outstandingBillFilters,
 	overdueBillFilters,
 } from "@/lib/query-helpers";
 
@@ -100,5 +101,36 @@ describe("overdueBillFilters", () => {
 		const { sql } = overdueQuery();
 
 		expect(sql).not.toContain("invoice_date");
+	});
+});
+
+describe("outstandingBillFilters", () => {
+	const outstandingQuery = () =>
+		qb
+			.select({ balance: vwInvoices.balance })
+			.from(vwInvoices)
+			.where(outstandingBillFilters())
+			.toSQL();
+
+	it("keeps only payable bills that still owe money", () => {
+		const { sql, params } = outstandingQuery();
+
+		expect(sql).toContain('"vw_invoices"."is_payable" = $1');
+		expect(sql).toContain('"vw_invoices"."balance" > $2');
+		expect(params).toEqual([true, "0"]);
+	});
+
+	// The ageing report buckets outstanding money and the overdue report lists
+	// the late part of it. Both must exclude draft/cancelled bills or the two AP
+	// reports stop reconciling.
+	it("shares the payability rule with the overdue filter", () => {
+		expect(outstandingQuery().sql).toContain("is_payable");
+		expect(
+			qb
+				.select({ balance: vwInvoices.balance })
+				.from(vwInvoices)
+				.where(overdueBillFilters())
+				.toSQL().sql,
+		).toContain("is_overdue");
 	});
 });
