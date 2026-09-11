@@ -7,7 +7,7 @@ import {
 	integer,
 	numeric,
 	pgEnum,
-	pgMaterializedView,
+	pgView,
 	pgTable,
 	serial,
 	text,
@@ -32,6 +32,19 @@ export const BILL_STATUS = [
 	"partially-paid",
 ] as const;
 export const billStatusEnum = pgEnum("bill_status", BILL_STATUS);
+
+/**
+ * The subset of BILL_STATUS that `vw_invoices.display_status` can actually
+ * produce. `draft`, `approved` and `cancelled` belong to the bill approval
+ * workflow, which nothing writes yet, so offering them as filters would only
+ * ever return empty results.
+ */
+export const BILL_DISPLAY_STATUS = [
+	"pending",
+	"partially-paid",
+	"paid",
+	"overdue",
+] as const satisfies ReadonlyArray<(typeof BILL_STATUS)[number]>;
 export const RECURRENCY_PERIOD = [
 	"daily",
 	"weekly",
@@ -241,7 +254,12 @@ export const recurringBillsSchedules = pgTable("recurring_bills_schedules", {
 	lastGeneratedDate: date("last_generated_date"),
 });
 
-export const vwInvoices = pgMaterializedView("vw_invoices", {
+/**
+ * Live view over bills and their payment lines. `balance`, `isOverdue` and
+ * `displayStatus` are computed on every read, so they cannot drift the way a
+ * stored status column does. `status` carries workflow state only.
+ */
+export const vwInvoices = pgView("vw_invoices", {
 	id: varchar("id").notNull(),
 	invoiceDate: date("invoice_date").notNull(),
 	dueDate: date("due_date"),
@@ -252,4 +270,6 @@ export const vwInvoices = pgMaterializedView("vw_invoices", {
 	totalPayment: numeric("total_payment", { precision: 10, scale: 2 }).notNull(),
 	balance: numeric("balance", { precision: 10, scale: 2 }).notNull(),
 	status: billStatusEnum("status").notNull(),
+	isOverdue: boolean("is_overdue").notNull(),
+	displayStatus: billStatusEnum("display_status").notNull(),
 }).existing();

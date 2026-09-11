@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BILL_STATUS, vatTypes } from "@/drizzle/schema";
+import { BILL_DISPLAY_STATUS, vatTypes } from "@/drizzle/schema";
 
 export const billSchema = z
 	.object({
@@ -62,7 +62,7 @@ export const supplierSchema = z.object({
 export const billValidateSearch = z
 	.object({
 		q: z.string().optional().catch(""),
-		status: z.enum(["all", ...BILL_STATUS]).catch("all"),
+		status: z.enum(["all", ...BILL_DISPLAY_STATUS]).catch("all"),
 	})
 	.optional();
 

@@ -83,24 +83,17 @@ describe("overdueBillFilters", () => {
 			.where(overdueBillFilters())
 			.toSQL();
 
-	it("keeps only bills past their due date", () => {
-		const { sql } = overdueQuery();
-
-		expect(sql).toContain('"vw_invoices"."due_date" is not null');
-		expect(sql).toContain('"vw_invoices"."due_date" < current_date');
-	});
-
-	it("keeps only bills that still carry a balance", () => {
+	it("selects on the view's derived overdue flag", () => {
 		const { sql, params } = overdueQuery();
 
-		expect(sql).toContain('"vw_invoices"."balance" > $1');
-		expect(params).toEqual(["0"]);
+		expect(sql).toContain('"vw_invoices"."is_overdue" = $1');
+		expect(params).toEqual([true]);
 	});
 
-	it("does not depend on the stored bill status", () => {
+	it("does not depend on the stored workflow status", () => {
 		const { sql } = overdueQuery();
 
-		expect(sql).not.toContain("status");
+		expect(sql).not.toContain('"status"');
 	});
 
 	it("applies no invoice or entry date range", () => {

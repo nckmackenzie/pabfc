@@ -6,7 +6,7 @@ import {
 	integer,
 	jsonb,
 	numeric,
-	pgMaterializedView,
+	pgView,
 	pgTable,
 	text,
 	timestamp,
@@ -87,7 +87,7 @@ export const biotimeUnmappedAttendanceTransactions = pgTable(
 	]
 );
 
-export const attendanceOverview = pgMaterializedView("vw_attendance_details", {
+export const attendanceOverview = pgView("vw_attendance_details", {
 	id: bigserial("id", { mode: "bigint" }).notNull(),
 	memberName: varchar("member_name").notNull(),
 	image: varchar("image"),

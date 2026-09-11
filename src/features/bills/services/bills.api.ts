@@ -35,7 +35,9 @@ export const getBills = createServerFn()
 			if (searchFilters) filters.push(searchFilters);
 		}
 		if (status && status !== "all") {
-			filters.push(eq(vwInvoices.status, status));
+			// Filter on the derived label rather than the stored workflow status,
+			// so "overdue" and "partially-paid" reflect the payment lines.
+			filters.push(eq(vwInvoices.displayStatus, status));
 		}
 		return await db
 			.select()

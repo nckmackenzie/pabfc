@@ -1,4 +1,4 @@
-import { and, eq, gt, gte, isNotNull, lt, lte, type SQL, sql } from "drizzle-orm";
+import { and, eq, gte, lte, type SQL, sql } from "drizzle-orm";
 import {
 	expenseHeaders,
 	journalEntries,
@@ -83,13 +83,10 @@ export function expenseJournalFilters({ dateFrom, dateTo }: DateRangeFiltersProp
 
 /**
  * Bills that are past due and still carry an unpaid balance. Point in time, so
- * no invoice/entry date range applies. `vwInvoices.balance` is derived from the
- * bill payment lines rather than `bills.status`, which can go stale.
+ * no invoice/entry date range applies. `isOverdue` is computed by the view from
+ * the bill payment lines on every read, so unlike a stored status it cannot go
+ * stale.
  */
 export function overdueBillFilters() {
-	return and(
-		isNotNull(vwInvoices.dueDate),
-		lt(vwInvoices.dueDate, sql`current_date`),
-		gt(vwInvoices.balance, "0")
-	);
+	return eq(vwInvoices.isOverdue, true);
 }

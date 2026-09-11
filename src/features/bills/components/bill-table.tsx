@@ -59,23 +59,23 @@ export function BillTable() {
 			}) => <Badge variant="outline">{currencyFormatter(total)}</Badge>,
 		},
 		{
-			accessorKey: "status",
+			accessorKey: "displayStatus",
 			header: "Status",
 			cell: ({
 				row: {
-					original: { status },
+					original: { displayStatus },
 				},
 			}) => (
 				<Badge
 					variant={
-						status === "paid"
+						displayStatus === "paid"
 							? "success"
-							: status === "overdue"
+							: displayStatus === "overdue"
 								? "destructive"
 								: "warning"
 					}
 				>
-					{toTitleCase(status)}
+					{toTitleCase(displayStatus)}
 				</Badge>
 			),
 		},

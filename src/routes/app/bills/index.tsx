@@ -17,7 +17,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { BILL_STATUS } from "@/drizzle/schema";
+import { BILL_DISPLAY_STATUS } from "@/drizzle/schema";
 import { BillTable } from "@/features/bills/components/bill-table";
 import { billQueries } from "@/features/bills/services/queries";
 import { billValidateSearch } from "@/features/bills/services/schemas";
@@ -94,7 +94,7 @@ function Filters() {
 				</SelectTrigger>
 				<SelectContent>
 					<SelectItem value="all">All</SelectItem>
-					{BILL_STATUS.map((status) => (
+					{BILL_DISPLAY_STATUS.map((status) => (
 						<SelectItem key={status} value={status}>
 							{toTitleCase(status)}
 						</SelectItem>

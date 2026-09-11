@@ -7,7 +7,7 @@ import {
 	jsonb,
 	numeric,
 	pgEnum,
-	pgMaterializedView,
+	pgView,
 	pgTable,
 	serial,
 	text,
@@ -302,7 +302,7 @@ export const memberAccessProfiles = pgTable(
 	],
 );
 
-export const membersOverview = pgMaterializedView("vw_member_overview", {
+export const membersOverview = pgView("vw_member_overview", {
 	id: varchar("id").notNull(),
 	memberNo: integer("member_no").notNull(),
 	firstName: varchar("first_name").notNull(),

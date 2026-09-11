@@ -1,17 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday, subDays } from "date-fns";
-import { and, eq, inArray, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncJobs,
 	attendanceLogs,
-	bills,
 	biotimePersonProfiles,
 	financialYears,
 	memberMemberships,
 	members,
 	users,
-	vwInvoices,
 } from "@/drizzle/schema";
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
 import { expireCreditNotes } from "@/features/credit-notes/services/credit-note.maintenance";
@@ -47,38 +45,20 @@ async function runDailyMaintenance() {
 	// 1) delete older audit logs
 	await deleteOlderLogs();
 
-	// 2) change status of invoices
-	const overDueInvoices = await db
-		.select({ id: vwInvoices.id })
-		.from(vwInvoices)
-		.where(
-			and(
-				sql`${vwInvoices.balance} > 0`,
-				lte(vwInvoices.dueDate, sql`CURRENT_DATE`),
-				notInArray(vwInvoices.status, ["cancelled", "overdue", "draft"])
-			)
-		);
+	// Invoice overdue state is no longer stamped onto bills.status here. It is
+	// derived by vw_invoices from the payment lines on every read, so it stays
+	// correct between runs instead of lagging up to a day behind.
 
-	await db
-		.update(bills)
-		.set({ status: "overdue" })
-		.where(
-			inArray(
-				bills.id,
-				overDueInvoices.map((i) => i.id)
-			)
-		);
-
-	// 3) auto create financial year
+	// 2) auto create financial year
 	await autoCreateFinancialYear();
 
-	// 4) update membership status rollovers
+	// 3) update membership status rollovers
 	await expireMembershipsAndDisableAccess();
 
-	// 5) deactivate inactive members
+	// 4) deactivate inactive members
 	await deactivateInactiveMembers();
 
-	// 6) write off expired, unredeemed credit note balances
+	// 5) write off expired, unredeemed credit note balances
 	await expireCreditNotes();
 }
 
