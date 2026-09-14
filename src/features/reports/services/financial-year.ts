@@ -20,3 +20,20 @@ export async function resolveFinancialYearStart(asOfDate: string) {
 
 	return financialYear.startDate;
 }
+
+/**
+ * Lists financial year start dates after `dateFrom` and on or before `dateTo`,
+ * i.e. the year boundaries crossed by a report period.
+ *
+ * Server-side only, like `resolveFinancialYearStart`.
+ */
+export async function listFinancialYearStartsWithin(dateFrom: string, dateTo: string) {
+	const financialYears = await db.query.financialYears.findMany({
+		columns: { startDate: true },
+		where: (financialYears, { and, gt, lte }) =>
+			and(gt(financialYears.startDate, dateFrom), lte(financialYears.startDate, dateTo)),
+		orderBy: (financialYears, { asc }) => [asc(financialYears.startDate)],
+	});
+
+	return financialYears.map((financialYear) => financialYear.startDate);
+}

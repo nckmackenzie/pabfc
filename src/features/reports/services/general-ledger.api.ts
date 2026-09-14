@@ -8,7 +8,10 @@ import {
 	filterGeneralLedgerRows,
 	getOpeningBalanceScope,
 } from "@/features/reports/lib/general-ledger";
-import { resolveFinancialYearStart } from "@/features/reports/services/financial-year";
+import {
+	listFinancialYearStartsWithin,
+	resolveFinancialYearStart,
+} from "@/features/reports/services/financial-year";
 import { generalLedgerServerSchema } from "@/features/reports/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -109,15 +112,19 @@ export const getGeneralLedger = createServerFn()
 			throw new ApplicationError("General ledger is only available for posting accounts");
 		}
 
-		const financialYearStart = await resolveFinancialYearStart(dateRange.from);
 		const openingBalanceScope = getOpeningBalanceScope(account.type);
 
+		// Balance sheet accounts carry full history, so they need no financial year.
+		const [financialYearStart, yearStartDates]: [string | null, string[]] =
+			openingBalanceScope === "fiscal-year"
+				? await Promise.all([
+						resolveFinancialYearStart(dateRange.from),
+						listFinancialYearStartsWithin(dateRange.from, dateRange.to),
+					])
+				: [null, []];
+
 		const [openingTotals, lines] = await Promise.all([
-			getOpeningTotals(
-				account.id,
-				dateRange.from,
-				openingBalanceScope === "fiscal-year" ? financialYearStart : null
-			),
+			getOpeningTotals(account.id, dateRange.from, financialYearStart),
 			getPeriodLines(account.id, dateRange.from, dateRange.to),
 		]);
 
@@ -126,6 +133,7 @@ export const getGeneralLedger = createServerFn()
 			openingDebits: openingTotals.debits,
 			openingCredits: openingTotals.credits,
 			lines,
+			yearStartDates,
 		});
 
 		return {

@@ -42,11 +42,19 @@ function formatAccountLabel(account: GeneralLedgerReport["account"]) {
 }
 
 function rowDescription(row: GeneralLedgerTableRow) {
+	if (row.kind === "year-reset") {
+		return `Balance reset - financial year starting ${dateFormat(row.date, "reporting")}`;
+	}
+
 	return toTitleCase(row.memo || row.description || "");
 }
 
+function rowKey(row: GeneralLedgerTableRow) {
+	return row.id ?? `year-reset-${row.date}`;
+}
+
 function openingBalanceLabel(report: GeneralLedgerReport) {
-	return report.openingBalanceScope === "fiscal-year"
+	return report.financialYearStart
 		? `Opening balance (since ${dateFormat(report.financialYearStart, "reporting")})`
 		: "Opening balance";
 }
@@ -101,17 +109,20 @@ export function GeneralLedger({ accountId, dateFrom, dateTo }: GeneralLedgerProp
 	// re-suspending the whole report.
 	const deferredSearch = useDeferredValue(search);
 
+	const dateRange = { from: dateFrom, to: dateTo };
 	const { data: report } = useSuspenseQuery(
-		generalLedgerQueries.report({
-			accountId,
-			dateRange: { from: dateFrom, to: dateTo },
-			q: deferredSearch || undefined,
-		})
+		generalLedgerQueries.report({ accountId, dateRange, q: deferredSearch || undefined })
+	);
+	// The PDF always exports the full period so its rows match its totals and
+	// closing balance, whatever the on-screen search.
+	const { data: fullReport } = useSuspenseQuery(
+		generalLedgerQueries.report({ accountId, dateRange })
 	);
 
 	const accountLabel = formatAccountLabel(report.account);
 	const period = `${dateFormat(dateFrom, "long")} to ${dateFormat(dateTo, "long")}`;
 	const isFiltered = Boolean(deferredSearch);
+	const hasTransactions = report.rows.some((row) => row.kind === "transaction");
 
 	return (
 		<div className="space-y-6">
@@ -123,10 +134,10 @@ export function GeneralLedger({ accountId, dateFrom, dateTo }: GeneralLedgerProp
 								data={{
 									accountLabel,
 									period,
-									openingBalanceLabel: openingBalanceLabel(report),
-									openingBalance: formatBalance(report.openingBalance),
-									rows: report.rows.map((row) => ({
-										id: row.id,
+									openingBalanceLabel: openingBalanceLabel(fullReport),
+									openingBalance: formatBalance(fullReport.openingBalance),
+									rows: fullReport.rows.map((row) => ({
+										key: rowKey(row),
 										date: dateFormat(row.date, "reporting"),
 										description: rowDescription(row),
 										source: row.source ? toTitleCase(row.source) : "",
@@ -135,13 +146,13 @@ export function GeneralLedger({ accountId, dateFrom, dateTo }: GeneralLedgerProp
 										credit: formatOptionalAmount(row.credit),
 										runningBalance: formatBalance(row.runningBalance),
 									})),
-									totalDebits: currencyFormatter(report.totalDebits, false),
-									totalCredits: currencyFormatter(report.totalCredits, false),
-									closingBalance: formatBalance(report.closingBalance),
+									totalDebits: currencyFormatter(fullReport.totalDebits, false),
+									totalCredits: currencyFormatter(fullReport.totalCredits, false),
+									closingBalance: formatBalance(fullReport.closingBalance),
 								}}
 							/>
 						}
-						fileName={`General-Ledger-${report.account.code ?? report.account.id}.pdf`}
+						fileName={`General-Ledger-${fullReport.account.code ?? fullReport.account.id}.pdf`}
 					>
 						{({ loading }) =>
 							loading ? (
@@ -164,7 +175,10 @@ export function GeneralLedger({ accountId, dateFrom, dateTo }: GeneralLedgerProp
 			</div>
 
 			<dl className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-				<SummaryItem label={openingBalanceLabel(report)} value={formatBalance(report.openingBalance)} />
+				<SummaryItem
+					label={openingBalanceLabel(report)}
+					value={formatBalance(report.openingBalance)}
+				/>
 				<SummaryItem label="Total debits" value={currencyFormatter(report.totalDebits, false)} />
 				<SummaryItem label="Total credits" value={currencyFormatter(report.totalCredits, false)} />
 				<SummaryItem label="Closing balance" value={formatBalance(report.closingBalance)} />
@@ -175,7 +189,7 @@ export function GeneralLedger({ accountId, dateFrom, dateTo }: GeneralLedgerProp
 				onHandleSearch={(q: string) => setSearch(q)}
 			/>
 
-			{report.rows.length === 0 ? (
+			{!hasTransactions ? (
 				<EmptyState
 					icon={isFiltered ? <SearchIcon /> : undefined}
 					title="No Transactions"

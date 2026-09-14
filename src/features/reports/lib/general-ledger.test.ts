@@ -93,6 +93,48 @@ describe("buildGeneralLedger", () => {
 		expect(result.rows).toEqual([]);
 		expect(result.closingBalance).toBe(50);
 	});
+
+	it("resets the running balance at each fiscal year start inside the period", () => {
+		const result = buildGeneralLedger({
+			normalBalance: "debit",
+			openingDebits: "400",
+			openingCredits: "0",
+			yearStartDates: ["2026-01-01"],
+			lines: [
+				line({ id: 1, date: "2025-12-15", dc: "debit", amount: "100" }),
+				line({ id: 2, date: "2026-01-01", dc: "debit", amount: "30" }),
+				line({ id: 3, date: "2026-02-10", dc: "credit", amount: "10" }),
+			],
+		});
+
+		expect(result.rows.map((row) => [row.kind, row.date, row.runningBalance])).toEqual([
+			["transaction", "2025-12-15", 500],
+			["year-reset", "2026-01-01", 0],
+			["transaction", "2026-01-01", 30],
+			["transaction", "2026-02-10", 20],
+		]);
+		expect(result.openingBalance).toBe(400);
+		expect(result.totalDebits).toBe(130);
+		expect(result.totalCredits).toBe(10);
+		expect(result.closingBalance).toBe(20);
+	});
+
+	it("emits trailing year resets with no later lines and closes at zero", () => {
+		const result = buildGeneralLedger({
+			normalBalance: "credit",
+			openingDebits: "0",
+			openingCredits: "0",
+			yearStartDates: ["2027-01-01", "2026-01-01"],
+			lines: [line({ id: 1, date: "2025-06-01", dc: "credit", amount: "75" })],
+		});
+
+		expect(result.rows.map((row) => [row.kind, row.date])).toEqual([
+			["transaction", "2025-06-01"],
+			["year-reset", "2026-01-01"],
+			["year-reset", "2027-01-01"],
+		]);
+		expect(result.closingBalance).toBe(0);
+	});
 });
 
 describe("filterGeneralLedgerRows", () => {
@@ -122,5 +164,23 @@ describe("filterGeneralLedgerRows", () => {
 	it("keeps the running balance computed over the unfiltered rows", () => {
 		const [row] = filterGeneralLedgerRows(rows, "water");
 		expect(row.runningBalance).toBe(130);
+	});
+
+	it("keeps year reset rows when filtering", () => {
+		const { rows: resetRows } = buildGeneralLedger({
+			normalBalance: "debit",
+			openingDebits: "0",
+			openingCredits: "0",
+			yearStartDates: ["2026-01-01"],
+			lines: [
+				line({ id: 1, date: "2025-12-01", dc: "debit", amount: "100", memo: "Office Rent" }),
+				line({ id: 2, date: "2026-01-05", dc: "debit", amount: "40", memo: "Water bill" }),
+			],
+		});
+
+		expect(filterGeneralLedgerRows(resetRows, "water").map((row) => row.kind)).toEqual([
+			"year-reset",
+			"transaction",
+		]);
 	});
 });

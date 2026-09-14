@@ -7,7 +7,7 @@ type GeneralLedgerPdfProps = {
 		openingBalanceLabel: string;
 		openingBalance: string;
 		rows: Array<{
-			id: number;
+			key: string | number;
 			date: string;
 			description: string;
 			source: string;
@@ -178,7 +178,7 @@ export function GeneralLedgerPdf({ data }: GeneralLedgerPdfProps) {
 						</Cell>
 					</View>
 					{data.rows.map((row) => (
-						<View key={row.id} style={styles.tableRow} wrap={false}>
+						<View key={row.key} style={styles.tableRow} wrap={false}>
 							<Cell index={0}>{row.date}</Cell>
 							<Cell index={1}>{row.description}</Cell>
 							<Cell index={2}>{row.source}</Cell>
