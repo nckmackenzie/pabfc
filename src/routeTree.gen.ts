@@ -142,6 +142,7 @@ import { Route as AppReportsFinanceReceiptsIndexRouteImport } from './routes/app
 import { Route as AppReportsFinancePaymentsIndexRouteImport } from './routes/app/reports/finance/payments/index'
 import { Route as AppReportsFinanceInvoicesIndexRouteImport } from './routes/app/reports/finance/invoices/index'
 import { Route as AppReportsFinanceIncomeStatementIndexRouteImport } from './routes/app/reports/finance/income-statement/index'
+import { Route as AppReportsFinanceGeneralLedgerIndexRouteImport } from './routes/app/reports/finance/general-ledger/index'
 import { Route as AppReportsFinanceExpensesIndexRouteImport } from './routes/app/reports/finance/expenses/index'
 import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/reports/finance/banking/index'
 import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes/app/reports/finance/balance-sheet/index'
@@ -871,6 +872,12 @@ const AppReportsFinanceIncomeStatementIndexRoute =
     path: '/income-statement/',
     getParentRoute: () => AppReportsFinanceRouteRoute,
   } as any)
+const AppReportsFinanceGeneralLedgerIndexRoute =
+  AppReportsFinanceGeneralLedgerIndexRouteImport.update({
+    id: '/general-ledger/',
+    path: '/general-ledger/',
+    getParentRoute: () => AppReportsFinanceRouteRoute,
+  } as any)
 const AppReportsFinanceExpensesIndexRoute =
   AppReportsFinanceExpensesIndexRouteImport.update({
     id: '/expenses/',
@@ -1134,6 +1141,7 @@ export interface FileRoutesByFullPath {
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/general-ledger/': typeof AppReportsFinanceGeneralLedgerIndexRoute
   '/app/reports/finance/income-statement/': typeof AppReportsFinanceIncomeStatementIndexRoute
   '/app/reports/finance/invoices/': typeof AppReportsFinanceInvoicesIndexRoute
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
@@ -1267,6 +1275,7 @@ export interface FileRoutesByTo {
   '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/general-ledger': typeof AppReportsFinanceGeneralLedgerIndexRoute
   '/app/reports/finance/income-statement': typeof AppReportsFinanceIncomeStatementIndexRoute
   '/app/reports/finance/invoices': typeof AppReportsFinanceInvoicesIndexRoute
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
@@ -1424,6 +1433,7 @@ export interface FileRoutesById {
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
+  '/app/reports/finance/general-ledger/': typeof AppReportsFinanceGeneralLedgerIndexRoute
   '/app/reports/finance/income-statement/': typeof AppReportsFinanceIncomeStatementIndexRoute
   '/app/reports/finance/invoices/': typeof AppReportsFinanceInvoicesIndexRoute
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
@@ -1581,6 +1591,7 @@ export interface FileRouteTypes {
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
+    | '/app/reports/finance/general-ledger/'
     | '/app/reports/finance/income-statement/'
     | '/app/reports/finance/invoices/'
     | '/app/reports/finance/payments/'
@@ -1714,6 +1725,7 @@ export interface FileRouteTypes {
     | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
+    | '/app/reports/finance/general-ledger'
     | '/app/reports/finance/income-statement'
     | '/app/reports/finance/invoices'
     | '/app/reports/finance/payments'
@@ -1870,6 +1882,7 @@ export interface FileRouteTypes {
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
+    | '/app/reports/finance/general-ledger/'
     | '/app/reports/finance/income-statement/'
     | '/app/reports/finance/invoices/'
     | '/app/reports/finance/payments/'
@@ -2843,6 +2856,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsFinanceIncomeStatementIndexRouteImport
       parentRoute: typeof AppReportsFinanceRouteRoute
     }
+    '/app/reports/finance/general-ledger/': {
+      id: '/app/reports/finance/general-ledger/'
+      path: '/general-ledger'
+      fullPath: '/app/reports/finance/general-ledger/'
+      preLoaderRoute: typeof AppReportsFinanceGeneralLedgerIndexRouteImport
+      parentRoute: typeof AppReportsFinanceRouteRoute
+    }
     '/app/reports/finance/expenses/': {
       id: '/app/reports/finance/expenses/'
       path: '/expenses'
@@ -3419,6 +3439,7 @@ interface AppReportsFinanceRouteRouteChildren {
   AppReportsFinanceBalanceSheetIndexRoute: typeof AppReportsFinanceBalanceSheetIndexRoute
   AppReportsFinanceBankingIndexRoute: typeof AppReportsFinanceBankingIndexRoute
   AppReportsFinanceExpensesIndexRoute: typeof AppReportsFinanceExpensesIndexRoute
+  AppReportsFinanceGeneralLedgerIndexRoute: typeof AppReportsFinanceGeneralLedgerIndexRoute
   AppReportsFinanceIncomeStatementIndexRoute: typeof AppReportsFinanceIncomeStatementIndexRoute
   AppReportsFinanceInvoicesIndexRoute: typeof AppReportsFinanceInvoicesIndexRoute
   AppReportsFinancePaymentsIndexRoute: typeof AppReportsFinancePaymentsIndexRoute
@@ -3433,6 +3454,8 @@ const AppReportsFinanceRouteRouteChildren: AppReportsFinanceRouteRouteChildren =
       AppReportsFinanceBalanceSheetIndexRoute,
     AppReportsFinanceBankingIndexRoute: AppReportsFinanceBankingIndexRoute,
     AppReportsFinanceExpensesIndexRoute: AppReportsFinanceExpensesIndexRoute,
+    AppReportsFinanceGeneralLedgerIndexRoute:
+      AppReportsFinanceGeneralLedgerIndexRoute,
     AppReportsFinanceIncomeStatementIndexRoute:
       AppReportsFinanceIncomeStatementIndexRoute,
     AppReportsFinanceInvoicesIndexRoute: AppReportsFinanceInvoicesIndexRoute,

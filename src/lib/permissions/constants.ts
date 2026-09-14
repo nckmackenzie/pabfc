@@ -104,6 +104,7 @@ export const PERMISSIONS = [
 	"reports:bankings-report",
 	"reports:income-statement",
 	"reports:trial-balance",
+	"reports:general-ledger",
 	"reports:balance-sheet",
 	"reports:payroll-p9",
 	"reports:hr-reports",

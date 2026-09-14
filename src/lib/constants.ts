@@ -201,6 +201,7 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 					"reports:payments-report",
 					"reports:income-statement",
 					"reports:trial-balance",
+					"reports:general-ledger",
 					"reports:balance-sheet",
 				],
 			},

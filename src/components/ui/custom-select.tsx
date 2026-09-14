@@ -14,8 +14,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import type { Option } from "@/types/index.types";
 
+export type ComboBoxItem = Option & {
+	/** Optional non-selectable section heading the item is listed under. */
+	group?: string;
+};
+
 interface ComboBoxProps {
-	items: Array<Option>;
+	items: Array<ComboBoxItem>;
 	value: string;
 	onChange: (value: string) => void;
 	placeholder: string;
@@ -23,6 +28,19 @@ interface ComboBoxProps {
 	isInvalid?: boolean;
 	addNew?: React.ReactNode;
 	disabled?: boolean;
+}
+
+// Keeps first-seen group order so callers control how sections are sorted.
+function groupItems(items: Array<ComboBoxItem>) {
+	const groups = new Map<string | undefined, Array<ComboBoxItem>>();
+
+	for (const item of items) {
+		const bucket = groups.get(item.group) ?? [];
+		bucket.push(item);
+		groups.set(item.group, bucket);
+	}
+
+	return Array.from(groups, ([heading, groupedItems]) => ({ heading, items: groupedItems }));
 }
 
 export function ComboBox({
@@ -59,23 +77,25 @@ export function ComboBox({
 					<CommandInput placeholder={commandPlaceholder ?? placeholder} className="h-10 " />
 					<CommandList>
 						<CommandEmpty>No options found.</CommandEmpty>
-						<CommandGroup>
-							{items.map((item) => (
-								<CommandItem
-									key={item.value}
-									value={item.label}
-									onSelect={() => {
-										onChange(item.value === value ? "" : item.value);
-										setOpen(false);
-									}}
-								>
-									{item.label}
-									<CheckIcon
-										className={cn("ml-auto", value === item.value ? "opacity-100" : "opacity-0")}
-									/>
-								</CommandItem>
-							))}
-						</CommandGroup>
+						{groupItems(items).map(({ heading, items: groupedItems }) => (
+							<CommandGroup key={heading ?? "ungrouped"} heading={heading}>
+								{groupedItems.map((item) => (
+									<CommandItem
+										key={item.value}
+										value={item.label}
+										onSelect={() => {
+											onChange(item.value === value ? "" : item.value);
+											setOpen(false);
+										}}
+									>
+										{item.label}
+										<CheckIcon
+											className={cn("ml-auto", value === item.value ? "opacity-100" : "opacity-0")}
+										/>
+									</CommandItem>
+								))}
+							</CommandGroup>
+						))}
 					</CommandList>
 					{addNew && (
 						<>

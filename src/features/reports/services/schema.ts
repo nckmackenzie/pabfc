@@ -175,6 +175,39 @@ export const trialBalanceReportFormSchema = z.object({
 		),
 });
 
+export const generalLedgerValidateSearchSchema = dateRangeSchema.safeExtend({
+	accountId: z.string().optional(),
+});
+
+export const generalLedgerReportFormSchema = dateRangeRequiredSchema
+	.safeExtend({
+		accountId: z
+			.string({
+				error: (iss) => (!iss.input ? "Select account" : "Invalid account"),
+			})
+			.regex(/^\d+$/, "Select account"),
+	})
+	.superRefine(({ dateRange: { to } }, ctx) => {
+		if (
+			to &&
+			new Date(to).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0)
+		) {
+			ctx.addIssue({
+				code: "custom",
+				message: "End date cannot be in the future",
+				path: ["dateRange.to"],
+			});
+		}
+	});
+
+export const generalLedgerServerSchema = generalLedgerReportFormSchema.safeExtend({
+	q: z.string().optional(),
+});
+
+export type GeneralLedgerReportFormSchema = z.infer<
+	typeof generalLedgerReportFormSchema
+>;
+
 export const membersReportValidateSearchSchema = z.object({
 	asOfDate: z.iso.date().optional(),
 	reportType: z.enum(MEMBERS_REPORT_TYPE.map((type) => type.value)).optional(),

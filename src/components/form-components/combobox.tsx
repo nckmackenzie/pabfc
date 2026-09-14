@@ -1,4 +1,4 @@
-import { ComboBox } from "@/components/ui/custom-select";
+import { ComboBox, type ComboBoxItem } from "@/components/ui/custom-select";
 import {
 	Field,
 	FieldDescription,
@@ -6,7 +6,6 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { useFieldContext } from "@/lib/form";
-import type { Option } from "@/types/index.types";
 
 export type ComboboxProps = {
 	label: string;
@@ -14,7 +13,7 @@ export type ComboboxProps = {
 	placeholder: string;
 	helperText?: string;
 	className?: string;
-	items: Array<Option>;
+	items: Array<ComboBoxItem>;
 	addNew?: React.ReactNode;
 	disabled?: boolean;
 };
