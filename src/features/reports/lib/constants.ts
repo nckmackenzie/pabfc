@@ -5,6 +5,7 @@ import {
 	BookOpenTextIcon,
 	FileTextIcon,
 	HandshakeIcon,
+	LibraryIcon,
 	LandmarkIcon,
 	ListIcon,
 	TrendingUpIcon,
@@ -103,6 +104,13 @@ export const REPORT_CARDS = linkOptions([
 		description: "Verify ledger debits and credits.",
 		icon: ListIcon,
 		permission: "reports:trial-balance",
+	},
+	{
+		to: "/app/reports/finance/general-ledger",
+		title: "General Ledger",
+		description: "Transaction history and running balance for an account.",
+		icon: LibraryIcon,
+		permission: "reports:general-ledger",
 	},
 	{
 		to: "/app/reports/finance/balance-sheet",
