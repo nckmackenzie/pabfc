@@ -123,9 +123,10 @@ export function ToggleActivateDeactivate({
 		},
 	});
 	const form = useAppForm({
+		// `active` is the member's current state; the server expects the requested one.
 		defaultValues: {
 			memberId,
-			active,
+			active: !active,
 		} as MemberToggleActiveSchema,
 		validators: {
 			onSubmit: memberToggleActiveSchema,

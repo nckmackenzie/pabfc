@@ -177,15 +177,16 @@ async function deactivateInactiveMembers() {
 }
 
 async function expireMembershipsAndDisableAccess() {
-	const today = dateFormat(new Date());
+	// One captured instant so activation and expiry agree on the calendar day.
 	const now = new Date();
+	const today = dateFormat(now);
 
 	await db.transaction(async (tx) => {
 		// 1) Activate pending memberships that start today (or earlier). This must
 		// run before expiry: a renewal paid ahead of time is "pending" until its
 		// start date, and without it the access check below would treat the
 		// member as having no valid membership and deactivate them.
-		await activateDueMemberships(tx);
+		await activateDueMemberships(tx, now);
 
 		// 2) Expire memberships and return affected members
 		const expiredMemberships = await tx

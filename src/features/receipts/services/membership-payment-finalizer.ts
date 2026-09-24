@@ -17,7 +17,10 @@ import { dateFormat, toBig, toDecimalString } from "@/lib/helpers";
 import { nextAddonInvoiceNo } from "@/features/addons/services/addon-invoice.helpers";
 import { type ComputedAddonLine, sumAddonSubtotal } from "@/features/addons/lib/helpers";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
-import { getDueMembershipConditions } from "@/features/receipts/lib/membership-activation";
+import {
+	getDueMembershipConditions,
+	getMemberIdsWithCurrentMemberships,
+} from "@/features/receipts/lib/membership-activation";
 import {
 	computeMembershipEndDate,
 	parseCalendarDate,
@@ -28,6 +31,7 @@ import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
+import { enableAccessForActivatedMembers } from "@/services/member-access";
 
 export type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -377,13 +381,20 @@ export async function finalizeMembershipPayment({
 	return success(undefined);
 }
 
-// Promotes pending memberships whose start date has arrived. The daily cron
-// runs this before expiring memberships, so a member whose renewal starts today
-// still has an active membership when the expiry step checks whether to disable
-// their access.
-export async function activateDueMemberships(tx: Transaction, today = new Date()) {
-	await tx
+// Promotes pending memberships whose start date has arrived, then reactivates any
+// member the system had deactivated in the meantime (e.g. a renewal paid ahead of
+// time that starts after a gap). The daily cron runs this before expiring
+// memberships, so a member whose renewal starts today still has an active
+// membership when the expiry step checks whether to disable their access.
+export async function activateDueMemberships(tx: Transaction, now = new Date()) {
+	const activated = await tx
 		.update(memberMemberships)
-		.set({ status: "active", updatedAt: new Date() })
-		.where(getDueMembershipConditions(today));
+		.set({ status: "active", updatedAt: now })
+		.where(getDueMembershipConditions(now))
+		.returning({ memberId: memberMemberships.memberId, endDate: memberMemberships.endDate });
+
+	await enableAccessForActivatedMembers(
+		tx,
+		getMemberIdsWithCurrentMemberships(activated, now)
+	);
 }
