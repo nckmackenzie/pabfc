@@ -2,6 +2,8 @@ import { queryOptions } from "@tanstack/react-query";
 import {
 	getActiveMembers,
 	getMember,
+	getMemberAttendanceHistory,
+	getMemberPaymentHistory,
 	getMemberProfileData,
 	getMembers,
 } from "@/features/members/services/members.queries.api";
@@ -22,6 +24,16 @@ export const memberQueries = {
 		queryOptions({
 			queryKey: [...memberQueries.all, "overview", memberId],
 			queryFn: () => getMemberProfileData({ data: memberId }),
+		}),
+	paymentHistory: (memberId: string) =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "payment-history", memberId],
+			queryFn: () => getMemberPaymentHistory({ data: memberId }),
+		}),
+	attendanceHistory: (memberId: string) =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "attendance-history", memberId],
+			queryFn: () => getMemberAttendanceHistory({ data: memberId }),
 		}),
 	activeMembers: () =>
 		queryOptions({

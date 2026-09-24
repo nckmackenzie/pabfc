@@ -24,6 +24,8 @@ import {
 } from "@/features/dashboard/components/expiring-soon";
 import { FinanceDashboard } from "@/features/dashboard/components/finance-dashboard";
 import {
+	MEMBERSHIP_STAT_COUNT,
+	MEMBERSHIP_STAT_GRID,
 	StatCards,
 	StatCardsSkeleton,
 } from "@/features/dashboard/components/stat-cards";
@@ -158,7 +160,14 @@ function DashboardTabs() {
 function MemberShipDashboard() {
 	return (
 		<>
-			<Suspense fallback={<StatCardsSkeleton />}>
+			<Suspense
+				fallback={
+					<StatCardsSkeleton
+						count={MEMBERSHIP_STAT_COUNT}
+						className={MEMBERSHIP_STAT_GRID}
+					/>
+				}
+			>
 				<StatCards />
 			</Suspense>
 			<div className="grid md:grid-cols-3 gap-6">

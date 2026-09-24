@@ -30,6 +30,13 @@ const {
 	endOfPreviousPeriod,
 } = getStatDates();
 
+// Deleted members are also flagged inactive (softDeleteMemberLocally), so they
+// have to be excluded explicitly.
+const inactiveMemberConditions = and(
+	eq(members.memberStatus, "inactive"),
+	isNull(members.deletedAt)
+);
+
 export const dashboardStats = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
@@ -43,6 +50,7 @@ export const dashboardStats = createServerFn()
 			totalAttendancePreviousPeriod,
 			averageAttendanceDuration,
 			expiredMemberships,
+			inactiveMembers,
 		] = await Promise.all([
 			db.$count(members, eq(members.memberStatus, "active")),
 			db.$count(
@@ -80,6 +88,7 @@ export const dashboardStats = createServerFn()
 				.from(memberMemberships)
 				.innerJoin(members, eq(memberMemberships.memberId, members.id))
 				.where(and(isNull(members.deletedAt), ...getExpiredMembershipConditions())),
+			db.$count(members, inactiveMemberConditions),
 		]);
 		return {
 			activeMembers,
@@ -90,6 +99,7 @@ export const dashboardStats = createServerFn()
 			totalAttendancePreviousPeriod,
 			newMembersLastMonth,
 			expiredMemberships: expiredMemberships[0]?.count ?? 0,
+			inactiveMembers,
 		};
 	});
 
@@ -183,6 +193,39 @@ export const getActiveMemberships = createServerFn()
 			.from(members)
 			.where(eq(members.memberStatus, "active"))
 			.orderBy(asc(sql`lower(${members.firstName})`), asc(sql`lower(${members.lastName})`));
+	});
+
+export const getInactiveMembers = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async () => {
+		await requirePermission("dashboard:view");
+
+		return db
+			.select({
+				id: members.id,
+				memberNo: members.memberNo,
+				fullName: sql<string>`${members.firstName} || ' ' || ${members.lastName}`,
+				contact: members.contact,
+				deactivatedAt: members.deactivatedAt,
+				lastPlanName: sql<string | null>`(
+					SELECT mp.name FROM member_memberships mm
+					INNER JOIN membership_plans mp ON mp.id = mm.membership_plan_id
+					WHERE mm.member_id = "members"."id"
+					ORDER BY mm.end_date DESC NULLS LAST
+					LIMIT 1
+				)`,
+				lastVisit: sql<string | null>`(
+					SELECT max(al.check_in_time) FROM attendance_logs al
+					WHERE al.member_id = "members"."id"
+				)`,
+			})
+			.from(members)
+			.where(inactiveMemberConditions)
+			.orderBy(
+				sql`${members.deactivatedAt} DESC NULLS LAST`,
+				asc(sql`lower(${members.firstName})`),
+				asc(sql`lower(${members.lastName})`)
+			);
 	});
 
 export const getAverageAttendanceByDay = createServerFn()

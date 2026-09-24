@@ -6,12 +6,14 @@ import {
 	DoorOpenIcon,
 	type LucideIcon,
 	Users2Icon,
+	UserXIcon,
 } from "lucide-react";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActiveMembersSheet } from "@/features/dashboard/components/active-members-sheet";
 import { ExpiredMembershipsSheet } from "@/features/dashboard/components/expired-memberships-sheet";
 import { ExpiringSoonSheet } from "@/features/dashboard/components/expiring-soon-sheet";
+import { InactiveMembersSheet } from "@/features/dashboard/components/inactive-members-sheet";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { useSheet } from "@/integrations/sheet-provider";
 import {
@@ -19,6 +21,10 @@ import {
 	percentageChangeCalculator,
 } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
+
+// Shared by StatCards and its loading skeleton so the two layouts match.
+export const MEMBERSHIP_STAT_GRID = "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
+export const MEMBERSHIP_STAT_COUNT = 5;
 
 export function StatCards() {
 	const { setOpen } = useSheet();
@@ -32,6 +38,7 @@ export function StatCards() {
 			newMembersLastMonth,
 			totalAttendancePreviousPeriod,
 			expiredMemberships,
+			inactiveMembers,
 		},
 	} = useSuspenseQuery(dashboardQueries.stats());
 
@@ -40,6 +47,15 @@ export function StatCards() {
 			title: "Active Members",
 			description: "Members with an active membership.",
 			className: "overflow-y-auto sm:max-w-xl!",
+		});
+	}
+
+	function showInactiveMembers() {
+		setOpen(<InactiveMembersSheet />, {
+			title: "Inactive Members",
+			description:
+				"Members who have been deactivated, most recently deactivated first.",
+			className: "overflow-y-auto sm:max-w-3xl!",
 		});
 	}
 
@@ -61,7 +77,7 @@ export function StatCards() {
 	}
 
 	return (
-		<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+		<div className={cn("mb-6 grid gap-4", MEMBERSHIP_STAT_GRID)}>
 			<KPICard
 				title="Active Members"
 				value={activeMembers.toLocaleString()}
@@ -73,6 +89,20 @@ export function StatCards() {
 				)}
 				variant="default"
 				onViewDetails={showActiveMembers}
+			/>
+			<KPICard
+				title="Inactive Members"
+				value={inactiveMembers.toLocaleString()}
+				subtitle={
+					inactiveMembers === 0
+						? "No inactive members"
+						: inactiveMembers === 1
+							? "1 member deactivated"
+							: `${inactiveMembers} members deactivated`
+				}
+				icon={UserXIcon}
+				variant="warning"
+				onViewDetails={showInactiveMembers}
 			/>
 			<KPICard
 				title="Expiring Soon"
@@ -111,10 +141,21 @@ export function StatCards() {
 	);
 }
 
-export function StatCardsSkeleton() {
+export function StatCardsSkeleton({
+	count = 4,
+	className,
+}: {
+	count?: number;
+	className?: string;
+}) {
 	return (
-		<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-			{Array.from({ length: 4 }).map((_, i) => (
+		<div
+			className={cn(
+				"mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
+				className,
+			)}
+		>
+			{Array.from({ length: count }).map((_, i) => (
 				<div
 					// biome-ignore lint/suspicious/noArrayIndexKey: Skeleton items are static
 					key={i}

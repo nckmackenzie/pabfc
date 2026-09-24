@@ -6,10 +6,11 @@ import { ViewDetailsAction } from "@/components/ui/custom-button";
 import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { CheckIcon, LoaderIcon, ResetIcon, XIcon } from "@/components/ui/icons";
+import { XIcon } from "@/components/ui/icons";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MemberAvatar } from "@/features/members/components/member-table";
+import { PaymentStatusBadge } from "@/features/receipts/components/payment-status-badge";
 import { VoidPaymentModal } from "@/features/receipts/components/void-payment-modal";
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { useFilters } from "@/hooks/use-filters";
@@ -72,37 +73,7 @@ export function ReceiptsTable() {
 		{
 			accessorKey: "status",
 			header: "Status",
-			cell: ({
-				row: {
-					original: { status },
-				},
-			}) => (
-				<Badge
-					variant={
-						status === "completed"
-							? "success"
-							: status === "pending"
-								? "info"
-								: status === "refunded"
-									? "warning"
-									: status === "voided"
-										? "destructive"
-										: "secondary"
-					}
-					className="capitalize"
-				>
-					{status === "completed" ? (
-						<CheckIcon />
-					) : status === "refunded" ? (
-						<ResetIcon />
-					) : status === "pending" ? (
-						<LoaderIcon className="animate-spin" />
-					) : (
-						<XIcon />
-					)}
-					<span>{status}</span>
-				</Badge>
-			),
+			cell: ({ row }) => <PaymentStatusBadge status={row.original.status} />,
 		},
 		{
 			id: "actions",

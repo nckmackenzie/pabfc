@@ -1,9 +1,8 @@
 import { addDays, startOfDay } from "date-fns";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
-import { and, eq, lt, lte, sql } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import type { PgTransaction } from "drizzle-orm/pg-core";
-import { db } from "@/drizzle/db";
 import type * as schema from "@/drizzle/schema";
 import {
 	activityLogs,
@@ -19,6 +18,10 @@ import { nextAddonInvoiceNo } from "@/features/addons/services/addon-invoice.hel
 import { type ComputedAddonLine, sumAddonSubtotal } from "@/features/addons/lib/helpers";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
 import {
+	getDueMembershipConditions,
+	getMemberIdsWithCurrentMemberships,
+} from "@/features/receipts/lib/membership-activation";
+import {
 	computeMembershipEndDate,
 	parseCalendarDate,
 	splitAmountEvenly,
@@ -28,6 +31,7 @@ import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { failure, success } from "@/lib/result";
 import { createBankingEntry } from "@/services/banking";
+import { enableAccessForActivatedMembers } from "@/services/member-access";
 
 export type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -377,18 +381,20 @@ export async function finalizeMembershipPayment({
 	return success(undefined);
 }
 
-export async function runMembershipMaintenance() {
-	const today = dateFormat(new Date());
+// Promotes pending memberships whose start date has arrived, then reactivates any
+// member the system had deactivated in the meantime (e.g. a renewal paid ahead of
+// time that starts after a gap). The daily cron runs this before expiring
+// memberships, so a member whose renewal starts today still has an active
+// membership when the expiry step checks whether to disable their access.
+export async function activateDueMemberships(tx: Transaction, now = new Date()) {
+	const activated = await tx
+		.update(memberMemberships)
+		.set({ status: "active", updatedAt: now })
+		.where(getDueMembershipConditions(now))
+		.returning({ memberId: memberMemberships.memberId, endDate: memberMemberships.endDate });
 
-	await db.transaction(async (tx) => {
-		await tx
-			.update(memberMemberships)
-			.set({ status: "expired" })
-			.where(and(eq(memberMemberships.status, "active"), lt(memberMemberships.endDate, today)));
-
-		await tx
-			.update(memberMemberships)
-			.set({ status: "active" })
-			.where(and(eq(memberMemberships.status, "pending"), lte(memberMemberships.startDate, today)));
-	});
+	await enableAccessForActivatedMembers(
+		tx,
+		getMemberIdsWithCurrentMemberships(activated, now)
+	);
 }

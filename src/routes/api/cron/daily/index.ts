@@ -12,6 +12,7 @@ import {
 	users,
 } from "@/drizzle/schema";
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
+import { activateDueMemberships } from "@/features/receipts/services/membership-payment-finalizer";
 import { expireCreditNotes } from "@/features/credit-notes/services/credit-note.maintenance";
 import { dateFormat, normalizeDateRange } from "@/lib/helpers";
 import { deleteOlderLogs } from "@/services/activity-logger";
@@ -52,7 +53,7 @@ async function runDailyMaintenance() {
 	// 2) auto create financial year
 	await autoCreateFinancialYear();
 
-	// 3) update membership status rollovers
+	// 3) update membership status rollovers (pending → active, active → expired)
 	await expireMembershipsAndDisableAccess();
 
 	// 4) deactivate inactive members
@@ -176,11 +177,18 @@ async function deactivateInactiveMembers() {
 }
 
 async function expireMembershipsAndDisableAccess() {
-	const today = dateFormat(new Date());
+	// One captured instant so activation and expiry agree on the calendar day.
 	const now = new Date();
+	const today = dateFormat(now);
 
 	await db.transaction(async (tx) => {
-		// 1) Expire memberships and return affected members
+		// 1) Activate pending memberships that start today (or earlier). This must
+		// run before expiry: a renewal paid ahead of time is "pending" until its
+		// start date, and without it the access check below would treat the
+		// member as having no valid membership and deactivate them.
+		await activateDueMemberships(tx, now);
+
+		// 2) Expire memberships and return affected members
 		const expiredMemberships = await tx
 			.update(memberMemberships)
 			.set({

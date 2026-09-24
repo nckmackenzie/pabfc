@@ -8,12 +8,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-	CalendarIcon,
 	ChatMessageIcon,
 	ChevronDownIcon,
-	DollarSignIcon,
 	PencilIcon,
 } from "@/components/ui/icons";
+import {
+	MemberAttendanceHistory,
+	MemberPaymentHistory,
+} from "@/features/members/components/member-profile-history";
 import {
 	MemberAvatar,
 	MemberBadge,
@@ -155,25 +157,9 @@ export function MemberProfile() {
 			</div>
 			<div className="grid md:grid-cols-2 gap-4">
 				<PersonalDetails memberData={memberData} />
-				<div className="grid gap-4">
-					<div className="rounded-md border border-gray-200 p-4 self-start">
-						<h2 className="text-base font-bold font-display">
-							Payment History
-						</h2>
-						<div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-							<DollarSignIcon className="size-12" />
-							<p className="text-sm mt-2">No payment history found.</p>
-						</div>
-					</div>
-					<div className="rounded-md border border-gray-200 p-4 self-start">
-						<h2 className="text-base font-bold font-display">
-							Attendance History
-						</h2>
-						<div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-							<CalendarIcon className="size-12" />
-							<p className="text-sm mt-2">No attendance history found.</p>
-						</div>
-					</div>
+				<div className="grid gap-4 self-start">
+					<MemberPaymentHistory memberId={memberData.id} />
+					<MemberAttendanceHistory memberId={memberData.id} />
 				</div>
 			</div>
 		</div>

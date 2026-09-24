@@ -24,6 +24,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { disableMemberAccess, enableMemberAccess } from "@/services/member-access";
 import {
 	checkColumnExists,
 	getMember,
@@ -423,33 +424,26 @@ export const toggleActive = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
-			if (!(await getMember({ data: memberId }))) {
+			await requirePermission("members:update");
+
+			const member = await getMember({ data: memberId });
+			if (!member) {
 				throw new NotFoundError("Member");
 			}
-
-			const user = await db.query.users.findFirst({
-				columns: { id: true, name: true },
-				where: eq(users.memberId, memberId),
-			});
-			if (!user) {
-				throw new NotFoundError("User");
-			}
+			const memberName = `${member.firstName} ${member.lastName}`;
 
 			await db.transaction(async (tx) => {
-				await tx
-					.update(members)
-					.set({ memberStatus: active ? "active" : "inactive" })
-					.where(eq(members.id, memberId));
-
-				await tx
-					.update(users)
-					.set({ active: !active })
-					.where(eq(users.id, user.id));
+				// `active` is the requested state, not the current one.
+				if (active) {
+					await enableMemberAccess(tx, memberId, "manual_activation");
+				} else {
+					await disableMemberAccess(tx, memberId, "manual_deactivation");
+				}
 
 				await logActivity({
 					data: {
 						action: "toggle active",
-						description: `${active ? "Activated" : "Deactivated"} member ${user.name}`,
+						description: `${active ? "Activated" : "Deactivated"} member ${memberName}`,
 						userId: loggedUserId,
 					},
 				});
