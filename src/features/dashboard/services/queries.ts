@@ -9,6 +9,7 @@ import {
 	getAverageAttendanceByDay,
 	getExpiredMemberships,
 	getExpiringMemberships,
+	getInactiveMembers,
 	getTodaysAttendances,
 } from "@/features/dashboard/services/dashboard.api";
 import {
@@ -34,6 +35,11 @@ export const dashboardQueries = {
 		queryOptions({
 			queryKey: [...dashboardQueries.all, "active-memberships"],
 			queryFn: () => getActiveMemberships(),
+		}),
+	inactiveMembers: () =>
+		queryOptions({
+			queryKey: [...dashboardQueries.all, "inactive-members"],
+			queryFn: () => getInactiveMembers(),
 		}),
 	expiringMemberships: () =>
 		queryOptions({

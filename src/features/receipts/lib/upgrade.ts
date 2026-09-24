@@ -108,8 +108,8 @@ export async function checkUpgradeEligibility(
 	}
 
 	// "Expired" stays a computed check (endDate < today) rather than trusting the
-	// stored `status` column, which only flips active→expired once
-	// runMembershipMaintenance next runs and can lag the real date. `plan` here is
+	// stored `status` column, which only flips active→expired once the daily
+	// cron next runs and can lag the real date. `plan` here is
 	// the member's *original* plan — its lateUpgradeGraceDays override (never the
 	// new/target plan's) governs the grace period, per task.md.
 	const today = dateFormat(new Date());

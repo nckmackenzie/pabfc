@@ -1,7 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, ilike, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/drizzle/db";
-import { memberMemberships, members, membersOverview } from "@/drizzle/schema";
+import {
+	addonInvoices,
+	attendanceLogs,
+	memberMemberships,
+	members,
+	membershipPlans,
+	membersOverview,
+	paymentMembers,
+	payments,
+} from "@/drizzle/schema";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -133,6 +143,80 @@ export const getMemberPreviousPlanDetails = createServerFn()
 			orderBy: desc(memberMemberships.endDate),
 		});
 		return plan ?? null;
+	});
+
+const PROFILE_HISTORY_LIMIT = 10;
+
+export const getMemberPaymentHistory = createServerFn()
+	.middleware([authMiddleware])
+	.validator(z.string().min(1, "Member id is required"))
+	.handler(async ({ data: memberId }) => {
+		await requirePermission("members:view-profile");
+
+		// A member can be the billing member on a payment or one of the members it
+		// covers (group payments), so both have to be matched.
+		const membershipRows = await db
+			.select({
+				id: payments.id,
+				type: sql<"membership">`'membership'`,
+				paymentNo: payments.paymentNo,
+				plan: sql<string | null>`${membershipPlans.name}`,
+				amount: payments.totalAmount,
+				paymentDate: payments.paymentDate,
+				status: payments.status,
+			})
+			.from(payments)
+			.innerJoin(membershipPlans, eq(payments.planId, membershipPlans.id))
+			.where(
+				or(
+					eq(payments.memberId, memberId),
+					sql`exists (select 1 from ${paymentMembers} where ${paymentMembers.paymentId} = ${payments.id} and ${paymentMembers.memberId} = ${memberId})`
+				)
+			)
+			.orderBy(desc(payments.paymentDate))
+			.limit(PROFILE_HISTORY_LIMIT);
+
+		// Addon-only receipts live solely in addon_invoices (see getPayments).
+		const addonRows = await db
+			.select({
+				id: addonInvoices.id,
+				type: sql<"addon">`'addon'`,
+				paymentNo: addonInvoices.invoiceNo,
+				plan: sql<string | null>`NULL`,
+				amount: addonInvoices.totalAmount,
+				paymentDate: addonInvoices.paymentDate,
+				status: addonInvoices.status,
+			})
+			.from(addonInvoices)
+			.where(and(eq(addonInvoices.memberId, memberId), isNull(addonInvoices.paymentId)))
+			.orderBy(desc(addonInvoices.paymentDate))
+			.limit(PROFILE_HISTORY_LIMIT);
+
+		return [...membershipRows, ...addonRows]
+			.sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+			.slice(0, PROFILE_HISTORY_LIMIT);
+	});
+
+export const getMemberAttendanceHistory = createServerFn()
+	.middleware([authMiddleware])
+	.validator(z.string().min(1, "Member id is required"))
+	.handler(async ({ data: memberId }) => {
+		await requirePermission("members:view-profile");
+
+		return db
+			.select({
+				id: sql<string>`${attendanceLogs.id}::text`,
+				checkInTime: attendanceLogs.checkInTime,
+				checkOutTime: attendanceLogs.checkOutTime,
+				/** Session length in minutes. Null until the member checks out. */
+				duration: sql<number | null>`
+					extract(epoch from (${attendanceLogs.checkOutTime} - ${attendanceLogs.checkInTime})) / 60
+				`.mapWith((value) => (value === null ? null : Number(value))),
+			})
+			.from(attendanceLogs)
+			.where(eq(attendanceLogs.memberId, memberId))
+			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
+			.limit(PROFILE_HISTORY_LIMIT);
 	});
 
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];
