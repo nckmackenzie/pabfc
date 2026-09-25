@@ -58,6 +58,19 @@ export const recurrencyPeriodEnum = pgEnum(
 	RECURRENCY_PERIOD,
 );
 
+/**
+ * Nature of expense that a withholding tax deduction is made against. The
+ * category selects a default rate (see `wht-constants.ts`); the rate stays
+ * editable per line because it varies with the vendor's residency.
+ */
+export const WHT_CATEGORIES = [
+	"professional_management_training_fee",
+	"rent",
+	"contractual_fee",
+	"other",
+] as const;
+export const whtCategoryEnum = pgEnum("wht_category", WHT_CATEGORIES);
+
 export const vendors = pgTable(
 	"vendors",
 	{
@@ -96,6 +109,16 @@ export const bills = pgTable(
 		subTotal: decimal("sub_total", { precision: 10, scale: 2 }).notNull(),
 		tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
 		total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+		// Snapshot of the withheld tax summed from the bill's lines. The vendor is
+		// owed `total - whtAmount`; the remainder is owed to KRA and is settled
+		// through `wht_remittances`, not through a bill payment.
+		whtAmount: decimal("wht_amount", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
+		// Recorded after the withheld amount is remitted and iTax issues the
+		// certificate, so both stay null on a freshly created bill.
+		whtCertificateNo: varchar("wht_certificate_no"),
+		whtCertificateIssuedDate: date("wht_certificate_issued_date"),
 		status: billStatusEnum("status").notNull().default("draft"),
 		isRecurring: boolean("is_recurring").notNull().default(false),
 		recurrencyPeriod: recurrencyPeriodEnum("recurrency_period"),
@@ -117,9 +140,14 @@ export const bills = pgTable(
 	],
 );
 
-export const billsRelations = relations(bills, ({ many }) => ({
+export const billsRelations = relations(bills, ({ one, many }) => ({
 	items: many(billItems),
 	payments: many(billPaymentLines),
+	whtRemittances: many(whtRemittanceLines),
+	vendor: one(vendors, {
+		fields: [bills.vendorId],
+		references: [vendors.id],
+	}),
 }));
 
 export const billItems = pgTable(
@@ -139,6 +167,14 @@ export const billItems = pgTable(
 			.default("16"),
 		taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).notNull(),
 		total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+		// Withholding tax mirrors the vatType/vatRate/taxAmount trio above: the
+		// category and rate are inputs, `whtAmount` is the computed snapshot.
+		whtApplicable: boolean("wht_applicable").notNull().default(false),
+		whtCategory: whtCategoryEnum("wht_category"),
+		whtRate: decimal("wht_rate", { precision: 5, scale: 2 }),
+		whtAmount: decimal("wht_amount", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
 		expenseAccountId: integer("expense_account_id")
 			.notNull()
 			.references(() => ledgerAccounts.id),
@@ -242,6 +278,87 @@ export const billPaymentLinesRelations = relations(
 	}),
 );
 
+/**
+ * A single payment of withheld tax to KRA. Structurally this mirrors
+ * `bill_payments`, with one deliberate difference: one remittance settles the
+ * WHT withheld across many vendors for a filing period, so there is no
+ * `vendorId` on the header.
+ */
+export const whtRemittances = pgTable(
+	"wht_remittances",
+	{
+		id,
+		remittanceNo: integer("remittance_no").notNull(),
+		remittanceDate: date("remittance_date").notNull(),
+		reference: varchar("reference"),
+		bankId: varchar("bank_id").references(() => bankAccounts.id),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
+		memo: text("memo"),
+		createdBy: varchar("created_by")
+			.notNull()
+			.references(() => users.id),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_wht_remittances_remittance_no").on(table.remittanceNo),
+		index("idx_wht_remittances_remittance_date").on(table.remittanceDate),
+		index("idx_wht_remittances_reference").on(table.reference),
+	],
+);
+
+export const whtRemittancesRelations = relations(
+	whtRemittances,
+	({ one, many }) => ({
+		lines: many(whtRemittanceLines),
+		bank: one(bankAccounts, {
+			fields: [whtRemittances.bankId],
+			references: [bankAccounts.id],
+		}),
+	}),
+);
+
+export const whtRemittanceLines = pgTable(
+	"wht_remittance_lines",
+	{
+		id: serial("id").primaryKey(),
+		lineNumber: integer("line_number").notNull(),
+		remittanceId: varchar("remittance_id")
+			.notNull()
+			.references(() => whtRemittances.id, { onDelete: "cascade" }),
+		billId: varchar("bill_id")
+			.notNull()
+			.references(() => bills.id),
+		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+		currentBalance: decimal("current_balance", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
+		dc: lineDcEnum("dc").notNull(),
+	},
+	(table) => [
+		index("idx_wht_remittance_lines_remittance_id").on(table.remittanceId),
+		index("idx_wht_remittance_lines_bill_id").on(table.billId),
+		// vw_wht_balances aggregates only the credit lines per bill, on every read.
+		index("idx_wht_remittance_lines_bill_id_dc").on(table.billId, table.dc),
+	],
+);
+
+export const whtRemittanceLinesRelations = relations(
+	whtRemittanceLines,
+	({ one }) => ({
+		remittance: one(whtRemittances, {
+			fields: [whtRemittanceLines.remittanceId],
+			references: [whtRemittances.id],
+		}),
+		bill: one(bills, {
+			fields: [whtRemittanceLines.billId],
+			references: [bills.id],
+		}),
+	}),
+);
+
 export const recurringBillsSchedules = pgTable("recurring_bills_schedules", {
 	id,
 	vendorId: varchar("vendor_id")
@@ -260,6 +377,11 @@ export const recurringBillsSchedules = pgTable("recurring_bills_schedules", {
  * Live view over bills and their payment lines. `balance`, `isOverdue` and
  * `displayStatus` are computed on every read, so they cannot drift the way a
  * stored status column does. `status` carries workflow state only.
+ *
+ * Every figure describing what the vendor is owed is net of withholding tax:
+ * `netPayable` is `total - whtAmount` and `balance` is `netPayable` less the
+ * payments made. The withheld portion is owed to KRA instead, and is tracked by
+ * `vw_wht_balances`.
  */
 export const vwInvoices = pgView("vw_invoices", {
 	id: varchar("id").notNull(),
@@ -269,10 +391,36 @@ export const vwInvoices = pgView("vw_invoices", {
 	invoiceNo: varchar("invoice_no").notNull(),
 	name: varchar("name").notNull(),
 	total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+	whtAmount: numeric("wht_amount", { precision: 10, scale: 2 }).notNull(),
+	netPayable: numeric("net_payable", { precision: 10, scale: 2 }).notNull(),
 	totalPayment: numeric("total_payment", { precision: 10, scale: 2 }).notNull(),
 	balance: numeric("balance", { precision: 10, scale: 2 }).notNull(),
 	status: billStatusEnum("status").notNull(),
 	isOverdue: boolean("is_overdue").notNull(),
 	isPayable: boolean("is_payable").notNull(),
 	displayStatus: billStatusEnum("display_status").notNull(),
+}).existing();
+
+/**
+ * The withholding-tax counterpart of `vw_invoices`: one row per bill carrying
+ * the amount withheld, the amount already remitted to KRA, and what is still
+ * owed. The remittance screen selects from here the way payments select unpaid
+ * bills from `vw_invoices`.
+ */
+export const vwWhtBalances = pgView("vw_wht_balances", {
+	id: varchar("id").notNull(),
+	invoiceDate: date("invoice_date").notNull(),
+	invoiceNo: varchar("invoice_no").notNull(),
+	vendorId: varchar("vendor_id").notNull(),
+	name: varchar("name").notNull(),
+	taxPin: varchar("tax_pin"),
+	total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+	whtAmount: numeric("wht_amount", { precision: 10, scale: 2 }).notNull(),
+	remittedAmount: numeric("remitted_amount", {
+		precision: 10,
+		scale: 2,
+	}).notNull(),
+	whtBalance: numeric("wht_balance", { precision: 10, scale: 2 }).notNull(),
+	whtCertificateNo: varchar("wht_certificate_no"),
+	whtCertificateIssuedDate: date("wht_certificate_issued_date"),
 }).existing();

@@ -3,10 +3,7 @@ import { z } from "zod";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { bankQueries } from "@/features/bankings/services/queries";
-import {
-	billQueries,
-	supplierQueries,
-} from "@/features/bills/services/queries";
+import { billQueries, supplierQueries } from "@/features/bills/services/queries";
 import { accountQueries } from "@/features/coa/services/queries";
 import {
 	PaymentForm,
@@ -31,26 +28,17 @@ export const Route = createFileRoute("/app/payments/new")({
 	}),
 	pendingComponent: PaymentFormPendingComponent,
 	loader: async ({ context: { queryClient }, deps: { billId } }) => {
-		const [vendors, paymentNo, banks, cashEquivalentAccounts] =
-			await Promise.all([
-				queryClient.ensureQueryData(supplierQueries.active()),
-				queryClient.ensureQueryData(paymentQueries.paymentNo()),
-				queryClient.ensureQueryData(bankQueries.list()),
-				queryClient.ensureQueryData(
-					accountQueries.childrenAccountsByParentName(
-						"Cash And Cash Equivalents",
-					),
-				),
-			]);
+		const [vendors, paymentNo, banks, cashEquivalentAccounts] = await Promise.all([
+			queryClient.ensureQueryData(supplierQueries.active()),
+			queryClient.ensureQueryData(paymentQueries.paymentNo()),
+			queryClient.ensureQueryData(bankQueries.list()),
+			queryClient.ensureQueryData(accountQueries.activePostingAccountsByAccountType(["asset"])),
+		]);
 
 		const singleVendor: Array<Option> = [];
 		if (billId) {
-			const bill = await queryClient.ensureQueryData(
-				billQueries.detail(billId),
-			);
-			const vendor = await queryClient.ensureQueryData(
-				supplierQueries.detail(bill.vendorId),
-			);
+			const bill = await queryClient.ensureQueryData(billQueries.detail(billId));
+			const vendor = await queryClient.ensureQueryData(supplierQueries.detail(bill.vendorId));
 			singleVendor.push({
 				value: vendor.id,
 				label: vendor.name,
@@ -61,7 +49,7 @@ export const Route = createFileRoute("/app/payments/new")({
 			vendors: billId ? singleVendor : vendors,
 			paymentNo,
 			banks: transformOptions(banks, "id", "bankName"),
-			cashEquivalentAccounts: transformOptions(cashEquivalentAccounts),
+			cashEquivalentAccounts,
 		};
 	},
 	staticData: {
@@ -70,8 +58,7 @@ export const Route = createFileRoute("/app/payments/new")({
 });
 
 function RouteComponent() {
-	const { vendors, paymentNo, banks, cashEquivalentAccounts } =
-		Route.useLoaderData();
+	const { vendors, paymentNo, banks, cashEquivalentAccounts } = Route.useLoaderData();
 	const { billId } = Route.useSearch();
 
 	// useEffect(() => {

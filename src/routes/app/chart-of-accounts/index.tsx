@@ -1,14 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { ChartOfAccountsTable } from "@/features/coa/components/coa-datatable";
 import { useFilters } from "@/hooks/use-filters";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { Button } from "@/components/ui/button";
+import { CogIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/chart-of-accounts/")({
 	beforeLoad: async () => {
-		await requirePermission("chart-of-accounts:view")
+		await requirePermission("chart-of-accounts:view");
 	},
 	component: RouteComponent,
 	validateSearch: searchValidateSchema,
@@ -26,6 +28,14 @@ function RouteComponent() {
 				pageDescription="Manage your chart of accounts"
 				hasNewButtonLink={true}
 				newButtonLinkPath={"/app/chart-of-accounts/new"}
+				extraActionButtons={
+					<Button asChild size="lg" variant="outline">
+						<Link to="/app/chart-of-accounts/account-mappings">
+							<CogIcon />
+							Account Mappings
+						</Link>
+					</Button>
+				}
 				createPermissions={["chart-of-accounts:create"]}
 				defaultSearchValue={filters.q}
 				onSearch={(val) => setFilters({ q: val })}

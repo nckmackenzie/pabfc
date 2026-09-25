@@ -1,6 +1,6 @@
 import type { getBillById } from "@/features/bills/services/bills.api";
 import type { BillSchema } from "@/features/bills/services/schemas";
-import { dateFormat } from "@/lib/helpers";
+import { dateFormat, toNullableNumber } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 export const getBillFormValues = (
@@ -23,6 +23,10 @@ export const getBillFormValues = (
 				lines.vatType === "inclusive"
 					? Number(lines.total)
 					: Number(lines.subTotal),
+			// The withheld amount is not carried into the form: the server recomputes
+			// it from the rate on every save.
+			whtApplicable: lines.whtApplicable,
+			whtRate: toNullableNumber(lines.whtRate),
 		})),
 		terms: bill.terms,
 	};

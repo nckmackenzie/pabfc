@@ -33,11 +33,11 @@ import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
-	createOrGetAccountId,
 	deleteJournalEntry,
 	getCashEquivalentAccountId,
 } from "@/services/journal";
@@ -164,7 +164,7 @@ export const createExpense = createServerFn({ method: "POST" })
 			const expenseAccountIds = lines.map((line) => parseInt(line.accountId, 10));
 
 			try {
-				const vatAccountId = await createOrGetAccountId("vat input", "asset");
+				const vatAccountId = await resolveAccountRole("vat_input");
 
 				if (taxAmount > 0 && vatAccountId === null) {
 					return failure({

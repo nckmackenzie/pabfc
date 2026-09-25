@@ -1,3 +1,4 @@
+import { seedLedgerAccountMappings } from "@/drizzle/seed/ledger-account-mappings";
 import { seedMemberData } from "@/drizzle/seed/members";
 import { seedPayrollAccountMappings, seedPayrollStatutoryRates } from "@/drizzle/seed/payroll";
 import { seedPermissions } from "@/drizzle/seed/permissions";
@@ -19,6 +20,8 @@ async function main() {
 		await seedPublicHolidays();
 		await seedPayrollAccountMappings();
 		await seedPayrollStatutoryRates();
+		// After payroll, which creates ledger accounts the mappings may bind to.
+		await seedLedgerAccountMappings();
 
 		console.log("=".repeat(50));
 		console.log("🎉 Database seeding completed successfully!");

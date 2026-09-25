@@ -114,6 +114,11 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				permission: "payments:view",
 			},
 			{
+				title: "WHT Remittances",
+				url: "/app/wht-remittances",
+				permission: "wht-remittances:view",
+			},
+			{
 				title: "Journal Entries",
 				url: "/app/journal-entries",
 				permission: "journal-entries:create",

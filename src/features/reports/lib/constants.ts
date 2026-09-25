@@ -8,6 +8,7 @@ import {
 	LibraryIcon,
 	LandmarkIcon,
 	ListIcon,
+	ReceiptTextIcon,
 	TrendingUpIcon,
 } from "lucide-react";
 
@@ -118,6 +119,13 @@ export const REPORT_CARDS = linkOptions([
 		description: "Assets, liabilities, and equity snapshot.",
 		icon: BookOpenTextIcon,
 		permission: "reports:balance-sheet",
+	},
+	{
+		to: "/app/reports/finance/wht-schedule",
+		title: "WHT Schedule",
+		description: "Withholding tax deducted per bill, grouped by category, for the KRA return.",
+		icon: ReceiptTextIcon,
+		permission: "reports:wht-schedule",
 	},
 ]);
 

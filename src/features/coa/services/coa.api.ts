@@ -29,7 +29,8 @@ import { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
-import { createJournalEntry, createOrGetAccountId } from "@/services/journal";
+import { createJournalEntry } from "@/services/journal";
+import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import { collectDescendantIds, filterPotentialParents } from "../lib/parent-account-filter";
 import {
 	childIsPosting,
@@ -213,9 +214,8 @@ const createAccount = async ({ data, userId }: { data: AccountsFormSchema; userI
 				});
 
 				if (data.openingBalance && data.openingBalance !== 0) {
-					const openingBalanceEquity = await createOrGetAccountId(
-						"opening balance equity",
-						"equity",
+					const openingBalanceEquity = await resolveAccountRole(
+						"opening_balance_equity",
 						tx
 					);
 

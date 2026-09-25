@@ -8,6 +8,10 @@ import {
 	getChildrenAccountByParentName,
 	getPotentialParentAccounts,
 } from "@/features/coa/services/coa.api";
+import {
+	getLedgerAccountMappingOptionsFn,
+	getLedgerAccountMappingsFn,
+} from "@/features/coa/services/account-mappings.api";
 import { filterActivePostingAccountsByType } from "@/features/coa/services/account-option-filter";
 import type { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
@@ -62,5 +66,19 @@ export const accountQueries = {
 		queryOptions({
 			queryKey: [...accountQueries.all, "children-accounts", parentName],
 			queryFn: () => getChildrenAccountByParentName({ data: parentName }),
+		}),
+};
+
+export const accountMappingQueries = {
+	all: ["accounts", "mappings"] as const,
+	list: () =>
+		queryOptions({
+			queryKey: [...accountMappingQueries.all, "list"],
+			queryFn: () => getLedgerAccountMappingsFn(),
+		}),
+	accountOptions: () =>
+		queryOptions({
+			queryKey: [...accountMappingQueries.all, "account-options"],
+			queryFn: () => getLedgerAccountMappingOptionsFn(),
 		}),
 };
