@@ -27,6 +27,13 @@ import {
 
 const JOURNAL_SOURCE = "wht remittance";
 
+/**
+ * Thrown inside the transaction so a failed balance check rolls the whole
+ * remittance back, then unwrapped by the catch below into a ValidationError
+ * carrying its own message rather than a generic one.
+ */
+class RemittanceValidationError extends Error {}
+
 export const getRemittanceNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
@@ -231,33 +238,6 @@ export const createRemittance = createServerFn({ method: "POST" })
 				});
 			}
 
-			// Cap each line against the balance the view reports right now, so a stale
-			// form cannot remit more than was ever withheld on a bill.
-			if (!id) {
-				for (const bill of remittedBills) {
-					const [current] = await db
-						.select({ whtBalance: vwWhtBalances.whtBalance })
-						.from(vwWhtBalances)
-						.where(eq(vwWhtBalances.id, bill.billId));
-
-					if (!current) {
-						return failure({
-							type: "ValidationError",
-							message: `Bill ${bill.invoiceNo} has no withholding tax to remit`,
-						});
-					}
-
-					if (Number(bill.amount ?? 0) > Number(current.whtBalance)) {
-						return failure({
-							type: "ValidationError",
-							message: `Remittance amount exceeds the WHT balance on bill ${bill.invoiceNo}`,
-						});
-					}
-
-					bill.whtBalance = Number(current.whtBalance);
-				}
-			}
-
 			try {
 				await db.transaction(async (tx) => {
 					const [{ id: remittanceId }] = await tx
@@ -301,13 +281,52 @@ export const createRemittance = createServerFn({ method: "POST" })
 						});
 					}
 
+					// Balances are validated here rather than before the transaction, and
+					// for updates as well as creates. On an update this runs after the
+					// remittance's own lines have been deleted above, so the bill's
+					// balance already excludes what this remittance previously claimed.
+					//
+					// Locking the bill row first serialises two remittances that touch the
+					// same bill; without it both could read the same balance and each pass
+					// a check the pair together violates.
+					const serverBalances = new Map<string, number>();
+
+					for (const bill of remittedBills) {
+						await tx.execute(
+							sql`SELECT id FROM bills WHERE id = ${bill.billId} FOR UPDATE`,
+						);
+
+						const [current] = await tx
+							.select({ whtBalance: vwWhtBalances.whtBalance })
+							.from(vwWhtBalances)
+							.where(eq(vwWhtBalances.id, bill.billId));
+
+						if (!current) {
+							throw new RemittanceValidationError(
+								`Bill ${bill.invoiceNo} has no withholding tax to remit`,
+							);
+						}
+
+						const balance = Number(current.whtBalance);
+
+						if (Number(bill.amount ?? 0) > balance) {
+							throw new RemittanceValidationError(
+								`Remittance amount exceeds the WHT balance on bill ${bill.invoiceNo}`,
+							);
+						}
+
+						serverBalances.set(bill.billId, balance);
+					}
+
 					await tx.insert(whtRemittanceLines).values(
 						remittedBills.map((bill, index) => ({
 							remittanceId,
 							billId: bill.billId,
 							amount: toDecimalString(bill.amount ?? 0),
 							lineNumber: index + 1,
-							currentBalance: toDecimalString(bill.whtBalance),
+							currentBalance: toDecimalString(
+								serverBalances.get(bill.billId) ?? 0,
+							),
 							dc: "credit" as const,
 						})),
 					);
@@ -350,6 +369,13 @@ export const createRemittance = createServerFn({ method: "POST" })
 
 				return success(undefined);
 			} catch (error) {
+				if (error instanceof RemittanceValidationError) {
+					return failure({
+						type: "ValidationError",
+						message: error.message,
+					});
+				}
+
 				console.error(error);
 				return failure({
 					type: "ApplicationError",

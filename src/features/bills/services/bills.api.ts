@@ -1,9 +1,27 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, gt, ilike, inArray, or, type SQL, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	gt,
+	ilike,
+	inArray,
+	or,
+	type SQL,
+	sql,
+	sum,
+} from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
-import { billItems, bills, ledgerAccounts, vwInvoices } from "@/drizzle/schema";
+import {
+	billItems,
+	bills,
+	ledgerAccounts,
+	vwInvoices,
+	vwWhtBalances,
+	whtRemittanceLines,
+} from "@/drizzle/schema";
 import {
 	billSchema,
 	billValidateSearch,
@@ -14,7 +32,7 @@ import {
 	billLineAmounts,
 	sumBillLineAmounts,
 } from "@/features/bills/lib/bill-totals";
-import { toDecimalString } from "@/lib/helpers";
+import { toDecimalString, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -50,9 +68,33 @@ export const getBills = createServerFn()
 		// The view carries its own ORDER BY, but a live view's ordering is not
 		// guaranteed to survive the outer query the way matview storage did, so
 		// the list states the order it wants.
+		// vw_wht_balances is joined for `whtRemitted` so the list can hide Edit on a
+		// bill whose withholding has already been paid over to KRA. It only has rows
+		// for bills that withheld tax, hence the left join and the coalesce.
 		return await db
-			.select()
+			.select({
+				id: vwInvoices.id,
+				invoiceDate: vwInvoices.invoiceDate,
+				dueDate: vwInvoices.dueDate,
+				vendorId: vwInvoices.vendorId,
+				invoiceNo: vwInvoices.invoiceNo,
+				name: vwInvoices.name,
+				total: vwInvoices.total,
+				whtAmount: vwInvoices.whtAmount,
+				netPayable: vwInvoices.netPayable,
+				totalPayment: vwInvoices.totalPayment,
+				balance: vwInvoices.balance,
+				status: vwInvoices.status,
+				isOverdue: vwInvoices.isOverdue,
+				isPayable: vwInvoices.isPayable,
+				displayStatus: vwInvoices.displayStatus,
+				whtRemitted:
+					sql<string>`coalesce(${vwWhtBalances.remittedAmount}, 0)`.as(
+						"wht_remitted",
+					),
+			})
 			.from(vwInvoices)
+			.leftJoin(vwWhtBalances, eq(vwWhtBalances.id, vwInvoices.id))
 			.where(and(...filters))
 			.orderBy(desc(vwInvoices.invoiceDate), desc(vwInvoices.invoiceNo))
 			.limit(100);
@@ -97,8 +139,6 @@ export const upsertBill = createServerFn()
 			},
 		}) => {
 			await requirePermission(data.id ? "bills:update" : "bills:create");
-
-			const vatAccountId = await resolveAccountRole("vat_input");
 
 			const {
 				id,
@@ -148,6 +188,30 @@ export const upsertBill = createServerFn()
 				});
 			}
 
+			// Lowering the withheld amount below what has already been paid over to KRA
+			// would drive vw_wht_balances.wht_balance negative and strand the WHT Payable
+			// ledger balance, so an edit that would do it is refused.
+			if (id) {
+				const [remitted] = await db
+					.select({ total: sum(whtRemittanceLines.amount) })
+					.from(whtRemittanceLines)
+					.where(
+						and(
+							eq(whtRemittanceLines.billId, id),
+							eq(whtRemittanceLines.dc, "credit"),
+						),
+					);
+
+				const remittedTotal = toNumber(remitted?.total ?? 0);
+
+				if (remittedTotal > 0 && whtAmount < remittedTotal) {
+					return failure({
+						type: "ValidationError",
+						message: `Withholding tax cannot be reduced below the ${remittedTotal.toFixed(2)} already remitted to KRA for this bill. Delete the remittance first.`,
+					});
+				}
+			}
+
 			const selectableAccounts = await db.query.ledgerAccounts.findMany({
 				columns: {
 					id: true,
@@ -188,10 +252,12 @@ export const upsertBill = createServerFn()
 				dc: "debit" as "debit" | "credit",
 			}));
 
+			// Resolved here rather than up front: a zero-VAT bill posts no VAT line, so
+			// it must not fail just because vat_input has no mapping yet.
 			if (tax > 0) {
 				ledgerLines.push({
 					lineNumber: ledgerLines.length + 1,
-					accountId: vatAccountId as number,
+					accountId: await resolveAccountRole("vat_input"),
 					amount: tax.toString(),
 					memo: `VAT`,
 					dc: "debit" as "debit" | "credit",

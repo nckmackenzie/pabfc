@@ -124,13 +124,20 @@ export function BillTable() {
 			id: "actions",
 			cell: ({
 				row: {
-					original: { id, totalPayment, balance, whtAmount, invoiceNo },
+					original: {
+						id,
+						totalPayment,
+						balance,
+						whtAmount,
+						whtRemitted,
+						invoiceNo,
+					},
 				},
 			}) => (
 				<DropdownMenu>
 					<CustomDropdownTrigger />
 					<CustomDropdownContent>
-						{+totalPayment === 0 && (
+						{+totalPayment === 0 && toNumber(whtRemitted) === 0 && (
 							<PermissionGate
 								permission="bills:update"
 								loadingComponent={<Skeleton className="h-4 w-56" />}
@@ -171,7 +178,7 @@ export function BillTable() {
 								</DropdownMenuItem>
 							</PermissionGate>
 						)}
-						{+totalPayment === 0 && (
+						{+totalPayment === 0 && toNumber(whtRemitted) === 0 && (
 							<PermissionGate
 								permission="bills:delete"
 								loadingComponent={<Skeleton className="h-4 w-56" />}

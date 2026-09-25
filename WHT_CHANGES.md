@@ -67,6 +67,21 @@ Only needed for non-admin roles — `userHasPermission` returns `true` for any u
 whose `role` is `admin` (`src/lib/permissions/permission-queries.ts:54`). Required
 before [section 10](#10-permission-gating).
 
+### 1.2b Bind the account mappings — required
+
+Postings resolve Accounts Payable, VAT Input and WHT Payable through
+`ledger_account_mappings`, not by account name. Nothing posts until each role is
+bound:
+
+```bash
+npx tsx ./src/drizzle/seed/seed-account-mappings-only.ts
+```
+
+Then open **Chart of Accounts › Account Mappings** and confirm all four roles read
+**Configured**. A role left unmapped makes bills, payments, expenses and
+remittances refuse to save with a message naming the role — by design, so a journal
+never lands in a silently-invented account.
+
 ### 1.3 Confirm it landed
 
 ```bash
@@ -77,10 +92,11 @@ union all select 'bill_items cols',      count(*)||'/4' from information_schema.
 union all select 'wht_category enum',    count(*)||'/1' from pg_type              where typname='wht_category'
 union all select 'vw_invoices.net_payable', count(*)||'/1' from information_schema.columns where table_name='vw_invoices' and column_name='net_payable'
 union all select 'vw_wht_balances',      count(*)||'/1' from pg_class             where relname='vw_wht_balances'
-union all select 'new permissions',      count(*)||'/5' from permissions          where key like 'wht-%' or key='reports:wht-schedule';"
+union all select 'ledger_account_mappings', count(*)||'/1' from information_schema.tables where table_name='ledger_account_mappings'
+union all select 'new permissions',      count(*)||'/7' from permissions          where key like 'wht-%' or key='reports:wht-schedule' or key like 'ledger-account-mappings:%';"
 ```
 
-All seven must read `n/n`. If `vw_invoices.net_payable` is `0/1`, the view SQL
+All eight must read `n/n`. If `vw_invoices.net_payable` is `0/1`, the view SQL
 didn't run.
 
 > `wht_category` (column + enum) is retained in the database but no longer written
@@ -242,34 +258,32 @@ Both sides total **11,600.00**. The debit side is unchanged from before this
 feature — **only the credit side splits**: the vendor is owed the total less the tax
 withheld on their behalf, and the withheld portion becomes a liability to KRA.
 
-`WHT Payable` is created lazily on the first WHT bill, via `createOrGetAccountId`.
-Confirm it is well-formed:
+`WHT Payable` is resolved through the **account mapping**, not by name, so this
+posting depends on that role being bound (section 1.2b). Confirm the account it
+resolves to:
 
 ```bash
 psql -h localhost -p 5433 -U postgres -d gym_local -c "
-select a.id, a.code, a.name, a.type, a.normal_balance, p.code as parent_code, p.name as parent,
-       a.is_posting, a.description
-from ledger_accounts a left join ledger_accounts p on p.id = a.parent_id
-where lower(a.name)='wht payable';"
+select r.role, a.code, a.name, a.type, a.is_posting
+from ledger_account_mappings r join ledger_accounts a on a.id = r.account_id
+order by r.role;"
 ```
 
-Expect **code `2202`**, name **`WHT Payable`**, parent **`2200 Tax Payables`**
-(alongside `2201 VAT Output`), `liability` / `credit`, posting, with a description.
+Expect `wht_payable` bound to **`2202 WHT Payable`**, a posting `liability` nested
+under `2200 Tax Payables` beside `2201 VAT Output`.
 
-> A parentless account would render as a stray **top-level** row in the Balance
-> Sheet and Trial Balance — both seed their recursion with `parent_id IS NULL` —
-> rather than as a line inside liabilities. If `parent_code` is blank here, see the
-> repair SQL in [section 13](#13-known-limitations).
->
-> **Never rename this account.** The lookup matches on `lower(name)`, so changing
-> its words makes the next posting create a *second* account and strands the
-> balance on the original, permanently. Changing only the case is safe.
+> **Renaming the account is safe.** Resolution is by the mapped id, so a rename no
+> longer creates a duplicate or strands the balance — which is exactly what the old
+> name-based lookup did. To point a role at a different account, change it on the
+> Account Mappings page rather than renaming the account.
 
 ---
 
 ## 4. Editing a bill
 
-Open `WHT-001` → **Edit** (only offered while the bill has no payments).
+Open `WHT-001` → **Edit** (offered only while the bill has no payments **and** none
+of its withholding has been remitted — the server refuses an edit that would drop
+the withheld amount below what was already paid over to KRA).
 
 - The saved rate `5` is shown — **and is not overwritten** by the default.
 - Change the rate to `10`, save.
@@ -294,8 +308,10 @@ The bill list now shows `WHT-001` as **Paid** with balance `0`, and **Make Payme
 disappears** from its row menu. The vendor has been settled in full; the 500 is owed
 to KRA, not to them.
 
-> `payments.api.ts` was **not modified** by this feature. It reads
-> `vw_invoices.balance`, so correcting that view is what made payments WHT-aware.
+> Payments became WHT-aware without any change to their *balance* logic:
+> `payments.api.ts` reads `vw_invoices.balance`, so correcting that view was
+> enough. It was later edited for a separate reason — to resolve Accounts Payable
+> through the account mapping instead of by name.
 
 ---
 
@@ -438,7 +454,7 @@ These inherit the fix without any code change of their own:
 Set up once:
 
 ```bash
-cd /home/nmackenzie/pabfc
+cd "$(git rev-parse --show-toplevel)"
 export PGPASSWORD=$(grep -m1 "^DATABASE_URL=postgresql://postgres" .env | sed 's|.*postgres:\([^@]*\)@.*|\1|')
 alias gq='psql -h localhost -p 5433 -U postgres -d gym_local'
 ```
@@ -531,32 +547,13 @@ from vw_wht_balances where wht_balance < 0;
    enum remain in the database but nothing writes them. If KRA filing needs the
    nature rather than just the rate, this has to come back — either as the dropdown
    or derived some other way.
-4. **The WHT Payable account is resolved by name, not by a stable key.**
-   `createOrGetAccountId` matches on `lower(name)`. Renaming the account in the
-   chart of accounts does not repoint the lookup — the next bill or remittance
-   creates a *second* account, and the original keeps a credit balance that can
-   never clear. This is pre-existing behaviour shared by `Accounts Payable` and
-   `Vat Input`, so renaming any of the three forks it. A role-keyed mapping table
-   like `payroll_account_mappings` is the durable fix.
-
-   If an earlier build created the account before `parentCode`/code generation was
-   added, it will have a null `code` and `parent_id`. Repair it in place — existing
-   journal lines reference it by `account_id`, so history is preserved:
-
-   ```sql
-   -- Check 2202 is free and Tax Payables is a heading first.
-   select count(*) as code_2202_taken from ledger_accounts where code = '2202';
-   select is_posting from ledger_accounts where code = '2200';
-
-   update ledger_accounts
-   set code = '2202',
-       name = 'WHT Payable',
-       parent_id = (select id from ledger_accounts where code = '2200'),
-       description = 'Withholding tax deducted from vendor bills and payable to KRA until remitted.',
-       updated_at = now()
-   where lower(name) = 'wht payable'
-     and (code is null or parent_id is null);
-   ```
+4. **Account roles must be bound before anything posts.** Accounts Payable, VAT
+   Input, WHT Payable and Opening Balance Equity resolve through
+   `ledger_account_mappings`. A role left unmapped makes the relevant save refuse
+   with a message naming it. There is no lazy account creation any more — on a
+   fresh install an admin creates the account in the chart of accounts and maps it.
+   VAT Input is resolved only when a document actually carries VAT, so zero-VAT
+   bills and expenses post without it.
 
 5. **`wht_remittances` has no `payment_method` column.** Editing a remittance shows
    M-Pesa as "Cash" and cheque as "Bank". The crediting account *is* stored so the

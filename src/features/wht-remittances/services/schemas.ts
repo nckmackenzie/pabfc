@@ -29,7 +29,10 @@ export const remittanceFormSchema = z
 						whtAmount: z.number(),
 						/** WHT still owed to KRA on this bill, before this remittance. */
 						whtBalance: z.number(),
-						amount: z.number().nullish(),
+						amount: z
+							.number()
+							.positive("Amount must be greater than zero")
+							.nullish(),
 					})
 					.superRefine((data, ctx) => {
 						if (!data.selected) return;

@@ -43,7 +43,9 @@ export const BillLinesTable = withForm({
 		accounts: [] as Array<Option>,
 		isPending: false,
 	},
-	render: ({ form, accounts, isPending }) => {
+	// Named rather than anonymous so react-hooks/rules-of-hooks recognises this as a
+	// component and can analyse the hooks called inside it.
+	render: function BillLinesTableFields({ form, accounts, isPending }) {
 		const lines = useStore(form.store, (state) => state.values.lines);
 
 		const setLineWhtRate = useCallback(

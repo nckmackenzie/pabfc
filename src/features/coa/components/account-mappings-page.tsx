@@ -42,6 +42,10 @@ function MappingStatusBadge({
 		return <Badge variant="destructive">Wrong Account Type</Badge>;
 	}
 
+	if (!mapping.account.isPosting) {
+		return <Badge variant="destructive">Not A Posting Account</Badge>;
+	}
+
 	return <Badge variant="success">Configured</Badge>;
 }
 

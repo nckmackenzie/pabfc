@@ -29,6 +29,7 @@ import {
 import { findInvalidPostingAccountIdsByType } from "@/features/coa/services/account-option-filter";
 import { calculateExpenseRequest } from "@/features/expenses/utils";
 import { normalizeDateRange } from "@/lib/helpers";
+import { ApplicationError } from "@/lib/error-handling/app-error";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
@@ -164,15 +165,6 @@ export const createExpense = createServerFn({ method: "POST" })
 			const expenseAccountIds = lines.map((line) => parseInt(line.accountId, 10));
 
 			try {
-				const vatAccountId = await resolveAccountRole("vat_input");
-
-				if (taxAmount > 0 && vatAccountId === null) {
-					return failure({
-						type: "ApplicationError",
-						message: "VAT Account not found. Define one in settings.",
-					});
-				}
-
 				const selectableAccounts = await db.query.ledgerAccounts.findMany({
 					columns: {
 						id: true,
@@ -212,10 +204,12 @@ export const createExpense = createServerFn({ method: "POST" })
 					dc: "debit" as "debit" | "credit",
 				}));
 
+				// Resolved here rather than up front: an expense with no VAT posts no VAT
+				// line, so it must not fail just because vat_input has no mapping yet.
 				if (taxAmount > 0) {
 					jLines.push({
 						lineNumber: lines.length + 1,
-						accountId: vatAccountId,
+						accountId: await resolveAccountRole("vat_input"),
 						amount: taxAmount.toString(),
 						memo: `VAT Input for expense no ${data.id ? data.expenseNo : expenseNo}`,
 						dc: "debit" as "debit" | "credit",
@@ -377,7 +371,12 @@ export const createExpense = createServerFn({ method: "POST" })
 				console.log(error);
 				return failure({
 					type: "ApplicationError",
-					message: "Failed to save expense",
+					// An unmapped or misconfigured account role explains exactly what to
+					// fix, so that message is worth more than a generic one.
+					message:
+						error instanceof ApplicationError
+							? error.message
+							: "Failed to save expense",
 				});
 			}
 		},

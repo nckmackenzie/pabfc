@@ -90,7 +90,6 @@ export function WhtScheduleReport() {
 							/>
 						}
 						fileName="WHT-Schedule.pdf"
-						key={Date.now()}
 					>
 						{({ loading }) =>
 							loading ? (

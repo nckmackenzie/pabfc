@@ -23,7 +23,7 @@ import { logActivity } from "@/services/activity-logger";
 
 type LedgerAccountSummary = Pick<
 	typeof ledgerAccounts.$inferSelect,
-	"id" | "code" | "name" | "type" | "normalBalance" | "isActive"
+	"id" | "code" | "name" | "type" | "normalBalance" | "isActive" | "isPosting"
 >;
 
 type LedgerAccountMappingView = {
@@ -62,6 +62,7 @@ async function listExistingMappings() {
 					type: true,
 					normalBalance: true,
 					isActive: true,
+					isPosting: true,
 				},
 			},
 		},
@@ -72,6 +73,7 @@ function isMappingInvalid(item: LedgerAccountMappingView) {
 	return (
 		item.accountId !== null &&
 		(item.account?.isActive !== true ||
+			item.account.isPosting !== true ||
 			item.account.type !== item.requiredAccountType)
 	);
 }
@@ -210,6 +212,7 @@ async function updateMapping({
 				type: account.type,
 				normalBalance: account.normalBalance,
 				isActive: account.isActive,
+				isPosting: account.isPosting,
 			},
 			accountId: upserted.accountId,
 			description: upserted.description,
