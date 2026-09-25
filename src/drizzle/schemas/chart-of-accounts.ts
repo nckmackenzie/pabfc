@@ -12,6 +12,10 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "@/drizzle/schema-helpers";
+import {
+	LEDGER_ACCOUNT_ROLE_KEYS,
+	type LedgerAccountRole,
+} from "@/features/coa/lib/account-roles";
 
 export const accountType = [
 	"asset",
@@ -28,6 +32,16 @@ export const accountTypeEnum = pgEnum("account_type", accountType);
 export const normalBalanceEnum = pgEnum("normal_balance", ["debit", "credit"]);
 
 export const lineDcEnum = pgEnum("line_dc", ["debit", "credit"]);
+
+const ledgerAccountRoleValues = LEDGER_ACCOUNT_ROLE_KEYS as [
+	LedgerAccountRole,
+	...Array<LedgerAccountRole>,
+];
+
+export const ledgerAccountRoleEnum = pgEnum(
+	"ledger_account_role",
+	ledgerAccountRoleValues,
+);
 
 export const ledgerAccounts = pgTable(
 	"ledger_accounts",
@@ -90,3 +104,37 @@ export const journalLinesRelations = relations(journalLines, ({ one }) => ({
 		references: [journalEntries.id],
 	}),
 }));
+
+/**
+ * Binds each posting role the application knows about to a real ledger account.
+ * This table is the source of truth: it is edited from the Account Mappings page,
+ * and postings resolve the account by `role` and use the mapped `account_id`.
+ *
+ * Resolving by id is what makes renaming an account safe — the previous behaviour
+ * matched accounts on `lower(name)`, so a rename silently created a duplicate and
+ * stranded the balance on the original.
+ */
+export const ledgerAccountMappings = pgTable(
+	"ledger_account_mappings",
+	{
+		id: serial("id").primaryKey(),
+		role: ledgerAccountRoleEnum("role").notNull().unique(),
+		accountId: integer("account_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		description: text("description"),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [index("idx_ledger_account_mappings_role").on(table.role)],
+);
+
+export const ledgerAccountMappingsRelations = relations(
+	ledgerAccountMappings,
+	({ one }) => ({
+		account: one(ledgerAccounts, {
+			fields: [ledgerAccountMappings.accountId],
+			references: [ledgerAccounts.id],
+		}),
+	}),
+);

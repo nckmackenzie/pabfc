@@ -21,6 +21,7 @@ import { Route as AppJournalEntriesRouteImport } from './routes/app/journal-entr
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
+import { Route as AppWhtRemittancesRouteRouteImport } from './routes/app/wht-remittances/route'
 import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
 import { Route as AppSuppliersRouteRouteImport } from './routes/app/suppliers/route'
 import { Route as AppReceiptsRouteRouteImport } from './routes/app/receipts/route'
@@ -36,6 +37,7 @@ import { Route as AppCreditNotesRouteRouteImport } from './routes/app/credit-not
 import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-of-accounts/route'
 import { Route as AppBillsRouteRouteImport } from './routes/app/bills/route'
 import { Route as AppBankingsRouteRouteImport } from './routes/app/bankings/route'
+import { Route as AppWhtRemittancesIndexRouteImport } from './routes/app/wht-remittances/index'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
 import { Route as AppSuppliersIndexRouteImport } from './routes/app/suppliers/index'
 import { Route as AppReceiptsIndexRouteImport } from './routes/app/receipts/index'
@@ -55,6 +57,7 @@ import { Route as AppAttendancesIndexRouteImport } from './routes/app/attendance
 import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-logs/index'
 import { Route as ApiMockApiIndexRouteImport } from './routes/api/mock-api/index'
 import { Route as ApiInngestIndexRouteImport } from './routes/api/inngest/index'
+import { Route as AppWhtRemittancesNewRouteImport } from './routes/app/wht-remittances/new'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppSuppliersNewRouteImport } from './routes/app/suppliers/new'
 import { Route as AppReceiptsNewRouteImport } from './routes/app/receipts/new'
@@ -70,6 +73,7 @@ import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
 import { Route as AppEmployeesNewRouteImport } from './routes/app/employees/new'
 import { Route as AppCreditNotesNewRouteImport } from './routes/app/credit-notes/new'
 import { Route as AppChartOfAccountsNewRouteImport } from './routes/app/chart-of-accounts/new'
+import { Route as AppChartOfAccountsAccountMappingsRouteImport } from './routes/app/chart-of-accounts/account-mappings'
 import { Route as AppBillsNewRouteImport } from './routes/app/bills/new'
 import { Route as AppBankingsReconcilliationRouteImport } from './routes/app/bankings/reconcilliation'
 import { Route as AppBankingsClearRouteImport } from './routes/app/bankings/clear'
@@ -100,6 +104,8 @@ import { Route as AppPayrollOvertimeIndexRouteImport } from './routes/app/payrol
 import { Route as AppPayrollLoansIndexRouteImport } from './routes/app/payroll/loans/index'
 import { Route as AppBankingsPostingsIndexRouteImport } from './routes/app/bankings/postings/index'
 import { Route as ApiCronDailyIndexRouteImport } from './routes/api/cron/daily/index'
+import { Route as AppWhtRemittancesRemittanceIdEditRouteImport } from './routes/app/wht-remittances/$remittanceId/edit'
+import { Route as AppWhtRemittancesRemittanceIdDetailsRouteImport } from './routes/app/wht-remittances/$remittanceId/details'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
@@ -137,6 +143,7 @@ import { Route as AppReportsPayrollLoansIndexRouteImport } from './routes/app/re
 import { Route as AppReportsPayrollDeductionsIndexRouteImport } from './routes/app/reports/payroll/deductions/index'
 import { Route as AppReportsHumanResourcesSalaryAdvancesIndexRouteImport } from './routes/app/reports/human-resources/salary-advances/index'
 import { Route as AppReportsHumanResourcesLeaveUtilisationIndexRouteImport } from './routes/app/reports/human-resources/leave-utilisation/index'
+import { Route as AppReportsFinanceWhtScheduleIndexRouteImport } from './routes/app/reports/finance/wht-schedule/index'
 import { Route as AppReportsFinanceTrialBalanceIndexRouteImport } from './routes/app/reports/finance/trial-balance/index'
 import { Route as AppReportsFinanceReceiptsIndexRouteImport } from './routes/app/reports/finance/receipts/index'
 import { Route as AppReportsFinancePaymentsIndexRouteImport } from './routes/app/reports/finance/payments/index'
@@ -224,6 +231,11 @@ const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => authRouteRoute,
 } as any)
+const AppWhtRemittancesRouteRoute = AppWhtRemittancesRouteRouteImport.update({
+  id: '/wht-remittances',
+  path: '/wht-remittances',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppUsersRouteRoute = AppUsersRouteRouteImport.update({
   id: '/users',
   path: '/users',
@@ -298,6 +310,11 @@ const AppBankingsRouteRoute = AppBankingsRouteRouteImport.update({
   id: '/bankings',
   path: '/bankings',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const AppWhtRemittancesIndexRoute = AppWhtRemittancesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWhtRemittancesRouteRoute,
 } as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/',
@@ -394,6 +411,11 @@ const ApiInngestIndexRoute = ApiInngestIndexRouteImport.update({
   path: '/api/inngest/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWhtRemittancesNewRoute = AppWhtRemittancesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppWhtRemittancesRouteRoute,
+} as any)
 const AppUsersNewRoute = AppUsersNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -471,6 +493,12 @@ const AppChartOfAccountsNewRoute = AppChartOfAccountsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppChartOfAccountsRouteRoute,
 } as any)
+const AppChartOfAccountsAccountMappingsRoute =
+  AppChartOfAccountsAccountMappingsRouteImport.update({
+    id: '/account-mappings',
+    path: '/account-mappings',
+    getParentRoute: () => AppChartOfAccountsRouteRoute,
+  } as any)
 const AppBillsNewRoute = AppBillsNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -634,6 +662,18 @@ const ApiCronDailyIndexRoute = ApiCronDailyIndexRouteImport.update({
   path: '/api/cron/daily/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWhtRemittancesRemittanceIdEditRoute =
+  AppWhtRemittancesRemittanceIdEditRouteImport.update({
+    id: '/$remittanceId/edit',
+    path: '/$remittanceId/edit',
+    getParentRoute: () => AppWhtRemittancesRouteRoute,
+  } as any)
+const AppWhtRemittancesRemittanceIdDetailsRoute =
+  AppWhtRemittancesRemittanceIdDetailsRouteImport.update({
+    id: '/$remittanceId/details',
+    path: '/$remittanceId/details',
+    getParentRoute: () => AppWhtRemittancesRouteRoute,
+  } as any)
 const AppUsersRolesNewRoute = AppUsersRolesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -842,6 +882,12 @@ const AppReportsHumanResourcesLeaveUtilisationIndexRoute =
     path: '/leave-utilisation/',
     getParentRoute: () => AppReportsHumanResourcesRouteRoute,
   } as any)
+const AppReportsFinanceWhtScheduleIndexRoute =
+  AppReportsFinanceWhtScheduleIndexRouteImport.update({
+    id: '/wht-schedule/',
+    path: '/wht-schedule/',
+    getParentRoute: () => AppReportsFinanceRouteRoute,
+  } as any)
 const AppReportsFinanceTrialBalanceIndexRoute =
   AppReportsFinanceTrialBalanceIndexRouteImport.update({
     id: '/trial-balance/',
@@ -1022,6 +1068,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
   '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
+  '/app/wht-remittances': typeof AppWhtRemittancesRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -1046,6 +1093,7 @@ export interface FileRoutesByFullPath {
   '/app/bankings/clear': typeof AppBankingsClearRoute
   '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
   '/app/bills/new': typeof AppBillsNewRoute
+  '/app/chart-of-accounts/account-mappings': typeof AppChartOfAccountsAccountMappingsRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/credit-notes/new': typeof AppCreditNotesNewRoute
   '/app/employees/new': typeof AppEmployeesNewRoute
@@ -1061,6 +1109,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/wht-remittances/new': typeof AppWhtRemittancesNewRoute
   '/api/inngest/': typeof ApiInngestIndexRoute
   '/api/mock-api/': typeof ApiMockApiIndexRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
@@ -1080,6 +1129,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts/': typeof AppReceiptsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/wht-remittances/': typeof AppWhtRemittancesIndexRoute
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
@@ -1111,6 +1161,8 @@ export interface FileRoutesByFullPath {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/wht-remittances/$remittanceId/details': typeof AppWhtRemittancesRemittanceIdDetailsRoute
+  '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
   '/app/payroll/loans/': typeof AppPayrollLoansIndexRoute
@@ -1147,6 +1199,7 @@ export interface FileRoutesByFullPath {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/finance/wht-schedule/': typeof AppReportsFinanceWhtScheduleIndexRoute
   '/app/reports/human-resources/leave-utilisation/': typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
   '/app/reports/human-resources/salary-advances/': typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
   '/app/reports/payroll/deductions/': typeof AppReportsPayrollDeductionsIndexRoute
@@ -1180,6 +1233,7 @@ export interface FileRoutesByTo {
   '/app/bankings/clear': typeof AppBankingsClearRoute
   '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
   '/app/bills/new': typeof AppBillsNewRoute
+  '/app/chart-of-accounts/account-mappings': typeof AppChartOfAccountsAccountMappingsRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/credit-notes/new': typeof AppCreditNotesNewRoute
   '/app/employees/new': typeof AppEmployeesNewRoute
@@ -1195,6 +1249,7 @@ export interface FileRoutesByTo {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/wht-remittances/new': typeof AppWhtRemittancesNewRoute
   '/api/inngest': typeof ApiInngestIndexRoute
   '/api/mock-api': typeof ApiMockApiIndexRoute
   '/app/activity-logs': typeof AppActivityLogsIndexRoute
@@ -1214,6 +1269,7 @@ export interface FileRoutesByTo {
   '/app/receipts': typeof AppReceiptsIndexRoute
   '/app/suppliers': typeof AppSuppliersIndexRoute
   '/app/users': typeof AppUsersIndexRoute
+  '/app/wht-remittances': typeof AppWhtRemittancesIndexRoute
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
@@ -1245,6 +1301,8 @@ export interface FileRoutesByTo {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/wht-remittances/$remittanceId/details': typeof AppWhtRemittancesRemittanceIdDetailsRoute
+  '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings': typeof AppBankingsPostingsIndexRoute
   '/app/payroll/loans': typeof AppPayrollLoansIndexRoute
@@ -1281,6 +1339,7 @@ export interface FileRoutesByTo {
   '/app/reports/finance/payments': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/finance/wht-schedule': typeof AppReportsFinanceWhtScheduleIndexRoute
   '/app/reports/human-resources/leave-utilisation': typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
   '/app/reports/human-resources/salary-advances': typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
   '/app/reports/payroll/deductions': typeof AppReportsPayrollDeductionsIndexRoute
@@ -1314,6 +1373,7 @@ export interface FileRoutesById {
   '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
   '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
+  '/app/wht-remittances': typeof AppWhtRemittancesRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/app/dashboard': typeof AppDashboardRoute
@@ -1338,6 +1398,7 @@ export interface FileRoutesById {
   '/app/bankings/clear': typeof AppBankingsClearRoute
   '/app/bankings/reconcilliation': typeof AppBankingsReconcilliationRoute
   '/app/bills/new': typeof AppBillsNewRoute
+  '/app/chart-of-accounts/account-mappings': typeof AppChartOfAccountsAccountMappingsRoute
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/credit-notes/new': typeof AppCreditNotesNewRoute
   '/app/employees/new': typeof AppEmployeesNewRoute
@@ -1353,6 +1414,7 @@ export interface FileRoutesById {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/wht-remittances/new': typeof AppWhtRemittancesNewRoute
   '/api/inngest/': typeof ApiInngestIndexRoute
   '/api/mock-api/': typeof ApiMockApiIndexRoute
   '/app/activity-logs/': typeof AppActivityLogsIndexRoute
@@ -1372,6 +1434,7 @@ export interface FileRoutesById {
   '/app/receipts/': typeof AppReceiptsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/wht-remittances/': typeof AppWhtRemittancesIndexRoute
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
@@ -1403,6 +1466,8 @@ export interface FileRoutesById {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/wht-remittances/$remittanceId/details': typeof AppWhtRemittancesRemittanceIdDetailsRoute
+  '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
   '/app/payroll/loans/': typeof AppPayrollLoansIndexRoute
@@ -1439,6 +1504,7 @@ export interface FileRoutesById {
   '/app/reports/finance/payments/': typeof AppReportsFinancePaymentsIndexRoute
   '/app/reports/finance/receipts/': typeof AppReportsFinanceReceiptsIndexRoute
   '/app/reports/finance/trial-balance/': typeof AppReportsFinanceTrialBalanceIndexRoute
+  '/app/reports/finance/wht-schedule/': typeof AppReportsFinanceWhtScheduleIndexRoute
   '/app/reports/human-resources/leave-utilisation/': typeof AppReportsHumanResourcesLeaveUtilisationIndexRoute
   '/app/reports/human-resources/salary-advances/': typeof AppReportsHumanResourcesSalaryAdvancesIndexRoute
   '/app/reports/payroll/deductions/': typeof AppReportsPayrollDeductionsIndexRoute
@@ -1472,6 +1538,7 @@ export interface FileRouteTypes {
     | '/app/receipts'
     | '/app/suppliers'
     | '/app/users'
+    | '/app/wht-remittances'
     | '/forgot-password'
     | '/sign-in'
     | '/app/dashboard'
@@ -1496,6 +1563,7 @@ export interface FileRouteTypes {
     | '/app/bankings/clear'
     | '/app/bankings/reconcilliation'
     | '/app/bills/new'
+    | '/app/chart-of-accounts/account-mappings'
     | '/app/chart-of-accounts/new'
     | '/app/credit-notes/new'
     | '/app/employees/new'
@@ -1511,6 +1579,7 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
+    | '/app/wht-remittances/new'
     | '/api/inngest/'
     | '/api/mock-api/'
     | '/app/activity-logs/'
@@ -1530,6 +1599,7 @@ export interface FileRouteTypes {
     | '/app/receipts/'
     | '/app/suppliers/'
     | '/app/users/'
+    | '/app/wht-remittances/'
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
@@ -1561,6 +1631,8 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/app/wht-remittances/$remittanceId/details'
+    | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
     | '/app/payroll/loans/'
@@ -1597,6 +1669,7 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/app/reports/finance/wht-schedule/'
     | '/app/reports/human-resources/leave-utilisation/'
     | '/app/reports/human-resources/salary-advances/'
     | '/app/reports/payroll/deductions/'
@@ -1630,6 +1703,7 @@ export interface FileRouteTypes {
     | '/app/bankings/clear'
     | '/app/bankings/reconcilliation'
     | '/app/bills/new'
+    | '/app/chart-of-accounts/account-mappings'
     | '/app/chart-of-accounts/new'
     | '/app/credit-notes/new'
     | '/app/employees/new'
@@ -1645,6 +1719,7 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
+    | '/app/wht-remittances/new'
     | '/api/inngest'
     | '/api/mock-api'
     | '/app/activity-logs'
@@ -1664,6 +1739,7 @@ export interface FileRouteTypes {
     | '/app/receipts'
     | '/app/suppliers'
     | '/app/users'
+    | '/app/wht-remittances'
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
@@ -1695,6 +1771,8 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/app/wht-remittances/$remittanceId/details'
+    | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily'
     | '/app/bankings/postings'
     | '/app/payroll/loans'
@@ -1731,6 +1809,7 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments'
     | '/app/reports/finance/receipts'
     | '/app/reports/finance/trial-balance'
+    | '/app/reports/finance/wht-schedule'
     | '/app/reports/human-resources/leave-utilisation'
     | '/app/reports/human-resources/salary-advances'
     | '/app/reports/payroll/deductions'
@@ -1763,6 +1842,7 @@ export interface FileRouteTypes {
     | '/app/receipts'
     | '/app/suppliers'
     | '/app/users'
+    | '/app/wht-remittances'
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
     | '/app/dashboard'
@@ -1787,6 +1867,7 @@ export interface FileRouteTypes {
     | '/app/bankings/clear'
     | '/app/bankings/reconcilliation'
     | '/app/bills/new'
+    | '/app/chart-of-accounts/account-mappings'
     | '/app/chart-of-accounts/new'
     | '/app/credit-notes/new'
     | '/app/employees/new'
@@ -1802,6 +1883,7 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
+    | '/app/wht-remittances/new'
     | '/api/inngest/'
     | '/api/mock-api/'
     | '/app/activity-logs/'
@@ -1821,6 +1903,7 @@ export interface FileRouteTypes {
     | '/app/receipts/'
     | '/app/suppliers/'
     | '/app/users/'
+    | '/app/wht-remittances/'
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
     | '/app/chart-of-accounts/$accountId/edit'
@@ -1852,6 +1935,8 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/app/wht-remittances/$remittanceId/details'
+    | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
     | '/app/payroll/loans/'
@@ -1888,6 +1973,7 @@ export interface FileRouteTypes {
     | '/app/reports/finance/payments/'
     | '/app/reports/finance/receipts/'
     | '/app/reports/finance/trial-balance/'
+    | '/app/reports/finance/wht-schedule/'
     | '/app/reports/human-resources/leave-utilisation/'
     | '/app/reports/human-resources/salary-advances/'
     | '/app/reports/payroll/deductions/'
@@ -2009,6 +2095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/app/wht-remittances': {
+      id: '/app/wht-remittances'
+      path: '/wht-remittances'
+      fullPath: '/app/wht-remittances'
+      preLoaderRoute: typeof AppWhtRemittancesRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/users': {
       id: '/app/users'
       path: '/users'
@@ -2113,6 +2206,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/bankings'
       preLoaderRoute: typeof AppBankingsRouteRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/app/wht-remittances/': {
+      id: '/app/wht-remittances/'
+      path: '/'
+      fullPath: '/app/wht-remittances/'
+      preLoaderRoute: typeof AppWhtRemittancesIndexRouteImport
+      parentRoute: typeof AppWhtRemittancesRouteRoute
     }
     '/app/users/': {
       id: '/app/users/'
@@ -2247,6 +2347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInngestIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/wht-remittances/new': {
+      id: '/app/wht-remittances/new'
+      path: '/new'
+      fullPath: '/app/wht-remittances/new'
+      preLoaderRoute: typeof AppWhtRemittancesNewRouteImport
+      parentRoute: typeof AppWhtRemittancesRouteRoute
+    }
     '/app/users/new': {
       id: '/app/users/new'
       path: '/new'
@@ -2350,6 +2457,13 @@ declare module '@tanstack/react-router' {
       path: '/new'
       fullPath: '/app/chart-of-accounts/new'
       preLoaderRoute: typeof AppChartOfAccountsNewRouteImport
+      parentRoute: typeof AppChartOfAccountsRouteRoute
+    }
+    '/app/chart-of-accounts/account-mappings': {
+      id: '/app/chart-of-accounts/account-mappings'
+      path: '/account-mappings'
+      fullPath: '/app/chart-of-accounts/account-mappings'
+      preLoaderRoute: typeof AppChartOfAccountsAccountMappingsRouteImport
       parentRoute: typeof AppChartOfAccountsRouteRoute
     }
     '/app/bills/new': {
@@ -2561,6 +2675,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/cron/daily/'
       preLoaderRoute: typeof ApiCronDailyIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/wht-remittances/$remittanceId/edit': {
+      id: '/app/wht-remittances/$remittanceId/edit'
+      path: '/$remittanceId/edit'
+      fullPath: '/app/wht-remittances/$remittanceId/edit'
+      preLoaderRoute: typeof AppWhtRemittancesRemittanceIdEditRouteImport
+      parentRoute: typeof AppWhtRemittancesRouteRoute
+    }
+    '/app/wht-remittances/$remittanceId/details': {
+      id: '/app/wht-remittances/$remittanceId/details'
+      path: '/$remittanceId/details'
+      fullPath: '/app/wht-remittances/$remittanceId/details'
+      preLoaderRoute: typeof AppWhtRemittancesRemittanceIdDetailsRouteImport
+      parentRoute: typeof AppWhtRemittancesRouteRoute
     }
     '/app/users/roles/new': {
       id: '/app/users/roles/new'
@@ -2821,6 +2949,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsHumanResourcesLeaveUtilisationIndexRouteImport
       parentRoute: typeof AppReportsHumanResourcesRouteRoute
     }
+    '/app/reports/finance/wht-schedule/': {
+      id: '/app/reports/finance/wht-schedule/'
+      path: '/wht-schedule'
+      fullPath: '/app/reports/finance/wht-schedule/'
+      preLoaderRoute: typeof AppReportsFinanceWhtScheduleIndexRouteImport
+      parentRoute: typeof AppReportsFinanceRouteRoute
+    }
     '/app/reports/finance/trial-balance/': {
       id: '/app/reports/finance/trial-balance/'
       path: '/trial-balance'
@@ -3078,6 +3213,7 @@ const AppBillsRouteRouteWithChildren = AppBillsRouteRoute._addFileChildren(
 )
 
 interface AppChartOfAccountsRouteRouteChildren {
+  AppChartOfAccountsAccountMappingsRoute: typeof AppChartOfAccountsAccountMappingsRoute
   AppChartOfAccountsNewRoute: typeof AppChartOfAccountsNewRoute
   AppChartOfAccountsIndexRoute: typeof AppChartOfAccountsIndexRoute
   AppChartOfAccountsAccountIdEditRoute: typeof AppChartOfAccountsAccountIdEditRoute
@@ -3085,6 +3221,8 @@ interface AppChartOfAccountsRouteRouteChildren {
 
 const AppChartOfAccountsRouteRouteChildren: AppChartOfAccountsRouteRouteChildren =
   {
+    AppChartOfAccountsAccountMappingsRoute:
+      AppChartOfAccountsAccountMappingsRoute,
     AppChartOfAccountsNewRoute: AppChartOfAccountsNewRoute,
     AppChartOfAccountsIndexRoute: AppChartOfAccountsIndexRoute,
     AppChartOfAccountsAccountIdEditRoute: AppChartOfAccountsAccountIdEditRoute,
@@ -3434,6 +3572,28 @@ const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
   AppUsersRouteRouteChildren,
 )
 
+interface AppWhtRemittancesRouteRouteChildren {
+  AppWhtRemittancesNewRoute: typeof AppWhtRemittancesNewRoute
+  AppWhtRemittancesIndexRoute: typeof AppWhtRemittancesIndexRoute
+  AppWhtRemittancesRemittanceIdDetailsRoute: typeof AppWhtRemittancesRemittanceIdDetailsRoute
+  AppWhtRemittancesRemittanceIdEditRoute: typeof AppWhtRemittancesRemittanceIdEditRoute
+}
+
+const AppWhtRemittancesRouteRouteChildren: AppWhtRemittancesRouteRouteChildren =
+  {
+    AppWhtRemittancesNewRoute: AppWhtRemittancesNewRoute,
+    AppWhtRemittancesIndexRoute: AppWhtRemittancesIndexRoute,
+    AppWhtRemittancesRemittanceIdDetailsRoute:
+      AppWhtRemittancesRemittanceIdDetailsRoute,
+    AppWhtRemittancesRemittanceIdEditRoute:
+      AppWhtRemittancesRemittanceIdEditRoute,
+  }
+
+const AppWhtRemittancesRouteRouteWithChildren =
+  AppWhtRemittancesRouteRoute._addFileChildren(
+    AppWhtRemittancesRouteRouteChildren,
+  )
+
 interface AppReportsFinanceRouteRouteChildren {
   AppReportsFinanceIndexRoute: typeof AppReportsFinanceIndexRoute
   AppReportsFinanceBalanceSheetIndexRoute: typeof AppReportsFinanceBalanceSheetIndexRoute
@@ -3445,6 +3605,7 @@ interface AppReportsFinanceRouteRouteChildren {
   AppReportsFinancePaymentsIndexRoute: typeof AppReportsFinancePaymentsIndexRoute
   AppReportsFinanceReceiptsIndexRoute: typeof AppReportsFinanceReceiptsIndexRoute
   AppReportsFinanceTrialBalanceIndexRoute: typeof AppReportsFinanceTrialBalanceIndexRoute
+  AppReportsFinanceWhtScheduleIndexRoute: typeof AppReportsFinanceWhtScheduleIndexRoute
 }
 
 const AppReportsFinanceRouteRouteChildren: AppReportsFinanceRouteRouteChildren =
@@ -3463,6 +3624,8 @@ const AppReportsFinanceRouteRouteChildren: AppReportsFinanceRouteRouteChildren =
     AppReportsFinanceReceiptsIndexRoute: AppReportsFinanceReceiptsIndexRoute,
     AppReportsFinanceTrialBalanceIndexRoute:
       AppReportsFinanceTrialBalanceIndexRoute,
+    AppReportsFinanceWhtScheduleIndexRoute:
+      AppReportsFinanceWhtScheduleIndexRoute,
   }
 
 const AppReportsFinanceRouteRouteWithChildren =
@@ -3530,6 +3693,7 @@ interface AppRouteRouteChildren {
   AppReceiptsRouteRoute: typeof AppReceiptsRouteRouteWithChildren
   AppSuppliersRouteRoute: typeof AppSuppliersRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
+  AppWhtRemittancesRouteRoute: typeof AppWhtRemittancesRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppJournalEntriesRoute: typeof AppJournalEntriesRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -3561,6 +3725,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppReceiptsRouteRoute: AppReceiptsRouteRouteWithChildren,
   AppSuppliersRouteRoute: AppSuppliersRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
+  AppWhtRemittancesRouteRoute: AppWhtRemittancesRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppJournalEntriesRoute: AppJournalEntriesRoute,
   AppSettingsRoute: AppSettingsRoute,

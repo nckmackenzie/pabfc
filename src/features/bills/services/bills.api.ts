@@ -1,20 +1,46 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, gt, ilike, inArray, or, type SQL, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	gt,
+	ilike,
+	inArray,
+	or,
+	type SQL,
+	sql,
+	sum,
+} from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "@/drizzle/db";
-import { billItems, bills, ledgerAccounts, vwInvoices } from "@/drizzle/schema";
-import { billSchema, billValidateSearch } from "@/features/bills/services/schemas";
+import {
+	billItems,
+	bills,
+	ledgerAccounts,
+	vwInvoices,
+	vwWhtBalances,
+	whtRemittanceLines,
+} from "@/drizzle/schema";
+import {
+	billSchema,
+	billValidateSearch,
+	whtCertificateSchema,
+} from "@/features/bills/services/schemas";
 import { findInvalidPostingAccountIdsByType } from "@/features/coa/services/account-option-filter";
-import { taxCalculator } from "@/lib/helpers";
+import {
+	billLineAmounts,
+	sumBillLineAmounts,
+} from "@/features/bills/lib/bill-totals";
+import { toDecimalString, toNumber } from "@/lib/helpers";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
+import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
-	createOrGetAccountId,
 	deleteJournalEntry,
 } from "@/services/journal";
 
@@ -42,9 +68,33 @@ export const getBills = createServerFn()
 		// The view carries its own ORDER BY, but a live view's ordering is not
 		// guaranteed to survive the outer query the way matview storage did, so
 		// the list states the order it wants.
+		// vw_wht_balances is joined for `whtRemitted` so the list can hide Edit on a
+		// bill whose withholding has already been paid over to KRA. It only has rows
+		// for bills that withheld tax, hence the left join and the coalesce.
 		return await db
-			.select()
+			.select({
+				id: vwInvoices.id,
+				invoiceDate: vwInvoices.invoiceDate,
+				dueDate: vwInvoices.dueDate,
+				vendorId: vwInvoices.vendorId,
+				invoiceNo: vwInvoices.invoiceNo,
+				name: vwInvoices.name,
+				total: vwInvoices.total,
+				whtAmount: vwInvoices.whtAmount,
+				netPayable: vwInvoices.netPayable,
+				totalPayment: vwInvoices.totalPayment,
+				balance: vwInvoices.balance,
+				status: vwInvoices.status,
+				isOverdue: vwInvoices.isOverdue,
+				isPayable: vwInvoices.isPayable,
+				displayStatus: vwInvoices.displayStatus,
+				whtRemitted:
+					sql<string>`coalesce(${vwWhtBalances.remittedAmount}, 0)`.as(
+						"wht_remitted",
+					),
+			})
 			.from(vwInvoices)
+			.leftJoin(vwWhtBalances, eq(vwWhtBalances.id, vwInvoices.id))
 			.where(and(...filters))
 			.orderBy(desc(vwInvoices.invoiceDate), desc(vwInvoices.invoiceNo))
 			.limit(100);
@@ -66,6 +116,9 @@ export const getBillById = createServerFn()
 						description: true,
 						subTotal: true,
 						total: true,
+						whtApplicable: true,
+						whtRate: true,
+						whtAmount: true,
 					},
 				},
 			},
@@ -87,8 +140,6 @@ export const upsertBill = createServerFn()
 		}) => {
 			await requirePermission(data.id ? "bills:update" : "bills:create");
 
-			const vatAccountId = await createOrGetAccountId("vat input", "asset");
-
 			const {
 				id,
 				invoiceDate,
@@ -102,30 +153,64 @@ export const upsertBill = createServerFn()
 				lines,
 			} = data;
 
-			const billItemsValues = lines.map((line) => {
-				const { taxAmount, amountExlusiveTax, totalInclusiveTax } = taxCalculator(
-					line.amount,
-					line.vatType ?? "none"
-				);
+			// Both VAT and WHT are recomputed here from the submitted rates rather
+			// than taken from the client; the figures the form showed are display only.
+			const lineAmounts = lines.map(billLineAmounts);
+
+			const billItemsValues = lines.map((line, index) => {
+				const amounts = lineAmounts[index];
+				const whtApplicable = Boolean(line.whtApplicable);
 				return {
 					accountId: +line.accountId,
 					description: line.description?.toLowerCase() ?? null,
-					subTotal: amountExlusiveTax.toString(),
+					subTotal: toDecimalString(amounts.subTotal),
 					vatType: line.vatType ?? "none",
-					taxAmount: taxAmount.toString(),
-					total: totalInclusiveTax.toString(),
+					taxAmount: toDecimalString(amounts.taxAmount),
+					total: toDecimalString(amounts.total),
+					whtApplicable,
+					whtRate: whtApplicable ? toDecimalString(line.whtRate) : null,
+					whtAmount: toDecimalString(amounts.whtAmount),
 				};
 			});
 
-			const { subTotal, tax, total } = billItemsValues.reduce(
-				(acc, line) => {
-					acc.subTotal += parseFloat(line.subTotal ?? "0");
-					acc.tax += parseFloat(line.taxAmount ?? "0");
-					acc.total += parseFloat(line.total ?? "0");
-					return acc;
-				},
-				{ subTotal: 0, tax: 0, total: 0 }
-			);
+			const {
+				subTotal,
+				taxAmount: tax,
+				total,
+				whtAmount,
+				netPayable,
+			} = sumBillLineAmounts(lineAmounts);
+
+			if (whtAmount > total) {
+				return failure({
+					type: "ValidationError",
+					message: "Withholding tax cannot exceed the bill total.",
+				});
+			}
+
+			// Lowering the withheld amount below what has already been paid over to KRA
+			// would drive vw_wht_balances.wht_balance negative and strand the WHT Payable
+			// ledger balance, so an edit that would do it is refused.
+			if (id) {
+				const [remitted] = await db
+					.select({ total: sum(whtRemittanceLines.amount) })
+					.from(whtRemittanceLines)
+					.where(
+						and(
+							eq(whtRemittanceLines.billId, id),
+							eq(whtRemittanceLines.dc, "credit"),
+						),
+					);
+
+				const remittedTotal = toNumber(remitted?.total ?? 0);
+
+				if (remittedTotal > 0 && whtAmount < remittedTotal) {
+					return failure({
+						type: "ValidationError",
+						message: `Withholding tax cannot be reduced below the ${remittedTotal.toFixed(2)} already remitted to KRA for this bill. Delete the remittance first.`,
+					});
+				}
+			}
 
 			const selectableAccounts = await db.query.ledgerAccounts.findMany({
 				columns: {
@@ -155,7 +240,9 @@ export const upsertBill = createServerFn()
 				});
 			}
 
-			const accountsPayableId = await createOrGetAccountId("accounts payable", "liability");
+			const accountsPayableId = await resolveAccountRole("accounts_payable");
+			const whtPayableId =
+				whtAmount > 0 ? await resolveAccountRole("wht_payable") : null;
 
 			const ledgerLines = billItemsValues.map((line, index) => ({
 				lineNumber: index + 1,
@@ -165,23 +252,38 @@ export const upsertBill = createServerFn()
 				dc: "debit" as "debit" | "credit",
 			}));
 
+			// Resolved here rather than up front: a zero-VAT bill posts no VAT line, so
+			// it must not fail just because vat_input has no mapping yet.
 			if (tax > 0) {
 				ledgerLines.push({
-					lineNumber: lines.length + 1,
-					accountId: vatAccountId as number,
+					lineNumber: ledgerLines.length + 1,
+					accountId: await resolveAccountRole("vat_input"),
 					amount: tax.toString(),
 					memo: `VAT`,
 					dc: "debit" as "debit" | "credit",
 				});
 			}
 
+			// The debit side is untouched by withholding. Only the credit side splits:
+			// the vendor is owed the total less the tax withheld on their behalf, and
+			// the withheld portion becomes a liability to KRA until it is remitted.
 			ledgerLines.push({
-				lineNumber: lines.length + 1,
+				lineNumber: ledgerLines.length + 1,
 				accountId: accountsPayableId,
-				amount: total.toString(),
+				amount: netPayable.toString(),
 				memo: `Bill ${invoiceNo}`,
 				dc: "credit" as "debit" | "credit",
 			});
+
+			if (whtPayableId) {
+				ledgerLines.push({
+					lineNumber: ledgerLines.length + 1,
+					accountId: whtPayableId,
+					amount: whtAmount.toString(),
+					memo: `WHT withheld on bill ${invoiceNo}`,
+					dc: "credit" as "debit" | "credit",
+				});
+			}
 
 			if (!areJournalValuesBalanced(ledgerLines)) {
 				return failure({
@@ -207,6 +309,7 @@ export const upsertBill = createServerFn()
 							subTotal: subTotal.toString(),
 							tax: tax.toString(),
 							total: total.toString(),
+							whtAmount: whtAmount.toString(),
 							status: "pending",
 							createdBy: userId,
 						})
@@ -224,6 +327,7 @@ export const upsertBill = createServerFn()
 								subTotal: subTotal.toString(),
 								tax: tax.toString(),
 								total: total.toString(),
+								whtAmount: whtAmount.toString(),
 								createdBy: userId,
 							},
 						})
@@ -291,6 +395,7 @@ export const deleteBill = createServerFn()
 				where: eq(bills.id, billId),
 				with: {
 					payments: { columns: { id: true } },
+					whtRemittances: { columns: { id: true } },
 				},
 			});
 
@@ -305,6 +410,15 @@ export const deleteBill = createServerFn()
 				return failure({
 					type: "ApplicationError",
 					message: "Bill has payments",
+				});
+			}
+
+			// The remittance lines reference the bill, so without this the delete would
+			// fail on the foreign key and surface as an unexplained error.
+			if (bill.whtRemittances.length > 0) {
+				return failure({
+					type: "ApplicationError",
+					message: "Bill has withholding tax remitted against it",
 				});
 			}
 
@@ -329,6 +443,71 @@ export const deleteBill = createServerFn()
 				return failure({
 					type: "ApplicationError",
 					message: "Failed to delete bill",
+				});
+			}
+		}
+	);
+
+/**
+ * Records the iTax certificate for tax already withheld on a bill. Purely a
+ * record-keeping update — it moves no money and posts nothing to the ledger, so
+ * it is deliberately separate from `upsertBill`, which a bill with payments
+ * against it can no longer run.
+ */
+export const updateBillWhtCertificate = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator(whtCertificateSchema)
+	.handler(
+		async ({
+			data: { billId, whtCertificateNo, whtCertificateIssuedDate },
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("bills:update");
+
+			const bill = await db.query.bills.findFirst({
+				columns: { id: true, invoiceNo: true, whtAmount: true },
+				where: eq(bills.id, billId),
+			});
+
+			if (!bill) {
+				return failure({
+					type: "NotFoundError",
+					message: "Bill not found",
+				});
+			}
+
+			if (parseFloat(bill.whtAmount) <= 0) {
+				return failure({
+					type: "ValidationError",
+					message: "No withholding tax was deducted on this bill",
+				});
+			}
+
+			try {
+				await db
+					.update(bills)
+					.set({
+						whtCertificateNo: whtCertificateNo.toUpperCase(),
+						whtCertificateIssuedDate,
+					})
+					.where(eq(bills.id, billId));
+
+				await logActivity({
+					data: {
+						action: "update bill wht certificate",
+						userId,
+						description: `Recorded WHT certificate ${whtCertificateNo.toUpperCase()} on bill ${bill.invoiceNo}`,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to record WHT certificate",
 				});
 			}
 		}

@@ -20,10 +20,10 @@ import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
+import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
-	createOrGetAccountId,
 	deleteJournalEntry,
 } from "@/services/journal";
 
@@ -140,7 +140,7 @@ export const createPayment = createServerFn({ method: "POST" })
 				cashEquivalentAccountId,
 			} = data;
 
-			const accountsPayableId = await createOrGetAccountId("accounts payable", "liability");
+			const accountsPayableId = await resolveAccountRole("accounts_payable");
 
 			const paidBills = bills.filter((bill) => bill.selected);
 

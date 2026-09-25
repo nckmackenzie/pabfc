@@ -26,11 +26,7 @@ export const Route = createFileRoute("/app/payments/$paymentId/edit")({
 		const [payment, banks, cashEquivalentAccounts] = await Promise.all([
 			queryClient.ensureQueryData(paymentQueries.detail(params.paymentId)),
 			queryClient.ensureQueryData(bankQueries.list()),
-			queryClient.ensureQueryData(
-				accountQueries.childrenAccountsByParentName(
-					"Cash And Cash Equivalents",
-				),
-			),
+			queryClient.ensureQueryData(accountQueries.activePostingAccountsByAccountType(["asset"])),
 		]);
 		const suppliers: Array<Option> = [];
 		const supplier = await queryClient
@@ -40,13 +36,12 @@ export const Route = createFileRoute("/app/payments/$paymentId/edit")({
 		return {
 			payment,
 			banks: transformOptions(banks, "id", "bankName"),
-			cashEquivalentAccounts: transformOptions(cashEquivalentAccounts),
+			cashEquivalentAccounts,
 			suppliers,
 		};
 	},
 	staticData: {
-		breadcrumb: (match) =>
-			`Edit Payment #${match.loaderData.payment.paymentNo}`,
+		breadcrumb: (match) => `Edit Payment #${match.loaderData.payment.paymentNo}`,
 	},
 	component: PaymentEdit,
 	pendingComponent: PaymentFormPendingComponent,

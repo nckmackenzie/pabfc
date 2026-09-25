@@ -1,16 +1,10 @@
 import type { ExtractTablesWithRelations } from "drizzle-orm";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import { db } from "@/drizzle/db";
 import type * as schema from "@/drizzle/schema";
-import {
-	bankAccounts,
-	journalEntries,
-	journalLines,
-	ledgerAccounts,
-} from "@/drizzle/schema";
-import { defaultNormalBalanceForType } from "@/features/coa/services/coa.api";
+import { bankAccounts, journalEntries, journalLines } from "@/drizzle/schema";
 import type { ExpenseSchema } from "@/features/expenses/services/schemas";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 
@@ -81,33 +75,6 @@ export const deleteJournalEntry = async ({
 		.delete(journalEntries)
 		.where(and(...filters))
 		.returning({ id: journalEntries.id });
-};
-
-export const createOrGetAccountId = async (
-	accountName: string,
-	type: schema.AccountType,
-	tx?: Transaction,
-) => {
-	const connection = tx ?? db;
-	const account = await connection.query.ledgerAccounts.findFirst({
-		where: eq(sql`lower(${ledgerAccounts.name})`, accountName.toLowerCase()),
-	});
-
-	if (!account) {
-		const [newAccount] = await connection
-			.insert(ledgerAccounts)
-			.values({
-				name: accountName,
-				type,
-				normalBalance: defaultNormalBalanceForType(type),
-				isPosting: true,
-				isActive: true,
-			})
-			.returning();
-		return newAccount.id;
-	}
-
-	return account.id;
 };
 
 export const getVatAccountId = async () => {

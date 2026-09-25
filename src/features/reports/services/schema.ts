@@ -11,7 +11,11 @@ import {
 } from "@/features/reports/lib/constants";
 import { loanStatusSchema } from "@/features/payroll/services/loan.schemas";
 import { salaryAdvanceStatusSchema } from "@/features/payroll/services/salary-advance.schemas";
-import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
+import {
+	dateRangeRequiredSchema,
+	dateRangeSchema,
+	dateSchema,
+} from "@/lib/schema-rules";
 
 export const receiptValidateSchema = dateRangeSchema.safeExtend({
 	reportType: z.enum(RECEIPTS_REPORT_TYPE.map((type) => type.value)).optional(),
@@ -115,6 +119,32 @@ export const invoiceReportFormSchema = dateRangeSchema
 			}
 		}
 	});
+
+export const whtScheduleValidateSchema = dateRangeSchema;
+
+/**
+ * The WHT schedule is meaningless without a period, so unlike
+ * `dateRangeRequiredSchema` — whose bounds stay optional in its inferred type —
+ * this one resolves to required dates and the server can use them directly.
+ */
+export const whtScheduleFormSchema = z
+	.object({
+		dateRange: z.object({
+			from: dateSchema("Select start date"),
+			to: dateSchema("Select end date"),
+		}),
+	})
+	.superRefine(({ dateRange: { from, to } }, ctx) => {
+		if (new Date(to).setHours(0, 0, 0, 0) < new Date(from).setHours(0, 0, 0, 0)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "End date cannot be before start date",
+				path: ["dateRange.to"],
+			});
+		}
+	});
+
+export type WhtScheduleFormSchema = z.infer<typeof whtScheduleFormSchema>;
 
 export type ExpenseValidateSchema = z.infer<typeof expenseReportFormSchema>;
 export type InvoiceReportFormSchema = z.infer<typeof invoiceReportFormSchema>;
