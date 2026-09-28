@@ -110,6 +110,7 @@ import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.n
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
 import { Route as AppSuppliersSupplierIdEditRouteImport } from './routes/app/suppliers/$supplierId/edit'
+import { Route as AppReceiptsComplimentaryNewRouteImport } from './routes/app/receipts/complimentary/new'
 import { Route as AppReceiptsReceiptIdUpgradeRouteImport } from './routes/app/receipts/$receiptId/upgrade'
 import { Route as AppReceiptsReceiptIdDetailsRouteImport } from './routes/app/receipts/$receiptId/details'
 import { Route as AppPlansAddonsNewRouteImport } from './routes/app/plans/addons/new'
@@ -695,6 +696,12 @@ const AppSuppliersSupplierIdEditRoute =
     path: '/$supplierId/edit',
     getParentRoute: () => AppSuppliersRouteRoute,
   } as any)
+const AppReceiptsComplimentaryNewRoute =
+  AppReceiptsComplimentaryNewRouteImport.update({
+    id: '/complimentary/new',
+    path: '/complimentary/new',
+    getParentRoute: () => AppReceiptsRouteRoute,
+  } as any)
 const AppReceiptsReceiptIdUpgradeRoute =
   AppReceiptsReceiptIdUpgradeRouteImport.update({
     id: '/$receiptId/upgrade',
@@ -1157,6 +1164,7 @@ export interface FileRoutesByFullPath {
   '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
+  '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1297,6 +1305,7 @@ export interface FileRoutesByTo {
   '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
+  '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1462,6 +1471,7 @@ export interface FileRoutesById {
   '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
+  '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1627,6 +1637,7 @@ export interface FileRouteTypes {
     | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
+    | '/app/receipts/complimentary/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -1767,6 +1778,7 @@ export interface FileRouteTypes {
     | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
+    | '/app/receipts/complimentary/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -1931,6 +1943,7 @@ export interface FileRouteTypes {
     | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
+    | '/app/receipts/complimentary/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -2717,6 +2730,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/suppliers/$supplierId/edit'
       preLoaderRoute: typeof AppSuppliersSupplierIdEditRouteImport
       parentRoute: typeof AppSuppliersRouteRoute
+    }
+    '/app/receipts/complimentary/new': {
+      id: '/app/receipts/complimentary/new'
+      path: '/complimentary/new'
+      fullPath: '/app/receipts/complimentary/new'
+      preLoaderRoute: typeof AppReceiptsComplimentaryNewRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
     }
     '/app/receipts/$receiptId/upgrade': {
       id: '/app/receipts/$receiptId/upgrade'
@@ -3507,6 +3527,7 @@ interface AppReceiptsRouteRouteChildren {
   AppReceiptsIndexRoute: typeof AppReceiptsIndexRoute
   AppReceiptsReceiptIdDetailsRoute: typeof AppReceiptsReceiptIdDetailsRoute
   AppReceiptsReceiptIdUpgradeRoute: typeof AppReceiptsReceiptIdUpgradeRoute
+  AppReceiptsComplimentaryNewRoute: typeof AppReceiptsComplimentaryNewRoute
   AppReceiptsAddonsAddonInvoiceIdDetailsRoute: typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
 }
 
@@ -3515,6 +3536,7 @@ const AppReceiptsRouteRouteChildren: AppReceiptsRouteRouteChildren = {
   AppReceiptsIndexRoute: AppReceiptsIndexRoute,
   AppReceiptsReceiptIdDetailsRoute: AppReceiptsReceiptIdDetailsRoute,
   AppReceiptsReceiptIdUpgradeRoute: AppReceiptsReceiptIdUpgradeRoute,
+  AppReceiptsComplimentaryNewRoute: AppReceiptsComplimentaryNewRoute,
   AppReceiptsAddonsAddonInvoiceIdDetailsRoute:
     AppReceiptsAddonsAddonInvoiceIdDetailsRoute,
 }
