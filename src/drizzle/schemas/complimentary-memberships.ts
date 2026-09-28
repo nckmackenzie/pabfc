@@ -1,5 +1,14 @@
 import { relations } from "drizzle-orm";
-import { date, index, integer, pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+	date,
+	index,
+	integer,
+	pgEnum,
+	pgTable,
+	text,
+	timestamp,
+	varchar,
+} from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "@/drizzle/schema-helpers";
 import { users } from "./auth";
 import { members, membershipPlans } from "./member";
@@ -16,13 +25,19 @@ export const complimentaryMembershipRequests = pgTable(
 	"complimentary_membership_requests",
 	{
 		id,
-		memberId: varchar("member_id").notNull().references(() => members.id),
-		planId: varchar("plan_id").notNull().references(() => membershipPlans.id),
+		memberId: varchar("member_id")
+			.notNull()
+			.references(() => members.id),
+		planId: varchar("plan_id")
+			.notNull()
+			.references(() => membershipPlans.id),
 		startDate: date("start_date").notNull(),
 		numberOfPeriods: integer("number_of_periods").notNull().default(1),
 		reason: text("reason").notNull(),
 		status: complimentaryRequestStatusEnum("status").notNull().default("pending"),
-		requestedByUserId: varchar("requested_by_user_id").notNull().references(() => users.id),
+		requestedByUserId: varchar("requested_by_user_id")
+			.notNull()
+			.references(() => users.id),
 		reviewedByUserId: varchar("reviewed_by_user_id").references(() => users.id),
 		reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 		rejectionReason: text("rejection_reason"),
