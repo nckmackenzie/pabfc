@@ -74,13 +74,13 @@ import { failure, success, type Result } from "@/lib/result";
 // callback would let Drizzle commit the partial writes (payment + members) that
 // happened before the failure; throwing rolls them back, and the outer catch
 // re-surfaces the carried failure unchanged.
-class PaymentTransactionError extends Error {
+export class PaymentTransactionError extends Error {
 	constructor(readonly result: Extract<Result<never>, { success: false }>) {
 		super("payment transaction rolled back");
 	}
 }
 
-async function checkMembershipOverlap({
+export async function checkMembershipOverlap({
 	tx,
 	memberIds,
 	startDate,
@@ -115,7 +115,7 @@ async function checkMembershipOverlap({
 	return success(undefined);
 }
 
-async function lockMemberMembershipCreation(tx: Transaction, memberId: string) {
+export async function lockMemberMembershipCreation(tx: Transaction, memberId: string) {
 	await tx.execute(
 		sql`select pg_advisory_xact_lock(hashtext('member_memberships'), hashtext(${memberId}))`
 	);
