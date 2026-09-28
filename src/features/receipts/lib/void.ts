@@ -127,7 +127,7 @@ export async function checkVoidEligibility(
 export async function buildVoidReversalJournalLines(
 	tx: Transaction,
 	payment: VoidEligiblePayment
-): Promise<Result<ReceiptJournalLine[]>> {
+): Promise<Result<ReceiptJournalLine[] | null>> {
 	const originalEntry = await tx.query.journalEntries.findFirst({
 		where: and(eq(journalEntries.source, "plan payment"), eq(journalEntries.sourceId, payment.id)),
 		with: {
@@ -136,6 +136,13 @@ export async function buildVoidReversalJournalLines(
 	});
 
 	if (!originalEntry || originalEntry.lines.length === 0) {
+		// Complimentary payments (method: "complimentary") post no journal entry at
+		// all — see the complimentary-membership approval flow — so there is nothing
+		// to reverse; that's expected, not an error. Any other payment method missing
+		// its journal entry is real data corruption and must still fail loudly.
+		if (payment.method === "complimentary") {
+			return success(null);
+		}
 		return failure({
 			type: "NotFoundError",
 			message: "Original journal entry for this payment was not found.",

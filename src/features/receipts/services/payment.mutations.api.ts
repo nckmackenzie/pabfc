@@ -541,17 +541,19 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 					const memberNames = coveredMembers.map((member) => member.name).join(", ");
 					const description = `VOID REVERSAL — Original receipt #${payment.paymentNo} voided on ${dateFormat(now, "long")} by ${voidingUser?.name ?? "Unknown user"}. Reason: ${voidReason}`;
 
-					await createJournalEntry({
-						entry: {
-							entryDate: dateFormat(now),
-							reference: payment.paymentNo,
-							source: "payment void",
-							sourceId: payment.id,
-							description,
-						},
-						lines: reversalLines,
-						tx,
-					});
+					if (reversalLines) {
+						await createJournalEntry({
+							entry: {
+								entryDate: dateFormat(now),
+								reference: payment.paymentNo,
+								source: "payment void",
+								sourceId: payment.id,
+								description,
+							},
+							lines: reversalLines,
+							tx,
+						});
+					}
 
 					// If the original payment posted a banking entry, mirror it back with
 					// dc flipped — same "mirror the actual entry" principle as the journal.
