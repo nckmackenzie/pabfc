@@ -33,6 +33,13 @@ export const planSchema = z
 				message: "Session count must be at least 1",
 			});
 		}
+		if (data.price > 0 && !data.revenueAccountId) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["revenueAccountId"],
+				message: "Revenue account is required for plans with a price above zero",
+			});
+		}
 	});
 
 export const planWithMembersValidateSearchSchema = searchValidateSchema.extend({

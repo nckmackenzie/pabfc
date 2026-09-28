@@ -62,7 +62,11 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 		onReset: () => form.reset(),
 	});
 
-	const [isSessionBased] = useStore(form.store, (state) => [state.values.isSessionBased]);
+	const [isSessionBased, price] = useStore(form.store, (state) => [
+		state.values.isSessionBased,
+		state.values.price,
+	]);
+	const isPaidPlan = Number(price) > 0;
 
 	return (
 		<div className="space-y-6">
@@ -140,8 +144,9 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 						{(field) => (
 							<field.Select
 								label="Revenue Account"
-								placeholder="Select an account (optional)"
-								helperText="Leave blank for a complimentary-only plan that never posts revenue."
+								placeholder={isPaidPlan ? "Select an account" : "Select an account (optional)"}
+								helperText="Leave blank for a complimentary-only plan that never posts revenue. Required when price is above zero."
+								required={isPaidPlan}
 							>
 								{accounts
 									.filter(
@@ -174,12 +179,14 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 							</form.AppField>
 						</FieldGroup>
 					)}
-					<form.AppForm>
-						<form.SubmitButton
-							isLoading={planMutation.isPending}
-							buttonText={plan ? "Update Plan" : "Create Plan"}
-						/>
-					</form.AppForm>
+					<FieldGroup className="col-span-2">
+						<form.AppForm>
+							<form.SubmitButton
+								isLoading={planMutation.isPending}
+								buttonText={plan ? "Update Plan" : "Create Plan"}
+							/>
+						</form.AppForm>
+					</FieldGroup>
 				</FieldGroup>
 			</form>
 		</div>

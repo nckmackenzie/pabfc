@@ -2,9 +2,11 @@ import { useStore } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { CustomAlert } from "@/components/ui/custom-alert";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
+import { ToastContent } from "@/components/ui/toast-content";
 import { useRequestComplimentaryMembership } from "@/features/receipts/hooks/use-request-complimentary-membership";
 import { complimentaryQueries } from "@/features/receipts/services/complimentary.queries";
 import {
@@ -41,6 +43,13 @@ export function ComplimentaryRequestForm() {
 						return;
 					}
 					queryClient.invalidateQueries({ queryKey: complimentaryQueries.all });
+					toast.success((t) => (
+						<ToastContent
+							t={t}
+							title="Request submitted"
+							message="Complimentary membership request submitted for approval."
+						/>
+					));
 					form.reset();
 					// Deferred so the reset's isDirty:false state commits before we
 					// navigate — otherwise usePreventUnsavedChanges's blocker still

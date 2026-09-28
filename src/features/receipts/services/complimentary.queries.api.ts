@@ -3,24 +3,24 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { complimentaryMembershipRequests } from "@/drizzle/schema";
 import { complimentaryRequestsSearchSchema } from "@/features/receipts/services/complimentary.schemas";
-import { userHasPermission } from "@/lib/permissions/permission-queries";
-import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
+import { getUserPermissionsByUserId } from "@/lib/permissions/permission-queries";
+import { requirePermission } from "@/lib/permissions/permissions";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 
 export const getComplimentaryRequests = createServerFn()
 	.middleware([authMiddleware])
 	.validator(complimentaryRequestsSearchSchema)
 	.handler(async ({ data: { status }, context: { user } }) => {
-		await requireAnyPermission([
-			"receipts:complimentary-request",
-			"receipts:complimentary-approve",
-		]);
+		const isAdmin = user.role === "admin";
+		const userPermissions = isAdmin ? null : await getUserPermissionsByUserId(user.id);
+		const canRequest =
+			isAdmin || !!userPermissions?.permissions.includes("receipts:complimentary-request");
+		const canApprove =
+			isAdmin || !!userPermissions?.permissions.includes("receipts:complimentary-approve");
 
-		const canApprove = await userHasPermission(
-			user.id,
-			user.role,
-			"receipts:complimentary-approve"
-		);
+		if (!canRequest && !canApprove) {
+			throw new Error("You do not have any of the required permissions to access this resource.");
+		}
 
 		return db.query.complimentaryMembershipRequests.findMany({
 			where: and(
