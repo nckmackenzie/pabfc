@@ -1,7 +1,7 @@
 import { useStore } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AlertErrorComponent } from "@/components/ui/error-component";
 import { Input } from "@/components/ui/input";
@@ -88,6 +88,22 @@ export function ClearBankingsForm() {
 	const bankings = useStore(form.store, (state) => state.values.bankings);
 	const selectedBankings = bankings.filter((b) => b.selected);
 
+	const [search, setSearch] = useState("");
+	const visibleBankingIds = useMemo(() => {
+		const query = search.trim().toLowerCase();
+		if (!query) return null;
+		return new Set(
+			bankings
+				.filter(
+					(b) =>
+						b.amount.toString().toLowerCase().includes(query) ||
+						currencyFormatter(b.amount, false).toLowerCase().includes(query) ||
+						b.reference.toLowerCase().includes(query),
+				)
+				.map((b) => b.bankingId),
+		);
+	}, [bankings, search]);
+
 	useEffect(() => {
 		if (data) {
 			form.setFieldValue(
@@ -126,6 +142,18 @@ export function ClearBankingsForm() {
 			}}
 			className="space-y-4"
 		>
+			{data && data.length > 0 && (
+				<Input
+					aria-label="Search by amount or reference"
+					placeholder="Search by amount or reference..."
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") e.preventDefault();
+					}}
+					className="max-w-sm"
+				/>
+			)}
 			<div className="overflow-x-auto border rounded-md p-4">
 				<Table>
 					<TableHeader>
@@ -141,54 +169,64 @@ export function ClearBankingsForm() {
 					<TableBody>
 						<form.AppField name="bankings" mode="array">
 							{(field) =>
-								field.state.value.map((banking, index) => (
-									<TableRow key={banking.bankingId}>
-										<TableCell>
-											<form.AppField name={`bankings[${index}].selected`}>
-												{(field) => <field.Checkbox label="" />}
-											</form.AppField>
-										</TableCell>
-										<TableCell>
-											{dateFormat(banking.transactionDate, "reporting")}
-										</TableCell>
-										<TableCell
-											title="Click to view more"
-											className="font-semibold text-blue-500 hover:text-blue-600 hover:underline transition-all cursor-pointer"
-											onClick={() => handleDisplayMore(banking.bankingId)}
-										>
-											{currencyFormatter(banking.amount, false)}
-										</TableCell>
-										<TableCell>{banking.reference.toUpperCase()}</TableCell>
-										<TableCell>
-											{banking.direction === "credit"
-												? "Money Out"
-												: "Money In"}
-										</TableCell>
-										<TableCell>
-											<form.Subscribe
-												selector={(state) =>
-													state.values.bankings[index]?.selected
-												}
+								field.state.value.map((banking, index) => {
+									if (
+										visibleBankingIds &&
+										!visibleBankingIds.has(banking.bankingId)
+									) {
+										return null;
+									}
+									return (
+										<TableRow key={banking.bankingId}>
+											<TableCell>
+												<form.AppField name={`bankings[${index}].selected`}>
+													{(field) => <field.Checkbox label="" />}
+												</form.AppField>
+											</TableCell>
+											<TableCell>
+												{dateFormat(banking.transactionDate, "reporting")}
+											</TableCell>
+											<TableCell
+												title="Click to view more"
+												className="font-semibold text-blue-500 hover:text-blue-600 hover:underline transition-all cursor-pointer"
+												onClick={() => handleDisplayMore(banking.bankingId)}
 											>
-												{(selected) =>
-													selected ? (
-														<form.AppField name={`bankings[${index}].clearedAt`}>
-															{(field) => (
-																<field.Input
-																	label=""
-																	type="date"
-																	className="h-8"
-																/>
-															)}
-														</form.AppField>
-													) : (
-														<Input className="h-8 border-none" disabled />
-													)
-												}
-											</form.Subscribe>
-										</TableCell>
-									</TableRow>
-								))
+												{currencyFormatter(banking.amount, false)}
+											</TableCell>
+											<TableCell>{banking.reference.toUpperCase()}</TableCell>
+											<TableCell>
+												{banking.direction === "credit"
+													? "Money Out"
+													: "Money In"}
+											</TableCell>
+											<TableCell>
+												<form.Subscribe
+													selector={(state) =>
+														state.values.bankings[index]?.selected
+													}
+												>
+													{(selected) =>
+														selected ? (
+															<form.AppField
+																name={`bankings[${index}].clearedAt`}
+															>
+																{(field) => (
+																	<field.Input
+																		label=""
+																		type="date"
+																		className="h-8"
+																	/>
+																)}
+															</form.AppField>
+														) : (
+															<Input className="h-8 border-none" disabled />
+														)
+													}
+												</form.Subscribe>
+											</TableCell>
+										</TableRow>
+									);
+								})
 							}
 						</form.AppField>
 					</TableBody>
