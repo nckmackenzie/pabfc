@@ -34,6 +34,8 @@ export const PERMISSIONS = [
 	"receipts:void",
 	"receipts:top-up",
 	"receipts:top-up-late",
+	"receipts:complimentary-request",
+	"receipts:complimentary-approve",
 	"credit-notes:view",
 	"credit-notes:create",
 	"bills:view",
