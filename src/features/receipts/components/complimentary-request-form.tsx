@@ -41,7 +41,15 @@ export function ComplimentaryRequestForm() {
 						return;
 					}
 					queryClient.invalidateQueries({ queryKey: complimentaryQueries.all });
-					navigate({ to: "/app/receipts/complimentary" });
+					form.reset();
+					// Deferred so the reset's isDirty:false state commits before we
+					// navigate — otherwise usePreventUnsavedChanges's blocker still
+					// sees the stale dirty form and pops the "unsaved changes"
+					// confirm dialog right after a successful save. Same pattern
+					// as useFormUpsert's post-success navigate.
+					setTimeout(() => {
+						navigate({ to: "/app/receipts/complimentary" });
+					}, 0);
 				},
 			});
 		},
