@@ -74,13 +74,13 @@ import { failure, success, type Result } from "@/lib/result";
 // callback would let Drizzle commit the partial writes (payment + members) that
 // happened before the failure; throwing rolls them back, and the outer catch
 // re-surfaces the carried failure unchanged.
-class PaymentTransactionError extends Error {
+export class PaymentTransactionError extends Error {
 	constructor(readonly result: Extract<Result<never>, { success: false }>) {
 		super("payment transaction rolled back");
 	}
 }
 
-async function checkMembershipOverlap({
+export async function checkMembershipOverlap({
 	tx,
 	memberIds,
 	startDate,
@@ -115,7 +115,7 @@ async function checkMembershipOverlap({
 	return success(undefined);
 }
 
-async function lockMemberMembershipCreation(tx: Transaction, memberId: string) {
+export async function lockMemberMembershipCreation(tx: Transaction, memberId: string) {
 	await tx.execute(
 		sql`select pg_advisory_xact_lock(hashtext('member_memberships'), hashtext(${memberId}))`
 	);
@@ -195,6 +195,12 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 			const discountedAmount = discountCalculator(discountType, discount ?? 0, plan.price);
 
 			const amount = plan.price - discountedAmount;
+
+			if (amount <= 0) {
+				throw new Error(
+					"Payment amount must be greater than zero. Complimentary (KES 0) plans cannot be paid via M-Pesa STK push — use the complimentary membership request flow instead."
+				);
+			}
 
 			const accountReference = generateFullPaymentInvoiceNo(
 				paymentNo,
@@ -541,17 +547,19 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 					const memberNames = coveredMembers.map((member) => member.name).join(", ");
 					const description = `VOID REVERSAL — Original receipt #${payment.paymentNo} voided on ${dateFormat(now, "long")} by ${voidingUser?.name ?? "Unknown user"}. Reason: ${voidReason}`;
 
-					await createJournalEntry({
-						entry: {
-							entryDate: dateFormat(now),
-							reference: payment.paymentNo,
-							source: "payment void",
-							sourceId: payment.id,
-							description,
-						},
-						lines: reversalLines,
-						tx,
-					});
+					if (reversalLines) {
+						await createJournalEntry({
+							entry: {
+								entryDate: dateFormat(now),
+								reference: payment.paymentNo,
+								source: "payment void",
+								sourceId: payment.id,
+								description,
+							},
+							lines: reversalLines,
+							tx,
+						});
+					}
 
 					// If the original payment posted a banking entry, mirror it back with
 					// dc flipped — same "mirror the actual entry" principle as the journal.

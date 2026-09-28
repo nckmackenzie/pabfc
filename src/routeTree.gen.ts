@@ -96,6 +96,7 @@ import { Route as AppReportsMembersIndexRouteImport } from './routes/app/reports
 import { Route as AppReportsHumanResourcesIndexRouteImport } from './routes/app/reports/human-resources/index'
 import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports/finance/index'
 import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
+import { Route as AppReceiptsComplimentaryIndexRouteImport } from './routes/app/receipts/complimentary/index'
 import { Route as AppPlansAddonsIndexRouteImport } from './routes/app/plans/addons/index'
 import { Route as AppPayrollSalaryStructuresIndexRouteImport } from './routes/app/payroll/salary-structures/index'
 import { Route as AppPayrollSalaryAdvancesIndexRouteImport } from './routes/app/payroll/salary-advances/index'
@@ -110,6 +111,7 @@ import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.n
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
 import { Route as AppSuppliersSupplierIdEditRouteImport } from './routes/app/suppliers/$supplierId/edit'
+import { Route as AppReceiptsComplimentaryNewRouteImport } from './routes/app/receipts/complimentary/new'
 import { Route as AppReceiptsReceiptIdUpgradeRouteImport } from './routes/app/receipts/$receiptId/upgrade'
 import { Route as AppReceiptsReceiptIdDetailsRouteImport } from './routes/app/receipts/$receiptId/details'
 import { Route as AppPlansAddonsNewRouteImport } from './routes/app/plans/addons/new'
@@ -619,6 +621,12 @@ const AppReportsAttendanceIndexRoute =
     path: '/reports/attendance/',
     getParentRoute: () => AppRouteRoute,
   } as any)
+const AppReceiptsComplimentaryIndexRoute =
+  AppReceiptsComplimentaryIndexRouteImport.update({
+    id: '/complimentary/',
+    path: '/complimentary/',
+    getParentRoute: () => AppReceiptsRouteRoute,
+  } as any)
 const AppPlansAddonsIndexRoute = AppPlansAddonsIndexRouteImport.update({
   id: '/addons/',
   path: '/addons/',
@@ -694,6 +702,12 @@ const AppSuppliersSupplierIdEditRoute =
     id: '/$supplierId/edit',
     path: '/$supplierId/edit',
     getParentRoute: () => AppSuppliersRouteRoute,
+  } as any)
+const AppReceiptsComplimentaryNewRoute =
+  AppReceiptsComplimentaryNewRouteImport.update({
+    id: '/complimentary/new',
+    path: '/complimentary/new',
+    getParentRoute: () => AppReceiptsRouteRoute,
   } as any)
 const AppReceiptsReceiptIdUpgradeRoute =
   AppReceiptsReceiptIdUpgradeRouteImport.update({
@@ -1157,6 +1171,7 @@ export interface FileRoutesByFullPath {
   '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
+  '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1171,6 +1186,7 @@ export interface FileRoutesByFullPath {
   '/app/payroll/salary-advances/': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/plans/addons/': typeof AppPlansAddonsIndexRoute
+  '/app/receipts/complimentary/': typeof AppReceiptsComplimentaryIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
   '/app/reports/human-resources/': typeof AppReportsHumanResourcesIndexRoute
@@ -1297,6 +1313,7 @@ export interface FileRoutesByTo {
   '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
+  '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1311,6 +1328,7 @@ export interface FileRoutesByTo {
   '/app/payroll/salary-advances': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/plans/addons': typeof AppPlansAddonsIndexRoute
+  '/app/receipts/complimentary': typeof AppReceiptsComplimentaryIndexRoute
   '/app/reports/attendance': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance': typeof AppReportsFinanceIndexRoute
   '/app/reports/human-resources': typeof AppReportsHumanResourcesIndexRoute
@@ -1462,6 +1480,7 @@ export interface FileRoutesById {
   '/app/plans/addons/new': typeof AppPlansAddonsNewRoute
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
+  '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1476,6 +1495,7 @@ export interface FileRoutesById {
   '/app/payroll/salary-advances/': typeof AppPayrollSalaryAdvancesIndexRoute
   '/app/payroll/salary-structures/': typeof AppPayrollSalaryStructuresIndexRoute
   '/app/plans/addons/': typeof AppPlansAddonsIndexRoute
+  '/app/receipts/complimentary/': typeof AppReceiptsComplimentaryIndexRoute
   '/app/reports/attendance/': typeof AppReportsAttendanceIndexRoute
   '/app/reports/finance/': typeof AppReportsFinanceIndexRoute
   '/app/reports/human-resources/': typeof AppReportsHumanResourcesIndexRoute
@@ -1627,6 +1647,7 @@ export interface FileRouteTypes {
     | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
+    | '/app/receipts/complimentary/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -1641,6 +1662,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-advances/'
     | '/app/payroll/salary-structures/'
     | '/app/plans/addons/'
+    | '/app/receipts/complimentary/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
     | '/app/reports/human-resources/'
@@ -1767,6 +1789,7 @@ export interface FileRouteTypes {
     | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
+    | '/app/receipts/complimentary/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -1781,6 +1804,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-advances'
     | '/app/payroll/salary-structures'
     | '/app/plans/addons'
+    | '/app/receipts/complimentary'
     | '/app/reports/attendance'
     | '/app/reports/finance'
     | '/app/reports/human-resources'
@@ -1931,6 +1955,7 @@ export interface FileRouteTypes {
     | '/app/plans/addons/new'
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
+    | '/app/receipts/complimentary/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -1945,6 +1970,7 @@ export interface FileRouteTypes {
     | '/app/payroll/salary-advances/'
     | '/app/payroll/salary-structures/'
     | '/app/plans/addons/'
+    | '/app/receipts/complimentary/'
     | '/app/reports/attendance/'
     | '/app/reports/finance/'
     | '/app/reports/human-resources/'
@@ -2620,6 +2646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsAttendanceIndexRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/receipts/complimentary/': {
+      id: '/app/receipts/complimentary/'
+      path: '/complimentary'
+      fullPath: '/app/receipts/complimentary/'
+      preLoaderRoute: typeof AppReceiptsComplimentaryIndexRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
+    }
     '/app/plans/addons/': {
       id: '/app/plans/addons/'
       path: '/addons'
@@ -2717,6 +2750,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/suppliers/$supplierId/edit'
       preLoaderRoute: typeof AppSuppliersSupplierIdEditRouteImport
       parentRoute: typeof AppSuppliersRouteRoute
+    }
+    '/app/receipts/complimentary/new': {
+      id: '/app/receipts/complimentary/new'
+      path: '/complimentary/new'
+      fullPath: '/app/receipts/complimentary/new'
+      preLoaderRoute: typeof AppReceiptsComplimentaryNewRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
     }
     '/app/receipts/$receiptId/upgrade': {
       id: '/app/receipts/$receiptId/upgrade'
@@ -3507,6 +3547,8 @@ interface AppReceiptsRouteRouteChildren {
   AppReceiptsIndexRoute: typeof AppReceiptsIndexRoute
   AppReceiptsReceiptIdDetailsRoute: typeof AppReceiptsReceiptIdDetailsRoute
   AppReceiptsReceiptIdUpgradeRoute: typeof AppReceiptsReceiptIdUpgradeRoute
+  AppReceiptsComplimentaryNewRoute: typeof AppReceiptsComplimentaryNewRoute
+  AppReceiptsComplimentaryIndexRoute: typeof AppReceiptsComplimentaryIndexRoute
   AppReceiptsAddonsAddonInvoiceIdDetailsRoute: typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
 }
 
@@ -3515,6 +3557,8 @@ const AppReceiptsRouteRouteChildren: AppReceiptsRouteRouteChildren = {
   AppReceiptsIndexRoute: AppReceiptsIndexRoute,
   AppReceiptsReceiptIdDetailsRoute: AppReceiptsReceiptIdDetailsRoute,
   AppReceiptsReceiptIdUpgradeRoute: AppReceiptsReceiptIdUpgradeRoute,
+  AppReceiptsComplimentaryNewRoute: AppReceiptsComplimentaryNewRoute,
+  AppReceiptsComplimentaryIndexRoute: AppReceiptsComplimentaryIndexRoute,
   AppReceiptsAddonsAddonInvoiceIdDetailsRoute:
     AppReceiptsAddonsAddonInvoiceIdDetailsRoute,
 }

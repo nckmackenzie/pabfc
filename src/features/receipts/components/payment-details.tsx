@@ -10,6 +10,7 @@ import { CustomAlert } from "@/components/ui/custom-alert";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReceiptNo } from "@/features/receipts/hooks/use-receipt-no";
+import { complimentaryQueries } from "@/features/receipts/services/complimentary.queries";
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { usePermissions } from "@/hooks/use-permissions";
 import { dateFormat } from "@/lib/helpers";
@@ -49,6 +50,11 @@ export function PaymentDetails() {
 	const showUpgradeButton =
 		canParticipateInUpgrade && upgradeInfo === null && upgradeContext?.eligible === true;
 	const { receiptNo: linkedReceiptNo } = useReceiptNo(Number(upgradeInfo?.linkedPaymentNo ?? 0));
+
+	const { data: complimentaryAudit } = useQuery({
+		...complimentaryQueries.byPaymentId(payment.id),
+		enabled: payment.method === "complimentary",
+	});
 
 	const currencyFormatter = new Intl.NumberFormat("en-KE", {
 		style: "currency",
@@ -221,6 +227,27 @@ export function PaymentDetails() {
 							{upgradeInfo.originalEndDate ? dateFormat(upgradeInfo.originalEndDate, "long") : "—"}{" "}
 							→ {upgradeInfo.newEndDate ? dateFormat(upgradeInfo.newEndDate, "long") : "—"}
 						</span>
+					}
+				/>
+			)}
+
+			{payment.method === "complimentary" && complimentaryAudit && (
+				<CustomAlert
+					title="Complimentary membership"
+					description={
+						<div className="space-y-1">
+							<p>
+								Requested by {complimentaryAudit.requestedByUser?.name ?? "Unknown"}. Reason:{" "}
+								{complimentaryAudit.reason}
+							</p>
+							<p className="text-muted-foreground">
+								Approved by {complimentaryAudit.reviewedByUser?.name ?? "Unknown"}
+								{complimentaryAudit.reviewedAt
+									? ` on ${format(new Date(complimentaryAudit.reviewedAt), "MMM d, yyyy 'at' p")}`
+									: ""}
+								.
+							</p>
+						</div>
 					}
 				/>
 			)}

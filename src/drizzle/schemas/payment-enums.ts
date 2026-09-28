@@ -15,6 +15,7 @@ export const paymentMethods = [
 	"cash",
 	"card",
 	"bank_transfer",
+	"complimentary",
 ] as const;
 export type PaymentMethod = (typeof paymentMethods)[number];
 export const paymentMethodEnum = pgEnum("payment_method", paymentMethods);
