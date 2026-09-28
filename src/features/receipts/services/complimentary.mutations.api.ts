@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	activityLogs,
@@ -170,6 +170,12 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 					if (!plan || !plan.active) {
 						throw fail({ type: "NotFoundError", message: "Plan is no longer active." });
 					}
+					if (plan.memberCount !== 1) {
+						throw fail({
+							type: "ApplicationError",
+							message: "Only single-member plans are eligible for complimentary membership.",
+						});
+					}
 
 					const candidateEndDate = dateFormat(
 						computeMembershipEndDate(request.startDate, plan.duration, request.numberOfPeriods)
@@ -238,6 +244,15 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 						priceCharged: "0.00",
 					});
 
+					// Guards against a concurrent approve/reject on the same request: the
+					// earlier `status !== "pending"` check above only reflects the row as of
+					// the start of this transaction, so a second decision racing in after
+					// this one already committed could otherwise still match on `id` alone
+					// and silently flip an already-decided request. Re-filtering on
+					// status = "pending" here means only the transaction that wins the race
+					// gets a row back; the loser sees `updatedRequest` as `undefined` and
+					// rolls back instead of leaving conflicting payment/membership records
+					// and a wrong decision SMS.
 					const [updatedRequest] = await tx
 						.update(complimentaryMembershipRequests)
 						.set({
@@ -246,8 +261,20 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 							reviewedAt: new Date(),
 							resultingPaymentId: payment.id,
 						})
-						.where(eq(complimentaryMembershipRequests.id, request.id))
+						.where(
+							and(
+								eq(complimentaryMembershipRequests.id, request.id),
+								eq(complimentaryMembershipRequests.status, "pending")
+							)
+						)
 						.returning();
+
+					if (!updatedRequest) {
+						throw fail({
+							type: "ConflictError",
+							message: "This request was already decided by another approver.",
+						});
+					}
 
 					await tx.insert(activityLogs).values({
 						userId,
@@ -309,6 +336,10 @@ export const rejectComplimentaryRequestFn = createServerFn({ method: "POST" })
 						});
 					}
 
+					// Same race guard as approveComplimentaryRequestFn: re-filter on
+					// status = "pending" so a concurrent approve/reject that already
+					// committed can't be silently overwritten, and roll back (instead of
+					// sending a contradictory decision SMS) if this transaction lost the race.
 					const [updatedRequest] = await tx
 						.update(complimentaryMembershipRequests)
 						.set({
@@ -317,8 +348,20 @@ export const rejectComplimentaryRequestFn = createServerFn({ method: "POST" })
 							reviewedAt: new Date(),
 							rejectionReason,
 						})
-						.where(eq(complimentaryMembershipRequests.id, request.id))
+						.where(
+							and(
+								eq(complimentaryMembershipRequests.id, request.id),
+								eq(complimentaryMembershipRequests.status, "pending")
+							)
+						)
 						.returning();
+
+					if (!updatedRequest) {
+						throw fail({
+							type: "ConflictError",
+							message: "This request was already decided by another approver.",
+						});
+					}
 
 					await tx.insert(activityLogs).values({
 						userId,
