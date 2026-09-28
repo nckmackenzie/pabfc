@@ -436,7 +436,7 @@ export const upsertPlan = createServerFn({ method: "POST" })
 							...data,
 							sessionCount: data.isSessionBased ? (data.sessionCount ?? 0) : 0,
 							description: data.description ?? null,
-							revenueAccountId: +data.revenueAccountId,
+							revenueAccountId: data.revenueAccountId ? +data.revenueAccountId : null,
 						})
 						.onConflictDoUpdate({
 							target: membershipPlans.id,
@@ -446,7 +446,7 @@ export const upsertPlan = createServerFn({ method: "POST" })
 									? (data.sessionCount ?? 0)
 									: 0,
 								description: data.description ?? null,
-								revenueAccountId: +data.revenueAccountId,
+								revenueAccountId: data.revenueAccountId ? +data.revenueAccountId : null,
 							},
 						});
 

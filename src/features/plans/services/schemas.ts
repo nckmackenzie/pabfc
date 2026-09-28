@@ -6,13 +6,16 @@ export const planSchema = z
 		id: z.string().optional(),
 		name: z.string().min(1, "Name is required"),
 		duration: z.number().min(1, "Duration is required"),
-		price: z.number().min(1, "Price is required"),
+		price: z.number().min(0, "Price cannot be negative"),
 		memberCount: z.number().int().min(1, "Member count must be at least 1"),
 		description: z.string().nullish(),
 		isSessionBased: z.boolean(),
 		sessionCount: z.number().nullish(),
 		active: z.boolean(),
-		revenueAccountId: z.string({ error: "Revenue account is required" }),
+		// Nullable: a complimentary-only plan (price 0) never posts to the GL,
+		// so it needs no revenue account. Every consumer of plan.revenueAccountId
+		// already null-checks it (finalizeMembershipPayment, upgrade, credit notes).
+		revenueAccountId: z.string().nullish(),
 		lateUpgradeGraceDays: z
 			.number()
 			.int("Grace period must be a whole number of days")

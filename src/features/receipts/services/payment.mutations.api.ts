@@ -196,6 +196,12 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 
 			const amount = plan.price - discountedAmount;
 
+			if (amount <= 0) {
+				throw new Error(
+					"Payment amount must be greater than zero. Complimentary (KES 0) plans cannot be paid via M-Pesa STK push — use the complimentary membership request flow instead."
+				);
+			}
+
 			const accountReference = generateFullPaymentInvoiceNo(
 				paymentNo,
 				settings?.billing?.invoicePrefix,

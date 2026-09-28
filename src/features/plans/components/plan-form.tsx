@@ -92,7 +92,14 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 					</form.AppField>
 					<form.AppField name="price">
 						{(field) => (
-							<field.Input type="number" label="Price" placeholder="Enter price" required />
+							<field.Input
+								type="number"
+								label="Price"
+								placeholder="Enter price"
+								helperText="Use 0 for a complimentary-only plan."
+								min={0}
+								required
+							/>
 						)}
 					</form.AppField>
 					<form.AppField name="memberCount">
@@ -131,7 +138,11 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 					</form.AppField>
 					<form.AppField name="revenueAccountId">
 						{(field) => (
-							<field.Select label="Revenue Account" required>
+							<field.Select
+								label="Revenue Account"
+								placeholder="Select an account (optional)"
+								helperText="Leave blank for a complimentary-only plan that never posts revenue."
+							>
 								{accounts
 									.filter(
 										(account) => account.type === "revenue" && account.isActive && account.isPosting
