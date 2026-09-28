@@ -94,6 +94,8 @@ function RequestActions({ requestId }: { requestId: string }) {
 					const result = await approveComplimentaryRequestFn({ data: requestId });
 					if (!result.success) return result;
 					queryClient.invalidateQueries({ queryKey: complimentaryQueries.all });
+					queryClient.invalidateQueries({ queryKey: ["receipts"] });
+					queryClient.invalidateQueries({ queryKey: ["members"] });
 					return success(undefined);
 				}}
 			>

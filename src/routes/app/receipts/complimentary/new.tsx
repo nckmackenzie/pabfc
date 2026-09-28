@@ -4,7 +4,6 @@ import { ComplimentaryRequestForm } from "@/features/receipts/components/complim
 import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
 import { requirePermission } from "@/lib/permissions/permissions";
-import type { Route as RoutePath } from "@/types/index.types";
 
 export const Route = createFileRoute("/app/receipts/complimentary/new")({
 	beforeLoad: async () => {
@@ -34,11 +33,7 @@ function RouteComponent() {
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink
-			// Cast: `/app/receipts/complimentary` is the list route Task 11 adds
-			// (src/routes/app/receipts/complimentary/index.tsx); it doesn't exist
-			// in routeTree.gen.ts yet since Task 10 runs before Task 11. Same
-			// precedent as app-sidebar.tsx's `as Route` cast.
-			backPath={"/app/receipts/complimentary" as RoutePath}
+			backPath="/app/receipts/complimentary"
 			buttonText="Complimentary Requests"
 			permissions={["receipts:complimentary-request"]}
 			size="sm"

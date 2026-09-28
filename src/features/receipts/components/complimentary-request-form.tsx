@@ -1,17 +1,18 @@
 import { useStore } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { CustomAlert } from "@/components/ui/custom-alert";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { useRequestComplimentaryMembership } from "@/features/receipts/hooks/use-request-complimentary-membership";
+import { complimentaryQueries } from "@/features/receipts/services/complimentary.queries";
 import {
 	complimentaryRequestSchema,
 	type ComplimentaryRequestSchema,
 } from "@/features/receipts/services/complimentary.schemas";
 import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
-import type { Route as RoutePath } from "@/types/index.types";
 
 const defaultValues: ComplimentaryRequestSchema = {
 	memberId: "",
@@ -24,6 +25,7 @@ const defaultValues: ComplimentaryRequestSchema = {
 export function ComplimentaryRequestForm() {
 	const { members, plans } = getRouteApi("/app/receipts/complimentary/new").useLoaderData();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const requestMutation = useRequestComplimentaryMembership();
 	const [submissionError, setSubmissionError] = useState<string | null>(null);
 
@@ -38,9 +40,8 @@ export function ComplimentaryRequestForm() {
 						setSubmissionError(result.error.message);
 						return;
 					}
-					// Cast: `/app/receipts/complimentary` is Task 11's not-yet-created
-					// list route (see same note in the route file).
-					navigate({ to: "/app/receipts/complimentary" as RoutePath });
+					queryClient.invalidateQueries({ queryKey: complimentaryQueries.all });
+					navigate({ to: "/app/receipts/complimentary" });
 				},
 			});
 		},

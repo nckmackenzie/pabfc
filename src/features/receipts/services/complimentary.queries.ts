@@ -11,6 +11,7 @@ export const complimentaryQueries = {
 		queryOptions({
 			queryKey: [...complimentaryQueries.all, "list", filters],
 			queryFn: () => getComplimentaryRequests({ data: filters }),
+			refetchInterval: 30_000,
 		}),
 	byPaymentId: (paymentId: string) =>
 		queryOptions({
