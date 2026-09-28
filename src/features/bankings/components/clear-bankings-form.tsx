@@ -97,6 +97,7 @@ export function ClearBankingsForm() {
 				.filter(
 					(b) =>
 						b.amount.toString().toLowerCase().includes(query) ||
+						currencyFormatter(b.amount, false).toLowerCase().includes(query) ||
 						b.reference.toLowerCase().includes(query),
 				)
 				.map((b) => b.bankingId),
@@ -143,9 +144,13 @@ export function ClearBankingsForm() {
 		>
 			{data && data.length > 0 && (
 				<Input
+					aria-label="Search by amount or reference"
 					placeholder="Search by amount or reference..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") e.preventDefault();
+					}}
 					className="max-w-sm"
 				/>
 			)}
