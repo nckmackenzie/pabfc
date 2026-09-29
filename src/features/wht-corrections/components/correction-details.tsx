@@ -16,7 +16,7 @@ import type { getCorrection } from "@/features/wht-corrections/services/wht-corr
 import { currencyFormatter, roundDecimal, toNumber } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
-const LINE_COLUMNS = ["Vendor", "Bill #", "Bill Date", "Category", "Rate %", "Amount"];
+const LINE_COLUMNS = ["Vendor", "Bill #", "Bill Date", "Rate %", "Amount"];
 
 const STATUS_LABEL = {
 	already_remitted: "Already remitted to KRA",
@@ -84,7 +84,7 @@ export function CorrectionDetails({
 							<TableHeader>
 								<TableRow>
 									{LINE_COLUMNS.map((column, index) => (
-										<TableHead key={column} className={index >= 4 ? "text-right" : ""}>
+										<TableHead key={column} className={index >= 3 ? "text-right" : ""}>
 											{column}
 										</TableHead>
 									))}
@@ -96,7 +96,6 @@ export function CorrectionDetails({
 										<TableCell>{toTitleCase(line.bill.vendor.name)}</TableCell>
 										<TableCell>{line.bill.invoiceNo}</TableCell>
 										<TableCell>{format(new Date(line.bill.invoiceDate), "dd/MM/yyyy")}</TableCell>
-										<TableCell>{toTitleCase(line.whtCategory.replaceAll("_", " "))}</TableCell>
 										<TableCell className="text-right tabular-nums">{line.whtRate}</TableCell>
 										<TableCell className="text-right tabular-nums">
 											{currencyFormatter(line.amount, false)}
@@ -106,7 +105,7 @@ export function CorrectionDetails({
 							</TableBody>
 							<TableFooter>
 								<TableRow>
-									<TableCell colSpan={5} className="text-right font-bold">
+									<TableCell colSpan={4} className="text-right font-bold">
 										Total
 									</TableCell>
 									<TableCell className="text-right font-bold tabular-nums">

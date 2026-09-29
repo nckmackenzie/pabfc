@@ -431,7 +431,6 @@ export const whtCorrectionLines = pgTable(
 		billId: varchar("bill_id")
 			.notNull()
 			.references(() => bills.id),
-		whtCategory: whtCategoryEnum("wht_category").notNull(),
 		// Informational only — what rate should have applied. Never used in posting.
 		whtRate: decimal("wht_rate", { precision: 5, scale: 2 }).notNull(),
 		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),

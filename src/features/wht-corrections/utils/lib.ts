@@ -16,7 +16,6 @@ export const toBillComboboxItem = (bill: CorrectableBill): ComboBoxItem => ({
 /** A blank correction line, appended by the form's "Add Line" button. */
 export const newCorrectionLine = (): CorrectionLineValues => ({
 	billId: "",
-	whtCategory: "professional_management_training_fee",
 	whtRate: DEFAULT_WHT_RATE,
 	amount: 0,
 });

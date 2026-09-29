@@ -20,7 +20,6 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Wrapper } from "@/components/ui/wrapper";
-import { WHT_CATEGORIES } from "@/drizzle/schema";
 import { correctionQueries } from "@/features/wht-corrections/services/queries";
 import { createCorrection } from "@/features/wht-corrections/services/wht-corrections.api";
 import {
@@ -32,7 +31,6 @@ import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
-import { toTitleCase } from "@/lib/utils";
 import type { Option } from "@/types/index.types";
 
 type CorrectionFormProps = {
@@ -40,9 +38,6 @@ type CorrectionFormProps = {
 	cashEquivalentAccounts: Array<Option>;
 	correctionNo?: string;
 };
-
-const CATEGORY_LABEL = (category: (typeof WHT_CATEGORIES)[number]) =>
-	toTitleCase(category.replaceAll("_", " "));
 
 export function CorrectionForm({
 	banks,
@@ -248,7 +243,6 @@ export function CorrectionForm({
 								<TableHeader>
 									<TableRow>
 										<TableHead className="w-[260px]">Bill</TableHead>
-										<TableHead className="w-[220px]">Category</TableHead>
 										<TableHead className="w-[110px]">Rate %</TableHead>
 										<TableHead className="w-[150px]">Amount</TableHead>
 										<TableHead className="w-16" />
@@ -266,19 +260,6 @@ export function CorrectionForm({
 															placeholder="Search bill"
 															items={billItems}
 														/>
-													)}
-												</form.AppField>
-											</TableCell>
-											<TableCell>
-												<form.AppField name={`lines[${index}].whtCategory`}>
-													{(field) => (
-														<field.Select label="" placeholder="Select Category">
-															{WHT_CATEGORIES.map((category) => (
-																<SelectItem key={category} value={category}>
-																	{CATEGORY_LABEL(category)}
-																</SelectItem>
-															))}
-														</field.Select>
 													)}
 												</form.AppField>
 											</TableCell>
@@ -323,7 +304,7 @@ export function CorrectionForm({
 								{lines.length > 0 && (
 									<TableFooter>
 										<TableRow className="bg-background hover:bg-background">
-											<TableCell colSpan={3} className="text-right font-semibold">
+											<TableCell colSpan={2} className="text-right font-semibold">
 												Total
 											</TableCell>
 											<TableCell className="font-semibold tabular-nums">

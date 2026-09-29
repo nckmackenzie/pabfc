@@ -327,7 +327,6 @@ export const createCorrection = createServerFn({ method: "POST" })
 							lineNumber: index + 1,
 							correctionId,
 							billId: line.billId,
-							whtCategory: line.whtCategory,
 							whtRate: line.whtRate.toString(),
 							amount: line.amount.toString(),
 						})),

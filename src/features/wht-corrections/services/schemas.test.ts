@@ -3,7 +3,6 @@ import { correctionFormSchema } from "@/features/wht-corrections/services/schema
 
 const baseLine = {
 	billId: "bill_1",
-	whtCategory: "professional_management_training_fee" as const,
 	whtRate: 5,
 	amount: 500,
 };

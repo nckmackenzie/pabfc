@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { WHT_CATEGORIES } from "@/drizzle/schema";
 
 // invoiceNo/vendorName are deliberately not part of this schema: they are
 // display-only and looked up from the correctable-bills list by `billId`
@@ -7,7 +6,6 @@ import { WHT_CATEGORIES } from "@/drizzle/schema";
 // warning banner), rather than duplicated into form/submission state.
 export const correctionLineSchema = z.object({
 	billId: z.string().min(1, { error: "Bill is required" }),
-	whtCategory: z.enum(WHT_CATEGORIES, { error: "Category is required" }),
 	whtRate: z.number().positive("Rate must be greater than zero"),
 	amount: z.number().positive("Amount must be greater than zero"),
 });
