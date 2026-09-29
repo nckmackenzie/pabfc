@@ -275,7 +275,17 @@ export const createCorrection = createServerFn({ method: "POST" })
 						? (bankId ?? null)
 						: null;
 			} else {
-				creditAccountId = await resolveAccountRole("wht_payable");
+				try {
+					creditAccountId = await resolveAccountRole("wht_payable");
+				} catch (error) {
+					return failure({
+						type: "ValidationError",
+						message:
+							error instanceof Error
+								? error.message
+								: "Could not resolve the WHT payable account",
+					});
+				}
 				journalDate = correctionDate;
 			}
 
