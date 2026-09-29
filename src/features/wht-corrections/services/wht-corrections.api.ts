@@ -22,10 +22,11 @@ import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
-import { createBankingEntry } from "@/services/banking";
+import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
+	deleteJournalEntry,
 	getCashEquivalentAccountId,
 } from "@/services/journal";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
@@ -380,6 +381,68 @@ export const createCorrection = createServerFn({ method: "POST" })
 				return failure({
 					type: "ApplicationError",
 					message: "Failed to create WHT correction",
+				});
+			}
+		},
+	);
+
+export const deleteCorrection = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator(z.string().min(1, { error: "Correction id is not valid" }))
+	.handler(
+		async ({
+			data: correctionId,
+			context: {
+				user: { id: userId },
+			},
+		}) => {
+			await requirePermission("wht-corrections:delete");
+
+			try {
+				const correction = await db.query.whtCorrections.findFirst({
+					columns: { id: true, correctionNo: true },
+					where: eq(whtCorrections.id, correctionId),
+				});
+
+				if (!correction) {
+					return failure({
+						type: "NotFoundError",
+						message: "Correction not found",
+					});
+				}
+
+				await db.transaction(async (tx) => {
+					// Lines cascade with the header, which restores every affected
+					// bill's net_payable/wht_balance on the next read.
+					await tx
+						.delete(whtCorrections)
+						.where(eq(whtCorrections.id, correctionId));
+					await deleteJournalEntry({
+						source: JOURNAL_SOURCE,
+						sourceId: correctionId,
+						tx,
+					});
+					await deleteBankingEntry({
+						source: JOURNAL_SOURCE,
+						sourceId: correctionId,
+						tx,
+					});
+				});
+
+				await logActivity({
+					data: {
+						action: "delete wht correction",
+						userId,
+						description: `Deleted WHT correction no ${correction.correctionNo}`,
+					},
+				});
+
+				return success(undefined);
+			} catch (error) {
+				console.error(error);
+				return failure({
+					type: "ApplicationError",
+					message: "Failed to delete WHT correction",
 				});
 			}
 		},
