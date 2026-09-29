@@ -94,11 +94,6 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				permission: "receipts:view",
 			},
 			{
-				title: "Complimentary Memberships",
-				url: "/app/receipts/complimentary",
-				permission: ["receipts:complimentary-request", "receipts:complimentary-approve"],
-			},
-			{
 				title: "Credit Notes",
 				url: "/app/credit-notes",
 				permission: "credit-notes:view",
