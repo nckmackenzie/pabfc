@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { AlertErrorComponent } from "@/components/ui/error-component";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { FieldGroup } from "@/components/ui/field";
+import { FieldError, FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,7 +38,6 @@ import type { Option } from "@/types/index.types";
 type CorrectionFormProps = {
 	banks: Array<Option>;
 	cashEquivalentAccounts: Array<Option>;
-	treatmentAccounts: Array<Option>;
 	correctionNo?: string;
 };
 
@@ -48,7 +47,6 @@ const CATEGORY_LABEL = (category: (typeof WHT_CATEGORIES)[number]) =>
 export function CorrectionForm({
 	banks,
 	cashEquivalentAccounts,
-	treatmentAccounts,
 	correctionNo,
 }: CorrectionFormProps) {
 	const queryClient = useQueryClient();
@@ -72,7 +70,6 @@ export function CorrectionForm({
 		defaultValues: {
 			correctionNo: correctionNo ?? "",
 			correctionDate: dateFormat(new Date()),
-			treatmentAccountId: "",
 			remittanceStatus: "pending",
 			remittanceDate: null,
 			paymentMethod: null,
@@ -141,21 +138,6 @@ export function CorrectionForm({
 				<form.AppField name="correctionDate">
 					{(field) => (
 						<field.Input type="date" label="Correction Date" required />
-					)}
-				</form.AppField>
-				<form.AppField name="treatmentAccountId">
-					{(field) => (
-						<field.Select
-							label="Treatment Account"
-							required
-							placeholder="Select Treatment Account"
-						>
-							{treatmentAccounts.map((account) => (
-								<SelectItem key={account.value} value={account.value}>
-									{account.label}
-								</SelectItem>
-							))}
-						</field.Select>
 					)}
 				</form.AppField>
 				<form.AppField name="remittanceStatus">
@@ -260,6 +242,7 @@ export function CorrectionForm({
 								Add Line
 							</Button>
 						</div>
+						<FieldError errors={field.state.meta.errors} />
 						<div className="overflow-x-auto border rounded-md p-4">
 							<Table>
 								<TableHeader>

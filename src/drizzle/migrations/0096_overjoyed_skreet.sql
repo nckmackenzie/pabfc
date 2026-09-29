@@ -13,7 +13,6 @@ CREATE TABLE "wht_corrections" (
 	"id" varchar PRIMARY KEY NOT NULL,
 	"correction_no" integer NOT NULL,
 	"correction_date" date NOT NULL,
-	"treatment_account_id" integer NOT NULL,
 	"remittance_status" "wht_correction_status" NOT NULL,
 	"remittance_date" date,
 	"bank_id" varchar,
@@ -26,7 +25,6 @@ CREATE TABLE "wht_corrections" (
 --> statement-breakpoint
 ALTER TABLE "wht_correction_lines" ADD CONSTRAINT "wht_correction_lines_correction_id_wht_corrections_id_fk" FOREIGN KEY ("correction_id") REFERENCES "public"."wht_corrections"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wht_correction_lines" ADD CONSTRAINT "wht_correction_lines_bill_id_bills_id_fk" FOREIGN KEY ("bill_id") REFERENCES "public"."bills"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "wht_corrections" ADD CONSTRAINT "wht_corrections_treatment_account_id_ledger_accounts_id_fk" FOREIGN KEY ("treatment_account_id") REFERENCES "public"."ledger_accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wht_corrections" ADD CONSTRAINT "wht_corrections_bank_id_bank_accounts_id_fk" FOREIGN KEY ("bank_id") REFERENCES "public"."bank_accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wht_corrections" ADD CONSTRAINT "wht_corrections_crediting_account_id_ledger_accounts_id_fk" FOREIGN KEY ("crediting_account_id") REFERENCES "public"."ledger_accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wht_corrections" ADD CONSTRAINT "wht_corrections_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

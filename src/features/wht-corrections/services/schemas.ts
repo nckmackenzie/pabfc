@@ -23,9 +23,6 @@ export const correctionFormSchema = z
 	.object({
 		correctionNo: z.string().min(1, "Correction number is required"),
 		correctionDate: z.iso.date({ error: "Invalid date" }),
-		treatmentAccountId: z
-			.string()
-			.min(1, { error: "Treatment account is required" }),
 		remittanceStatus: z.enum(["already_remitted", "pending"], {
 			error: "Remittance status is required",
 		}),

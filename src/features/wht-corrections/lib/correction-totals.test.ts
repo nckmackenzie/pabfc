@@ -24,9 +24,9 @@ describe("sumCorrectionLines", () => {
 });
 
 describe("buildCorrectionJournalLines", () => {
-	it("debits the treatment account and credits the resolved account for the same total", () => {
+	it("debits accounts_payable and credits the resolved account for the same total", () => {
 		const lines = buildCorrectionJournalLines({
-			treatmentAccountId: 42,
+			debitAccountId: 42,
 			creditAccountId: 17,
 			total: 500,
 			memo: "March catch-up",
@@ -52,7 +52,7 @@ describe("buildCorrectionJournalLines", () => {
 
 	it("always produces a balanced journal", () => {
 		const lines = buildCorrectionJournalLines({
-			treatmentAccountId: 1,
+			debitAccountId: 1,
 			creditAccountId: 2,
 			total: 333.33,
 			memo: null,

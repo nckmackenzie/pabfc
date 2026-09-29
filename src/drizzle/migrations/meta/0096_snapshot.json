@@ -4288,12 +4288,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "treatment_account_id": {
-          "name": "treatment_account_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
         "remittance_status": {
           "name": "remittance_status",
           "type": "wht_correction_status",
@@ -4379,19 +4373,6 @@
         }
       },
       "foreignKeys": {
-        "wht_corrections_treatment_account_id_ledger_accounts_id_fk": {
-          "name": "wht_corrections_treatment_account_id_ledger_accounts_id_fk",
-          "tableFrom": "wht_corrections",
-          "tableTo": "ledger_accounts",
-          "columnsFrom": [
-            "treatment_account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "wht_corrections_bank_id_bank_accounts_id_fk": {
           "name": "wht_corrections_bank_id_bank_accounts_id_fk",
           "tableFrom": "wht_corrections",

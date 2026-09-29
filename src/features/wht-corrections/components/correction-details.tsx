@@ -49,12 +49,6 @@ export function CorrectionDetails({
 						value={format(new Date(correction.correctionDate), "dd/MM/yyyy")}
 					/>
 					<MemberInfo label="Status" value={STATUS_LABEL[correction.remittanceStatus]} />
-					<MemberInfo
-						label="Treatment Account"
-						value={
-							correction.treatmentAccount ? toTitleCase(correction.treatmentAccount.name) : "-"
-						}
-					/>
 					{correction.remittanceStatus === "already_remitted" && (
 						<>
 							<MemberInfo

@@ -389,9 +389,6 @@ export const whtCorrections = pgTable(
 		id,
 		correctionNo: integer("correction_no").notNull(),
 		correctionDate: date("correction_date").notNull(),
-		treatmentAccountId: integer("treatment_account_id")
-			.notNull()
-			.references(() => ledgerAccounts.id),
 		remittanceStatus: whtCorrectionStatusEnum("remittance_status").notNull(),
 		remittanceDate: date("remittance_date"),
 		bankId: varchar("bank_id").references(() => bankAccounts.id),
@@ -418,10 +415,6 @@ export const whtCorrectionsRelations = relations(
 		bank: one(bankAccounts, {
 			fields: [whtCorrections.bankId],
 			references: [bankAccounts.id],
-		}),
-		treatmentAccount: one(ledgerAccounts, {
-			fields: [whtCorrections.treatmentAccountId],
-			references: [ledgerAccounts.id],
 		}),
 	}),
 );

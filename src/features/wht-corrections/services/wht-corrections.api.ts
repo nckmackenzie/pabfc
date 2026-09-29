@@ -6,12 +6,11 @@ import { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
 	bills,
-	ledgerAccounts,
 	vendors,
+	vwWhtBalances,
 	whtCorrectionLines,
 	whtCorrections,
 } from "@/drizzle/schema";
-import { findInvalidPostingAccountIdsByType } from "@/features/coa/services/account-option-filter";
 import {
 	buildCorrectionJournalLines,
 	sumCorrectionLines,
@@ -32,6 +31,14 @@ import {
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
 
 const JOURNAL_SOURCE = "wht correction";
+
+/**
+ * Thrown inside the transaction so a failed balance check rolls the whole
+ * deletion back, then unwrapped by the catch below into a ValidationError
+ * carrying its own message rather than a generic one. Mirrors
+ * `RemittanceValidationError` in the sibling wht-remittances service.
+ */
+class CorrectionDeletionError extends Error {}
 
 export const getCorrectionNo = createServerFn()
 	.middleware([authMiddleware])
@@ -63,8 +70,7 @@ export const getCorrectableBills = createServerFn()
 			.from(bills)
 			.innerJoin(vendors, eq(bills.vendorId, vendors.id))
 			.where(notInArray(bills.status, ["draft", "cancelled"]))
-			.orderBy(desc(bills.invoiceDate))
-			.limit(500);
+			.orderBy(desc(bills.invoiceDate));
 	});
 
 /**
@@ -142,7 +148,6 @@ export const getCorrection = createServerFn()
 			where: eq(whtCorrections.id, correctionId),
 			with: {
 				bank: { columns: { id: true, bankName: true } },
-				treatmentAccount: { columns: { id: true, name: true } },
 				lines: {
 					orderBy: (t, { asc }) => asc(t.lineNumber),
 					with: {
@@ -178,7 +183,6 @@ export const createCorrection = createServerFn({ method: "POST" })
 
 			const {
 				correctionDate,
-				treatmentAccountId,
 				remittanceStatus,
 				remittanceDate,
 				paymentMethod,
@@ -204,30 +208,20 @@ export const createCorrection = createServerFn({ method: "POST" })
 				});
 			}
 
-			const treatmentAccountIdNum = Number(treatmentAccountId);
-			const selectableAccounts = await db.query.ledgerAccounts.findMany({
-				columns: {
-					id: true,
-					name: true,
-					type: true,
-					isActive: true,
-					isPosting: true,
-					parentId: true,
-				},
-				where: inArray(ledgerAccounts.id, [treatmentAccountIdNum]),
-			});
-
-			const invalidAccountIds = findInvalidPostingAccountIdsByType(
-				selectableAccounts,
-				[treatmentAccountIdNum],
-				["expense", "asset"],
-			);
-
-			if (invalidAccountIds.length > 0) {
+			// Every correction debits accounts_payable, never a user-chosen
+			// account: the original bill posted CR accounts_payable for the
+			// full pre-correction amount, so the correction always brings that
+			// recorded payable back down to what's actually owed.
+			let accountsPayableId: number;
+			try {
+				accountsPayableId = await resolveAccountRole("accounts_payable");
+			} catch (error) {
 				return failure({
 					type: "ValidationError",
 					message:
-						"Treatment account must be an active posting asset or expense account.",
+						error instanceof Error
+							? error.message
+							: "Could not resolve the accounts payable account",
 				});
 			}
 
@@ -291,7 +285,7 @@ export const createCorrection = createServerFn({ method: "POST" })
 			}
 
 			const journalLines = buildCorrectionJournalLines({
-				treatmentAccountId: treatmentAccountIdNum,
+				debitAccountId: accountsPayableId,
 				creditAccountId,
 				total,
 				memo,
@@ -316,7 +310,6 @@ export const createCorrection = createServerFn({ method: "POST" })
 							id: nanoid(),
 							correctionNo,
 							correctionDate,
-							treatmentAccountId: treatmentAccountIdNum,
 							remittanceStatus,
 							remittanceDate:
 								remittanceStatus === "already_remitted" ? remittanceDate : null,
@@ -400,7 +393,7 @@ export const deleteCorrection = createServerFn({ method: "POST" })
 
 			try {
 				const correction = await db.query.whtCorrections.findFirst({
-					columns: { id: true, correctionNo: true },
+					columns: { id: true, correctionNo: true, remittanceStatus: true },
 					where: eq(whtCorrections.id, correctionId),
 				});
 
@@ -412,6 +405,37 @@ export const deleteCorrection = createServerFn({ method: "POST" })
 				}
 
 				await db.transaction(async (tx) => {
+					// A pending correction adds to vw_wht_balances.wht_balance, which a
+					// remittance may already have consumed. Deleting it out from under
+					// a remittance would strand that remittance's debit and drive the
+					// balance negative, so refuse when that would happen. Mirrors the
+					// analogous guard in bills.api.ts's upsertBill.
+					if (correction.remittanceStatus === "pending") {
+						const lines = await tx.query.whtCorrectionLines.findMany({
+							where: eq(whtCorrectionLines.correctionId, correctionId),
+						});
+
+						for (const line of lines) {
+							await tx.execute(
+								sql`SELECT id FROM bills WHERE id = ${line.billId} FOR UPDATE`,
+							);
+
+							const [balance] = await tx
+								.select({ whtBalance: vwWhtBalances.whtBalance })
+								.from(vwWhtBalances)
+								.where(eq(vwWhtBalances.id, line.billId));
+
+							if (
+								balance &&
+								Number(balance.whtBalance) - Number(line.amount) < 0
+							) {
+								throw new CorrectionDeletionError(
+									"Deleting this correction would leave more WHT remitted than owed on a bill it covers. Delete the affected remittance first.",
+								);
+							}
+						}
+					}
+
 					// Lines cascade with the header, which restores every affected
 					// bill's net_payable/wht_balance on the next read.
 					await tx
@@ -439,6 +463,13 @@ export const deleteCorrection = createServerFn({ method: "POST" })
 
 				return success(undefined);
 			} catch (error) {
+				if (error instanceof CorrectionDeletionError) {
+					return failure({
+						type: "ValidationError",
+						message: error.message,
+					});
+				}
+
 				console.error(error);
 				return failure({
 					type: "ApplicationError",

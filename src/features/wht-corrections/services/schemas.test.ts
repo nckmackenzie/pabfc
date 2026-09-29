@@ -11,7 +11,6 @@ const baseLine = {
 const basePending = {
 	correctionNo: "1",
 	correctionDate: "2026-09-29",
-	treatmentAccountId: "42",
 	remittanceStatus: "pending" as const,
 	remittanceDate: null,
 	paymentMethod: null,

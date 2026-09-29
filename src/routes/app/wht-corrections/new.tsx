@@ -21,28 +21,20 @@ export const Route = createFileRoute("/app/wht-corrections/new")({
 	}),
 	pendingComponent: CorrectionFormPendingComponent,
 	loader: async ({ context: { queryClient } }) => {
-		const [correctionNo, banks, cashEquivalentAccounts, treatmentAccounts] =
-			await Promise.all([
-				queryClient.ensureQueryData(correctionQueries.correctionNo()),
-				queryClient.ensureQueryData(bankQueries.list()),
-				queryClient.ensureQueryData(
-					accountQueries.childrenAccountsByParentName(
-						"Cash And Cash Equivalents",
-					),
+		const [correctionNo, banks, cashEquivalentAccounts] = await Promise.all([
+			queryClient.ensureQueryData(correctionQueries.correctionNo()),
+			queryClient.ensureQueryData(bankQueries.list()),
+			queryClient.ensureQueryData(
+				accountQueries.childrenAccountsByParentName(
+					"Cash And Cash Equivalents",
 				),
-				queryClient.ensureQueryData(
-					accountQueries.activePostingAccountsByAccountType([
-						"expense",
-						"asset",
-					]),
-				),
-			]);
+			),
+		]);
 
 		return {
 			correctionNo,
 			banks: transformOptions(banks, "id", "bankName"),
 			cashEquivalentAccounts: transformOptions(cashEquivalentAccounts),
-			treatmentAccounts,
 		};
 	},
 	staticData: {
@@ -51,7 +43,7 @@ export const Route = createFileRoute("/app/wht-corrections/new")({
 });
 
 function RouteComponent() {
-	const { correctionNo, banks, cashEquivalentAccounts, treatmentAccounts } =
+	const { correctionNo, banks, cashEquivalentAccounts } =
 		Route.useLoaderData();
 
 	return (
@@ -70,7 +62,6 @@ function RouteComponent() {
 				correctionNo={correctionNo.toString()}
 				banks={banks}
 				cashEquivalentAccounts={cashEquivalentAccounts}
-				treatmentAccounts={treatmentAccounts}
 			/>
 		</ProtectedPageWithWrapper>
 	);

@@ -9,28 +9,30 @@ export function sumCorrectionLines(
 }
 
 type BuildCorrectionJournalLinesParams = {
-	treatmentAccountId: number;
+	debitAccountId: number;
 	creditAccountId: number;
 	total: number;
 	memo?: string | null;
 };
 
 /**
- * Every correction posts exactly two lines: DR the treatment account the
- * user chose, CR whichever account was resolved for the scenario (a bank/
- * cash-equivalent account for `already_remitted`, `wht_payable` for
- * `pending`). Both sides always carry the same total, so this can never
- * produce an unbalanced entry.
+ * Every correction posts exactly two lines: DR accounts_payable (the
+ * original bill posted CR accounts_payable for the full pre-correction
+ * amount, so the correction always brings that recorded payable back down
+ * to what's actually owed), CR whichever account was resolved for the
+ * scenario (a bank/cash-equivalent account for `already_remitted`,
+ * `wht_payable` for `pending`). Both sides always carry the same total, so
+ * this can never produce an unbalanced entry.
  */
 export function buildCorrectionJournalLines({
-	treatmentAccountId,
+	debitAccountId,
 	creditAccountId,
 	total,
 	memo,
 }: BuildCorrectionJournalLinesParams) {
 	return [
 		{
-			accountId: treatmentAccountId,
+			accountId: debitAccountId,
 			amount: total.toString(),
 			dc: "debit" as const,
 			lineNumber: 1,

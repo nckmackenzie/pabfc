@@ -20,12 +20,16 @@ export const correctionQueries = {
 		queryOptions({
 			queryKey: [...correctionQueries.all, "correctable-bills"],
 			queryFn: () => getCorrectableBills(),
+			// Balances move whenever a bill is posted or another correction is made.
+			staleTime: 0,
 		}),
 	existingCorrectionsForBills: (billIds: Array<string>) =>
 		queryOptions({
 			queryKey: [...correctionQueries.all, "existing-for-bills", billIds],
 			queryFn: () => getExistingCorrectionsForBills({ data: billIds }),
 			enabled: billIds.length > 0,
+			// Balances move whenever a bill is posted or another correction is made.
+			staleTime: 0,
 		}),
 	list: (filters: z.infer<typeof searchValidateSchema>) =>
 		queryOptions({
