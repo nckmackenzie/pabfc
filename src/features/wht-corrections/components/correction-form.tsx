@@ -2,6 +2,7 @@ import { useStore } from "@tanstack/react-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { PlusIcon, TrashIcon } from "lucide-react";
+import { useEffect } from "react";
 import { AlertErrorComponent } from "@/components/ui/error-component";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,14 @@ export function CorrectionForm({
 
 	const isBankAccount = paymentMethod === "bank" || paymentMethod === "cheque";
 	const isAlreadyRemitted = remittanceStatus === "already_remitted";
+
+	useEffect(() => {
+		if (paymentMethod === "cash" || paymentMethod === "mpesa") {
+			form.setFieldValue("bankId", null);
+		} else if (paymentMethod === "bank" || paymentMethod === "cheque") {
+			form.setFieldValue("cashEquivalentAccountId", null);
+		}
+	}, [paymentMethod, form]);
 
 	function invoiceNoFor(billId: string) {
 		return correctableBills?.find((bill) => bill.id === billId)?.invoiceNo ?? billId;
