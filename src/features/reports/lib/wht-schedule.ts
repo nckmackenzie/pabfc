@@ -1,12 +1,14 @@
 import { roundDecimal, toNumber } from "@/lib/helpers";
 
 export type WhtScheduleRow = {
+	rowType: "billing" | "correction";
+	remittanceStatus: "already_remitted" | "pending" | null;
 	vendor: string;
 	taxPin: string | null;
 	invoiceNo: string;
 	invoiceDate: string;
 	description: string | null;
-	grossAmount: string;
+	grossAmount: string | null;
 	rate: string | null;
 	whtAmount: string;
 	certificateNo: string | null;
@@ -66,7 +68,7 @@ export function summariseWhtSchedule(
 
 		group.rows.push(row);
 		group.grossAmount = roundDecimal(
-			group.grossAmount + toNumber(row.grossAmount),
+			group.grossAmount + (row.grossAmount === null ? 0 : toNumber(row.grossAmount)),
 		);
 		group.whtAmount = roundDecimal(group.whtAmount + toNumber(row.whtAmount));
 	}
