@@ -84,6 +84,8 @@ const styles = StyleSheet.create({
 	colRate: { flex: 0.7, fontSize: 9, textAlign: "right" },
 	colWht: { flex: 1.5, fontSize: 9, textAlign: "right" },
 	colCert: { flex: 1.4, fontSize: 9 },
+	colType: { flex: 1, fontSize: 9 },
+	colStatus: { flex: 1.3, fontSize: 9 },
 	bold: { fontWeight: "bold", color: "#000" },
 });
 
@@ -96,6 +98,8 @@ export type WhtSchedulePdfRow = {
 	rate: string;
 	whtAmount: string;
 	certificateNo: string;
+	rowType: string;
+	remittanceStatus: string;
 };
 
 export type WhtSchedulePdfGroup = {
@@ -146,6 +150,8 @@ export function WhtSchedulePdf({ data }: { data: WhtSchedulePdfProps }) {
 					<Text style={[styles.colRate, styles.bold]}>Rate %</Text>
 					<Text style={[styles.colWht, styles.bold]}>WHT Amount</Text>
 					<Text style={[styles.colCert, styles.bold]}>Certificate No</Text>
+					<Text style={[styles.colType, styles.bold]}>Type</Text>
+					<Text style={[styles.colStatus, styles.bold]}>Status</Text>
 				</View>
 
 				{data.groups.map((group) => (
@@ -161,6 +167,8 @@ export function WhtSchedulePdf({ data }: { data: WhtSchedulePdfProps }) {
 								<Text style={styles.colRate}>{row.rate}</Text>
 								<Text style={styles.colWht}>{row.whtAmount}</Text>
 								<Text style={styles.colCert}>{row.certificateNo}</Text>
+								<Text style={styles.colType}>{row.rowType}</Text>
+								<Text style={styles.colStatus}>{row.remittanceStatus}</Text>
 							</View>
 						))}
 						<View style={styles.subtotalRow}>
@@ -176,6 +184,8 @@ export function WhtSchedulePdf({ data }: { data: WhtSchedulePdfProps }) {
 							<Text style={styles.colRate} />
 							<Text style={[styles.colWht, styles.bold]}>{group.whtAmount}</Text>
 							<Text style={styles.colCert} />
+							<Text style={styles.colType} />
+							<Text style={styles.colStatus} />
 						</View>
 					</View>
 				))}
@@ -191,6 +201,8 @@ export function WhtSchedulePdf({ data }: { data: WhtSchedulePdfProps }) {
 					<Text style={styles.colRate} />
 					<Text style={[styles.colWht, styles.bold]}>{data.totalWhtAmount}</Text>
 					<Text style={styles.colCert} />
+					<Text style={styles.colType} />
+					<Text style={styles.colStatus} />
 				</View>
 			</Page>
 		</Document>

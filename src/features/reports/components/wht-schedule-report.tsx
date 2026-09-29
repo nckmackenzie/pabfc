@@ -26,7 +26,7 @@ import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 const route = getRouteApi("/app/reports/finance/wht-schedule/");
-const COLUMN_COUNT = 8;
+const COLUMN_COUNT = 10;
 
 /**
  * The period's withholding deductions, grouped by nature of expense so the totals
@@ -76,10 +76,23 @@ export function WhtScheduleReport() {
 											taxPin: row.taxPin?.toUpperCase() ?? "-",
 											invoiceNo: row.invoiceNo,
 											invoiceDate: dateFormat(row.invoiceDate, "reporting"),
-											grossAmount: currencyFormatter(row.grossAmount, false),
+											grossAmount:
+												row.grossAmount === null
+													? "-"
+													: currencyFormatter(row.grossAmount, false),
 											rate: row.rate ?? "-",
 											whtAmount: currencyFormatter(row.whtAmount, false),
 											certificateNo: row.certificateNo?.toUpperCase() ?? "-",
+											rowType:
+												row.rowType === "billing"
+													? "Entered at billing"
+													: "Correction entry",
+											remittanceStatus:
+												row.remittanceStatus === "already_remitted"
+													? "Already remitted"
+													: row.remittanceStatus === "pending"
+														? "Pending remittance"
+														: "-",
 										})),
 										grossAmount: currencyFormatter(group.grossAmount, false),
 										whtAmount: currencyFormatter(group.whtAmount, false),
@@ -118,6 +131,8 @@ export function WhtScheduleReport() {
 							<TableHead className="text-right w-[90px]">Rate %</TableHead>
 							<TableHead className="text-right w-[150px]">WHT Amount</TableHead>
 							<TableHead className="w-[150px]">Certificate No</TableHead>
+							<TableHead className="w-[110px]">Type</TableHead>
+							<TableHead className="w-[150px]">Remittance Status</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -139,7 +154,9 @@ export function WhtScheduleReport() {
 											{dateFormat(row.invoiceDate, "reporting")}
 										</TableCell>
 										<TableCell className="text-right tabular-nums">
-											{currencyFormatter(row.grossAmount, false)}
+											{row.grossAmount === null
+												? "-"
+												: currencyFormatter(row.grossAmount, false)}
 										</TableCell>
 										<TableCell className="text-right tabular-nums">
 											{row.rate ?? "-"}
@@ -149,6 +166,18 @@ export function WhtScheduleReport() {
 										</TableCell>
 										<TableCell>
 											{row.certificateNo?.toUpperCase() ?? "-"}
+										</TableCell>
+										<TableCell>
+											{row.rowType === "billing"
+												? "Entered at billing"
+												: "Correction entry"}
+										</TableCell>
+										<TableCell>
+											{row.remittanceStatus === "already_remitted"
+												? "Already remitted"
+												: row.remittanceStatus === "pending"
+													? "Pending remittance"
+													: "-"}
 										</TableCell>
 									</TableRow>
 								))}
@@ -163,6 +192,8 @@ export function WhtScheduleReport() {
 									<TableCell className="text-right font-medium tabular-nums">
 										{currencyFormatter(group.whtAmount, false)}
 									</TableCell>
+									<TableCell />
+									<TableCell />
 									<TableCell />
 								</TableRow>
 							</Fragment>
@@ -180,6 +211,8 @@ export function WhtScheduleReport() {
 							<TableCell className="text-right font-bold tabular-nums">
 								{currencyFormatter(summary.whtAmount, false)}
 							</TableCell>
+							<TableCell />
+							<TableCell />
 							<TableCell />
 						</TableRow>
 					</TableFooter>
