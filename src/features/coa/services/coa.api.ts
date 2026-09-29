@@ -597,7 +597,11 @@ export const getChildrenAccountByParentName = createServerFn({ method: "GET" })
 
 		return db.query.ledgerAccounts.findMany({
 			columns: { id: true, name: true },
-			where: eq(ledgerAccounts.parentId, parentAccount.id),
+			where: and(
+				eq(ledgerAccounts.parentId, parentAccount.id),
+				eq(ledgerAccounts.isPosting, true),
+				eq(ledgerAccounts.isActive, true),
+			),
 		});
 	});
 
