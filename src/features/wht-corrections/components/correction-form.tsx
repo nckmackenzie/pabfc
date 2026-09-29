@@ -33,7 +33,7 @@ import { useAppForm } from "@/lib/form";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
-import type { Option, Route } from "@/types/index.types";
+import type { Option } from "@/types/index.types";
 
 type CorrectionFormProps = {
 	banks: Array<Option>;
@@ -58,13 +58,7 @@ export function CorrectionForm({
 		upsertFn: (data: CorrectionFormValues) => createCorrection({ data }),
 		entityName: "WHT correction",
 		queryKey: ["wht-corrections"],
-		// The "/app/wht-corrections" route is created by a later task in this
-		// plan (route-tree regeneration + nav entry); until then it isn't a
-		// member of the generated `Route` union, so this is asserted rather
-		// than inferred. Same forward-reference the plan's nav-entry step hit
-		// (see ledger, Task 3) — remove the cast once that route lands and
-		// `Route` includes it.
-		navigateTo: "/app/wht-corrections" as Route,
+		navigateTo: "/app/wht-corrections",
 		onSuccessCallback: async () => {
 			// A correction retroactively changes both the bill list (net_payable)
 			// and the WHT remittance picker (wht_balance).

@@ -18,7 +18,6 @@ import { deleteCorrection } from "@/features/wht-corrections/services/wht-correc
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
-import type { Route } from "@/types/index.types";
 
 const STATUS_LABEL = {
 	already_remitted: "Already remitted",
@@ -26,10 +25,7 @@ const STATUS_LABEL = {
 } as const;
 
 export function CorrectionsTable() {
-	// route not yet generated (added in Task 14); once /app/wht-corrections/ exists
-	// in routeTree.gen.ts, drop the `as any` cast.
-	// biome-ignore lint/suspicious/noExplicitAny: see comment above
-	const { filters } = useFilters(getRouteApi("/app/wht-corrections/" as any).id);
+	const { filters } = useFilters(getRouteApi("/app/wht-corrections/").id);
 	const { data } = useSuspenseQuery(correctionQueries.list(filters));
 
 	const columns: Array<ColumnDef<(typeof data)[0]>> = [
@@ -92,10 +88,8 @@ export function CorrectionsTable() {
 						>
 							<DropdownMenuItem asChild>
 								<Link
-									// biome-ignore lint/suspicious/noExplicitAny: route not yet generated (added in Task 14); remove both casts once /app/wht-corrections/$correctionId/details exists in routeTree.gen.ts
-									to={"/app/wht-corrections/$correctionId/details" as any}
-									// biome-ignore lint/suspicious/noExplicitAny: see comment above; `to` being `any` means `params` can't be inferred either
-									params={{ correctionId: id } as any}
+									to="/app/wht-corrections/$correctionId/details"
+									params={{ correctionId: id }}
 								>
 									<ViewDetailsAction text="View" />
 								</Link>
@@ -125,8 +119,7 @@ export function CorrectionsTable() {
 				description="You haven't recorded any missed-WHT catch-ups yet."
 				buttonName="Create your first correction"
 				icon={<FileWarningIcon />}
-				// route not yet generated (added in Task 14); remove cast once /app/wht-corrections/new exists in routeTree.gen.ts
-				path={"/app/wht-corrections/new" as Route}
+				path="/app/wht-corrections/new"
 			/>
 		);
 	}

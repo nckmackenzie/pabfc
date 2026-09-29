@@ -22,6 +22,7 @@ import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as AppWhtRemittancesRouteRouteImport } from './routes/app/wht-remittances/route'
+import { Route as AppWhtCorrectionsRouteRouteImport } from './routes/app/wht-corrections/route'
 import { Route as AppUsersRouteRouteImport } from './routes/app/users/route'
 import { Route as AppSuppliersRouteRouteImport } from './routes/app/suppliers/route'
 import { Route as AppReceiptsRouteRouteImport } from './routes/app/receipts/route'
@@ -38,6 +39,7 @@ import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-
 import { Route as AppBillsRouteRouteImport } from './routes/app/bills/route'
 import { Route as AppBankingsRouteRouteImport } from './routes/app/bankings/route'
 import { Route as AppWhtRemittancesIndexRouteImport } from './routes/app/wht-remittances/index'
+import { Route as AppWhtCorrectionsIndexRouteImport } from './routes/app/wht-corrections/index'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users/index'
 import { Route as AppSuppliersIndexRouteImport } from './routes/app/suppliers/index'
 import { Route as AppReceiptsIndexRouteImport } from './routes/app/receipts/index'
@@ -58,6 +60,7 @@ import { Route as AppActivityLogsIndexRouteImport } from './routes/app/activity-
 import { Route as ApiMockApiIndexRouteImport } from './routes/api/mock-api/index'
 import { Route as ApiInngestIndexRouteImport } from './routes/api/inngest/index'
 import { Route as AppWhtRemittancesNewRouteImport } from './routes/app/wht-remittances/new'
+import { Route as AppWhtCorrectionsNewRouteImport } from './routes/app/wht-corrections/new'
 import { Route as AppUsersNewRouteImport } from './routes/app/users/new'
 import { Route as AppSuppliersNewRouteImport } from './routes/app/suppliers/new'
 import { Route as AppReceiptsNewRouteImport } from './routes/app/receipts/new'
@@ -107,6 +110,7 @@ import { Route as AppBankingsPostingsIndexRouteImport } from './routes/app/banki
 import { Route as ApiCronDailyIndexRouteImport } from './routes/api/cron/daily/index'
 import { Route as AppWhtRemittancesRemittanceIdEditRouteImport } from './routes/app/wht-remittances/$remittanceId/edit'
 import { Route as AppWhtRemittancesRemittanceIdDetailsRouteImport } from './routes/app/wht-remittances/$remittanceId/details'
+import { Route as AppWhtCorrectionsCorrectionIdDetailsRouteImport } from './routes/app/wht-corrections/$correctionId/details'
 import { Route as AppUsersRolesNewRouteImport } from './routes/app/users/roles.new'
 import { Route as AppUsersUserIdResetRouteImport } from './routes/app/users/$userId.reset'
 import { Route as AppUsersUserIdEditRouteImport } from './routes/app/users/$userId.edit'
@@ -238,6 +242,11 @@ const AppWhtRemittancesRouteRoute = AppWhtRemittancesRouteRouteImport.update({
   path: '/wht-remittances',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppWhtCorrectionsRouteRoute = AppWhtCorrectionsRouteRouteImport.update({
+  id: '/wht-corrections',
+  path: '/wht-corrections',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppUsersRouteRoute = AppUsersRouteRouteImport.update({
   id: '/users',
   path: '/users',
@@ -317,6 +326,11 @@ const AppWhtRemittancesIndexRoute = AppWhtRemittancesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppWhtRemittancesRouteRoute,
+} as any)
+const AppWhtCorrectionsIndexRoute = AppWhtCorrectionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWhtCorrectionsRouteRoute,
 } as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/',
@@ -417,6 +431,11 @@ const AppWhtRemittancesNewRoute = AppWhtRemittancesNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppWhtRemittancesRouteRoute,
+} as any)
+const AppWhtCorrectionsNewRoute = AppWhtCorrectionsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppWhtCorrectionsRouteRoute,
 } as any)
 const AppUsersNewRoute = AppUsersNewRouteImport.update({
   id: '/new',
@@ -681,6 +700,12 @@ const AppWhtRemittancesRemittanceIdDetailsRoute =
     id: '/$remittanceId/details',
     path: '/$remittanceId/details',
     getParentRoute: () => AppWhtRemittancesRouteRoute,
+  } as any)
+const AppWhtCorrectionsCorrectionIdDetailsRoute =
+  AppWhtCorrectionsCorrectionIdDetailsRouteImport.update({
+    id: '/$correctionId/details',
+    path: '/$correctionId/details',
+    getParentRoute: () => AppWhtCorrectionsRouteRoute,
   } as any)
 const AppUsersRolesNewRoute = AppUsersRolesNewRouteImport.update({
   id: '/new',
@@ -1082,6 +1107,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
   '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
+  '/app/wht-corrections': typeof AppWhtCorrectionsRouteRouteWithChildren
   '/app/wht-remittances': typeof AppWhtRemittancesRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/sign-in': typeof authSignInRoute
@@ -1123,6 +1149,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/wht-corrections/new': typeof AppWhtCorrectionsNewRoute
   '/app/wht-remittances/new': typeof AppWhtRemittancesNewRoute
   '/api/inngest/': typeof ApiInngestIndexRoute
   '/api/mock-api/': typeof ApiMockApiIndexRoute
@@ -1143,6 +1170,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts/': typeof AppReceiptsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/wht-corrections/': typeof AppWhtCorrectionsIndexRoute
   '/app/wht-remittances/': typeof AppWhtRemittancesIndexRoute
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
@@ -1176,6 +1204,7 @@ export interface FileRoutesByFullPath {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/wht-corrections/$correctionId/details': typeof AppWhtCorrectionsCorrectionIdDetailsRoute
   '/app/wht-remittances/$remittanceId/details': typeof AppWhtRemittancesRemittanceIdDetailsRoute
   '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
@@ -1265,6 +1294,7 @@ export interface FileRoutesByTo {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/wht-corrections/new': typeof AppWhtCorrectionsNewRoute
   '/app/wht-remittances/new': typeof AppWhtRemittancesNewRoute
   '/api/inngest': typeof ApiInngestIndexRoute
   '/api/mock-api': typeof ApiMockApiIndexRoute
@@ -1285,6 +1315,7 @@ export interface FileRoutesByTo {
   '/app/receipts': typeof AppReceiptsIndexRoute
   '/app/suppliers': typeof AppSuppliersIndexRoute
   '/app/users': typeof AppUsersIndexRoute
+  '/app/wht-corrections': typeof AppWhtCorrectionsIndexRoute
   '/app/wht-remittances': typeof AppWhtRemittancesIndexRoute
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
@@ -1318,6 +1349,7 @@ export interface FileRoutesByTo {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/wht-corrections/$correctionId/details': typeof AppWhtCorrectionsCorrectionIdDetailsRoute
   '/app/wht-remittances/$remittanceId/details': typeof AppWhtRemittancesRemittanceIdDetailsRoute
   '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily': typeof ApiCronDailyIndexRoute
@@ -1391,6 +1423,7 @@ export interface FileRoutesById {
   '/app/receipts': typeof AppReceiptsRouteRouteWithChildren
   '/app/suppliers': typeof AppSuppliersRouteRouteWithChildren
   '/app/users': typeof AppUsersRouteRouteWithChildren
+  '/app/wht-corrections': typeof AppWhtCorrectionsRouteRouteWithChildren
   '/app/wht-remittances': typeof AppWhtRemittancesRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/sign-in': typeof authSignInRoute
@@ -1432,6 +1465,7 @@ export interface FileRoutesById {
   '/app/receipts/new': typeof AppReceiptsNewRoute
   '/app/suppliers/new': typeof AppSuppliersNewRoute
   '/app/users/new': typeof AppUsersNewRoute
+  '/app/wht-corrections/new': typeof AppWhtCorrectionsNewRoute
   '/app/wht-remittances/new': typeof AppWhtRemittancesNewRoute
   '/api/inngest/': typeof ApiInngestIndexRoute
   '/api/mock-api/': typeof ApiMockApiIndexRoute
@@ -1452,6 +1486,7 @@ export interface FileRoutesById {
   '/app/receipts/': typeof AppReceiptsIndexRoute
   '/app/suppliers/': typeof AppSuppliersIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
+  '/app/wht-corrections/': typeof AppWhtCorrectionsIndexRoute
   '/app/wht-remittances/': typeof AppWhtRemittancesIndexRoute
   '/app/bankings/postings/new': typeof AppBankingsPostingsNewRoute
   '/app/bills/$billId/edit': typeof AppBillsBillIdEditRoute
@@ -1485,6 +1520,7 @@ export interface FileRoutesById {
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
   '/app/users/roles/new': typeof AppUsersRolesNewRoute
+  '/app/wht-corrections/$correctionId/details': typeof AppWhtCorrectionsCorrectionIdDetailsRoute
   '/app/wht-remittances/$remittanceId/details': typeof AppWhtRemittancesRemittanceIdDetailsRoute
   '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
@@ -1558,6 +1594,7 @@ export interface FileRouteTypes {
     | '/app/receipts'
     | '/app/suppliers'
     | '/app/users'
+    | '/app/wht-corrections'
     | '/app/wht-remittances'
     | '/forgot-password'
     | '/sign-in'
@@ -1599,6 +1636,7 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
+    | '/app/wht-corrections/new'
     | '/app/wht-remittances/new'
     | '/api/inngest/'
     | '/api/mock-api/'
@@ -1619,6 +1657,7 @@ export interface FileRouteTypes {
     | '/app/receipts/'
     | '/app/suppliers/'
     | '/app/users/'
+    | '/app/wht-corrections/'
     | '/app/wht-remittances/'
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
@@ -1652,6 +1691,7 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/app/wht-corrections/$correctionId/details'
     | '/app/wht-remittances/$remittanceId/details'
     | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily/'
@@ -1741,6 +1781,7 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
+    | '/app/wht-corrections/new'
     | '/app/wht-remittances/new'
     | '/api/inngest'
     | '/api/mock-api'
@@ -1761,6 +1802,7 @@ export interface FileRouteTypes {
     | '/app/receipts'
     | '/app/suppliers'
     | '/app/users'
+    | '/app/wht-corrections'
     | '/app/wht-remittances'
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
@@ -1794,6 +1836,7 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/app/wht-corrections/$correctionId/details'
     | '/app/wht-remittances/$remittanceId/details'
     | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily'
@@ -1866,6 +1909,7 @@ export interface FileRouteTypes {
     | '/app/receipts'
     | '/app/suppliers'
     | '/app/users'
+    | '/app/wht-corrections'
     | '/app/wht-remittances'
     | '/(auth)/forgot-password'
     | '/(auth)/sign-in'
@@ -1907,6 +1951,7 @@ export interface FileRouteTypes {
     | '/app/receipts/new'
     | '/app/suppliers/new'
     | '/app/users/new'
+    | '/app/wht-corrections/new'
     | '/app/wht-remittances/new'
     | '/api/inngest/'
     | '/api/mock-api/'
@@ -1927,6 +1972,7 @@ export interface FileRouteTypes {
     | '/app/receipts/'
     | '/app/suppliers/'
     | '/app/users/'
+    | '/app/wht-corrections/'
     | '/app/wht-remittances/'
     | '/app/bankings/postings/new'
     | '/app/bills/$billId/edit'
@@ -1960,6 +2006,7 @@ export interface FileRouteTypes {
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
     | '/app/users/roles/new'
+    | '/app/wht-corrections/$correctionId/details'
     | '/app/wht-remittances/$remittanceId/details'
     | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily/'
@@ -2128,6 +2175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWhtRemittancesRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/wht-corrections': {
+      id: '/app/wht-corrections'
+      path: '/wht-corrections'
+      fullPath: '/app/wht-corrections'
+      preLoaderRoute: typeof AppWhtCorrectionsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/users': {
       id: '/app/users'
       path: '/users'
@@ -2239,6 +2293,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/wht-remittances/'
       preLoaderRoute: typeof AppWhtRemittancesIndexRouteImport
       parentRoute: typeof AppWhtRemittancesRouteRoute
+    }
+    '/app/wht-corrections/': {
+      id: '/app/wht-corrections/'
+      path: '/'
+      fullPath: '/app/wht-corrections/'
+      preLoaderRoute: typeof AppWhtCorrectionsIndexRouteImport
+      parentRoute: typeof AppWhtCorrectionsRouteRoute
     }
     '/app/users/': {
       id: '/app/users/'
@@ -2379,6 +2440,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/wht-remittances/new'
       preLoaderRoute: typeof AppWhtRemittancesNewRouteImport
       parentRoute: typeof AppWhtRemittancesRouteRoute
+    }
+    '/app/wht-corrections/new': {
+      id: '/app/wht-corrections/new'
+      path: '/new'
+      fullPath: '/app/wht-corrections/new'
+      preLoaderRoute: typeof AppWhtCorrectionsNewRouteImport
+      parentRoute: typeof AppWhtCorrectionsRouteRoute
     }
     '/app/users/new': {
       id: '/app/users/new'
@@ -2722,6 +2790,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/wht-remittances/$remittanceId/details'
       preLoaderRoute: typeof AppWhtRemittancesRemittanceIdDetailsRouteImport
       parentRoute: typeof AppWhtRemittancesRouteRoute
+    }
+    '/app/wht-corrections/$correctionId/details': {
+      id: '/app/wht-corrections/$correctionId/details'
+      path: '/$correctionId/details'
+      fullPath: '/app/wht-corrections/$correctionId/details'
+      preLoaderRoute: typeof AppWhtCorrectionsCorrectionIdDetailsRouteImport
+      parentRoute: typeof AppWhtCorrectionsRouteRoute
     }
     '/app/users/roles/new': {
       id: '/app/users/roles/new'
@@ -3616,6 +3691,25 @@ const AppUsersRouteRouteWithChildren = AppUsersRouteRoute._addFileChildren(
   AppUsersRouteRouteChildren,
 )
 
+interface AppWhtCorrectionsRouteRouteChildren {
+  AppWhtCorrectionsNewRoute: typeof AppWhtCorrectionsNewRoute
+  AppWhtCorrectionsIndexRoute: typeof AppWhtCorrectionsIndexRoute
+  AppWhtCorrectionsCorrectionIdDetailsRoute: typeof AppWhtCorrectionsCorrectionIdDetailsRoute
+}
+
+const AppWhtCorrectionsRouteRouteChildren: AppWhtCorrectionsRouteRouteChildren =
+  {
+    AppWhtCorrectionsNewRoute: AppWhtCorrectionsNewRoute,
+    AppWhtCorrectionsIndexRoute: AppWhtCorrectionsIndexRoute,
+    AppWhtCorrectionsCorrectionIdDetailsRoute:
+      AppWhtCorrectionsCorrectionIdDetailsRoute,
+  }
+
+const AppWhtCorrectionsRouteRouteWithChildren =
+  AppWhtCorrectionsRouteRoute._addFileChildren(
+    AppWhtCorrectionsRouteRouteChildren,
+  )
+
 interface AppWhtRemittancesRouteRouteChildren {
   AppWhtRemittancesNewRoute: typeof AppWhtRemittancesNewRoute
   AppWhtRemittancesIndexRoute: typeof AppWhtRemittancesIndexRoute
@@ -3737,6 +3831,7 @@ interface AppRouteRouteChildren {
   AppReceiptsRouteRoute: typeof AppReceiptsRouteRouteWithChildren
   AppSuppliersRouteRoute: typeof AppSuppliersRouteRouteWithChildren
   AppUsersRouteRoute: typeof AppUsersRouteRouteWithChildren
+  AppWhtCorrectionsRouteRoute: typeof AppWhtCorrectionsRouteRouteWithChildren
   AppWhtRemittancesRouteRoute: typeof AppWhtRemittancesRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppJournalEntriesRoute: typeof AppJournalEntriesRoute
@@ -3769,6 +3864,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppReceiptsRouteRoute: AppReceiptsRouteRouteWithChildren,
   AppSuppliersRouteRoute: AppSuppliersRouteRouteWithChildren,
   AppUsersRouteRoute: AppUsersRouteRouteWithChildren,
+  AppWhtCorrectionsRouteRoute: AppWhtCorrectionsRouteRouteWithChildren,
   AppWhtRemittancesRouteRoute: AppWhtRemittancesRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppJournalEntriesRoute: AppJournalEntriesRoute,
