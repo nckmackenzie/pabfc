@@ -396,6 +396,7 @@ export const deleteBill = createServerFn()
 				with: {
 					payments: { columns: { id: true } },
 					whtRemittances: { columns: { id: true } },
+					correctionLines: { columns: { id: true } },
 				},
 			});
 
@@ -419,6 +420,13 @@ export const deleteBill = createServerFn()
 				return failure({
 					type: "ApplicationError",
 					message: "Bill has withholding tax remitted against it",
+				});
+			}
+
+			if (bill.correctionLines.length > 0) {
+				return failure({
+					type: "ApplicationError",
+					message: "Bill has WHT correction entries and cannot be deleted",
 				});
 			}
 
