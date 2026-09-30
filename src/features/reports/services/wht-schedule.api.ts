@@ -17,9 +17,9 @@ function compareScheduleRows(a: WhtScheduleRow, b: WhtScheduleRow) {
 	const rateA = a.rate === null ? Number.POSITIVE_INFINITY : Number(a.rate);
 	const rateB = b.rate === null ? Number.POSITIVE_INFINITY : Number(b.rate);
 	if (rateA !== rateB) return rateA - rateB;
-	if (a.vendor !== b.vendor) return a.vendor.localeCompare(b.vendor);
-	if (a.invoiceDate !== b.invoiceDate) return a.invoiceDate.localeCompare(b.invoiceDate);
-	return a.invoiceNo.localeCompare(b.invoiceNo);
+	if (a.vendor !== b.vendor) return a.vendor.localeCompare(b.vendor, "en");
+	if (a.invoiceDate !== b.invoiceDate) return a.invoiceDate.localeCompare(b.invoiceDate, "en");
+	return a.invoiceNo.localeCompare(b.invoiceNo, "en");
 }
 
 /**
@@ -40,60 +40,69 @@ export const getWhtSchedule = createServerFn()
 		await requirePermission("reports:wht-schedule");
 		const { from, to } = data.dateRange;
 
-		const billingRows: Array<WhtScheduleRow> = await db
-			.select({
-				rowType: sql<"billing">`'billing'`.as("row_type"),
-				remittanceStatus: sql<null>`NULL`.as("remittance_status"),
-				vendor: vendors.name,
-				taxPin: vendors.taxPin,
-				invoiceNo: bills.invoiceNo,
-				invoiceDate: bills.invoiceDate,
-				description: billItems.description,
-				grossAmount: billItems.subTotal,
-				rate: billItems.whtRate,
-				whtAmount: billItems.whtAmount,
-				certificateNo: bills.whtCertificateNo,
-			})
-			.from(billItems)
-			.innerJoin(bills, eq(billItems.billId, bills.id))
-			.innerJoin(vendors, eq(bills.vendorId, vendors.id))
-			.where(
-				and(
-					eq(billItems.whtApplicable, true),
-					sql`${billItems.whtAmount} > 0`,
-					gte(bills.invoiceDate, from),
-					lte(bills.invoiceDate, to),
-					sql`${bills.status} <> ALL (ARRAY['draft'::bill_status, 'cancelled'::bill_status])`,
+		const [billingRows, correctionRows]: [
+			Array<WhtScheduleRow>,
+			Array<WhtScheduleRow>,
+		] = await Promise.all([
+			db
+				.select({
+					rowType: sql<"billing">`'billing'`.as("row_type"),
+					remittanceStatus: sql<null>`NULL`.as("remittance_status"),
+					vendor: vendors.name,
+					taxPin: vendors.taxPin,
+					invoiceNo: bills.invoiceNo,
+					invoiceDate: bills.invoiceDate,
+					description: billItems.description,
+					grossAmount: billItems.subTotal,
+					rate: billItems.whtRate,
+					whtAmount: billItems.whtAmount,
+					certificateNo: bills.whtCertificateNo,
+				})
+				.from(billItems)
+				.innerJoin(bills, eq(billItems.billId, bills.id))
+				.innerJoin(vendors, eq(bills.vendorId, vendors.id))
+				.where(
+					and(
+						eq(billItems.whtApplicable, true),
+						sql`${billItems.whtAmount} > 0`,
+						gte(bills.invoiceDate, from),
+						lte(bills.invoiceDate, to),
+						sql`${bills.status} <> ALL (ARRAY['draft'::bill_status, 'cancelled'::bill_status])`,
+					),
 				),
-			);
-
-		const correctionRows: Array<WhtScheduleRow> = await db
-			.select({
-				rowType: sql<"correction">`'correction'`.as("row_type"),
-				remittanceStatus: whtCorrections.remittanceStatus,
-				vendor: vendors.name,
-				taxPin: vendors.taxPin,
-				invoiceNo: bills.invoiceNo,
-				invoiceDate: whtCorrections.correctionDate,
-				description: whtCorrections.memo,
-				grossAmount: sql<null>`NULL`.as("gross_amount"),
-				rate: whtCorrectionLines.whtRate,
-				whtAmount: whtCorrectionLines.amount,
-				certificateNo: bills.whtCertificateNo,
-			})
-			.from(whtCorrectionLines)
-			.innerJoin(
-				whtCorrections,
-				eq(whtCorrectionLines.correctionId, whtCorrections.id),
-			)
-			.innerJoin(bills, eq(whtCorrectionLines.billId, bills.id))
-			.innerJoin(vendors, eq(bills.vendorId, vendors.id))
-			.where(
-				and(
-					gte(whtCorrections.correctionDate, from),
-					lte(whtCorrections.correctionDate, to),
+			// certificateNo is left NULL here: `bills.whtCertificateNo` is the
+			// certificate for the bill's own original withholding, already shown
+			// on that bill's billing row. A correction has no certificate of its
+			// own, so reusing the bill's would show the same certificate number
+			// against two different WHT amounts.
+			db
+				.select({
+					rowType: sql<"correction">`'correction'`.as("row_type"),
+					remittanceStatus: whtCorrections.remittanceStatus,
+					vendor: vendors.name,
+					taxPin: vendors.taxPin,
+					invoiceNo: bills.invoiceNo,
+					invoiceDate: whtCorrections.correctionDate,
+					description: whtCorrections.memo,
+					grossAmount: sql<null>`NULL`.as("gross_amount"),
+					rate: whtCorrectionLines.whtRate,
+					whtAmount: whtCorrectionLines.amount,
+					certificateNo: sql<null>`NULL`.as("certificate_no"),
+				})
+				.from(whtCorrectionLines)
+				.innerJoin(
+					whtCorrections,
+					eq(whtCorrectionLines.correctionId, whtCorrections.id),
+				)
+				.innerJoin(bills, eq(whtCorrectionLines.billId, bills.id))
+				.innerJoin(vendors, eq(bills.vendorId, vendors.id))
+				.where(
+					and(
+						gte(whtCorrections.correctionDate, from),
+						lte(whtCorrections.correctionDate, to),
+					),
 				),
-			);
+		]);
 
 		return [...billingRows, ...correctionRows].sort(compareScheduleRows);
 	});

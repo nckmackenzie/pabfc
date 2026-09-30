@@ -26,6 +26,7 @@ import {
 	type CorrectionFormValues,
 	correctionFormSchema,
 } from "@/features/wht-corrections/services/schemas";
+import { sumCorrectionLines } from "@/features/wht-corrections/lib/correction-totals";
 import { newCorrectionLine, toBillComboboxItem } from "@/features/wht-corrections/utils/lib";
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { useAppForm } from "@/lib/form";
@@ -115,7 +116,7 @@ export function CorrectionForm({
 		return correctableBills?.find((bill) => bill.id === billId)?.invoiceNo ?? billId;
 	}
 
-	const total = lines.reduce((acc, line) => acc + Number(line.amount || 0), 0);
+	const total = sumCorrectionLines(lines);
 
 	return (
 		<form
@@ -225,19 +226,19 @@ export function CorrectionForm({
 			)}
 
 			<form.Field name="lines" mode="array">
-				{(field) => (
+				{(linesField) => (
 					<div className="space-y-4">
 						<div className="flex items-center justify-end">
 							<Button
 								type="button"
 								variant="secondary"
-								onClick={() => field.pushValue(newCorrectionLine())}
+								onClick={() => linesField.pushValue(newCorrectionLine())}
 							>
 								<PlusIcon className="size-4" aria-hidden="true" />
 								Add Line
 							</Button>
 						</div>
-						<FieldError errors={field.state.meta.errors} />
+						<FieldError errors={linesField.state.meta.errors} />
 						<div className="overflow-x-auto border rounded-md p-4">
 							<Table>
 								<TableHeader>
@@ -249,7 +250,7 @@ export function CorrectionForm({
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{field.state.value.map((_line, index) => (
+									{linesField.state.value.map((_line, index) => (
 										// biome-ignore lint/suspicious/noArrayIndexKey: lines have no stable id
 										<TableRow key={index}>
 											<TableCell>
@@ -265,8 +266,8 @@ export function CorrectionForm({
 											</TableCell>
 											<TableCell>
 												<form.AppField name={`lines[${index}].whtRate`}>
-													{(field) => (
-														<field.Input
+													{(rateField) => (
+														<rateField.Input
 															label=""
 															type="number"
 															step="0.01"
@@ -278,8 +279,8 @@ export function CorrectionForm({
 											</TableCell>
 											<TableCell>
 												<form.AppField name={`lines[${index}].amount`}>
-													{(field) => (
-														<field.Input
+													{(amountField) => (
+														<amountField.Input
 															label=""
 															type="number"
 															step="0.01"
@@ -293,7 +294,7 @@ export function CorrectionForm({
 												<Button
 													type="button"
 													variant="ghost"
-													onClick={() => field.removeValue(index)}
+													onClick={() => linesField.removeValue(index)}
 												>
 													<TrashIcon className="size-4 text-destructive" aria-hidden="true" />
 												</Button>

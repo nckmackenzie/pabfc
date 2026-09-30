@@ -18,12 +18,14 @@ import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
+import { getNextDocumentNumber } from "@/services/document-numbering";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
 	deleteJournalEntry,
 	getCashEquivalentAccountId,
 } from "@/services/journal";
+import { lockBillWhtBalance } from "@/services/wht-balance";
 
 const JOURNAL_SOURCE = "wht remittance";
 
@@ -34,6 +36,12 @@ const JOURNAL_SOURCE = "wht remittance";
  */
 class RemittanceValidationError extends Error {}
 
+/**
+ * A best-effort preview of the next remittance number, shown on the form
+ * before submit. It can go stale between this read and submission, so for a
+ * create the number actually persisted is (re)computed atomically inside
+ * `createRemittance`'s transaction via `getNextDocumentNumber`.
+ */
 export const getRemittanceNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
@@ -175,9 +183,10 @@ export const createRemittance = createServerFn({ method: "POST" })
 				});
 			}
 
-			const remittanceNo = id
-				? Number(data.remittanceNo)
-				: await getRemittanceNo();
+			// For a create, the real number is (re)computed atomically inside the
+			// transaction below via `getNextDocumentNumber`; for an update the
+			// existing number is simply reused, so no lock is needed there.
+			let remittanceNo = id ? Number(data.remittanceNo) : 0;
 
 			const totalRemitted = roundDecimal(
 				remittedBills.reduce(
@@ -240,6 +249,13 @@ export const createRemittance = createServerFn({ method: "POST" })
 
 			try {
 				await db.transaction(async (tx) => {
+					if (!id) {
+						remittanceNo = await getNextDocumentNumber(tx, {
+							table: "wht_remittances",
+							column: "remittance_no",
+						});
+					}
+
 					const [{ id: remittanceId }] = await tx
 						.insert(whtRemittances)
 						.values({
@@ -292,22 +308,13 @@ export const createRemittance = createServerFn({ method: "POST" })
 					const serverBalances = new Map<string, number>();
 
 					for (const bill of remittedBills) {
-						await tx.execute(
-							sql`SELECT id FROM bills WHERE id = ${bill.billId} FOR UPDATE`,
-						);
+						const balance = await lockBillWhtBalance(tx, bill.billId);
 
-						const [current] = await tx
-							.select({ whtBalance: vwWhtBalances.whtBalance })
-							.from(vwWhtBalances)
-							.where(eq(vwWhtBalances.id, bill.billId));
-
-						if (!current) {
+						if (balance === null) {
 							throw new RemittanceValidationError(
 								`Bill ${bill.invoiceNo} has no withholding tax to remit`,
 							);
 						}
-
-						const balance = Number(current.whtBalance);
 
 						if (Number(bill.amount ?? 0) > balance) {
 							throw new RemittanceValidationError(

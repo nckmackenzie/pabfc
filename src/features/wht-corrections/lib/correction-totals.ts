@@ -1,7 +1,7 @@
-import { roundDecimal, toNumber } from "@/lib/helpers";
+import { type NumericValue, roundDecimal, toNumber } from "@/lib/helpers";
 
 export function sumCorrectionLines(
-	lines: Array<{ amount: number }>,
+	lines: Array<{ amount: NumericValue }>,
 ): number {
 	return roundDecimal(
 		lines.reduce((total, line) => total + toNumber(line.amount), 0),

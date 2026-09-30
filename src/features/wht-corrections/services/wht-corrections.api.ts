@@ -7,7 +7,6 @@ import { db } from "@/drizzle/db";
 import {
 	bills,
 	vendors,
-	vwWhtBalances,
 	whtCorrectionLines,
 	whtCorrections,
 } from "@/drizzle/schema";
@@ -28,7 +27,9 @@ import {
 	deleteJournalEntry,
 	getCashEquivalentAccountId,
 } from "@/services/journal";
+import { getNextDocumentNumber } from "@/services/document-numbering";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
+import { lockBillWhtBalance } from "@/services/wht-balance";
 
 const JOURNAL_SOURCE = "wht correction";
 
@@ -40,9 +41,17 @@ const JOURNAL_SOURCE = "wht correction";
  */
 class CorrectionDeletionError extends Error {}
 
+/**
+ * A best-effort preview of the next correction number, shown on the form
+ * before submit. It can go stale between this read and submission, so the
+ * number actually persisted is (re)computed atomically inside
+ * `createCorrection`'s transaction via `getNextDocumentNumber`.
+ */
 export const getCorrectionNo = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("wht-corrections:create");
+
 		const result = await db.execute<{ correctionNo: number }>(
 			`SELECT COALESCE(MAX(correction_no), 0) as "correctionNo" FROM wht_corrections`,
 		);
@@ -298,12 +307,16 @@ export const createCorrection = createServerFn({ method: "POST" })
 				});
 			}
 
-			const correctionNo = await getCorrectionNo();
-
 			try {
 				let correctionId = "";
+				let correctionNo = 0;
 
 				await db.transaction(async (tx) => {
+					correctionNo = await getNextDocumentNumber(tx, {
+						table: "wht_corrections",
+						column: "correction_no",
+					});
+
 					const [{ id: insertedId }] = await tx
 						.insert(whtCorrections)
 						.values({
@@ -415,19 +428,9 @@ export const deleteCorrection = createServerFn({ method: "POST" })
 						});
 
 						for (const line of lines) {
-							await tx.execute(
-								sql`SELECT id FROM bills WHERE id = ${line.billId} FOR UPDATE`,
-							);
+							const balance = await lockBillWhtBalance(tx, line.billId);
 
-							const [balance] = await tx
-								.select({ whtBalance: vwWhtBalances.whtBalance })
-								.from(vwWhtBalances)
-								.where(eq(vwWhtBalances.id, line.billId));
-
-							if (
-								balance &&
-								Number(balance.whtBalance) - Number(line.amount) < 0
-							) {
+							if (balance !== null && balance - Number(line.amount) < 0) {
 								throw new CorrectionDeletionError(
 									"Deleting this correction would leave more WHT remitted than owed on a bill it covers. Delete the affected remittance first.",
 								);

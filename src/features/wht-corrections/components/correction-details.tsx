@@ -12,8 +12,9 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { MemberInfo } from "@/features/members/components/member-profile";
+import { sumCorrectionLines } from "@/features/wht-corrections/lib/correction-totals";
 import type { getCorrection } from "@/features/wht-corrections/services/wht-corrections.api";
-import { currencyFormatter, roundDecimal, toNumber } from "@/lib/helpers";
+import { currencyFormatter } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 const LINE_COLUMNS = ["Vendor", "Bill #", "Bill Date", "Rate %", "Amount"];
@@ -28,9 +29,7 @@ export function CorrectionDetails({
 }: {
 	correction: Awaited<ReturnType<typeof getCorrection>>;
 }) {
-	const total = roundDecimal(
-		correction.lines.reduce((acc, line) => acc + toNumber(line.amount), 0)
-	);
+	const total = sumCorrectionLines(correction.lines);
 
 	return (
 		<div className="space-y-6">
