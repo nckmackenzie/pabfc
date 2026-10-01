@@ -1,12 +1,5 @@
-import {
-	createFileRoute,
-	Link,
-	stripSearchParams,
-} from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { createFileRoute, Link, stripSearchParams } from "@tanstack/react-router";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { Button } from "@/components/ui/button";
 import { Users2Icon } from "@/components/ui/icons";
 import { Search } from "@/components/ui/search";
@@ -24,6 +17,7 @@ import { billValidateSearch } from "@/features/bills/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
+import { PermissionGate } from "@/components/ui/permission-gate";
 
 const defaultValue = {
 	status: "all" as const,
@@ -61,12 +55,22 @@ function RouteComponent() {
 			newButtonLinkPath="/app/bills/new"
 			customFilters={<Filters />}
 			extraActionButtons={
-				<Button size="lg" variant="outline" asChild>
-					<Link to="/app/suppliers">
-						<Users2Icon />
-						Manage Suppliers
-					</Link>
-				</Button>
+				<div className="flex flex-col md:flex-row gap-2">
+					<Button size="lg" variant="outline" asChild>
+						<Link to="/app/suppliers">
+							<Users2Icon />
+							Manage Suppliers
+						</Link>
+					</Button>
+					<PermissionGate permissions={["wht-corrections:view"]}>
+						<Button size="lg" variant="secondary" asChild>
+							<Link to="/app/wht-corrections">
+								<Users2Icon />
+								WHT Corrections
+							</Link>
+						</Button>
+					</PermissionGate>
+				</div>
 			}
 		>
 			<BillTable />
@@ -85,10 +89,7 @@ function Filters() {
 				}}
 				defaultValue={filters?.q}
 			/>
-			<Select
-				onValueChange={(e) => setFilters({ status: e })}
-				value={filters?.status}
-			>
+			<Select onValueChange={(e) => setFilters({ status: e })} value={filters?.status}>
 				<SelectTrigger className="w-full md:max-w-md">
 					<SelectValue placeholder="Payment Status" />
 				</SelectTrigger>

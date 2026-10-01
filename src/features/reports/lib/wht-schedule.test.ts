@@ -6,6 +6,8 @@ import {
 } from "@/features/reports/lib/wht-schedule";
 
 const row = (overrides: Partial<WhtScheduleRow> = {}): WhtScheduleRow => ({
+	rowType: "billing",
+	remittanceStatus: null,
 	vendor: "acme consulting",
 	taxPin: "P051234567A",
 	invoiceNo: "INV-001",
@@ -116,5 +118,32 @@ describe("summariseWhtSchedule", () => {
 
 		expect(summary.grossAmount).toBe(1_000);
 		expect(summary.whtAmount).toBe(50.01);
+	});
+
+	it("includes a correction row in its rate band alongside billing rows", () => {
+		const summary = summariseWhtSchedule([
+			row(),
+			row({
+				invoiceNo: "INV-004",
+				rowType: "correction",
+				remittanceStatus: "pending",
+				grossAmount: null,
+				whtAmount: "100.00",
+			}),
+		]);
+
+		expect(summary.groups).toHaveLength(1);
+		expect(summary.groups[0].rows).toHaveLength(2);
+		expect(summary.whtAmount).toBe(600);
+	});
+
+	it("does not let a null grossAmount on a correction row corrupt the gross total", () => {
+		const summary = summariseWhtSchedule([
+			row({ grossAmount: null, rowType: "correction", remittanceStatus: "already_remitted" }),
+			row({ invoiceNo: "INV-002" }),
+		]);
+
+		expect(summary.grossAmount).toBe(10_000);
+		expect(Number.isNaN(summary.grossAmount)).toBe(false);
 	});
 });

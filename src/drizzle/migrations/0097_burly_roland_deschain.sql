@@ -1,0 +1,1 @@
+ALTER TABLE "wht_correction_lines" DROP COLUMN "wht_category";

@@ -71,6 +71,17 @@ export const WHT_CATEGORIES = [
 ] as const;
 export const whtCategoryEnum = pgEnum("wht_category", WHT_CATEGORIES);
 
+/**
+ * Whether a missed-WHT catch-up has already been paid to KRA out of pocket
+ * (settled, no WHT Payable involved) or is still owed (feeds the existing
+ * WHT Payable + remittance workflow via `vw_wht_balances`).
+ */
+export const WHT_CORRECTION_STATUSES = ["already_remitted", "pending"] as const;
+export const whtCorrectionStatusEnum = pgEnum(
+	"wht_correction_status",
+	WHT_CORRECTION_STATUSES,
+);
+
 export const vendors = pgTable(
 	"vendors",
 	{
@@ -144,6 +155,7 @@ export const billsRelations = relations(bills, ({ one, many }) => ({
 	items: many(billItems),
 	payments: many(billPaymentLines),
 	whtRemittances: many(whtRemittanceLines),
+	correctionLines: many(whtCorrectionLines),
 	vendor: one(vendors, {
 		fields: [bills.vendorId],
 		references: [vendors.id],
@@ -359,6 +371,90 @@ export const whtRemittanceLinesRelations = relations(
 	}),
 );
 
+/**
+ * A historical missed-WHT catch-up against one or more already-posted bills,
+ * recorded without ever editing the original bill. `already_remitted` means
+ * the business already paid KRA out of its own funds outside the app (a pure
+ * bookkeeping catch-up, no WHT Payable involved); `pending` means the money
+ * hasn't gone to KRA yet, so it feeds the existing WHT Payable + remittance
+ * workflow through `vw_wht_balances` instead.
+ *
+ * There is no edit flow: a mistake is fixed by deleting and recreating, so
+ * `paymentMethod` is never persisted here — unlike `wht_remittances`, which
+ * keeps it implicit and re-derives it for its own edit form.
+ */
+export const whtCorrections = pgTable(
+	"wht_corrections",
+	{
+		id,
+		correctionNo: integer("correction_no").notNull(),
+		correctionDate: date("correction_date").notNull(),
+		remittanceStatus: whtCorrectionStatusEnum("remittance_status").notNull(),
+		remittanceDate: date("remittance_date"),
+		bankId: varchar("bank_id").references(() => bankAccounts.id),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
+		memo: text("memo"),
+		createdBy: varchar("created_by")
+			.notNull()
+			.references(() => users.id),
+		createdAt,
+		updatedAt,
+	},
+	(table) => [
+		index("idx_wht_corrections_correction_no").on(table.correctionNo),
+		index("idx_wht_corrections_correction_date").on(table.correctionDate),
+	],
+);
+
+export const whtCorrectionsRelations = relations(
+	whtCorrections,
+	({ one, many }) => ({
+		lines: many(whtCorrectionLines),
+		bank: one(bankAccounts, {
+			fields: [whtCorrections.bankId],
+			references: [bankAccounts.id],
+		}),
+	}),
+);
+
+export const whtCorrectionLines = pgTable(
+	"wht_correction_lines",
+	{
+		id: serial("id").primaryKey(),
+		lineNumber: integer("line_number").notNull(),
+		correctionId: varchar("correction_id")
+			.notNull()
+			.references(() => whtCorrections.id, { onDelete: "cascade" }),
+		// Reference only, for traceability — never used to modify the bill.
+		billId: varchar("bill_id")
+			.notNull()
+			.references(() => bills.id),
+		// Informational only — what rate should have applied. Never used in posting.
+		whtRate: decimal("wht_rate", { precision: 5, scale: 2 }).notNull(),
+		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+	},
+	(table) => [
+		index("idx_wht_correction_lines_correction_id").on(table.correctionId),
+		index("idx_wht_correction_lines_bill_id").on(table.billId),
+	],
+);
+
+export const whtCorrectionLinesRelations = relations(
+	whtCorrectionLines,
+	({ one }) => ({
+		correction: one(whtCorrections, {
+			fields: [whtCorrectionLines.correctionId],
+			references: [whtCorrections.id],
+		}),
+		bill: one(bills, {
+			fields: [whtCorrectionLines.billId],
+			references: [bills.id],
+		}),
+	}),
+);
+
 export const recurringBillsSchedules = pgTable("recurring_bills_schedules", {
 	id,
 	vendorId: varchar("vendor_id")
@@ -416,6 +512,10 @@ export const vwWhtBalances = pgView("vw_wht_balances", {
 	taxPin: varchar("tax_pin"),
 	total: numeric("total", { precision: 10, scale: 2 }).notNull(),
 	whtAmount: numeric("wht_amount", { precision: 10, scale: 2 }).notNull(),
+	pendingCorrectionAmount: numeric("pending_correction_amount", {
+		precision: 10,
+		scale: 2,
+	}).notNull(),
 	remittedAmount: numeric("remitted_amount", {
 		precision: 10,
 		scale: 2,
