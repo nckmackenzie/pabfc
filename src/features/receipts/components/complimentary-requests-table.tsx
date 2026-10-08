@@ -9,12 +9,14 @@ import { RejectComplimentaryRequestModal } from "@/features/receipts/components/
 import { approveComplimentaryRequestFn } from "@/features/receipts/services/complimentary.mutations.api";
 import { complimentaryQueries } from "@/features/receipts/services/complimentary.queries";
 import { useModal } from "@/integrations/modal-provider";
+import { useSession } from "@/lib/auth/client";
 import { dateFormat } from "@/lib/helpers";
 import { success } from "@/lib/result";
 import { toTitleCase } from "@/lib/utils";
 
 export function ComplimentaryRequestsTable() {
 	const { data: requests } = useSuspenseQuery(complimentaryQueries.list({ status: "all" }));
+	const { data: session } = useSession();
 
 	const columns: Array<ColumnDef<(typeof requests)[0]>> = [
 		{
@@ -67,7 +69,7 @@ export function ComplimentaryRequestsTable() {
 		{
 			id: "actions",
 			cell: ({ row }) =>
-				row.original.status === "pending" ? (
+				row.original.status === "pending" && row.original.requestedByUserId !== session?.user.id ? (
 					<PermissionGate permission="receipts:complimentary-approve">
 						<RequestActions requestId={row.original.id} />
 					</PermissionGate>

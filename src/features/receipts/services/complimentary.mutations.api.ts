@@ -153,6 +153,12 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 							message: `This request has already been ${request.status}.`,
 						});
 					}
+					if (request.requestedByUserId === userId) {
+						throw fail({
+							type: "AuthorizationError",
+							message: "You cannot approve your own complimentary membership request.",
+						});
+					}
 
 					await lockMemberMembershipCreation(tx, request.memberId);
 
@@ -333,6 +339,12 @@ export const rejectComplimentaryRequestFn = createServerFn({ method: "POST" })
 						throw fail({
 							type: "ConflictError",
 							message: `This request has already been ${request.status}.`,
+						});
+					}
+					if (request.requestedByUserId === userId) {
+						throw fail({
+							type: "AuthorizationError",
+							message: "You cannot reject your own complimentary membership request.",
 						});
 					}
 
