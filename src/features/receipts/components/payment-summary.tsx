@@ -23,6 +23,10 @@ type PaymentSummaryProps = {
 	newPlanName?: string;
 	newPeriodStart?: string;
 	newPeriodEnd?: string;
+	// Session-plan preview, scaled by numberOfPeriods — only ever set when the
+	// selected new plan is session-based.
+	newPlanSessionCount?: number;
+	newPlanValidityDays?: number;
 	planPrice?: number;
 	discountAmount?: number;
 	amountDue?: number;
@@ -53,6 +57,8 @@ export function PaymentSummary({
 	newPlanName,
 	newPeriodStart,
 	newPeriodEnd,
+	newPlanSessionCount,
+	newPlanValidityDays,
 	planPrice = 0,
 	discountAmount = 0,
 	amountDue = 0,
@@ -113,6 +119,12 @@ export function PaymentSummary({
 							<p className="text-sm text-muted-foreground">
 								{newPeriodStart && newPeriodEnd ? `${newPeriodStart} → ${newPeriodEnd}` : "—"}
 							</p>
+							{newPlanSessionCount !== undefined && newPlanValidityDays !== undefined && (
+								<p className="text-xs text-muted-foreground">
+									Includes {newPlanSessionCount} session{newPlanSessionCount === 1 ? "" : "s"},
+									valid {newPlanValidityDays} days
+								</p>
+							)}
 						</div>
 
 						<Separator />

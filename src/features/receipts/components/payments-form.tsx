@@ -17,6 +17,7 @@ import { addonQueries } from "@/features/addons/services/queries";
 import { getMemberCreditBalanceFn } from "@/features/credit-notes/services/credit-note.queries.api";
 import { getMemberPreviousPlanDetails } from "@/features/members/services/members.queries.api";
 import { memberQueries } from "@/features/members/services/queries";
+import { formatPlanOptionLabel } from "@/features/plans/lib/format";
 import {
 	type AddonSummaryLine,
 	PaymentSummary,
@@ -303,6 +304,15 @@ function MembershipPaymentForm() {
 		return { startDate: format(parseISO(startDate), "PP"), endDate: format(end, "PP") };
 	}, [selectedPlan, startDate, numberOfPeriods]);
 
+	const newPlanSessionInfo = useMemo(() => {
+		if (!selectedPlan?.isSessionBased) return null;
+		const periods = numberOfPeriods || 1;
+		return {
+			sessionCount: selectedPlan.sessionCount * periods,
+			validityDays: selectedPlan.duration * periods,
+		};
+	}, [selectedPlan, numberOfPeriods]);
+
 	const currentPlanName = activeMembership?.membershipPlan?.name || "";
 	const currentPeriodStart = activeMembership?.startDate
 		? format(parseISO(activeMembership.startDate), "PP")
@@ -344,7 +354,7 @@ function MembershipPaymentForm() {
 										<field.Select label="Plan" required placeholder="Select a plan">
 											{plans.map((plan) => (
 												<SelectItem key={plan.id} value={plan.id}>
-													{plan.name}
+													{formatPlanOptionLabel(plan)}
 													{plan.memberCount > 1 ? ` (${plan.memberCount} members)` : ""}
 												</SelectItem>
 											))}
@@ -490,6 +500,8 @@ function MembershipPaymentForm() {
 							newPlanName={newPlanName}
 							newPeriodStart={newMembershipDates.startDate}
 							newPeriodEnd={newMembershipDates.endDate}
+							newPlanSessionCount={newPlanSessionInfo?.sessionCount}
+							newPlanValidityDays={newPlanSessionInfo?.validityDays}
 							planPrice={pricingSummary.planPrice}
 							discountAmount={pricingSummary.discountAmount}
 							amountDue={pricingSummary.amountDue}
