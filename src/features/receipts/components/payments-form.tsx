@@ -24,7 +24,7 @@ import {
 } from "@/features/receipts/components/payment-summary";
 import { useAddonOnlyPayment } from "@/features/receipts/hooks/use-addon-only-payment";
 import { useManualMembershipPayment } from "@/features/receipts/hooks/use-manual-membership-payment";
-import { computeMembershipEndDate } from "@/features/receipts/lib/helpers";
+import { computeMembershipEndDate, computeSessionsTotal } from "@/features/receipts/lib/helpers";
 import {
 	type AddonOnlyPaymentSchema,
 	addonOnlyPaymentSchema,
@@ -305,10 +305,12 @@ function MembershipPaymentForm() {
 	}, [selectedPlan, startDate, numberOfPeriods]);
 
 	const newPlanSessionInfo = useMemo(() => {
-		if (!selectedPlan?.isSessionBased) return null;
+		if (!selectedPlan) return null;
 		const periods = numberOfPeriods || 1;
+		const sessionCount = computeSessionsTotal(selectedPlan, periods);
+		if (sessionCount === null) return null;
 		return {
-			sessionCount: selectedPlan.sessionCount * periods,
+			sessionCount,
 			validityDays: selectedPlan.duration * periods,
 		};
 	}, [selectedPlan, numberOfPeriods]);
