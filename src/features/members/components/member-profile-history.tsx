@@ -148,10 +148,21 @@ function formatTime(value: Date | string) {
 	});
 }
 
-export function HistorySection({ title, children }: { title: string; children: ReactNode }) {
+export function HistorySection({
+	title,
+	action,
+	children,
+}: {
+	title: string;
+	action?: ReactNode;
+	children: ReactNode;
+}) {
 	return (
 		<div className="rounded-md border border-gray-200 p-4 self-start">
-			<h2 className="text-base font-bold font-display mb-2">{title}</h2>
+			<div className="flex items-center justify-between mb-2">
+				<h2 className="text-base font-bold font-display">{title}</h2>
+				{action}
+			</div>
 			{children}
 		</div>
 	);
