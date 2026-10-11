@@ -107,6 +107,16 @@ export async function checkUpgradeEligibility(
 		});
 	}
 
+	// Session-based memberships aren't supported by the upgrade flow yet — the
+	// top-up/duration-extension model doesn't map onto a fixed session count.
+	if (membershipRow.sessionsTotal !== null) {
+		return failure({
+			type: "ApplicationError",
+			message:
+				"Session-based memberships cannot be upgraded yet — this membership must run its course or be corrected manually.",
+		});
+	}
+
 	// "Expired" stays a computed check (endDate < today) rather than trusting the
 	// stored `status` column, which only flips active→expired once the daily
 	// cron next runs and can lag the real date. `plan` here is

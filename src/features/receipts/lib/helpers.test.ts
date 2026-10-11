@@ -258,6 +258,16 @@ describe("isEligibleUpgradePlan", () => {
 		const familyFortnight = { id: "family-fortnight", duration: 14, memberCount: 3 };
 		expect(isEligibleUpgradePlan(familyMonthly, familyFortnight)).toBe(true);
 	});
+
+	it("rejects a session-based plan as an upgrade target", () => {
+		const sessionPlan = { id: "sessions-10", duration: 90, memberCount: 1, isSessionBased: true };
+		const monthlySingle = { id: "monthly-single", duration: 30, memberCount: 1 };
+		expect(isEligibleUpgradePlan(sessionPlan, monthlySingle)).toBe(false);
+	});
+
+	it("still allows a non-session plan when isSessionBased is omitted (existing callers unaffected)", () => {
+		expect(isEligibleUpgradePlan(monthly, fortnight)).toBe(true);
+	});
 });
 
 describe("resolveLateUpgradeGraceDays", () => {

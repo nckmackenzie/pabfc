@@ -74,11 +74,12 @@ export function computeSuggestedTopUpAmount({
 // membership rows mismatched against the plan's own memberCount invariant (the
 // same one createManualMembershipPaymentFn enforces at payment creation time).
 export function isEligibleUpgradePlan(
-	candidatePlan: { id: string; duration: number; memberCount: number },
+	candidatePlan: { id: string; duration: number; memberCount: number; isSessionBased?: boolean },
 	currentPlan: { id: string; duration: number; memberCount: number }
 ): boolean {
 	if (candidatePlan.id === currentPlan.id) return false;
 	if (candidatePlan.memberCount !== currentPlan.memberCount) return false;
+	if (candidatePlan.isSessionBased) return false;
 	return candidatePlan.duration >= currentPlan.duration;
 }
 
