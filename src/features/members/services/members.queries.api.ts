@@ -267,4 +267,30 @@ export const getMemberAttendanceHistory = createServerFn()
 			.limit(PROFILE_HISTORY_LIMIT);
 	});
 
+export const getMemberSessionUsageHistory = createServerFn()
+	.middleware([authMiddleware])
+	.validator(z.string().min(1, "Member id is required"))
+	.handler(async ({ data: memberId }) => {
+		await requirePermission("attendance:view");
+
+		return db.query.membershipSessionUsage.findMany({
+			where: eq(membershipSessionUsage.memberId, memberId),
+			orderBy: (row, { desc }) => [desc(row.usageDate), desc(row.id)],
+			limit: PROFILE_HISTORY_LIMIT,
+			columns: {
+				id: true,
+				membershipId: true,
+				usageDate: true,
+				source: true,
+				voidedAt: true,
+				reason: true,
+				voidReason: true,
+			},
+			with: {
+				createdByUser: { columns: { name: true } },
+				voidedByUser: { columns: { name: true } },
+			},
+		});
+	});
+
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];

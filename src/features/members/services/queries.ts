@@ -5,6 +5,7 @@ import {
 	getMemberAttendanceHistory,
 	getMemberPaymentHistory,
 	getMemberProfileData,
+	getMemberSessionUsageHistory,
 	getMembers,
 } from "@/features/members/services/members.queries.api";
 import type { MemberValidateSearch } from "@/features/members/services/schemas";
@@ -34,6 +35,11 @@ export const memberQueries = {
 		queryOptions({
 			queryKey: [...memberQueries.all, "attendance-history", memberId],
 			queryFn: () => getMemberAttendanceHistory({ data: memberId }),
+		}),
+	sessionUsageHistory: (memberId: string) =>
+		queryOptions({
+			queryKey: [...memberQueries.all, "session-usage-history", memberId],
+			queryFn: () => getMemberSessionUsageHistory({ data: memberId }),
 		}),
 	activeMembers: () =>
 		queryOptions({

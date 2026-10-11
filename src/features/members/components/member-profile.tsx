@@ -16,6 +16,7 @@ import {
 	MemberAttendanceHistory,
 	MemberPaymentHistory,
 } from "@/features/members/components/member-profile-history";
+import { MemberSessionUsageHistory } from "@/features/members/components/member-session-usage-history";
 import {
 	MemberAvatar,
 	MemberBadge,
@@ -160,6 +161,7 @@ export function MemberProfile() {
 				<div className="grid gap-4 self-start">
 					<MemberPaymentHistory memberId={memberData.id} />
 					<MemberAttendanceHistory memberId={memberData.id} />
+					<MemberSessionUsageHistory memberId={memberData.id} />
 				</div>
 			</div>
 		</div>

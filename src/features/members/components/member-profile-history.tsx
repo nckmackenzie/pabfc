@@ -148,7 +148,7 @@ function formatTime(value: Date | string) {
 	});
 }
 
-function HistorySection({ title, children }: { title: string; children: ReactNode }) {
+export function HistorySection({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div className="rounded-md border border-gray-200 p-4 self-start">
 			<h2 className="text-base font-bold font-display mb-2">{title}</h2>
@@ -157,7 +157,7 @@ function HistorySection({ title, children }: { title: string; children: ReactNod
 	);
 }
 
-function HistoryMessage({ icon, message }: { icon: ReactNode; message: string }) {
+export function HistoryMessage({ icon, message }: { icon: ReactNode; message: string }) {
 	return (
 		<div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
 			{icon}
@@ -166,7 +166,7 @@ function HistoryMessage({ icon, message }: { icon: ReactNode; message: string })
 	);
 }
 
-function HistorySkeleton() {
+export function HistorySkeleton() {
 	return (
 		<div className="space-y-3 py-2">
 			{Array.from({ length: 3 }).map((_, i) => (
