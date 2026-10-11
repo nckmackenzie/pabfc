@@ -708,6 +708,13 @@
       "when": 1791723698930,
       "tag": "0100_calm_changeling",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1791724054103,
+      "tag": "0101_create_vw_daily_attendance_view",
+      "breakpoints": true
     }
   ]
 }
