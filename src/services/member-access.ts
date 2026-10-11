@@ -9,7 +9,7 @@ import {
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 
 type DisableAccessReason = "membership_expired" | "credit_note_termination" | "manual_deactivation";
-type EnableAccessReason = "membership_activated" | "manual_activation";
+type EnableAccessReason = "membership_activated" | "manual_activation" | "session_usage_restored";
 
 async function getMemberAccessProfile(tx: Transaction, memberId: string) {
 	const [row] = await tx
