@@ -14,7 +14,7 @@ import {
 	notifyComplimentaryRequestDecision,
 	notifyComplimentaryRequestSubmitted,
 } from "@/features/receipts/lib/complimentary-notifications";
-import { computeMembershipEndDate } from "@/features/receipts/lib/helpers";
+import { computeMembershipEndDate, computeSessionsTotal } from "@/features/receipts/lib/helpers";
 import {
 	checkMembershipOverlap,
 	lockMemberMembershipCreation,
@@ -248,6 +248,7 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 						paymentId: payment.id,
 						previousMembershipPlanId: mostRecentMembership?.membershipPlanId,
 						priceCharged: "0.00",
+						sessionsTotal: computeSessionsTotal(plan, request.numberOfPeriods),
 					});
 
 					// Guards against a concurrent approve/reject on the same request: the

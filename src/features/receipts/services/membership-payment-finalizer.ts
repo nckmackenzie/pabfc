@@ -23,6 +23,7 @@ import {
 } from "@/features/receipts/lib/membership-activation";
 import {
 	computeMembershipEndDate,
+	computeSessionsTotal,
 	parseCalendarDate,
 	splitAmountEvenly,
 } from "@/features/receipts/lib/helpers";
@@ -271,6 +272,7 @@ export async function finalizeMembershipPayment({
 			paymentId: payment.id,
 			previousMembershipPlanId: mostRecentMembership?.membershipPlanId,
 			priceCharged: priceChargedShares[index],
+			sessionsTotal: computeSessionsTotal(plan, periods),
 		});
 	}
 
