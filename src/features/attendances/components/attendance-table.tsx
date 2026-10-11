@@ -204,9 +204,16 @@ function AttendanceCard({ record }: { record: AttendanceTimelineRecord }) {
 					className="h-11 w-11 border border-border/70"
 				/>
 				<div className="min-w-0 flex-1">
-					<p className="truncate text-sm font-semibold text-foreground">
-						{toTitleCase(record.memberName)}
-					</p>
+					<div className="flex items-center gap-2">
+						<p className="truncate text-sm font-semibold text-foreground">
+							{toTitleCase(record.memberName)}
+						</p>
+						{record.punchCount > 1 && (
+							<Badge variant="secondary" title={`${record.punchCount} punches today`}>
+								+{record.punchCount - 1}
+							</Badge>
+						)}
+					</div>
 					<div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
 						<Clock3Icon className="h-3.5 w-3.5" />
 						<span>{format(record.checkInTime, "h:mm:ss a")}</span>
