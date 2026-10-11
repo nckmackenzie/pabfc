@@ -23,6 +23,12 @@ class SessionUsageTransactionError extends Error {
 	}
 }
 
+// Shared by both handlers below — doesn't close over anything per-call, so a
+// single module-level helper replaces what would otherwise be two identical
+// closures.
+const fail = (error: Parameters<typeof failure>[0]) =>
+	new SessionUsageTransactionError({ success: false, error });
+
 export const addSessionUsageFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(addSessionUsageSchema)
@@ -35,9 +41,6 @@ export const addSessionUsageFn = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("attendance:adjust-sessions");
 
-			const fail = (error: Parameters<typeof failure>[0]) =>
-				new SessionUsageTransactionError({ success: false, error });
-
 			try {
 				return await db.transaction(async (tx) => {
 					const membership = await tx.query.memberMemberships.findFirst({
@@ -46,14 +49,21 @@ export const addSessionUsageFn = createServerFn({ method: "POST" })
 					if (!membership) {
 						throw fail({ type: "NotFoundError", message: "Membership not found" });
 					}
+
+					// Lock before any check that depends on membership's mutable fields
+					// (sessionsTotal/originalEndDate/endDate below) — only the bare
+					// existence check above (needed to get memberId for the lock itself)
+					// may run before it. Same lock-then-validate convention as
+					// checkVoidEligibility/checkUpgradeEligibility/checkMembershipOverlap
+					// in payment.mutations.api.ts.
+					await lockMemberMembershipCreation(tx, membership.memberId);
+
 					if (membership.sessionsTotal === null) {
 						throw fail({
 							type: "ApplicationError",
 							message: "This membership is not session-based.",
 						});
 					}
-
-					await lockMemberMembershipCreation(tx, membership.memberId);
 
 					const windowEnd = membership.originalEndDate ?? membership.endDate;
 					if (!windowEnd || usageDate < membership.startDate || usageDate > windowEnd) {
@@ -141,9 +151,6 @@ export const waiveSessionUsageFn = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("attendance:adjust-sessions");
 
-			const fail = (error: Parameters<typeof failure>[0]) =>
-				new SessionUsageTransactionError({ success: false, error });
-
 			try {
 				return await db.transaction(async (tx) => {
 					const usage = await tx.query.membershipSessionUsage.findFirst({
@@ -152,14 +159,26 @@ export const waiveSessionUsageFn = createServerFn({ method: "POST" })
 					if (!usage) {
 						throw fail({ type: "NotFoundError", message: "Session usage record not found" });
 					}
-					if (usage.voidedAt !== null) {
+
+					// Lock before the voidedAt check, then re-fetch the row below —
+					// otherwise two concurrent waives on the same usageId can both pass
+					// this pre-lock existence check, and whichever loses the race on the
+					// lock would otherwise write an unconditional update on top of the
+					// winner's already-voided row (double activity log, double
+					// reconcileOneMembership). Same lock-then-validate convention as
+					// checkVoidEligibility/checkUpgradeEligibility/checkMembershipOverlap
+					// in payment.mutations.api.ts.
+					await lockMemberMembershipCreation(tx, usage.memberId);
+
+					const lockedUsage = await tx.query.membershipSessionUsage.findFirst({
+						where: eq(membershipSessionUsage.id, usageId),
+					});
+					if (!lockedUsage || lockedUsage.voidedAt !== null) {
 						throw fail({
 							type: "ApplicationError",
 							message: "This session has already been waived.",
 						});
 					}
-
-					await lockMemberMembershipCreation(tx, usage.memberId);
 
 					const now = new Date();
 					await tx
@@ -167,12 +186,12 @@ export const waiveSessionUsageFn = createServerFn({ method: "POST" })
 						.set({ voidedAt: now, voidedByUserId: userId, voidReason: reason })
 						.where(eq(membershipSessionUsage.id, usageId));
 
-					await reconcileOneMembership(tx, usage.membershipId, { actorUserId: userId, now });
+					await reconcileOneMembership(tx, lockedUsage.membershipId, { actorUserId: userId, now });
 
 					await tx.insert(activityLogs).values({
 						userId,
 						action: "waive session usage",
-						description: `Waived the session for membership ${usage.membershipId} on ${usage.usageDate}. Reason: ${reason}.`,
+						description: `Waived the session for membership ${lockedUsage.membershipId} on ${lockedUsage.usageDate}. Reason: ${reason}.`,
 					});
 
 					return success(undefined);

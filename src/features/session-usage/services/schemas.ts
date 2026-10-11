@@ -2,9 +2,7 @@ import { z } from "zod";
 
 export const addSessionUsageSchema = z.object({
 	membershipId: z.string().min(1, "Membership is required"),
-	usageDate: z
-		.string()
-		.regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Usage date must be yyyy-MM-dd" }),
+	usageDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Usage date must be yyyy-MM-dd" }),
 	reason: z.string().trim().min(10, { error: "Reason must be at least 10 characters" }),
 });
 
