@@ -1,6 +1,7 @@
 import { useStore } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { SelectItem } from "@/components/ui/select";
@@ -68,6 +69,12 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 	]);
 	const isPaidPlan = Number(price) > 0;
 
+	useEffect(() => {
+		if (isSessionBased) {
+			form.setFieldValue("memberCount", 1);
+		}
+	}, [isSessionBased, form]);
+
 	return (
 		<div className="space-y-6">
 			<PageHeader
@@ -87,9 +94,18 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 					<form.AppField name="duration">
 						{(field) => (
 							<field.Input
-								label="Duration (in days)"
+								label={isSessionBased ? "Validity (in days)" : "Duration (in days)"}
 								type="number"
-								placeholder="Enter duration in days"
+								placeholder={
+									isSessionBased
+										? "Enter validity period in days"
+										: "Enter duration in days"
+								}
+								helperText={
+									isSessionBased
+										? "Unused sessions lapse once the validity window ends."
+										: undefined
+								}
 								required
 							/>
 						)}
@@ -112,10 +128,15 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 								type="number"
 								label="Member Count"
 								placeholder="Enter number of members covered"
-								helperText="Number of members this plan covers, e.g. 2 for a couple plan"
+								helperText={
+									isSessionBased
+										? "Session-based plans cover one member"
+										: "Number of members this plan covers, e.g. 2 for a couple plan"
+								}
 								min={1}
 								step={1}
 								required
+								disabled={isSessionBased}
 							/>
 						)}
 					</form.AppField>

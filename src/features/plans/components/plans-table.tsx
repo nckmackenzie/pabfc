@@ -56,7 +56,9 @@ export function PlansTable() {
 			),
 			cell: ({ row }) => (
 				<Badge variant="outline">
-					{row.original.isSessionBased ? "Yes" : "No"}
+					{row.original.isSessionBased
+						? `Yes · ${row.original.sessionCount} session${row.original.sessionCount === 1 ? "" : "s"}`
+						: "No"}
 				</Badge>
 			),
 		},
