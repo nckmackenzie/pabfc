@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, isNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -8,10 +8,12 @@ import {
 	memberMemberships,
 	members,
 	membershipPlans,
+	membershipSessionUsage,
 	membersOverview,
 	paymentMembers,
 	payments,
 } from "@/drizzle/schema";
+import { pickCurrentSessionMembership } from "@/features/members/lib/session-membership";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -90,7 +92,53 @@ export const getMemberProfileData = createServerFn()
 	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		const member = await db.select().from(membersOverview).where(eq(membersOverview.id, memberId));
-		return member[0];
+
+		const sessionMemberships = await db.query.memberMemberships.findMany({
+			where: and(
+				eq(memberMemberships.memberId, memberId),
+				isNotNull(memberMemberships.sessionsTotal)
+			),
+			columns: {
+				id: true,
+				status: true,
+				startDate: true,
+				endDate: true,
+				originalEndDate: true,
+				sessionsTotal: true,
+			},
+		});
+		const currentSessionMembership = pickCurrentSessionMembership(sessionMemberships);
+
+		let sessionInfo: {
+			membershipId: string;
+			sessionsTotal: number;
+			sessionsUsed: number;
+			startDate: string;
+			endDate: string | null;
+			originalEndDate: string | null;
+			status: string;
+		} | null = null;
+
+		if (currentSessionMembership) {
+			const sessionsUsed = await db.$count(
+				membershipSessionUsage,
+				and(
+					eq(membershipSessionUsage.membershipId, currentSessionMembership.id),
+					isNull(membershipSessionUsage.voidedAt)
+				)
+			);
+			sessionInfo = {
+				membershipId: currentSessionMembership.id,
+				sessionsTotal: currentSessionMembership.sessionsTotal as number,
+				sessionsUsed,
+				startDate: currentSessionMembership.startDate,
+				endDate: currentSessionMembership.endDate,
+				originalEndDate: currentSessionMembership.originalEndDate,
+				status: currentSessionMembership.status,
+			};
+		}
+
+		return { ...member[0], sessionInfo };
 	});
 
 export const checkColumnExists = createServerFn()

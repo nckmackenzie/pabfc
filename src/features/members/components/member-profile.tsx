@@ -200,6 +200,24 @@ function PersonalDetails({
 						label="Next Renewal Date"
 						value={memberData.nextRenewalDate?.toString()}
 					/>
+					{memberData.sessionInfo && (
+						<>
+							<MemberInfo
+								label="Sessions"
+								value={`${memberData.sessionInfo.sessionsUsed} of ${memberData.sessionInfo.sessionsTotal} used`}
+							/>
+							<MemberInfo
+								label={memberData.sessionInfo.originalEndDate ? "Sessions used up" : "Valid Until"}
+								value={
+									memberData.sessionInfo.originalEndDate
+										? `Originally valid until ${dateFormat(memberData.sessionInfo.originalEndDate, "long")}`
+										: memberData.sessionInfo.endDate
+											? dateFormat(memberData.sessionInfo.endDate, "long")
+											: undefined
+								}
+							/>
+						</>
+					)}
 
 					<MemberInfo
 						className="col-span-2"
