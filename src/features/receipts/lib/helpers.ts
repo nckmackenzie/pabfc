@@ -38,6 +38,15 @@ export function computeMembershipEndDate(
 	return addDays(parseCalendarDate(startDate), planDurationDays * numberOfPeriods);
 }
 
+// Snapshotted at membership creation, not re-derived from the plan later — see
+// memberMemberships.sessionsTotal. Null means "not a session membership."
+export function computeSessionsTotal(
+	plan: { isSessionBased: boolean; sessionCount: number },
+	numberOfPeriods: number
+): number | null {
+	return plan.isSessionBased ? plan.sessionCount * numberOfPeriods : null;
+}
+
 // Staff-entered default for the upgrade form's top-up field — the price difference
 // between what the new plan would cost for the same number of periods/members and
 // what was already paid. Purely a pre-fill hint: whatever the staff member submits
