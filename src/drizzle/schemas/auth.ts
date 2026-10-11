@@ -117,6 +117,9 @@ export const twoFactors = pgTable("two_factors", {
 	userId: text("user_id")
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
+	verified: boolean("verified").default(true),
+	failedVerificationCount: integer("failed_verification_count").default(0),
+	lockedUntil: timestamp("locked_until"),
 });
 
 export const loginAttempts = pgTable(

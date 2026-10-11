@@ -694,6 +694,13 @@
       "when": 1790840663457,
       "tag": "0098_drop_stale_treatment_account_id",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1791708285686,
+      "tag": "0099_aspiring_the_renegades",
+      "breakpoints": true
     }
   ]
 }

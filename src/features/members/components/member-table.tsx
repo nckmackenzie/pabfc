@@ -1,5 +1,5 @@
-import { initials } from "@dicebear/collection";
-import { createAvatar } from "@dicebear/core";
+import { Style, Avatar as DicebearAvatar } from "@dicebear/core";
+import definition from "@dicebear/styles/initials.json" with { type: "json" };
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -48,15 +48,11 @@ export function MemberTable() {
 	const columns: Array<ColumnDef<MemberOverview>> = [
 		{
 			accessorKey: "memberNo",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Member No" />
-			),
+			header: ({ column }) => <DataTableColumnHeader column={column} title="Member No" />,
 		},
 		{
 			accessorKey: "fullName",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Full Name" />
-			),
+			header: ({ column }) => <DataTableColumnHeader column={column} title="Full Name" />,
 			cell: ({ row }) => {
 				const member = row.original;
 				return (
@@ -69,27 +65,18 @@ export function MemberTable() {
 		},
 		{
 			accessorKey: "memberStatus",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Member Status" />
-			),
+			header: ({ column }) => <DataTableColumnHeader column={column} title="Member Status" />,
 			cell: ({
 				row: {
 					original: { memberStatus, fullyRegistered },
 				},
 			}) => {
-				return (
-					<MemberBadge
-						status={memberStatus}
-						fullyRegistered={fullyRegistered}
-					/>
-				);
+				return <MemberBadge status={memberStatus} fullyRegistered={fullyRegistered} />;
 			},
 		},
 		{
 			accessorKey: "activePlanName",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Active Plan" />
-			),
+			header: ({ column }) => <DataTableColumnHeader column={column} title="Active Plan" />,
 			cell: ({
 				row: {
 					original: { activePlanName },
@@ -102,9 +89,7 @@ export function MemberTable() {
 		},
 		{
 			accessorKey: "nextRenewalDate",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Next Renewal Date" />
-			),
+			header: ({ column }) => <DataTableColumnHeader column={column} title="Next Renewal Date" />,
 			cell: ({
 				row: {
 					original: { nextRenewalDate },
@@ -117,9 +102,7 @@ export function MemberTable() {
 		},
 		{
 			accessorKey: "lastVisit",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Last Visit" />
-			),
+			header: ({ column }) => <DataTableColumnHeader column={column} title="Last Visit" />,
 			cell: ({
 				row: {
 					original: { lastVisit },
@@ -151,13 +134,7 @@ export function MemberTable() {
 			id: "actions",
 			cell: ({
 				row: {
-					original: {
-						id,
-						memberStatus,
-						portalAccess,
-						fullName,
-						fullyRegistered,
-					},
+					original: { id, memberStatus, portalAccess, fullName, fullyRegistered },
 				},
 			}) => (
 				<DatatableActions>
@@ -184,18 +161,14 @@ export function MemberTable() {
 						</DropdownMenuItem>
 					</PermissionGate>
 					{!fullyRegistered && (
-						<DropdownMenuItem
-							onSelect={() => handleSendRegistrationLink({ memberId: id })}
-						>
+						<DropdownMenuItem onSelect={() => handleSendRegistrationLink({ memberId: id })}>
 							<ChatMessageIcon className="size-4" />
 							<span className="-ml-1">Send Registration Link</span>
 						</DropdownMenuItem>
 					)}
 					{fullyRegistered && (
 						<DropdownMenuItem
-							onSelect={() =>
-								handleSendMessage({ memberId: id, memberName: fullName })
-							}
+							onSelect={() => handleSendMessage({ memberId: id, memberName: fullName })}
 						>
 							<ChatMessageIcon className="size-4" />
 							<span className="-ml-1">Send Message</span>
@@ -212,9 +185,7 @@ export function MemberTable() {
 							}
 						>
 							<Users2Icon className="size-4" />
-							<span className="-ml-1">
-								{memberStatus === "active" ? "Deactivate" : "Activate"}
-							</span>
+							<span className="-ml-1">{memberStatus === "active" ? "Deactivate" : "Activate"}</span>
 						</DropdownMenuItem>
 					)}
 					{!!fullyRegistered && (
@@ -228,9 +199,7 @@ export function MemberTable() {
 							}
 						>
 							<MonitorPhoneIcon className="size-4" />
-							<span className="-ml-1">
-								{!portalAccess ? "Revoke" : "Grant"} Portal Access
-							</span>
+							<span className="-ml-1">{!portalAccess ? "Revoke" : "Grant"} Portal Access</span>
 						</DropdownMenuItem>
 					)}
 					<PermissionGate permission="members:delete">
@@ -269,10 +238,12 @@ export function MemberAvatar({
 	image?: string | null;
 	className?: string;
 }) {
-	const avatar = createAvatar(initials, {
+	const style = new Style(definition);
+	const avatar = new DicebearAvatar(style, {
 		seed: memberName,
 		size: 24,
 	});
+
 	return (
 		<Avatar className={cn("h-8 w-8", className)}>
 			<AvatarImage src={image ?? avatar.toDataUri()} alt={memberName} />

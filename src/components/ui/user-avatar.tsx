@@ -1,5 +1,5 @@
-import { initials } from "@dicebear/collection";
-import { createAvatar } from "@dicebear/core";
+import { Style, Avatar as DicebearAvatar } from "@dicebear/core";
+import definition from "@dicebear/styles/initials.json" with { type: "json" };
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,12 +13,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	ClipboardClockIcon,
-	CogIcon,
-	LogOutIcon,
-	UsersIcon,
-} from "@/components/ui/icons";
+import { ClipboardClockIcon, CogIcon, LogOutIcon, UsersIcon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient, useSession } from "@/lib/auth/client";
 
@@ -30,7 +25,8 @@ export function UserAvatar() {
 		return <Skeleton className="size-8 bg-secondary" />;
 	}
 
-	const avatar = createAvatar(initials, {
+	const style = new Style(definition);
+	const avatar = new DicebearAvatar(style, {
 		seed: session?.user.name,
 	});
 
@@ -54,9 +50,7 @@ export function UserAvatar() {
 							src={session?.user.image ?? avatar.toDataUri()}
 							alt={session?.user.name ?? "User"}
 						/>
-						<AvatarFallback>
-							{session?.user.name?.slice(0, 2).toUpperCase()}
-						</AvatarFallback>
+						<AvatarFallback>{session?.user.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
 					</Avatar>
 				</Button>
 			</DropdownMenuTrigger>
