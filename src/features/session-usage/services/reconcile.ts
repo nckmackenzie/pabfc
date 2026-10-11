@@ -1,5 +1,5 @@
 import { subDays } from "date-fns";
-import { and, eq, gte, inArray, isNotNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	activityLogs,
@@ -118,6 +118,27 @@ export async function reconcileOneMembership(
 			)
 		);
 
+	// Days already recorded (non-voided) against some OTHER membership of this
+	// member, regardless of that membership's current status. The sibling-window
+	// filter above only protects against a currently active/pending sibling's
+	// window claiming a day first — it goes blind the moment that sibling later
+	// expires (e.g. its own natural lapse, long after it already recorded a
+	// usage row for the day in question). This filter catches that case: a day
+	// already claimed elsewhere can never become eligible for this membership,
+	// no matter what the other membership's status is now. Uses the existing
+	// (memberId, usageDate) index on membership_session_usage.
+	const claimedElsewhere = await tx
+		.select({ usageDate: membershipSessionUsage.usageDate })
+		.from(membershipSessionUsage)
+		.where(
+			and(
+				eq(membershipSessionUsage.memberId, membership.memberId),
+				ne(membershipSessionUsage.membershipId, membership.id),
+				isNull(membershipSessionUsage.voidedAt)
+			)
+		);
+	const claimedDates = new Set(claimedElsewhere.map((row) => row.usageDate));
+
 	const dailyAttendance: DailyAttendanceInput[] = dailyRowsRaw
 		.map((row) => ({
 			attendanceDate: row.attendanceDate,
@@ -125,6 +146,7 @@ export async function reconcileOneMembership(
 		}))
 		.filter(
 			(day) =>
+				!claimedDates.has(day.attendanceDate) &&
 				!siblingMemberships.some(
 					(sibling) =>
 						day.attendanceDate >= sibling.startDate &&
@@ -272,16 +294,30 @@ export async function reconcileSessionUsage({
 	};
 
 	for (const candidate of candidates) {
-		await db.transaction(async (tx) => {
-			await lockMemberMembershipCreation(tx, candidate.memberId);
-			const outcome = await reconcileOneMembership(tx, candidate.id, { now });
-			result.usageInserted += outcome.usageInserted;
-			if (outcome.truncated) result.truncated += 1;
-			if (outcome.restored) result.restored += 1;
-			result.overConsumption.push(
-				...outcome.overConsumption.map((usageDate) => ({ memberId: candidate.memberId, usageDate }))
+		try {
+			await db.transaction(async (tx) => {
+				await lockMemberMembershipCreation(tx, candidate.memberId);
+				const outcome = await reconcileOneMembership(tx, candidate.id, { now });
+				result.usageInserted += outcome.usageInserted;
+				if (outcome.truncated) result.truncated += 1;
+				if (outcome.restored) result.restored += 1;
+				result.overConsumption.push(
+					...outcome.overConsumption.map((usageDate) => ({
+						memberId: candidate.memberId,
+						usageDate,
+					}))
+				);
+			});
+		} catch (error) {
+			// Isolate one bad candidate (transient DB error, lock timeout) so it
+			// can't abort the whole sweep for every other membership — and, since
+			// the nightly cron wraps this call in one try/catch alongside
+			// expireExhaustedSessionMemberships, so it can't skip that step either.
+			console.error(
+				`reconcileOneMembership failed for membership ${candidate.id} (member ${candidate.memberId})`,
+				error
 			);
-		});
+		}
 	}
 
 	return result;
