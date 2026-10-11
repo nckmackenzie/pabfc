@@ -58,8 +58,16 @@ async function runDailyMaintenance() {
 	// 3) reconcile session-based memberships against yesterday/today's punches
 	// (safety net for the upload-endpoint trigger), then expire the ones that
 	// ran out of sessions or lapsed unused, using the Nairobi calendar day.
-	await reconcileSessionUsage();
-	await expireExhaustedSessionMemberships();
+	// Isolated in its own try/catch (mirroring the upload endpoint's pattern)
+	// so a transient failure here — a single bad row, a lock timeout — can't
+	// abort the rest of this run and silently skip the three unrelated
+	// maintenance steps below.
+	try {
+		await reconcileSessionUsage();
+		await expireExhaustedSessionMemberships();
+	} catch (error) {
+		console.error("Session-usage reconciliation/expiry failed during nightly maintenance", error);
+	}
 
 	// 4) update membership status rollovers (pending → active, active → expired)
 	await expireMembershipsAndDisableAccess();

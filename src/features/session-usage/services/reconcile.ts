@@ -1,4 +1,5 @@
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { subDays } from "date-fns";
+import { and, eq, gte, inArray, isNotNull, lte, ne, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	activityLogs,
@@ -13,8 +14,14 @@ import {
 	planSessionReconciliation,
 	type UsageRowInput,
 } from "@/features/session-usage/lib/reconciliation";
-import { nairobiToday } from "@/lib/nairobi-time";
+import { nairobiToday, toNairobiDateString } from "@/lib/nairobi-time";
 import { enableMemberAccess } from "@/services/member-access";
+
+// Matches the BioTime sync's 30-day fixed lookback (see attendance-sync's
+// state/index.ts) plus slack: an expired, never-truncated session membership
+// (originalEndDate null) whose endDate is older than this is permanently
+// resolved and can be skipped forever by the candidate query below.
+const RECENTLY_EXPIRED_WINDOW_DAYS = 35;
 
 export type ReconcileSessionUsageResult = {
 	membershipsChecked: number;
@@ -92,10 +99,38 @@ export async function reconcileOneMembership(
 				lte(dailyAttendanceView.attendanceDate, windowEnd)
 			)
 		);
-	const dailyAttendance: DailyAttendanceInput[] = dailyRowsRaw.map((row) => ({
-		attendanceDate: row.attendanceDate,
-		firstAttendanceLogId: row.firstAttendanceLogId,
-	}));
+
+	// Other currently-relevant (active/pending) memberships for this member.
+	// A day already inside one of their windows rightfully belongs to that
+	// sibling, not to this membership — without this exclusion, a membership
+	// whose window was widened by a restore (originalEndDate set) could claim
+	// a day that a newer, overlapping membership already owns, double-counting
+	// one real visit as usage on two memberships. Fetched once and reused below
+	// for the reactivate-overlap check.
+	const siblingMemberships = await tx
+		.select({ startDate: memberMemberships.startDate, endDate: memberMemberships.endDate })
+		.from(memberMemberships)
+		.where(
+			and(
+				eq(memberMemberships.memberId, membership.memberId),
+				ne(memberMemberships.id, membership.id),
+				inArray(memberMemberships.status, ["active", "pending"])
+			)
+		);
+
+	const dailyAttendance: DailyAttendanceInput[] = dailyRowsRaw
+		.map((row) => ({
+			attendanceDate: row.attendanceDate,
+			firstAttendanceLogId: row.firstAttendanceLogId,
+		}))
+		.filter(
+			(day) =>
+				!siblingMemberships.some(
+					(sibling) =>
+						day.attendanceDate >= sibling.startDate &&
+						(sibling.endDate === null || day.attendanceDate <= sibling.endDate)
+				)
+		);
 
 	const actions = planSessionReconciliation({
 		membership: {
@@ -116,7 +151,7 @@ export async function reconcileOneMembership(
 
 	for (const action of actions) {
 		if (action.type === "insertUsage") {
-			await tx
+			const insertedRows = await tx
 				.insert(membershipSessionUsage)
 				.values({
 					membershipId: membership.id,
@@ -127,8 +162,9 @@ export async function reconcileOneMembership(
 				})
 				.onConflictDoNothing({
 					target: [membershipSessionUsage.membershipId, membershipSessionUsage.usageDate],
-				});
-			outcome.usageInserted += 1;
+				})
+				.returning({ id: membershipSessionUsage.id });
+			outcome.usageInserted += insertedRows.length;
 		} else if (action.type === "truncateEnd") {
 			await tx
 				.update(memberMemberships)
@@ -143,12 +179,31 @@ export async function reconcileOneMembership(
 			}
 			outcome.truncated = true;
 		} else if (action.type === "restoreEnd") {
+			// A restore widens this membership's window back out (originalEndDate
+			// is cleared, endDate goes back to action.endDate). If that widened
+			// window now overlaps a sibling active/pending membership, flipping
+			// this one back to "active" would let it start claiming days that
+			// rightfully belong to the sibling on the next reconciliation run —
+			// double-consuming the same visit. So the session-count bookkeeping
+			// (endDate/originalEndDate) is still applied honestly, but reactivation
+			// and access-grant are suppressed when there's an overlap.
+			const overlapsAnotherMembership = siblingMemberships.some(
+				(sibling) =>
+					action.endDate >= sibling.startDate &&
+					(sibling.endDate === null || membership.startDate <= sibling.endDate)
+			);
+			const reactivate = action.reactivate && !overlapsAnotherMembership;
+			if (action.reactivate && overlapsAnotherMembership) {
+				console.warn(
+					`Session membership ${membership.id} (member ${membership.memberId}) could not be reactivated after a waiver — the restored window would overlap another membership. Manual review needed.`
+				);
+			}
 			await tx
 				.update(memberMemberships)
 				.set({
 					endDate: action.endDate,
 					originalEndDate: null,
-					...(action.reactivate ? { status: "active" as const } : {}),
+					...(reactivate ? { status: "active" as const } : {}),
 				})
 				.where(eq(memberMemberships.id, membership.id));
 			if (actorUserId) {
@@ -158,7 +213,7 @@ export async function reconcileOneMembership(
 					description: `Membership ${membership.id} end date restored to ${action.endDate}.`,
 				});
 			}
-			if (action.reactivate) {
+			if (reactivate) {
 				await enableMemberAccess(tx, membership.memberId, "session_usage_restored");
 			}
 			outcome.restored = true;
@@ -180,6 +235,16 @@ export async function reconcileSessionUsage({
 	memberIds,
 	now = new Date(),
 }: { memberIds?: string[]; now?: Date } = {}): Promise<ReconcileSessionUsageResult> {
+	// Bound the candidate set so a membership that's permanently resolved
+	// (expired, never truncated for exhaustion, and long past its endDate)
+	// isn't re-queried/locked every night forever for zero effect. A status
+	// other than "expired" always needs checking; an expired membership still
+	// needs checking if it was truncated for exhaustion (originalEndDate set —
+	// a future waiver could still restore it, no matter how old) or if its
+	// endDate falls within the recent safety window.
+	const recentExpiredCutoff = toNairobiDateString(
+		subDays(new Date(nairobiToday(now)), RECENTLY_EXPIRED_WINDOW_DAYS)
+	);
 	const candidates = await db
 		.select({ id: memberMemberships.id, memberId: memberMemberships.memberId })
 		.from(memberMemberships)
@@ -187,7 +252,14 @@ export async function reconcileSessionUsage({
 			and(
 				sql`${memberMemberships.sessionsTotal} is not null`,
 				inArray(memberMemberships.status, ["active", "pending", "expired"]),
-				memberIds && memberIds.length > 0 ? inArray(memberMemberships.memberId, memberIds) : undefined
+				or(
+					ne(memberMemberships.status, "expired"),
+					isNotNull(memberMemberships.originalEndDate),
+					gte(memberMemberships.endDate, recentExpiredCutoff)
+				),
+				memberIds && memberIds.length > 0
+					? inArray(memberMemberships.memberId, memberIds)
+					: undefined
 			)
 		);
 
