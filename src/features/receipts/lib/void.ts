@@ -3,6 +3,7 @@ import {
 	creditNotes,
 	journalEntries,
 	memberMemberships,
+	membershipSessionUsage,
 	membershipUpgrades,
 	payments,
 	paymentMembers,
@@ -57,13 +58,37 @@ export async function checkVoidEligibility(
 
 	const membershipRow = await tx.query.memberMemberships.findFirst({
 		where: eq(memberMemberships.paymentId, payment.id),
-		columns: { startDate: true, endDate: true, membershipPlanId: true },
+		columns: {
+			id: true,
+			startDate: true,
+			endDate: true,
+			membershipPlanId: true,
+			sessionsTotal: true,
+		},
 	});
 	if (!membershipRow) {
 		return failure({
 			type: "ApplicationError",
 			message: "No membership record found for this payment; cannot verify void eligibility.",
 		});
+	}
+
+	// Sessions already recorded against this membership (used or manually
+	// waived) make a clean automatic void impossible — see
+	// membership_session_usage. Mirrors the upgrade/credit-note checks below:
+	// this is a new, additive guard, not a replacement for them.
+	if (membershipRow.sessionsTotal !== null) {
+		const existingUsage = await tx.query.membershipSessionUsage.findFirst({
+			where: eq(membershipSessionUsage.membershipId, membershipRow.id),
+			columns: { id: true },
+		});
+		if (existingUsage) {
+			return failure({
+				type: "ConflictError",
+				message:
+					"Sessions have already been recorded against this membership and it cannot be voided automatically — it requires a manual correction.",
+			});
+		}
 	}
 
 	// A member has "renewed" if any other membership row of theirs (not created by this
