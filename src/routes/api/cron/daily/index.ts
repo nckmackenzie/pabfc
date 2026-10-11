@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { addYears, format, isToday, subDays } from "date-fns";
-import { and, eq, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	accessControlSyncJobs,
@@ -14,7 +14,9 @@ import {
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
 import { activateDueMemberships } from "@/features/receipts/services/membership-payment-finalizer";
 import { expireCreditNotes } from "@/features/credit-notes/services/credit-note.maintenance";
+import { reconcileSessionUsage } from "@/features/session-usage/services/reconcile";
 import { dateFormat, normalizeDateRange } from "@/lib/helpers";
+import { nairobiToday } from "@/lib/nairobi-time";
 import { deleteOlderLogs } from "@/services/activity-logger";
 import { disableMemberAccessIfNoValidMembership } from "@/services/member-access";
 
@@ -53,13 +55,19 @@ async function runDailyMaintenance() {
 	// 2) auto create financial year
 	await autoCreateFinancialYear();
 
-	// 3) update membership status rollovers (pending → active, active → expired)
+	// 3) reconcile session-based memberships against yesterday/today's punches
+	// (safety net for the upload-endpoint trigger), then expire the ones that
+	// ran out of sessions or lapsed unused, using the Nairobi calendar day.
+	await reconcileSessionUsage();
+	await expireExhaustedSessionMemberships();
+
+	// 4) update membership status rollovers (pending → active, active → expired)
 	await expireMembershipsAndDisableAccess();
 
-	// 4) deactivate inactive members
+	// 5) deactivate inactive members
 	await deactivateInactiveMembers();
 
-	// 5) write off expired, unredeemed credit note balances
+	// 6) write off expired, unredeemed credit note balances
 	await expireCreditNotes();
 }
 
@@ -204,6 +212,43 @@ async function expireMembershipsAndDisableAccess() {
 
 		const affectedMemberIds = [...new Set(expiredMemberships.map((m) => m.memberId))];
 
+		for (const memberId of affectedMemberIds) {
+			await disableMemberAccessIfNoValidMembership(tx, memberId, "membership_expired");
+		}
+	});
+}
+
+// Session memberships end at whichever comes first: sessions exhausted
+// (reconcileSessionUsage already truncated endDate for those) or the date
+// window lapsing unused. Both cases are just "endDate < today" once
+// reconcileSessionUsage has run — but unlike expireMembershipsAndDisableAccess,
+// "today" here must be the Nairobi calendar date, not whatever the server's
+// local/UTC date happens to be (see Task 16's finding). Runs before the
+// generic expiry step so session memberships are correctly dated first; the
+// generic step is then a no-op for rows this one already expired.
+async function expireExhaustedSessionMemberships() {
+	const today = nairobiToday();
+
+	await db.transaction(async (tx) => {
+		const toExpire = await tx
+			.select({ id: memberMemberships.id, memberId: memberMemberships.memberId })
+			.from(memberMemberships)
+			.where(
+				and(
+					sql`${memberMemberships.sessionsTotal} is not null`,
+					eq(memberMemberships.status, "active"),
+					lt(memberMemberships.endDate, today)
+				)
+			);
+
+		if (toExpire.length === 0) return;
+
+		await tx
+			.update(memberMemberships)
+			.set({ status: "expired", updatedAt: new Date() })
+			.where(inArray(memberMemberships.id, toExpire.map((row) => row.id)));
+
+		const affectedMemberIds = [...new Set(toExpire.map((row) => row.memberId))];
 		for (const memberId of affectedMemberIds) {
 			await disableMemberAccessIfNoValidMembership(tx, memberId, "membership_expired");
 		}
