@@ -94,7 +94,7 @@ export const getMemberProfileData = createServerFn()
 	.handler(async ({ data: memberId }) => {
 		const member = await db.select().from(membersOverview).where(eq(membersOverview.id, memberId));
 		const memberRow = member[0];
-		if (!memberRow) return undefined;
+		if (!memberRow) return null;
 
 		const sessionMemberships = await db.query.memberMemberships.findMany({
 			where: and(
