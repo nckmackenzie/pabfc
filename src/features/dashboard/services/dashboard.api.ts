@@ -5,13 +5,14 @@ import { db } from "@/drizzle/db";
 import {
 	attendanceLogs,
 	attendanceOverview,
+	dailyAttendance,
 	memberMemberships,
 	members,
 	membershipPlans,
 } from "@/drizzle/schema";
 import { getExpiredMembershipConditions } from "@/features/dashboard/lib/expired-memberships";
 import { getExpiringMembershipConditions } from "@/features/dashboard/lib/expiring-memberships";
-import { getStatDates } from "@/features/dashboard/lib/helpers";
+import { getAttendancePeriodBounds, getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
@@ -26,8 +27,6 @@ const {
 	previousMonthStartDate,
 	previousMonthEndDate,
 	startOfLast30Days,
-	startOfPreviousPeriod,
-	endOfPreviousPeriod,
 } = getStatDates();
 
 // Deleted members are also flagged inactive (softDeleteMemberLocally), so they
@@ -41,6 +40,9 @@ export const dashboardStats = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:view");
+		const { currentStart, currentEnd, previousStart, previousEnd } = getAttendancePeriodBounds(
+			new Date()
+		);
 		const [
 			activeMembers,
 			newMembersThisMonth,
@@ -74,10 +76,19 @@ export const dashboardStats = createServerFn()
 				.from(memberMemberships)
 				.innerJoin(members, eq(memberMemberships.memberId, members.id))
 				.where(and(isNull(members.deletedAt), ...getExpiringMembershipConditions())),
-			db.$count(attendanceLogs, between(attendanceLogs.checkInTime, startOfLast7Days, new Date())),
 			db.$count(
-				attendanceLogs,
-				between(attendanceLogs.checkInTime, startOfPreviousPeriod, endOfPreviousPeriod)
+				dailyAttendance,
+				and(
+					gte(dailyAttendance.attendanceDate, currentStart),
+					lte(dailyAttendance.attendanceDate, currentEnd)
+				)
+			),
+			db.$count(
+				dailyAttendance,
+				and(
+					gte(dailyAttendance.attendanceDate, previousStart),
+					lte(dailyAttendance.attendanceDate, previousEnd)
+				)
 			),
 			db
 				.select({ averageDuration: avg(attendanceOverview.duration) })

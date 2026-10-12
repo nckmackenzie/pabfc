@@ -1,11 +1,33 @@
 import { format } from "date-fns";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+	getAttendancePeriodBounds,
 	getExpiredMembershipStatDates,
 	getExpiringMembershipStatDates,
 	getFinanceStatDates,
 	getMembershipExpiryStatus,
 } from "./helpers";
+
+describe("getAttendancePeriodBounds", () => {
+	it("computes a 7-day current window ending on the Nairobi day of `now`", () => {
+		const bounds = getAttendancePeriodBounds(new Date("2026-03-15T12:00:00Z"));
+		expect(bounds.currentEnd).toBe("2026-03-15");
+		expect(bounds.currentStart).toBe("2026-03-09");
+	});
+
+	it("computes the previous 7-day window immediately before the current one, with no gap or overlap", () => {
+		const bounds = getAttendancePeriodBounds(new Date("2026-03-15T12:00:00Z"));
+		expect(bounds.previousEnd).toBe("2026-03-08");
+		expect(bounds.previousStart).toBe("2026-03-02");
+	});
+
+	it("rolls the Nairobi day over exactly at the 21:00 UTC boundary", () => {
+		const justBefore = getAttendancePeriodBounds(new Date("2026-03-15T20:59:59Z"));
+		const atBoundary = getAttendancePeriodBounds(new Date("2026-03-15T21:00:00Z"));
+		expect(justBefore.currentEnd).toBe("2026-03-15");
+		expect(atBoundary.currentEnd).toBe("2026-03-16");
+	});
+});
 
 describe("getExpiredMembershipStatDates", () => {
 	it("returns a rolling 30-day window ending on the supplied date", () => {

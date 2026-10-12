@@ -7,6 +7,7 @@ import {
 	subDays,
 	subMonths,
 } from "date-fns";
+import { nairobiToday } from "@/lib/nairobi-time";
 
 export function getStatDates() {
 	const monthStartDate = startOfMonth(new Date());
@@ -26,6 +27,18 @@ export function getStatDates() {
 		startOfPreviousPeriod,
 		endOfPreviousPeriod,
 	};
+}
+
+// 7-day "current" window ending on now's Nairobi calendar day, and the 7-day
+// "previous" window immediately before it, with no gap or overlap — used by
+// dashboardStats' visit-count trend comparison. Nairobi-dated so the window
+// boundary matches the gym's local day, not the server's/UTC's.
+export function getAttendancePeriodBounds(now: Date) {
+	const currentEnd = nairobiToday(now);
+	const currentStart = nairobiToday(subDays(now, 6));
+	const previousEnd = nairobiToday(subDays(now, 7));
+	const previousStart = nairobiToday(subDays(now, 13));
+	return { currentStart, currentEnd, previousStart, previousEnd };
 }
 
 export function getExpiredMembershipStatDates(today = new Date()) {
