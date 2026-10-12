@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { isToday } from "date-fns";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, DollarSignIcon } from "@/components/ui/icons";
@@ -8,7 +7,7 @@ import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { memberQueries } from "@/features/members/services/queries";
 import { PaymentStatusBadge } from "@/features/receipts/components/payment-status-badge";
-import { currencyFormatter, dateFormat, formatMinutesDuration } from "@/lib/helpers";
+import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 export function MemberPaymentHistory({ memberId }: { memberId: string }) {
@@ -121,17 +120,12 @@ export function MemberAttendanceHistory({ memberId }: { memberId: string }) {
 								</span>
 								<span className="text-xs text-muted-foreground">
 									In {formatTime(attendance.checkInTime)}
-									{attendance.checkOutTime ? ` • Out ${formatTime(attendance.checkOutTime)}` : ""}
 								</span>
 							</div>
-							{attendance.duration === null ? (
-								isToday(attendance.checkInTime) ? (
-									<Badge variant="info">In session</Badge>
-								) : (
-									<Badge variant="secondary">No check-out</Badge>
-								)
-							) : (
-								<Badge variant="outline">{formatMinutesDuration(attendance.duration)}</Badge>
+							{attendance.punchCount > 1 && (
+								<Badge variant="secondary" title={`${attendance.punchCount} punches that day`}>
+									+{attendance.punchCount - 1}
+								</Badge>
 							)}
 						</li>
 					))}

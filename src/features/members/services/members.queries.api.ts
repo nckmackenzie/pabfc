@@ -5,6 +5,7 @@ import { db } from "@/drizzle/db";
 import {
 	addonInvoices,
 	attendanceLogs,
+	dailyAttendance,
 	memberMemberships,
 	members,
 	membershipPlans,
@@ -254,16 +255,13 @@ export const getMemberAttendanceHistory = createServerFn()
 		return db
 			.select({
 				id: sql<string>`${attendanceLogs.id}::text`,
-				checkInTime: attendanceLogs.checkInTime,
-				checkOutTime: attendanceLogs.checkOutTime,
-				/** Session length in minutes. Null until the member checks out. */
-				duration: sql<number | null>`
-					extract(epoch from (${attendanceLogs.checkOutTime} - ${attendanceLogs.checkInTime})) / 60
-				`.mapWith((value) => (value === null ? null : Number(value))),
+				checkInTime: dailyAttendance.firstCheckInTime,
+				punchCount: dailyAttendance.punchCount,
 			})
-			.from(attendanceLogs)
-			.where(eq(attendanceLogs.memberId, memberId))
-			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
+			.from(dailyAttendance)
+			.innerJoin(attendanceLogs, eq(attendanceLogs.id, dailyAttendance.firstAttendanceLogId))
+			.where(eq(dailyAttendance.memberId, memberId))
+			.orderBy(desc(dailyAttendance.firstCheckInTime), desc(attendanceLogs.id))
 			.limit(PROFILE_HISTORY_LIMIT);
 	});
 
