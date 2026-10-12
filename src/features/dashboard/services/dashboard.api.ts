@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { subDays } from "date-fns";
 import { and, asc, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
@@ -16,18 +17,14 @@ import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
 } from "@/features/dashboard/lib/mockData";
+import { parseCalendarDate } from "@/features/receipts/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
-import { nairobiToday } from "@/lib/nairobi-time";
+import { nairobiToday, toNairobiDateString } from "@/lib/nairobi-time";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
 
-const {
-	monthStartDate,
-	startOfLast7Days,
-	previousMonthStartDate,
-	previousMonthEndDate,
-	startOfLast30Days,
-} = getStatDates();
+const { monthStartDate, startOfLast7Days, previousMonthStartDate, previousMonthEndDate } =
+	getStatDates();
 
 // Deleted members are also flagged inactive (softDeleteMemberLocally), so they
 // have to be excluded explicitly.
@@ -244,12 +241,12 @@ export const getInactiveMembers = createServerFn()
 export const getAverageAttendanceByDay = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const logs = await db
-			.select({
-				checkInTime: attendanceLogs.checkInTime,
-			})
-			.from(attendanceLogs)
-			.where(gte(attendanceLogs.checkInTime, startOfLast30Days));
+		const startDate = toNairobiDateString(subDays(new Date(), 30));
+
+		const rows = await db
+			.select({ attendanceDate: dailyAttendance.attendanceDate })
+			.from(dailyAttendance)
+			.where(gte(dailyAttendance.attendanceDate, startDate));
 
 		const daysOfWeek = [
 			"Sunday",
@@ -261,25 +258,24 @@ export const getAverageAttendanceByDay = createServerFn()
 			"Saturday",
 		];
 
+		// vw_daily_attendance already has one row per member per day, so this is
+		// a plain count of rows per date — no further dedup needed, unlike the
+		// old per-punch version this replaced.
 		const dailyCounts: Record<string, number> = {};
-
-		logs.forEach((log) => {
-			const dateStr = log.checkInTime.toDateString(); // "Mon Dec 25 2023"
-			// Store unique dates to count how many of each weekday passed
-			if (!dailyCounts[dateStr]) {
-				dailyCounts[dateStr] = 0;
-			}
-			dailyCounts[dateStr]++;
+		rows.forEach((row) => {
+			dailyCounts[row.attendanceDate] = (dailyCounts[row.attendanceDate] ?? 0) + 1;
 		});
 
-		// Now group daily totals by day of week
 		const dayOfWeekTotals: Record<string, { total: number; count: number }> = {};
 		daysOfWeek.forEach((day) => {
 			dayOfWeekTotals[day] = { total: 0, count: 0 };
 		});
 
 		Object.keys(dailyCounts).forEach((dateStr) => {
-			const date = new Date(dateStr);
+			// dateStr is already a Nairobi calendar date string — parseCalendarDate
+			// (not `new Date(dateStr)`) keeps it as local midnight so .getDay()
+			// can't roll over to the wrong weekday.
+			const date = parseCalendarDate(dateStr);
 			const dayName = daysOfWeek[date.getDay()];
 			dayOfWeekTotals[dayName].total += dailyCounts[dateStr];
 			dayOfWeekTotals[dayName].count += 1;
