@@ -93,6 +93,8 @@ export const getMemberProfileData = createServerFn()
 	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		const member = await db.select().from(membersOverview).where(eq(membersOverview.id, memberId));
+		const memberRow = member[0];
+		if (!memberRow) return undefined;
 
 		const sessionMemberships = await db.query.memberMemberships.findMany({
 			where: and(
@@ -139,7 +141,7 @@ export const getMemberProfileData = createServerFn()
 			};
 		}
 
-		return { ...member[0], sessionInfo };
+		return { ...memberRow, sessionInfo };
 	});
 
 export const checkColumnExists = createServerFn()

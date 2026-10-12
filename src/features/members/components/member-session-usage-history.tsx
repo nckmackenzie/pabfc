@@ -20,6 +20,10 @@ export function MemberSessionUsageHistory({ memberId }: { memberId: string }) {
 	const { data: profile } = useQuery(memberQueries.overview(memberId));
 	const sessionInfo = profile?.sessionInfo ?? null;
 
+	if (!isLoading && !sessionInfo && !data?.length) {
+		return null;
+	}
+
 	return (
 		<HistorySection
 			title="Session Usage History"

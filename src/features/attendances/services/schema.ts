@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { dateFormat } from "@/lib/helpers";
+import { nairobiToday } from "@/lib/nairobi-time";
 
 const currentDateSearchValue = () =>
-	z.preprocess((value) => value ?? dateFormat(new Date()), z.iso.date());
+	z.preprocess((value) => value ?? nairobiToday(), z.iso.date());
 
 export const attendanceValidateSearch = z
 	.object({

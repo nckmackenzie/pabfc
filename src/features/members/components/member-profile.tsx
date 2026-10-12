@@ -12,6 +12,7 @@ import {
 	ChevronDownIcon,
 	PencilIcon,
 } from "@/components/ui/icons";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import {
 	MemberAttendanceHistory,
 	MemberPaymentHistory,
@@ -161,7 +162,9 @@ export function MemberProfile() {
 				<div className="grid gap-4 self-start">
 					<MemberPaymentHistory memberId={memberData.id} />
 					<MemberAttendanceHistory memberId={memberData.id} />
-					<MemberSessionUsageHistory memberId={memberData.id} />
+					<PermissionGate permission="attendance:view">
+						<MemberSessionUsageHistory memberId={memberData.id} />
+					</PermissionGate>
 				</div>
 			</div>
 		</div>
@@ -171,7 +174,7 @@ export function MemberProfile() {
 function PersonalDetails({
 	memberData,
 }: {
-	memberData: Awaited<ReturnType<typeof getMemberProfileData>>;
+	memberData: NonNullable<Awaited<ReturnType<typeof getMemberProfileData>>>;
 }) {
 	return (
 		<div className="rounded-md border border-gray-200 p-4">
