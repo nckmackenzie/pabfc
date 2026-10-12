@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { endOfDay, startOfDay } from "date-fns";
 import { and, asc, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
@@ -18,6 +17,7 @@ import {
 	mockTodaysAttendances,
 } from "@/features/dashboard/lib/mockData";
 import { inngest } from "@/lib/inngest/client";
+import { nairobiToday } from "@/lib/nairobi-time";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
 
@@ -136,6 +136,7 @@ export const getExpiredMemberships = createServerFn()
 export const getTodaysAttendances = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		const today = nairobiToday();
 		const todaysAttendances = await db
 			.select({
 				id: attendanceLogs.id,
@@ -143,12 +144,13 @@ export const getTodaysAttendances = createServerFn()
 					"memberName"
 				),
 				image: members.image,
-				checkInTime: attendanceLogs.checkInTime,
+				checkInTime: dailyAttendance.firstCheckInTime,
 			})
-			.from(attendanceLogs)
-			.innerJoin(members, eq(attendanceLogs.memberId, members.id))
-			.where(between(attendanceLogs.checkInTime, startOfDay(new Date()), endOfDay(new Date())))
-			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
+			.from(dailyAttendance)
+			.innerJoin(attendanceLogs, eq(attendanceLogs.id, dailyAttendance.firstAttendanceLogId))
+			.innerJoin(members, eq(dailyAttendance.memberId, members.id))
+			.where(eq(dailyAttendance.attendanceDate, today))
+			.orderBy(desc(dailyAttendance.firstCheckInTime), desc(members.id))
 			.execute();
 
 		return process.env.APP_ENV === "production"
