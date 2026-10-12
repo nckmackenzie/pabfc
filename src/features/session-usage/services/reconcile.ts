@@ -15,7 +15,7 @@ import {
 	type UsageRowInput,
 } from "@/features/session-usage/lib/reconciliation";
 import { nairobiToday, toNairobiDateString } from "@/lib/nairobi-time";
-import { enableMemberAccess } from "@/services/member-access";
+import { enableAccessForActivatedMembers } from "@/services/member-access";
 
 // Matches the BioTime sync's 30-day fixed lookback (see attendance-sync's
 // state/index.ts) plus slack: an expired, never-truncated session membership
@@ -206,20 +206,21 @@ export async function reconcileOneMembership(
 			// window now overlaps a sibling active/pending membership, flipping
 			// this one back to "active" would let it start claiming days that
 			// rightfully belong to the sibling on the next reconciliation run —
-			// double-consuming the same visit. So the session-count bookkeeping
-			// (endDate/originalEndDate) is still applied honestly, but reactivation
-			// and access-grant are suppressed when there's an overlap.
+			// double-consuming the same visit. So when there's an overlap the whole
+			// restoration is deferred: endDate and originalEndDate are retained and
+			// the membership is left untouched.
 			const overlapsAnotherMembership = siblingMemberships.some(
 				(sibling) =>
 					action.endDate >= sibling.startDate &&
 					(sibling.endDate === null || membership.startDate <= sibling.endDate)
 			);
-			const reactivate = action.reactivate && !overlapsAnotherMembership;
-			if (action.reactivate && overlapsAnotherMembership) {
+			if (overlapsAnotherMembership) {
 				console.warn(
-					`Session membership ${membership.id} (member ${membership.memberId}) could not be reactivated after a waiver — the restored window would overlap another membership. Manual review needed.`
+					`Session membership ${membership.id} (member ${membership.memberId}) restoration deferred after a waiver — the restored window would overlap another membership. Manual review needed.`
 				);
+				continue;
 			}
+			const reactivate = action.reactivate;
 			await tx
 				.update(memberMemberships)
 				.set({
@@ -236,7 +237,9 @@ export async function reconcileOneMembership(
 				});
 			}
 			if (reactivate) {
-				await enableMemberAccess(tx, membership.memberId, "session_usage_restored");
+				// Only lifts members the system itself deactivated; manually
+				// deactivated/frozen/terminated or soft-deleted members are left alone.
+				await enableAccessForActivatedMembers(tx, [membership.memberId], "session_usage_restored");
 			}
 			outcome.restored = true;
 		} else if (action.type === "overConsumption") {
