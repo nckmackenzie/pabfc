@@ -1,7 +1,9 @@
 import { relations } from "drizzle-orm";
 import {
+	bigint,
 	bigserial,
 	boolean,
+	date,
 	index,
 	integer,
 	jsonb,
@@ -110,4 +112,17 @@ export const attendanceOverview = pgView("vw_attendance_details", {
 	duration: numeric("duration"),
 	activePlanName: varchar("active_plan_name"),
 	nextRenewalDate: timestamp("next_renewal_date"),
+}).existing();
+
+// One row per member per Nairobi-local day. A device/terminal filter would go
+// in the WHERE clause below if this gym ever runs more than one BioTime
+// reader that writes to attendance_logs — today the app models exactly one
+// device (biotimeSettings.deviceSerialNumber), so none is applied.
+export const dailyAttendance = pgView("vw_daily_attendance", {
+	memberId: varchar("member_id").notNull(),
+	attendanceDate: date("attendance_date").notNull(),
+	firstCheckInTime: timestamp("first_check_in_time", { withTimezone: true }).notNull(),
+	lastCheckInTime: timestamp("last_check_in_time", { withTimezone: true }).notNull(),
+	punchCount: integer("punch_count").notNull(),
+	firstAttendanceLogId: bigint("first_attendance_log_id", { mode: "bigint" }).notNull(),
 }).existing();

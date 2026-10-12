@@ -8,6 +8,7 @@ import {
 	biotimeUnmappedAttendanceTransactions,
 	employeeGymAccessLogs,
 } from "@/drizzle/schema";
+import { reconcileSessionUsage } from "@/features/session-usage/services/reconcile";
 import { authenticateAccessAgent } from "@/services/access-control";
 
 type BioTimeTransactionUpload = {
@@ -124,6 +125,9 @@ export const Route = createFileRoute("/api/access-control/agent/attendance-sync/
 
 						const mappedRows: (typeof attendanceLogs.$inferInsert)[] = [];
 						const employeeRows: (typeof employeeGymAccessLogs.$inferInsert)[] = [];
+						// No flow anywhere in this codebase resolves an unmapped row into a
+						// member/attendance_logs match after the fact — these punches never
+						// consume a session. See the session-based-plans discovery doc.
 						const unmappedRows: (typeof biotimeUnmappedAttendanceTransactions.$inferInsert)[] = [];
 
 						for (const txItem of validTransactions) {
@@ -178,14 +182,16 @@ export const Route = createFileRoute("/api/access-control/agent/attendance-sync/
 						let insertedCount = 0;
 						let employeeInsertedCount = 0;
 						let unmappedInsertedCount = 0;
+						let insertedMemberIds: string[] = [];
 
 						if (mappedRows.length > 0) {
 							const inserted = await tx
 								.insert(attendanceLogs)
 								.values(mappedRows)
 								.onConflictDoNothing({ target: attendanceLogs.biotimeId })
-								.returning({ id: attendanceLogs.id });
+								.returning({ id: attendanceLogs.id, memberId: attendanceLogs.memberId });
 							insertedCount = inserted.length;
+							insertedMemberIds = [...new Set(inserted.map((row) => row.memberId))];
 						}
 
 						if (employeeRows.length > 0) {
@@ -255,8 +261,18 @@ export const Route = createFileRoute("/api/access-control/agent/attendance-sync/
 							employeeInsertedCount,
 							unmappedCount: unmappedInsertedCount,
 							skippedDuplicateCount,
+							insertedMemberIds,
 						};
 					});
+
+					if (result.insertedMemberIds.length > 0) {
+						try {
+							await reconcileSessionUsage({ memberIds: result.insertedMemberIds });
+						} catch (error) {
+							console.error("reconcileSessionUsage failed after attendance upload", error);
+						}
+					}
+
 					return new Response(
 						JSON.stringify({
 							success: true,

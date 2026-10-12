@@ -1,34 +1,30 @@
 import { createServerFn } from "@tanstack/react-start";
-import { endOfDay, startOfDay } from "date-fns";
+import { subDays } from "date-fns";
 import { and, asc, avg, between, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
 	attendanceLogs,
 	attendanceOverview,
+	dailyAttendance,
 	memberMemberships,
 	members,
 	membershipPlans,
 } from "@/drizzle/schema";
 import { getExpiredMembershipConditions } from "@/features/dashboard/lib/expired-memberships";
 import { getExpiringMembershipConditions } from "@/features/dashboard/lib/expiring-memberships";
-import { getStatDates } from "@/features/dashboard/lib/helpers";
+import { getAttendancePeriodBounds, getStatDates } from "@/features/dashboard/lib/helpers";
 import {
 	mockAverageAttendanceByDay,
 	mockTodaysAttendances,
 } from "@/features/dashboard/lib/mockData";
+import { parseCalendarDate } from "@/features/receipts/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
+import { nairobiToday, toNairobiDateString } from "@/lib/nairobi-time";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
 
-const {
-	monthStartDate,
-	startOfLast7Days,
-	previousMonthStartDate,
-	previousMonthEndDate,
-	startOfLast30Days,
-	startOfPreviousPeriod,
-	endOfPreviousPeriod,
-} = getStatDates();
+const { monthStartDate, startOfLast7Days, previousMonthStartDate, previousMonthEndDate } =
+	getStatDates();
 
 // Deleted members are also flagged inactive (softDeleteMemberLocally), so they
 // have to be excluded explicitly.
@@ -41,6 +37,9 @@ export const dashboardStats = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
 		await requirePermission("dashboard:view");
+		const { currentStart, currentEnd, previousStart, previousEnd } = getAttendancePeriodBounds(
+			new Date()
+		);
 		const [
 			activeMembers,
 			newMembersThisMonth,
@@ -74,10 +73,19 @@ export const dashboardStats = createServerFn()
 				.from(memberMemberships)
 				.innerJoin(members, eq(memberMemberships.memberId, members.id))
 				.where(and(isNull(members.deletedAt), ...getExpiringMembershipConditions())),
-			db.$count(attendanceLogs, between(attendanceLogs.checkInTime, startOfLast7Days, new Date())),
 			db.$count(
-				attendanceLogs,
-				between(attendanceLogs.checkInTime, startOfPreviousPeriod, endOfPreviousPeriod)
+				dailyAttendance,
+				and(
+					gte(dailyAttendance.attendanceDate, currentStart),
+					lte(dailyAttendance.attendanceDate, currentEnd)
+				)
+			),
+			db.$count(
+				dailyAttendance,
+				and(
+					gte(dailyAttendance.attendanceDate, previousStart),
+					lte(dailyAttendance.attendanceDate, previousEnd)
+				)
 			),
 			db
 				.select({ averageDuration: avg(attendanceOverview.duration) })
@@ -125,6 +133,7 @@ export const getExpiredMemberships = createServerFn()
 export const getTodaysAttendances = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		const today = nairobiToday();
 		const todaysAttendances = await db
 			.select({
 				id: attendanceLogs.id,
@@ -132,12 +141,13 @@ export const getTodaysAttendances = createServerFn()
 					"memberName"
 				),
 				image: members.image,
-				checkInTime: attendanceLogs.checkInTime,
+				checkInTime: dailyAttendance.firstCheckInTime,
 			})
-			.from(attendanceLogs)
-			.innerJoin(members, eq(attendanceLogs.memberId, members.id))
-			.where(between(attendanceLogs.checkInTime, startOfDay(new Date()), endOfDay(new Date())))
-			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
+			.from(dailyAttendance)
+			.innerJoin(attendanceLogs, eq(attendanceLogs.id, dailyAttendance.firstAttendanceLogId))
+			.innerJoin(members, eq(dailyAttendance.memberId, members.id))
+			.where(eq(dailyAttendance.attendanceDate, today))
+			.orderBy(desc(dailyAttendance.firstCheckInTime), desc(members.id))
 			.execute();
 
 		return process.env.APP_ENV === "production"
@@ -231,12 +241,12 @@ export const getInactiveMembers = createServerFn()
 export const getAverageAttendanceByDay = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
-		const logs = await db
-			.select({
-				checkInTime: attendanceLogs.checkInTime,
-			})
-			.from(attendanceLogs)
-			.where(gte(attendanceLogs.checkInTime, startOfLast30Days));
+		const startDate = toNairobiDateString(subDays(new Date(), 30));
+
+		const rows = await db
+			.select({ attendanceDate: dailyAttendance.attendanceDate })
+			.from(dailyAttendance)
+			.where(gte(dailyAttendance.attendanceDate, startDate));
 
 		const daysOfWeek = [
 			"Sunday",
@@ -248,25 +258,24 @@ export const getAverageAttendanceByDay = createServerFn()
 			"Saturday",
 		];
 
+		// vw_daily_attendance already has one row per member per day, so this is
+		// a plain count of rows per date — no further dedup needed, unlike the
+		// old per-punch version this replaced.
 		const dailyCounts: Record<string, number> = {};
-
-		logs.forEach((log) => {
-			const dateStr = log.checkInTime.toDateString(); // "Mon Dec 25 2023"
-			// Store unique dates to count how many of each weekday passed
-			if (!dailyCounts[dateStr]) {
-				dailyCounts[dateStr] = 0;
-			}
-			dailyCounts[dateStr]++;
+		rows.forEach((row) => {
+			dailyCounts[row.attendanceDate] = (dailyCounts[row.attendanceDate] ?? 0) + 1;
 		});
 
-		// Now group daily totals by day of week
 		const dayOfWeekTotals: Record<string, { total: number; count: number }> = {};
 		daysOfWeek.forEach((day) => {
 			dayOfWeekTotals[day] = { total: 0, count: 0 };
 		});
 
 		Object.keys(dailyCounts).forEach((dateStr) => {
-			const date = new Date(dateStr);
+			// dateStr is already a Nairobi calendar date string — parseCalendarDate
+			// (not `new Date(dateStr)`) keeps it as local midnight so .getDay()
+			// can't roll over to the wrong weekday.
+			const date = parseCalendarDate(dateStr);
 			const dayName = daysOfWeek[date.getDay()];
 			dayOfWeekTotals[dayName].total += dailyCounts[dateStr];
 			dayOfWeekTotals[dayName].count += 1;

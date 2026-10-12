@@ -12,10 +12,12 @@ import {
 	ChevronDownIcon,
 	PencilIcon,
 } from "@/components/ui/icons";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import {
 	MemberAttendanceHistory,
 	MemberPaymentHistory,
 } from "@/features/members/components/member-profile-history";
+import { MemberSessionUsageHistory } from "@/features/members/components/member-session-usage-history";
 import {
 	MemberAvatar,
 	MemberBadge,
@@ -160,6 +162,9 @@ export function MemberProfile() {
 				<div className="grid gap-4 self-start">
 					<MemberPaymentHistory memberId={memberData.id} />
 					<MemberAttendanceHistory memberId={memberData.id} />
+					<PermissionGate permission="attendance:view">
+						<MemberSessionUsageHistory memberId={memberData.id} />
+					</PermissionGate>
 				</div>
 			</div>
 		</div>
@@ -169,7 +174,7 @@ export function MemberProfile() {
 function PersonalDetails({
 	memberData,
 }: {
-	memberData: Awaited<ReturnType<typeof getMemberProfileData>>;
+	memberData: NonNullable<Awaited<ReturnType<typeof getMemberProfileData>>>;
 }) {
 	return (
 		<div className="rounded-md border border-gray-200 p-4">
@@ -200,6 +205,24 @@ function PersonalDetails({
 						label="Next Renewal Date"
 						value={memberData.nextRenewalDate?.toString()}
 					/>
+					{memberData.sessionInfo && (
+						<>
+							<MemberInfo
+								label="Sessions"
+								value={`${memberData.sessionInfo.sessionsUsed} of ${memberData.sessionInfo.sessionsTotal} used`}
+							/>
+							<MemberInfo
+								label={memberData.sessionInfo.originalEndDate ? "Sessions used up" : "Valid Until"}
+								value={
+									memberData.sessionInfo.originalEndDate
+										? `Originally valid until ${dateFormat(memberData.sessionInfo.originalEndDate, "long")}`
+										: memberData.sessionInfo.endDate
+											? dateFormat(memberData.sessionInfo.endDate, "long")
+											: undefined
+								}
+							/>
+						</>
+					)}
 
 					<MemberInfo
 						className="col-span-2"

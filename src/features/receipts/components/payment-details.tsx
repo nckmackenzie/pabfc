@@ -472,6 +472,15 @@ export function PaymentDetails() {
 												{payment.membership.status || "Active"}
 											</Badge>
 										</div>
+										{payment.membership.sessionsTotal != null && (
+											<div>
+												<p className="text-muted-foreground font-medium text-xs">Sessions</p>
+												<p>
+													{payment.membership.sessionsUsed} of {payment.membership.sessionsTotal}{" "}
+													used
+												</p>
+											</div>
+										)}
 									</>
 								)}
 							</div>

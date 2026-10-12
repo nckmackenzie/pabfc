@@ -206,6 +206,14 @@ export const memberMemberships = pgTable(
 		previousMembershipPlanId: varchar("previous_membership_plan_id", {
 			length: 255,
 		}),
+		// Snapshotted at creation as plan.sessionCount × numberOfPeriods. Null means
+		// "not a session membership" — never re-derived from the plan's current
+		// isSessionBased/sessionCount, so later plan edits don't change this row.
+		sessionsTotal: integer("sessions_total"),
+		// Pre-truncation endDate, set the first time a session membership's endDate
+		// is truncated on exhaustion. Null again once restored (e.g. after a waiver
+		// brings used sessions back below sessionsTotal). See reconcileOneMembership.
+		originalEndDate: date("original_end_date"),
 		createdAt,
 		updatedAt,
 	},

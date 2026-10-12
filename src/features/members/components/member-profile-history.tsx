@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { isToday } from "date-fns";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, DollarSignIcon } from "@/components/ui/icons";
@@ -8,7 +7,7 @@ import { PermissionGate } from "@/components/ui/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { memberQueries } from "@/features/members/services/queries";
 import { PaymentStatusBadge } from "@/features/receipts/components/payment-status-badge";
-import { currencyFormatter, dateFormat, formatMinutesDuration } from "@/lib/helpers";
+import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
 export function MemberPaymentHistory({ memberId }: { memberId: string }) {
@@ -121,17 +120,12 @@ export function MemberAttendanceHistory({ memberId }: { memberId: string }) {
 								</span>
 								<span className="text-xs text-muted-foreground">
 									In {formatTime(attendance.checkInTime)}
-									{attendance.checkOutTime ? ` • Out ${formatTime(attendance.checkOutTime)}` : ""}
 								</span>
 							</div>
-							{attendance.duration === null ? (
-								isToday(attendance.checkInTime) ? (
-									<Badge variant="info">In session</Badge>
-								) : (
-									<Badge variant="secondary">No check-out</Badge>
-								)
-							) : (
-								<Badge variant="outline">{formatMinutesDuration(attendance.duration)}</Badge>
+							{attendance.punchCount > 1 && (
+								<Badge variant="secondary" title={`${attendance.punchCount} punches that day`}>
+									+{attendance.punchCount - 1}
+								</Badge>
 							)}
 						</li>
 					))}
@@ -148,16 +142,27 @@ function formatTime(value: Date | string) {
 	});
 }
 
-function HistorySection({ title, children }: { title: string; children: ReactNode }) {
+export function HistorySection({
+	title,
+	action,
+	children,
+}: {
+	title: string;
+	action?: ReactNode;
+	children: ReactNode;
+}) {
 	return (
 		<div className="rounded-md border border-gray-200 p-4 self-start">
-			<h2 className="text-base font-bold font-display mb-2">{title}</h2>
+			<div className="flex items-center justify-between mb-2">
+				<h2 className="text-base font-bold font-display">{title}</h2>
+				{action}
+			</div>
 			{children}
 		</div>
 	);
 }
 
-function HistoryMessage({ icon, message }: { icon: ReactNode; message: string }) {
+export function HistoryMessage({ icon, message }: { icon: ReactNode; message: string }) {
 	return (
 		<div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
 			{icon}
@@ -166,7 +171,7 @@ function HistoryMessage({ icon, message }: { icon: ReactNode; message: string })
 	);
 }
 
-function HistorySkeleton() {
+export function HistorySkeleton() {
 	return (
 		<div className="space-y-3 py-2">
 			{Array.from({ length: 3 }).map((_, i) => (

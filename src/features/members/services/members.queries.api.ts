@@ -1,17 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, isNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
 	addonInvoices,
 	attendanceLogs,
+	dailyAttendance,
 	memberMemberships,
 	members,
 	membershipPlans,
+	membershipSessionUsage,
 	membersOverview,
 	paymentMembers,
 	payments,
 } from "@/drizzle/schema";
+import { pickCurrentSessionMembership } from "@/features/members/lib/session-membership";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -90,7 +93,55 @@ export const getMemberProfileData = createServerFn()
 	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
 		const member = await db.select().from(membersOverview).where(eq(membersOverview.id, memberId));
-		return member[0];
+		const memberRow = member[0];
+		if (!memberRow) return null;
+
+		const sessionMemberships = await db.query.memberMemberships.findMany({
+			where: and(
+				eq(memberMemberships.memberId, memberId),
+				isNotNull(memberMemberships.sessionsTotal)
+			),
+			columns: {
+				id: true,
+				status: true,
+				startDate: true,
+				endDate: true,
+				originalEndDate: true,
+				sessionsTotal: true,
+			},
+		});
+		const currentSessionMembership = pickCurrentSessionMembership(sessionMemberships);
+
+		let sessionInfo: {
+			membershipId: string;
+			sessionsTotal: number;
+			sessionsUsed: number;
+			startDate: string;
+			endDate: string | null;
+			originalEndDate: string | null;
+			status: string;
+		} | null = null;
+
+		if (currentSessionMembership) {
+			const sessionsUsed = await db.$count(
+				membershipSessionUsage,
+				and(
+					eq(membershipSessionUsage.membershipId, currentSessionMembership.id),
+					isNull(membershipSessionUsage.voidedAt)
+				)
+			);
+			sessionInfo = {
+				membershipId: currentSessionMembership.id,
+				sessionsTotal: currentSessionMembership.sessionsTotal as number,
+				sessionsUsed,
+				startDate: currentSessionMembership.startDate,
+				endDate: currentSessionMembership.endDate,
+				originalEndDate: currentSessionMembership.originalEndDate,
+				status: currentSessionMembership.status,
+			};
+		}
+
+		return { ...memberRow, sessionInfo };
 	});
 
 export const checkColumnExists = createServerFn()
@@ -206,17 +257,40 @@ export const getMemberAttendanceHistory = createServerFn()
 		return db
 			.select({
 				id: sql<string>`${attendanceLogs.id}::text`,
-				checkInTime: attendanceLogs.checkInTime,
-				checkOutTime: attendanceLogs.checkOutTime,
-				/** Session length in minutes. Null until the member checks out. */
-				duration: sql<number | null>`
-					extract(epoch from (${attendanceLogs.checkOutTime} - ${attendanceLogs.checkInTime})) / 60
-				`.mapWith((value) => (value === null ? null : Number(value))),
+				checkInTime: dailyAttendance.firstCheckInTime,
+				punchCount: dailyAttendance.punchCount,
 			})
-			.from(attendanceLogs)
-			.where(eq(attendanceLogs.memberId, memberId))
-			.orderBy(desc(attendanceLogs.checkInTime), desc(attendanceLogs.id))
+			.from(dailyAttendance)
+			.innerJoin(attendanceLogs, eq(attendanceLogs.id, dailyAttendance.firstAttendanceLogId))
+			.where(eq(dailyAttendance.memberId, memberId))
+			.orderBy(desc(dailyAttendance.firstCheckInTime), desc(attendanceLogs.id))
 			.limit(PROFILE_HISTORY_LIMIT);
+	});
+
+export const getMemberSessionUsageHistory = createServerFn()
+	.middleware([authMiddleware])
+	.validator(z.string().min(1, "Member id is required"))
+	.handler(async ({ data: memberId }) => {
+		await requirePermission("attendance:view");
+
+		return db.query.membershipSessionUsage.findMany({
+			where: eq(membershipSessionUsage.memberId, memberId),
+			orderBy: (row, { desc }) => [desc(row.usageDate), desc(row.id)],
+			limit: PROFILE_HISTORY_LIMIT,
+			columns: {
+				id: true,
+				membershipId: true,
+				usageDate: true,
+				source: true,
+				voidedAt: true,
+				reason: true,
+				voidReason: true,
+			},
+			with: {
+				createdByUser: { columns: { name: true } },
+				voidedByUser: { columns: { name: true } },
+			},
+		});
 	});
 
 export type MemberOverview = Awaited<ReturnType<typeof getMembers>>[number];

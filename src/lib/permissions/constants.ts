@@ -8,6 +8,7 @@ export const PERMISSIONS = [
 	"members:terminate",
 	"members:view-profile",
 	"attendance:view",
+	"attendance:adjust-sessions",
 	"plans:view",
 	"plans:create",
 	"plans:update",

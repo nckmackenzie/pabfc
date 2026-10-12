@@ -6,6 +6,7 @@ import {
 	memberMemberships,
 	members,
 	membershipPlans,
+	membershipSessionUsage,
 	membershipUpgrades,
 	mpesaStkRequests,
 	payments,
@@ -185,19 +186,32 @@ export const getPayment = createServerFn()
 		const membership = await db.query.memberMemberships.findFirst({
 			where: eq(memberMemberships.paymentId, id),
 			columns: {
+				id: true,
 				startDate: true,
 				endDate: true,
 				status: true,
 				autoRenew: true,
+				sessionsTotal: true,
 			},
 		});
+
+		const sessionsUsed =
+			membership?.sessionsTotal != null
+				? await db.$count(
+						membershipSessionUsage,
+						and(
+							eq(membershipSessionUsage.membershipId, membership.id),
+							isNull(membershipSessionUsage.voidedAt)
+						)
+					)
+				: null;
 
 		// A membership payment has at most one addon invoice attached.
 		const { addonInvoices: attachedAddonInvoices, ...paymentRest } = payment;
 
 		return {
 			...paymentRest,
-			membership,
+			membership: membership ? { ...membership, sessionsUsed } : membership,
 			addonInvoice: attachedAddonInvoices[0] ?? null,
 		};
 	});

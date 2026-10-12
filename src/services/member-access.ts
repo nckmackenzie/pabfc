@@ -9,7 +9,7 @@ import {
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 
 type DisableAccessReason = "membership_expired" | "credit_note_termination" | "manual_deactivation";
-type EnableAccessReason = "membership_activated" | "manual_activation";
+type EnableAccessReason = "membership_activated" | "manual_activation" | "session_usage_restored";
 
 async function getMemberAccessProfile(tx: Transaction, memberId: string) {
 	const [row] = await tx
@@ -172,7 +172,11 @@ export async function disableMemberAccessIfNoValidMembership(
 // Called after pending memberships become active. Only members the system had
 // switched to "inactive" are reactivated: frozen/terminated members and deleted
 // members are left alone, and already-active members still have their access.
-export async function enableAccessForActivatedMembers(tx: Transaction, memberIds: string[]) {
+export async function enableAccessForActivatedMembers(
+	tx: Transaction,
+	memberIds: string[],
+	reason: Extract<EnableAccessReason, "membership_activated" | "session_usage_restored"> = "membership_activated"
+) {
 	if (memberIds.length === 0) return;
 
 	const inactiveMembers = await tx
@@ -187,6 +191,6 @@ export async function enableAccessForActivatedMembers(tx: Transaction, memberIds
 		);
 
 	for (const member of inactiveMembers) {
-		await enableMemberAccess(tx, member.id, "membership_activated");
+		await enableMemberAccess(tx, member.id, reason);
 	}
 }

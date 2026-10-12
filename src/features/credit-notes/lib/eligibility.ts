@@ -74,6 +74,15 @@ export async function checkCreditNoteEligibility(
 		});
 	}
 
+	// Credit notes are priced off unused calendar days (computeSuggestedCreditAmount
+	// below) — that model doesn't apply to a fixed session count.
+	if (membership.sessionsTotal !== null) {
+		return failure({
+			type: "ApplicationError",
+			message: "Credit notes for session-based memberships are not supported yet.",
+		});
+	}
+
 	const today = startOfDay(new Date());
 	if (!membership.endDate || parseCalendarDate(membership.endDate) <= today) {
 		return failure({

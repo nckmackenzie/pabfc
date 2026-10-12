@@ -2,6 +2,7 @@ import { format, parseISO } from "date-fns";
 import { describe, expect, it } from "vitest";
 import {
 	computeMembershipEndDate,
+	computeSessionsTotal,
 	computeSuggestedTopUpAmount,
 	computeDaysLate,
 	evaluateLateUpgradeEligibility,
@@ -257,6 +258,16 @@ describe("isEligibleUpgradePlan", () => {
 		const familyFortnight = { id: "family-fortnight", duration: 14, memberCount: 3 };
 		expect(isEligibleUpgradePlan(familyMonthly, familyFortnight)).toBe(true);
 	});
+
+	it("rejects a session-based plan as an upgrade target", () => {
+		const sessionPlan = { id: "sessions-10", duration: 90, memberCount: 1, isSessionBased: true };
+		const monthlySingle = { id: "monthly-single", duration: 30, memberCount: 1 };
+		expect(isEligibleUpgradePlan(sessionPlan, monthlySingle)).toBe(false);
+	});
+
+	it("still allows a non-session plan when isSessionBased is omitted (existing callers unaffected)", () => {
+		expect(isEligibleUpgradePlan(monthly, fortnight)).toBe(true);
+	});
 });
 
 describe("resolveLateUpgradeGraceDays", () => {
@@ -289,6 +300,20 @@ describe("computeDaysLate", () => {
 
 	it("returns a large value for a long-expired membership", () => {
 		expect(computeDaysLate("2026-01-01", "2026-07-05")).toBe(185);
+	});
+});
+
+describe("computeSessionsTotal", () => {
+	it("returns sessionCount × numberOfPeriods for a session-based plan", () => {
+		expect(computeSessionsTotal({ isSessionBased: true, sessionCount: 10 }, 2)).toBe(20);
+	});
+
+	it("returns null for a non-session-based plan regardless of sessionCount", () => {
+		expect(computeSessionsTotal({ isSessionBased: false, sessionCount: 10 }, 2)).toBeNull();
+	});
+
+	it("returns sessionCount unchanged for a single period", () => {
+		expect(computeSessionsTotal({ isSessionBased: true, sessionCount: 12 }, 1)).toBe(12);
 	});
 });
 
