@@ -429,25 +429,31 @@ export const upsertPlan = createServerFn({ method: "POST" })
 					});
 				}
 
+				// Guest passes are always a single session for a single person, whatever
+				// the client sent.
+				const planValues = {
+					...data,
+					isGuestPass: data.isGuestPass,
+					isSessionBased: data.isGuestPass ? true : data.isSessionBased,
+					sessionCount: data.isGuestPass
+						? 1
+						: data.isSessionBased
+							? (data.sessionCount ?? 0)
+							: 0,
+					memberCount: data.isGuestPass ? 1 : data.memberCount,
+					validFrom: data.validFrom || null,
+					validTo: data.validTo || null,
+					description: data.description ?? null,
+					revenueAccountId: data.revenueAccountId ? +data.revenueAccountId : null,
+				};
+
 				await db.transaction(async (tx) => {
 					await tx
 						.insert(membershipPlans)
-						.values({
-							...data,
-							sessionCount: data.isSessionBased ? (data.sessionCount ?? 0) : 0,
-							description: data.description ?? null,
-							revenueAccountId: data.revenueAccountId ? +data.revenueAccountId : null,
-						})
+						.values(planValues)
 						.onConflictDoUpdate({
 							target: membershipPlans.id,
-							set: {
-								...data,
-								sessionCount: data.isSessionBased
-									? (data.sessionCount ?? 0)
-									: 0,
-								description: data.description ?? null,
-								revenueAccountId: data.revenueAccountId ? +data.revenueAccountId : null,
-							},
+							set: planValues,
 						});
 
 					await logActivity({

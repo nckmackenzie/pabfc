@@ -21,6 +21,9 @@ const defaultValues = {
 	isSessionBased: false,
 	sessionCount: null,
 	active: true,
+	isGuestPass: false,
+	validFrom: null,
+	validTo: null,
 	revenueAccountId: "",
 	lateUpgradeGraceDays: null,
 } as PlanSchema;
@@ -63,9 +66,10 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 		onReset: () => form.reset(),
 	});
 
-	const [isSessionBased, price] = useStore(form.store, (state) => [
+	const [isSessionBased, price, isGuestPass] = useStore(form.store, (state) => [
 		state.values.isSessionBased,
 		state.values.price,
+		state.values.isGuestPass,
 	]);
 	const isPaidPlan = Number(price) > 0;
 
@@ -74,6 +78,15 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 			form.setFieldValue("memberCount", 1);
 		}
 	}, [isSessionBased, form]);
+
+	// A guest pass is always a single session for a single person.
+	useEffect(() => {
+		if (isGuestPass) {
+			form.setFieldValue("isSessionBased", true);
+			form.setFieldValue("sessionCount", 1);
+			form.setFieldValue("memberCount", 1);
+		}
+	}, [isGuestPass, form]);
 
 	return (
 		<div className="space-y-6">
@@ -136,14 +149,22 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 								min={1}
 								step={1}
 								required
-								disabled={isSessionBased}
+								disabled={isSessionBased || isGuestPass}
 							/>
 						)}
 					</form.AppField>
 					<form.AppField name="description">
 						{(field) => <field.Textarea label="Description" placeholder="Enter description" />}
 					</form.AppField>
-					<div className="col-span-2 ">
+					<div className="col-span-2 space-y-4">
+						<form.AppField name="isGuestPass">
+							{(field) => (
+								<field.Switch
+									label="Guest pass (sponsored promo)"
+									helperText="A sponsor pays for a new person's single visit within the availability window."
+								/>
+							)}
+						</form.AppField>
 						<div className="flex items-center gap-2">
 							<form.AppField name="isSessionBased">
 								{(field) => <field.Checkbox label="Is Session Based" />}
@@ -156,8 +177,36 @@ export function PlanForm({ plan }: { plan?: PlanSchema }) {
 								type="number"
 								label="Session Count"
 								placeholder="Enter session count"
-								disabled={!isSessionBased}
+								disabled={!isSessionBased || isGuestPass}
 								required={isSessionBased}
+							/>
+						)}
+					</form.AppField>
+					<form.AppField name="validFrom">
+						{(field) => (
+							<field.Input
+								type="date"
+								label="Available from"
+								required={isGuestPass}
+								helperText={
+									isGuestPass
+										? "Passes can be sold and used only within these dates."
+										: "Limits the dates this plan can be sold. Does not change membership end dates."
+								}
+							/>
+						)}
+					</form.AppField>
+					<form.AppField name="validTo">
+						{(field) => (
+							<field.Input
+								type="date"
+								label="Available to"
+								required={isGuestPass}
+								helperText={
+									isGuestPass
+										? "Passes can be sold and used only within these dates."
+										: "Limits the dates this plan can be sold. Does not change membership end dates."
+								}
 							/>
 						)}
 					</form.AppField>

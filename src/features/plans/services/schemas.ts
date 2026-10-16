@@ -12,6 +12,11 @@ export const planSchema = z
 		isSessionBased: z.boolean(),
 		sessionCount: z.number().nullish(),
 		active: z.boolean(),
+		isGuestPass: z.boolean(),
+		// Sale window (Nairobi calendar dates). For guest passes it is also the
+		// last day the pass can be used — see computeMembershipEndDateForPlan.
+		validFrom: z.iso.date({ error: "Enter a valid date" }).nullish(),
+		validTo: z.iso.date({ error: "Enter a valid date" }).nullish(),
 		// Nullable: a complimentary-only plan (price 0) never posts to the GL,
 		// so it needs no revenue account. Every consumer of plan.revenueAccountId
 		// already null-checks it (finalizeMembershipPayment, upgrade, credit notes).
@@ -38,6 +43,57 @@ export const planSchema = z
 				code: "custom",
 				path: ["memberCount"],
 				message: "Session-based plans must cover exactly one member",
+			});
+		}
+		if (data.isGuestPass) {
+			if (!data.isSessionBased) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["isSessionBased"],
+					message: "Guest passes must be session-based",
+				});
+			}
+			if (data.sessionCount !== 1) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["sessionCount"],
+					message: "Guest passes must have exactly 1 session",
+				});
+			}
+			if (data.memberCount !== 1) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["memberCount"],
+					message: "Guest passes must cover exactly one member",
+				});
+			}
+			if (data.price <= 0) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["price"],
+					message: "Guest passes must have a price above zero",
+				});
+			}
+			if (!data.validFrom) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["validFrom"],
+					message: "Available from is required for guest passes",
+				});
+			}
+			if (!data.validTo) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["validTo"],
+					message: "Available to is required for guest passes",
+				});
+			}
+		}
+		if (data.validFrom && data.validTo && data.validTo < data.validFrom) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["validTo"],
+				message: "Available to must be on or after Available from",
 			});
 		}
 		if (data.price > 0 && !data.revenueAccountId) {

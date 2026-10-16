@@ -131,6 +131,9 @@ export const payments = pgTable("payments", {
 	memberId: varchar("member_id")
 		.notNull()
 		.references(() => members.id),
+	// Set only for guest pass payments: the existing member who paid for
+	// `memberId` (the guest). Non-null identifies a guest pass payment.
+	sponsorMemberId: varchar("sponsor_member_id").references(() => members.id),
 	planId: varchar("plan_id").references(() => membershipPlans.id),
 	paymentNo: varchar("payment_no", { length: 50 }).notNull().unique(),
 	// subtotal before discount = plan.price * numberOfPeriods
@@ -156,12 +159,18 @@ export const payments = pgTable("payments", {
 	voidReason: text("void_reason"),
 	createdAt,
 	updatedAt,
-});
+}, (table) => [index("idx_payments_sponsor_member_id").on(table.sponsorMemberId)]);
 
 export const paymentRelations = relations(payments, ({ one, many }) => ({
 	member: one(members, {
 		fields: [payments.memberId],
 		references: [members.id],
+		relationName: "paymentMember",
+	}),
+	sponsor: one(members, {
+		fields: [payments.sponsorMemberId],
+		references: [members.id],
+		relationName: "paymentSponsor",
 	}),
 	members: many(paymentMembers),
 	plan: one(membershipPlans, {

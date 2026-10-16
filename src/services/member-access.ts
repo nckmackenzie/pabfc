@@ -8,8 +8,16 @@ import {
 } from "@/drizzle/schema";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 
-type DisableAccessReason = "membership_expired" | "credit_note_termination" | "manual_deactivation";
-type EnableAccessReason = "membership_activated" | "manual_activation" | "session_usage_restored";
+type DisableAccessReason =
+	| "membership_expired"
+	| "credit_note_termination"
+	| "manual_deactivation"
+	| "payment_voided";
+type EnableAccessReason =
+	| "membership_activated"
+	| "manual_activation"
+	| "session_usage_restored"
+	| "guest_pass_reissued";
 
 async function getMemberAccessProfile(tx: Transaction, memberId: string) {
 	const [row] = await tx

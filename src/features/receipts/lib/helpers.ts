@@ -1,5 +1,6 @@
 import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
 import type { MembershipStatus } from "@/drizzle/schema";
+import { failure, type Result, success } from "@/lib/result";
 
 // "yyyy-MM-dd" strings must go through parseISO (interpreted as local midnight),
 // not `new Date(str)` (interpreted as UTC midnight) — the latter can shift the
@@ -16,13 +17,21 @@ export function membershipRangeConflicts({
 	existingEnd,
 	newStart,
 	newEnd,
+	sessionsExhausted = false,
 }: {
 	status: MembershipStatus;
 	existingStart: string;
 	existingEnd: string | null;
 	newStart: string;
 	newEnd: string;
+	// A session membership whose sessions are all used (non-voided usage >=
+	// sessionsTotal) no longer occupies its date range, so a new membership
+	// may overlap it.
+	sessionsExhausted?: boolean;
 }): boolean {
+	if (sessionsExhausted) {
+		return false;
+	}
 	if (NON_BLOCKING_STATUSES.includes(status as (typeof NON_BLOCKING_STATUSES)[number])) {
 		return false;
 	}
@@ -36,6 +45,58 @@ export function computeMembershipEndDate(
 	numberOfPeriods: number
 ): Date {
 	return addDays(parseCalendarDate(startDate), planDurationDays * numberOfPeriods);
+}
+
+export type PlanAvailabilityInput = {
+	active: boolean;
+	validFrom: string | null;
+	validTo: string | null;
+};
+
+// Sale window check shared by every flow that sells a plan. `today` is a
+// Nairobi "yyyy-MM-dd" date (see nairobiToday).
+export function checkPlanAvailability({
+	plan,
+	today,
+}: {
+	plan: PlanAvailabilityInput;
+	today: string;
+}): Result<void> {
+	if (!plan.active) {
+		return failure({ type: "ApplicationError", message: "This plan is not active." });
+	}
+	if (plan.validFrom && today < plan.validFrom) {
+		return failure({
+			type: "ApplicationError",
+			message: `This plan is not available until ${plan.validFrom}.`,
+		});
+	}
+	if (plan.validTo && today > plan.validTo) {
+		return failure({
+			type: "ApplicationError",
+			message: `This plan was available only until ${plan.validTo}.`,
+		});
+	}
+	return success(undefined);
+}
+
+// Only guest passes cap the membership end date at the plan's validTo; for
+// every other plan validTo limits sale dates only (see checkPlanAvailability).
+export function computeMembershipEndDateForPlan({
+	plan,
+	startDate,
+	numberOfPeriods,
+}: {
+	plan: { duration: number; isGuestPass: boolean; validTo: string | null };
+	startDate: Date | string;
+	numberOfPeriods: number;
+}): Date {
+	const endDate = computeMembershipEndDate(startDate, plan.duration, numberOfPeriods);
+	if (plan.isGuestPass && plan.validTo) {
+		const cap = parseCalendarDate(plan.validTo);
+		return cap < endDate ? cap : endDate;
+	}
+	return endDate;
 }
 
 // Snapshotted at membership creation, not re-derived from the plan later — see
