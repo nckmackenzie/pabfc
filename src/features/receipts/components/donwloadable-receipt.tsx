@@ -171,6 +171,8 @@ interface ReceiptProps {
 		address?: string;
 	}>;
 	paymentMethod: string;
+	// Set for guest pass receipts: the member who paid for the billed guest.
+	sponsor?: { name: string; memberNo: string };
 	lineItems: Array<{
 		description: string;
 		qty: number;
@@ -233,6 +235,11 @@ export const GymReceiptPdf = ({ data }: { data: ReceiptProps }) => (
 								.slice(1)
 								.map((member) => `${member.name} (Member No: ${member.id})`)
 								.join(", ")}
+						</Text>
+					)}
+					{data.sponsor && (
+						<Text style={styles.infoValue}>
+							Paid by: {data.sponsor.name} ({data.sponsor.memberNo})
 						</Text>
 					)}
 				</View>

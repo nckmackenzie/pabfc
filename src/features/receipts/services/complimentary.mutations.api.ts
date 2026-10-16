@@ -14,7 +14,11 @@ import {
 	notifyComplimentaryRequestDecision,
 	notifyComplimentaryRequestSubmitted,
 } from "@/features/receipts/lib/complimentary-notifications";
-import { computeMembershipEndDate, computeSessionsTotal } from "@/features/receipts/lib/helpers";
+import {
+	checkPlanAvailability,
+	computeMembershipEndDateForPlan,
+	computeSessionsTotal,
+} from "@/features/receipts/lib/helpers";
 import {
 	checkMembershipOverlap,
 	lockMemberMembershipCreation,
@@ -26,9 +30,12 @@ import {
 	rejectComplimentaryRequestSchema,
 } from "@/features/receipts/services/complimentary.schemas";
 import { dateFormat } from "@/lib/helpers";
+import { nairobiToday } from "@/lib/nairobi-time";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
+
+const GUEST_PASS_BLOCKED_MESSAGE = "Guest passes must be issued through the guest pass flow";
 
 export const requestComplimentaryMembershipFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
@@ -63,8 +70,16 @@ export const requestComplimentaryMembershipFn = createServerFn({ method: "POST" 
 				});
 			}
 
+			if (plan.isGuestPass) {
+				return failure({ type: "ApplicationError", message: GUEST_PASS_BLOCKED_MESSAGE });
+			}
+			const availability = checkPlanAvailability({ plan, today: nairobiToday() });
+			if (!availability.success) {
+				return availability;
+			}
+
 			const candidateEndDate = dateFormat(
-				computeMembershipEndDate(startDate, plan.duration, numberOfPeriods)
+				computeMembershipEndDateForPlan({ plan, startDate, numberOfPeriods })
 			);
 
 			try {
@@ -183,8 +198,20 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 						});
 					}
 
+					if (plan.isGuestPass) {
+						throw fail({ type: "ApplicationError", message: GUEST_PASS_BLOCKED_MESSAGE });
+					}
+					const availability = checkPlanAvailability({ plan, today: nairobiToday() });
+					if (!availability.success) {
+						throw new PaymentTransactionError(availability);
+					}
+
 					const candidateEndDate = dateFormat(
-						computeMembershipEndDate(request.startDate, plan.duration, request.numberOfPeriods)
+						computeMembershipEndDateForPlan({
+							plan,
+							startDate: request.startDate,
+							numberOfPeriods: request.numberOfPeriods,
+						})
 					);
 					const overlapCheck = await checkMembershipOverlap({
 						tx,
@@ -226,11 +253,11 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 
 					const today = dateFormat(new Date());
 					const membershipStatus = request.startDate > today ? "pending" : "active";
-					const endDate = computeMembershipEndDate(
-						request.startDate,
-						plan.duration,
-						request.numberOfPeriods
-					);
+					const endDate = computeMembershipEndDateForPlan({
+						plan,
+						startDate: request.startDate,
+						numberOfPeriods: request.numberOfPeriods,
+					});
 
 					const mostRecentMembership = await tx.query.memberMemberships.findFirst({
 						where: eq(memberMemberships.memberId, request.memberId),

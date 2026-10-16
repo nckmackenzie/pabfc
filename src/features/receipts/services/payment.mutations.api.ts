@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
 import {
@@ -14,6 +14,7 @@ import {
 	memberMemberships,
 	members,
 	membershipPlans,
+	membershipSessionUsage,
 	membershipUpgrades,
 	mpesaStkRequests,
 	paymentMembers,
@@ -40,6 +41,7 @@ import {
 } from "@/features/credit-notes/lib/redemption";
 import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { buildVoidReversalJournalLines, checkVoidEligibility } from "@/features/receipts/lib/void";
+import { disableMemberAccess } from "@/services/member-access";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { createBankingEntry } from "@/services/banking";
 import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
@@ -50,7 +52,9 @@ import {
 	voidPaymentSchema,
 } from "@/features/receipts/services/schemas";
 import {
+	checkPlanAvailability,
 	computeMembershipEndDate,
+	computeMembershipEndDateForPlan,
 	isEligibleUpgradePlan,
 	membershipRangeConflicts,
 	splitAmountEvenly,
@@ -63,6 +67,7 @@ import {
 	toBig,
 	toDecimalString,
 } from "@/lib/helpers";
+import { nairobiToday } from "@/lib/nairobi-time";
 import { initiateMpesaStkPush, registerUrlCallacks } from "@/lib/mpesa";
 import { userHasPermission } from "@/lib/permissions/permission-queries";
 import { requirePermission } from "@/lib/permissions/permissions";
@@ -94,8 +99,29 @@ export async function checkMembershipOverlap({
 	for (const memberId of memberIds) {
 		const existing = await tx.query.memberMemberships.findMany({
 			where: eq(memberMemberships.memberId, memberId),
-			columns: { id: true, status: true, startDate: true, endDate: true },
+			columns: { id: true, status: true, startDate: true, endDate: true, sessionsTotal: true },
 		});
+
+		// One grouped query for every session membership, rather than one per row.
+		const sessionMembershipIds = existing.filter((m) => m.sessionsTotal !== null).map((m) => m.id);
+		const usageCounts = new Map<string, number>();
+		if (sessionMembershipIds.length > 0) {
+			const rows = await tx
+				.select({
+					membershipId: membershipSessionUsage.membershipId,
+					used: count(),
+				})
+				.from(membershipSessionUsage)
+				.where(
+					and(
+						inArray(membershipSessionUsage.membershipId, sessionMembershipIds),
+						isNull(membershipSessionUsage.voidedAt)
+					)
+				)
+				.groupBy(membershipSessionUsage.membershipId);
+			for (const row of rows) usageCounts.set(row.membershipId, row.used);
+		}
+
 		const conflict = existing.find((m) =>
 			membershipRangeConflicts({
 				status: m.status,
@@ -103,6 +129,8 @@ export async function checkMembershipOverlap({
 				existingEnd: m.endDate,
 				newStart: startDate,
 				newEnd: endDate,
+				sessionsExhausted:
+					m.sessionsTotal !== null && (usageCounts.get(m.id) ?? 0) >= m.sessionsTotal,
 			})
 		);
 		if (conflict) {
@@ -322,6 +350,16 @@ export const createManualMembershipPaymentFn = createServerFn({
 				if (!plan) {
 					return failure({ type: "NotFoundError", message: "Plan not found" });
 				}
+				if (plan.isGuestPass) {
+					return failure({
+						type: "ApplicationError",
+						message: "Guest passes must be issued through the guest pass flow",
+					});
+				}
+				const availability = checkPlanAvailability({ plan, today: nairobiToday() });
+				if (!availability.success) {
+					return availability;
+				}
 
 				if (memberIds.length !== plan.memberCount) {
 					return failure({
@@ -395,7 +433,7 @@ export const createManualMembershipPaymentFn = createServerFn({
 					}
 
 					const candidateEndDate = dateFormat(
-						computeMembershipEndDate(startDate, plan.duration, numberOfPeriods)
+						computeMembershipEndDateForPlan({ plan, startDate, numberOfPeriods })
 					);
 					const overlapCheck = await checkMembershipOverlap({
 						tx,
@@ -484,6 +522,30 @@ export const createManualMembershipPaymentFn = createServerFn({
 		}
 	);
 
+async function disableAccessForMembersWithoutLiveMembership(memberIds: string[], paymentId: string) {
+	for (const memberId of memberIds) {
+		try {
+			await db.transaction(async (tx) => {
+				const liveMembership = await tx.query.memberMemberships.findFirst({
+					where: and(
+						eq(memberMemberships.memberId, memberId),
+						inArray(memberMemberships.status, ["active", "pending"])
+					),
+					columns: { id: true },
+				});
+				if (!liveMembership) {
+					await disableMemberAccess(tx, memberId, "payment_voided");
+				}
+			});
+		} catch (error) {
+			console.error(
+				`Failed to disable access for member ${memberId} after voiding payment ${paymentId}`,
+				error
+			);
+		}
+	}
+}
+
 export const voidPaymentFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.validator(voidPaymentSchema)
@@ -496,6 +558,7 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 		}) => {
 			await requirePermission("receipts:void");
 
+			const coveredMemberIdsForVoid: string[] = [];
 			try {
 				const result = await db.transaction(async (tx) => {
 					// Lock on the covered members before the eligibility check — the same
@@ -516,6 +579,7 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 						throw new PaymentTransactionError(eligibility);
 					}
 					const { payment, coveredMembers } = eligibility.data;
+					coveredMemberIdsForVoid.push(...coveredMembers.map((member) => member.id));
 
 					const reversalLinesResult = await buildVoidReversalJournalLines(tx, payment);
 					if (!reversalLinesResult.success) {
@@ -530,6 +594,20 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 
 					// Member names must be captured above before this delete — the join
 					// table won't be queryable for them afterward.
+					// membership_session_usage.membership_id is ON DELETE RESTRICT, so the
+					// waived (voided) usage rows that eligibility ignored must go first.
+					// Non-voided rows already failed the eligibility check above.
+					const paymentMembershipIds = (
+						await tx
+							.select({ id: memberMemberships.id })
+							.from(memberMemberships)
+							.where(eq(memberMemberships.paymentId, payment.id))
+					).map((row) => row.id);
+					if (paymentMembershipIds.length > 0) {
+						await tx
+							.delete(membershipSessionUsage)
+							.where(inArray(membershipSessionUsage.membershipId, paymentMembershipIds));
+					}
 					await tx.delete(memberMemberships).where(eq(memberMemberships.paymentId, payment.id));
 					await tx.delete(paymentMembers).where(eq(paymentMembers.paymentId, payment.id));
 
@@ -619,6 +697,16 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 
 					return success(undefined);
 				});
+
+				// Best-effort follow-up once the void has committed: a member left with
+				// no live membership (e.g. a guest whose only pass was voided) must not
+				// keep door access. Never fails the void — errors are logged only.
+				if (result.success) {
+					await disableAccessForMembersWithoutLiveMembership(
+						coveredMemberIdsForVoid,
+						paymentId
+					);
+				}
 
 				return result;
 			} catch (error) {

@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import {
 	creditNotes,
 	journalEntries,
@@ -13,6 +13,15 @@ import type { ReceiptJournalLine } from "@/features/receipts/lib/journal";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 import { failure, success, type Result } from "@/lib/result";
 import { areJournalValuesBalanced } from "@/services/journal";
+
+// Voided (waived) usage rows no longer consume a session, so they must not
+// block a void. Exported so the exact query shape can be asserted in tests.
+export function activeSessionUsageCondition(membershipId: string) {
+	return and(
+		eq(membershipSessionUsage.membershipId, membershipId),
+		isNull(membershipSessionUsage.voidedAt)
+	);
+}
 
 export type VoidEligiblePayment = typeof payments.$inferSelect;
 
@@ -73,13 +82,13 @@ export async function checkVoidEligibility(
 		});
 	}
 
-	// Sessions already recorded against this membership (used or manually
-	// waived) make a clean automatic void impossible — see
-	// membership_session_usage. Mirrors the upgrade/credit-note checks below:
+	// Sessions already consumed against this membership make a clean automatic
+	// void impossible — see membership_session_usage. Waived (voided) rows are
+	// ignored; they are deleted with the membership in voidPaymentFn. Mirrors the upgrade/credit-note checks below:
 	// this is a new, additive guard, not a replacement for them.
 	if (membershipRow.sessionsTotal !== null) {
 		const existingUsage = await tx.query.membershipSessionUsage.findFirst({
-			where: eq(membershipSessionUsage.membershipId, membershipRow.id),
+			where: activeSessionUsageCondition(membershipRow.id),
 			columns: { id: true },
 		});
 		if (existingUsage) {

@@ -130,6 +130,7 @@ import { Route as AppReceiptsReceiptIdDetailsRouteImport } from './routes/app/re
 import { Route as AppReceiptsReceiptIdUpgradeRouteImport } from './routes/app/receipts/$receiptId/upgrade'
 import { Route as AppReceiptsComplimentaryIndexRouteImport } from './routes/app/receipts/complimentary/index'
 import { Route as AppReceiptsComplimentaryNewRouteImport } from './routes/app/receipts/complimentary/new'
+import { Route as AppReceiptsGuestPassNewRouteImport } from './routes/app/receipts/guest-pass/new'
 import { Route as AppReportsAttendanceIndexRouteImport } from './routes/app/reports/attendance/index'
 import { Route as AppReportsFinanceIndexRouteImport } from './routes/app/reports/finance/index'
 import { Route as AppReportsHumanResourcesIndexRouteImport } from './routes/app/reports/human-resources/index'
@@ -814,6 +815,11 @@ const AppReceiptsComplimentaryNewRoute =
     path: '/complimentary/new',
     getParentRoute: () => AppReceiptsRouteRoute,
   } as any)
+const AppReceiptsGuestPassNewRoute = AppReceiptsGuestPassNewRouteImport.update({
+  id: '/guest-pass/new',
+  path: '/guest-pass/new',
+  getParentRoute: () => AppReceiptsRouteRoute,
+} as any)
 const AppReportsAttendanceIndexRoute =
   AppReportsAttendanceIndexRouteImport.update({
     id: '/reports/attendance/',
@@ -1200,6 +1206,7 @@ export interface FileRoutesByFullPath {
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
   '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
+  '/app/receipts/guest-pass/new': typeof AppReceiptsGuestPassNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1345,6 +1352,7 @@ export interface FileRoutesByTo {
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
   '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
+  '/app/receipts/guest-pass/new': typeof AppReceiptsGuestPassNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1516,6 +1524,7 @@ export interface FileRoutesById {
   '/app/receipts/$receiptId/details': typeof AppReceiptsReceiptIdDetailsRoute
   '/app/receipts/$receiptId/upgrade': typeof AppReceiptsReceiptIdUpgradeRoute
   '/app/receipts/complimentary/new': typeof AppReceiptsComplimentaryNewRoute
+  '/app/receipts/guest-pass/new': typeof AppReceiptsGuestPassNewRoute
   '/app/suppliers/$supplierId/edit': typeof AppSuppliersSupplierIdEditRoute
   '/app/users/$userId/edit': typeof AppUsersUserIdEditRoute
   '/app/users/$userId/reset': typeof AppUsersUserIdResetRoute
@@ -1687,6 +1696,7 @@ export interface FileRouteTypes {
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
     | '/app/receipts/complimentary/new'
+    | '/app/receipts/guest-pass/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -1832,6 +1842,7 @@ export interface FileRouteTypes {
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
     | '/app/receipts/complimentary/new'
+    | '/app/receipts/guest-pass/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -2002,6 +2013,7 @@ export interface FileRouteTypes {
     | '/app/receipts/$receiptId/details'
     | '/app/receipts/$receiptId/upgrade'
     | '/app/receipts/complimentary/new'
+    | '/app/receipts/guest-pass/new'
     | '/app/suppliers/$supplierId/edit'
     | '/app/users/$userId/edit'
     | '/app/users/$userId/reset'
@@ -2931,6 +2943,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReceiptsComplimentaryNewRouteImport
       parentRoute: typeof AppReceiptsRouteRoute
     }
+    '/app/receipts/guest-pass/new': {
+      id: '/app/receipts/guest-pass/new'
+      path: '/guest-pass/new'
+      fullPath: '/app/receipts/guest-pass/new'
+      preLoaderRoute: typeof AppReceiptsGuestPassNewRouteImport
+      parentRoute: typeof AppReceiptsRouteRoute
+    }
     '/app/reports/attendance/': {
       id: '/app/reports/attendance/'
       path: '/reports/attendance'
@@ -3623,6 +3642,7 @@ interface AppReceiptsRouteRouteChildren {
   AppReceiptsReceiptIdDetailsRoute: typeof AppReceiptsReceiptIdDetailsRoute
   AppReceiptsReceiptIdUpgradeRoute: typeof AppReceiptsReceiptIdUpgradeRoute
   AppReceiptsComplimentaryNewRoute: typeof AppReceiptsComplimentaryNewRoute
+  AppReceiptsGuestPassNewRoute: typeof AppReceiptsGuestPassNewRoute
   AppReceiptsComplimentaryIndexRoute: typeof AppReceiptsComplimentaryIndexRoute
   AppReceiptsAddonsAddonInvoiceIdDetailsRoute: typeof AppReceiptsAddonsAddonInvoiceIdDetailsRoute
 }
@@ -3633,6 +3653,7 @@ const AppReceiptsRouteRouteChildren: AppReceiptsRouteRouteChildren = {
   AppReceiptsReceiptIdDetailsRoute: AppReceiptsReceiptIdDetailsRoute,
   AppReceiptsReceiptIdUpgradeRoute: AppReceiptsReceiptIdUpgradeRoute,
   AppReceiptsComplimentaryNewRoute: AppReceiptsComplimentaryNewRoute,
+  AppReceiptsGuestPassNewRoute: AppReceiptsGuestPassNewRoute,
   AppReceiptsComplimentaryIndexRoute: AppReceiptsComplimentaryIndexRoute,
   AppReceiptsAddonsAddonInvoiceIdDetailsRoute:
     AppReceiptsAddonsAddonInvoiceIdDetailsRoute,

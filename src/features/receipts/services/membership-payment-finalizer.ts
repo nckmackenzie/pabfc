@@ -22,7 +22,7 @@ import {
 	getMemberIdsWithCurrentMemberships,
 } from "@/features/receipts/lib/membership-activation";
 import {
-	computeMembershipEndDate,
+	computeMembershipEndDateForPlan,
 	computeSessionsTotal,
 	parseCalendarDate,
 	splitAmountEvenly,
@@ -232,7 +232,11 @@ export async function finalizeMembershipPayment({
 
 	const today = startOfDay(new Date());
 	const membershipStatus = startDate > today ? "pending" : "active";
-	const endDate = computeMembershipEndDate(startDate, plan.duration, periods);
+	const endDate = computeMembershipEndDateForPlan({
+		plan,
+		startDate,
+		numberOfPeriods: periods,
+	});
 
 	// Split the membership total across every covered member (in cents, so the shares
 	// sum back to the exact total) so that each member's own membership row reflects

@@ -715,6 +715,13 @@
       "when": 1791724054103,
       "tag": "0101_create_vw_daily_attendance_view",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1792147315702,
+      "tag": "0102_cool_vivisector",
+      "breakpoints": true
     }
   ]
 }

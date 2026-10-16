@@ -16,6 +16,7 @@ import {
 } from "@/drizzle/schema";
 import { pickCurrentSessionMembership } from "@/features/members/lib/session-membership";
 import { memberValidateSearch } from "@/features/members/services/schemas";
+import { nextMemberNo } from "./member-creation";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
@@ -165,14 +166,7 @@ export const checkColumnExists = createServerFn()
 
 export const getMemberNo = createServerFn()
 	.middleware([authMiddleware])
-	.handler(async () => {
-		return db
-			.select({
-				memberNo: sql<number>`COALESCE(MAX(${members.memberNo}), 1000)`,
-			})
-			.from(members)
-			.then((res) => res[0].memberNo + 1);
-	});
+	.handler(async () => nextMemberNo());
 
 export const getMember = createServerFn()
 	.middleware([authMiddleware])

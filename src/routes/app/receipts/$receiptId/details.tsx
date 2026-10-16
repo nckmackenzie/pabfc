@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { z } from "zod";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import {
 	PaymentDetails,
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/app/receipts/$receiptId/details")({
 	beforeLoad: async () => {
 		await requirePermission("receipts:view");
 	},
+	validateSearch: z.object({ guestMemberNo: z.number().optional().catch(undefined) }),
 	head: () => ({
 		meta: [{ title: "Payment Details / Prime Age Beauty & Fitness Club" }],
 	}),

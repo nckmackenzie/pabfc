@@ -25,15 +25,8 @@ import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { disableMemberAccess, enableMemberAccess } from "@/services/member-access";
-import {
-	checkColumnExists,
-	getMember,
-	getMemberNo,
-} from "./members.queries.api";
-
-function generateBioTimeEmployeeCode(memberNo: number) {
-	return `M${String(memberNo).padStart(6, "0")}`;
-}
+import { insertMemberRecord, mapMemberData } from "./member-creation";
+import { checkColumnExists, getMember } from "./members.queries.api";
 
 const createMember = async ({
 	data,
@@ -49,71 +42,8 @@ const createMember = async ({
 			idNumber: data.idNumber,
 		});
 
-		const memberNo = await getMemberNo();
-		const memberData = mapMemberData(data);
-
-		const settings = await db.query.biotimeSettings.findFirst();
-
 		const memberId = await db.transaction(async (tx) => {
-			const [member] = await tx
-				.insert(members)
-				.values({
-					...memberData,
-					memberNo,
-				})
-				.returning();
-
-			const empCode = generateBioTimeEmployeeCode(memberNo);
-
-			const payload = {
-				empCode,
-				firstName: member.firstName,
-				lastName: member.lastName,
-				departmentId: 1,
-				areaIds: [settings?.authorizedAreaId ?? 2],
-				mobile: member.contact,
-				email: member.email,
-				gender: member.gender,
-				birthday: member.dateOfBirth,
-				employeeType: 1,
-			};
-
-			const existingProfile = await tx.query.biotimePersonProfiles.findFirst({
-				where: and(
-					eq(biotimePersonProfiles.memberId, member.id),
-					eq(biotimePersonProfiles.personType, "member"),
-				),
-			});
-
-			if (existingProfile) {
-				throw new ConflictError("Access Control Profile already exists");
-			}
-
-			const [profile] = await tx
-				.insert(biotimePersonProfiles)
-				.values({
-					personType: "member",
-					memberId: member.id,
-					employeeId: null,
-					biotimeEmployeeCode: empCode,
-					biotimeDepartmentId: 1,
-					authorizedAreaId: 2,
-					unauthorizedAreaId: 1,
-					desiredAccessEnabled: true,
-					accessControlStatus: "pending_sync",
-					biometricEnrollmentStatus: "pending",
-					lastSyncPayload: payload,
-				})
-				.returning();
-
-			await tx.insert(accessControlSyncJobs).values({
-				biotimePersonProfileId: profile.id,
-				memberId: member.id,
-				action: "CREATE_EMPLOYEE",
-				status: "pending",
-				payload,
-				idempotencyKey: `CREATE_EMPLOYEE:${profile.id}:${empCode}`,
-			});
+			const member = await insertMemberRecord({ tx, data });
 
 			await logActivity({
 				data: {
@@ -520,38 +450,4 @@ const validateMemberUniqueness = async ({
 			throw new ConflictError("ID Number");
 		}
 	}
-};
-
-const mapMemberData = (data: MemberFormSchema) => {
-	const {
-		firstName,
-		lastName,
-		dateOfBirth,
-		gender,
-		email,
-		contact,
-		idType,
-		idNumber,
-		memberStatus,
-		emergencyContactName,
-		emergencyContactNo,
-		emergencyContactRelationship,
-		notes,
-	} = data;
-
-	return {
-		firstName,
-		lastName,
-		dateOfBirth: dateOfBirth ? dateOfBirth : null,
-		gender: gender ?? undefined,
-		email: email ?? undefined,
-		contact,
-		idType: idType ?? undefined,
-		idNumber: !idType ? null : idNumber,
-		memberStatus,
-		emergencyContactName: emergencyContactName ?? undefined,
-		emergencyContactNo: emergencyContactNo ?? undefined,
-		emergencyContactRelationship: emergencyContactRelationship ?? undefined,
-		notes: notes ?? undefined,
-	};
 };

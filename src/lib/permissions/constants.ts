@@ -37,6 +37,7 @@ export const PERMISSIONS = [
 	"receipts:top-up-late",
 	"receipts:complimentary-request",
 	"receipts:complimentary-approve",
+	"receipts:guest-pass",
 	"credit-notes:view",
 	"credit-notes:create",
 	"bills:view",

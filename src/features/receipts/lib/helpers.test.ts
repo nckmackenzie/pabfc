@@ -1,7 +1,9 @@
 import { format, parseISO } from "date-fns";
 import { describe, expect, it } from "vitest";
 import {
+	checkPlanAvailability,
 	computeMembershipEndDate,
+	computeMembershipEndDateForPlan,
 	computeSessionsTotal,
 	computeSuggestedTopUpAmount,
 	computeDaysLate,
@@ -361,5 +363,83 @@ describe("evaluateLateUpgradeEligibility", () => {
 			hasLateUpgradePermission: true,
 		});
 		expect(result.eligible).toBe(false);
+	});
+});
+
+describe("membershipRangeConflicts with sessionsExhausted", () => {
+	const overlapping = {
+		status: "active" as const,
+		existingStart: "2026-01-01",
+		existingEnd: "2026-01-31",
+		newStart: "2026-01-10",
+		newEnd: "2026-01-20",
+	};
+
+	it("does not block when the session membership is exhausted", () => {
+		expect(membershipRangeConflicts({ ...overlapping, sessionsExhausted: true })).toBe(false);
+	});
+
+	it("still blocks when the session membership is not exhausted", () => {
+		expect(membershipRangeConflicts({ ...overlapping, sessionsExhausted: false })).toBe(true);
+		expect(membershipRangeConflicts(overlapping)).toBe(true);
+	});
+});
+
+describe("checkPlanAvailability", () => {
+	const plan = { active: true, validFrom: "2026-10-10", validTo: "2026-10-20" };
+
+	it("fails for an inactive plan", () => {
+		expect(checkPlanAvailability({ plan: { ...plan, active: false }, today: "2026-10-15" }).success).toBe(false);
+	});
+
+	it("fails before the window opens", () => {
+		expect(checkPlanAvailability({ plan, today: "2026-10-09" }).success).toBe(false);
+	});
+
+	it("fails after the window closes", () => {
+		expect(checkPlanAvailability({ plan, today: "2026-10-21" }).success).toBe(false);
+	});
+
+	it("passes on the boundary dates", () => {
+		expect(checkPlanAvailability({ plan, today: "2026-10-10" }).success).toBe(true);
+		expect(checkPlanAvailability({ plan, today: "2026-10-20" }).success).toBe(true);
+	});
+
+	it("treats missing bounds as open-ended", () => {
+		const open = { active: true, validFrom: null, validTo: null };
+		expect(checkPlanAvailability({ plan: open, today: "1999-01-01" }).success).toBe(true);
+		expect(checkPlanAvailability({ plan: { ...open, validFrom: "2026-10-10" }, today: "2030-01-01" }).success).toBe(true);
+		expect(checkPlanAvailability({ plan: { ...open, validTo: "2026-10-10" }, today: "2020-01-01" }).success).toBe(true);
+	});
+});
+
+describe("computeMembershipEndDateForPlan", () => {
+	const fmt = (date: Date) => format(date, "yyyy-MM-dd");
+
+	it("caps a guest pass at validTo", () => {
+		const end = computeMembershipEndDateForPlan({
+			plan: { duration: 30, isGuestPass: true, validTo: "2026-10-20" },
+			startDate: "2026-10-15",
+			numberOfPeriods: 1,
+		});
+		expect(fmt(end)).toBe("2026-10-20");
+	});
+
+	it("leaves a guest pass under the cap unchanged", () => {
+		const end = computeMembershipEndDateForPlan({
+			plan: { duration: 2, isGuestPass: true, validTo: "2026-10-20" },
+			startDate: "2026-10-15",
+			numberOfPeriods: 1,
+		});
+		expect(fmt(end)).toBe("2026-10-17");
+	});
+
+	it("never caps a regular plan", () => {
+		const end = computeMembershipEndDateForPlan({
+			plan: { duration: 30, isGuestPass: false, validTo: "2026-10-20" },
+			startDate: "2026-10-15",
+			numberOfPeriods: 1,
+		});
+		expect(fmt(end)).toBe("2026-11-14");
 	});
 });

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ClipboardCheckIcon } from "@/components/ui/icons";
+import { TicketIcon } from "lucide-react";
 import { ButtonLink } from "@/components/ui/links";
 import { PermissionGate } from "@/components/ui/permission-gate";
 import { ProtectedPage } from "@/components/ui/protected-page";
@@ -34,17 +35,28 @@ function RouteComponent() {
 				onSearch={(val) => setFilters({ q: val })}
 				buttonText="Add Receipt"
 				extraActionButtons={
-					<PermissionGate
-						permissions={["receipts:complimentary-request", "receipts:complimentary-approve"]}
-					>
-						<ButtonLink
-							variant="outline"
-							path="/app/receipts/complimentary"
-							icon={<ClipboardCheckIcon />}
+					<>
+						<PermissionGate permissions={["receipts:guest-pass"]}>
+							<ButtonLink
+								variant="outline"
+								path="/app/receipts/guest-pass/new"
+								icon={<TicketIcon />}
+							>
+								Issue Guest Pass
+							</ButtonLink>
+						</PermissionGate>
+						<PermissionGate
+							permissions={["receipts:complimentary-request", "receipts:complimentary-approve"]}
 						>
-							Complimentary Memberships
-						</ButtonLink>
-					</PermissionGate>
+							<ButtonLink
+								variant="outline"
+								path="/app/receipts/complimentary"
+								icon={<ClipboardCheckIcon />}
+							>
+								Complimentary Memberships
+							</ButtonLink>
+						</PermissionGate>
+					</>
 				}
 			>
 				<ReceiptsTable />

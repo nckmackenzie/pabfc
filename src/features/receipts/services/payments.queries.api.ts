@@ -171,6 +171,9 @@ export const getPayment = createServerFn()
 						},
 					},
 				},
+				sponsor: {
+					columns: { id: true, firstName: true, lastName: true, memberNo: true },
+				},
 				plan: { columns: { name: true, price: true } },
 				user: { columns: { name: true } },
 				voidedByUser: { columns: { name: true } },

@@ -143,7 +143,8 @@ export const memberRelations = relations(members, ({ many }) => ({
 	memberships: many(memberMemberships),
 	attendances: many(attendanceLogs),
 	invoices: many(customerInvoices),
-	payments: many(payments),
+	payments: many(payments, { relationName: "paymentMember" }),
+	sponsoredPayments: many(payments, { relationName: "paymentSponsor" }),
 }));
 
 export const membershipPlans = pgTable(
@@ -159,6 +160,9 @@ export const membershipPlans = pgTable(
 		memberCount: integer("member_count").notNull().default(1),
 		validFrom: date("valid_from"),
 		validTo: date("valid_to"),
+		// Heroes Day style promo: a sponsor pays for a brand-new person's single
+		// session. Always session-based with sessionCount 1 and memberCount 1.
+		isGuestPass: boolean("is_guest_pass").notNull().default(false),
 		revenueAccountId: integer("revenue_account_id").references(
 			() => ledgerAccounts.id,
 		),

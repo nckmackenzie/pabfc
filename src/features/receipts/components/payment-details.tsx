@@ -1,6 +1,8 @@
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
+import { nanoid } from "nanoid";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ArrowUpCircle, Download, RefreshCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +21,8 @@ import { GymReceiptPdf } from "./donwloadable-receipt";
 export function PaymentDetails() {
 	const payment = getRouteApi("/app/receipts/$receiptId/details").useLoaderData();
 	const { receiptNo, isLoading: isLoadingReceiptNo } = useReceiptNo(+payment.paymentNo);
+	const { guestMemberNo } = getRouteApi("/app/receipts/$receiptId/details").useSearch();
+	const [guestNoticeDismissed, setGuestNoticeDismissed] = useState(false);
 	const { hasPermission } = usePermissions();
 
 	// The banner query only needs view access; the eligibility query is gated on
@@ -89,6 +93,27 @@ export function PaymentDetails() {
 
 	return (
 		<div className="space-y-6">
+			{guestMemberNo !== undefined && !guestNoticeDismissed && (
+				<CustomAlert
+					title="Guest pass issued"
+					description={
+						<div className="flex items-start justify-between gap-4">
+							<span>
+								Guest created as {guestMemberNo}. Enroll their face/fingerprint on the BioTime
+								terminal before their visit.
+							</span>
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								onClick={() => setGuestNoticeDismissed(true)}
+							>
+								Dismiss
+							</Button>
+						</div>
+					}
+				/>
+			)}
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Receipt details</h1>
@@ -111,6 +136,12 @@ export function PaymentDetails() {
 												address: "",
 											})),
 											paymentMethod: payment.method.replace("_", " ").toUpperCase(),
+											sponsor: payment.sponsor
+												? {
+														name: `${payment.sponsor.firstName} ${payment.sponsor.lastName}`,
+														memberNo: payment.sponsor.memberNo.toString(),
+													}
+												: undefined,
 											lineItems: [
 												{
 													description: `Membership Fee - ${payment.plan?.name}`,
@@ -292,6 +323,25 @@ export function PaymentDetails() {
 										</p>
 									))}
 								</div>
+								{payment.sponsor && (
+									<div className="space-y-1">
+										<p className="font-medium text-muted-foreground">Paid by</p>
+										<p className="font-semibold">
+											<Link
+												to="/app/members/$memberId/profile"
+												params={{ memberId: payment.sponsor.id }}
+												search={{ vid: nanoid() }}
+												className="underline-offset-4 hover:underline"
+											>
+												{payment.sponsor.firstName} {payment.sponsor.lastName}
+											</Link>{" "}
+											<span className="text-muted-foreground text-xs font-normal">
+												(ID: {payment.sponsor.memberNo})
+											</span>{" "}
+											<Badge variant="secondary">Guest pass</Badge>
+										</p>
+									</div>
+								)}
 								<div className="space-y-1">
 									<p className="font-medium text-muted-foreground">Payment method</p>
 									<p className="font-semibold capitalize">{payment.method.replace(/_/g, " ")}</p>

@@ -30,6 +30,19 @@ export function PlansTable() {
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title="Plan/Package Name" />
 			),
+			cell: ({ row: { original: plan } }) => (
+				<div className="flex flex-col gap-1">
+					<span className="flex items-center gap-2">
+						{plan.name}
+						{plan.isGuestPass && <Badge variant="secondary">Guest pass</Badge>}
+					</span>
+					{(plan.validFrom || plan.validTo) && (
+						<span className="text-xs text-muted-foreground">
+							Available {plan.validFrom ?? "any time"} to {plan.validTo ?? "open-ended"}
+						</span>
+					)}
+				</div>
+			),
 		},
 		{
 			accessorKey: "duration",

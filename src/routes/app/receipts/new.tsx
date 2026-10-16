@@ -27,7 +27,7 @@ export const Route = createFileRoute("/app/receipts/new")({
 			members,
 			taxType,
 			plans: plans
-				.filter(({ active }) => active)
+				.filter(({ active, isGuestPass }) => active && !isGuestPass)
 				.map((plan) => ({ ...plan, name: toTitleCase(plan.name) })),
 		};
 	},
