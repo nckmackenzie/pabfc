@@ -104,7 +104,6 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 				id: data.id ?? nanoid(),
 				data: {
 					logRetentionDays: data.logRetentionDays,
-					inactiveMemberDays: nullifyZeroValues(data.inactiveMemberDays),
 					inactiveMemberDeleteDays: nullifyZeroValues(data.inactiveMemberDeleteDays),
 					inactiveUserDays: nullifyZeroValues(data.inactiveUserDays),
 					inactiveUserDeleteDays: nullifyZeroValues(data.inactiveUserDeleteDays),
@@ -115,8 +114,7 @@ export const upsertDataSettings = createServerFn({ method: "POST" })
 				target: settings.id,
 				set: {
 					data: {
-						inactiveMemberDays: nullifyZeroValues(data.inactiveMemberDays),
-						inactiveMemberDeleteDays: nullifyZeroValues(data.inactiveMemberDeleteDays),
+							inactiveMemberDeleteDays: nullifyZeroValues(data.inactiveMemberDeleteDays),
 						inactiveUserDays: nullifyZeroValues(data.inactiveUserDays),
 						inactiveUserDeleteDays: nullifyZeroValues(data.inactiveUserDeleteDays),
 						logRetentionDays: data.logRetentionDays,

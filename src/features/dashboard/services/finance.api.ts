@@ -23,6 +23,7 @@ import {
 	shouldUseFinanceMockData,
 } from "@/features/dashboard/lib/finance-data";
 import { getFinanceStatDates } from "@/features/dashboard/lib/helpers";
+import { buildPlanDistribution } from "@/features/dashboard/lib/plan-distribution";
 import { requirePermission } from "@/lib/permissions/permissions";
 import {
 	expenseFilters,
@@ -134,16 +135,20 @@ async function getExpenseJournalLines(range: ExpenseJournalDateRange, limit?: nu
 	return rows.map((row) => ({ ...row, amount: Number(row.amount) }));
 }
 
-/** Outstanding balance across every bill that is past due, point in time. */
-async function getOverdueBillsTotal() {
+/**
+ * Number of bills past due and the balance still owed on them, point in time.
+ * Both come from the same `overdueBillFilters` rows as the drill-down sheet.
+ */
+async function getOverdueBillsSummary() {
 	const [row] = await db
 		.select({
-			total: sql<string>`coalesce(sum(${vwInvoices.balance}), 0)`,
+			count: sql<string>`count(*)`,
+			amount: sql<string>`coalesce(sum(${vwInvoices.balance}), 0)`,
 		})
 		.from(vwInvoices)
 		.where(overdueBillFilters());
 
-	return Number(row.total);
+	return { count: Number(row.count), amount: Number(row.amount) };
 }
 
 export const getFinanceStats = createServerFn()
@@ -166,7 +171,7 @@ export const getFinanceStats = createServerFn()
 			totalRevenuePreviousPeriod,
 			totalExpenses,
 			totalExpensesPreviousPeriod,
-			totalOverdueBills,
+			overdueBills,
 			totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod,
 		] = await Promise.all([
@@ -190,7 +195,7 @@ export const getFinanceStats = createServerFn()
 				),
 			getExpenseJournalTotal(currentExpenseFilters),
 			getExpenseJournalTotal(previousExpenseFilters),
-			getOverdueBillsTotal(),
+			getOverdueBillsSummary(),
 			db
 				.select({
 					totalDiscountedRevenue: sql<number>`coalesce(sum(${payments.discountedAmount}), 0)`,
@@ -218,7 +223,8 @@ export const getFinanceStats = createServerFn()
 			totalRevenuePreviousPeriod: totalRevenuePreviousPeriod[0].totalRevenuePreviousPeriod,
 			totalExpensesLast30Days: totalExpenses,
 			totalExpensesPreviousPeriod,
-			totalOverdueBills,
+			totalOverdueBills: overdueBills.count,
+			totalOverdueBillsAmount: overdueBills.amount,
 			totalDiscountedRevenue: totalDiscountedRevenue[0].totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod:
 				totalDiscountedRevenuePreviousPeriod[0].totalDiscountedRevenuePreviousPeriod,
@@ -312,8 +318,6 @@ export const getPlanDistribution = createServerFn()
 		const mockData = await getFinanceMockDataIfNeeded(currentPaymentFilters, currentExpenseFilters);
 		if (mockData) return mockData.planDistribution;
 
-		const CHART_COLOR_COUNT = 5;
-
 		const planDistribution = await db
 			.select({
 				planName: sql<string>`coalesce(${membershipPlans.name}, 'Unassigned')`,
@@ -325,12 +329,12 @@ export const getPlanDistribution = createServerFn()
 			.groupBy(membershipPlans.name, payments.planId)
 			.orderBy(desc(sql`total_amount`));
 
-		return planDistribution.map(({ amount, planName }, index) => ({
-			name: toTitleCase(planName.toLowerCase()),
-			value: Number(amount),
-			// fill: `var(--chart-${index + 1})`,
-			fill: `var(--chart-${(index % CHART_COLOR_COUNT) + 1})`,
-		}));
+		return buildPlanDistribution(
+			planDistribution.map(({ amount, planName }) => ({
+				name: toTitleCase(planName.toLowerCase()),
+				value: Number(amount),
+			}))
+		);
 	});
 
 /**
@@ -354,7 +358,7 @@ export const getExpenseMtdBreakdown = createServerFn()
 
 /**
  * Drill-down behind the Overdue Bills stat card. Shares `overdueBillFilters`
- * with `getOverdueBillsTotal` and reports each bill's remaining balance rather
+ * with `getOverdueBillsSummary` and reports each bill's remaining balance rather
  * than its original total, so the rows reconcile with the card.
  */
 export const getOverdueBillsBreakdown = createServerFn()

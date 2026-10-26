@@ -16,6 +16,7 @@ import {
 } from "@/features/receipts/lib/complimentary-notifications";
 import {
 	checkPlanAvailability,
+	canReceiveMembership,
 	computeMembershipEndDateForPlan,
 	computeSessionsTotal,
 } from "@/features/receipts/lib/helpers";
@@ -24,6 +25,7 @@ import {
 	lockMemberMembershipCreation,
 	PaymentTransactionError,
 } from "@/features/receipts/services/payment.mutations.api";
+import { reconcileMemberState } from "@/services/member-state";
 import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
 import {
 	complimentaryRequestSchema,
@@ -51,10 +53,13 @@ export const requestComplimentaryMembershipFn = createServerFn({ method: "POST" 
 
 			const member = await db.query.members.findFirst({
 				where: eq(members.id, memberId),
-				columns: { id: true, memberStatus: true },
+				columns: { id: true, memberStatus: true, deletedAt: true },
 			});
-			if (!member || member.memberStatus !== "active") {
-				return failure({ type: "ApplicationError", message: "Member must be active." });
+			if (!member || !canReceiveMembership(member)) {
+				return failure({
+					type: "ApplicationError",
+					message: "Member must be active or inactive (not frozen or terminated).",
+				});
 			}
 
 			const plan = await db.query.membershipPlans.findFirst({
@@ -179,10 +184,13 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 
 					const member = await tx.query.members.findFirst({
 						where: eq(members.id, request.memberId),
-						columns: { id: true, memberStatus: true },
+						columns: { id: true, memberStatus: true, deletedAt: true },
 					});
-					if (!member || member.memberStatus !== "active") {
-						throw fail({ type: "ApplicationError", message: "Member is no longer active." });
+					if (!member || !canReceiveMembership(member)) {
+						throw fail({
+							type: "ApplicationError",
+							message: "Member can no longer receive a membership (frozen, terminated or deleted).",
+						});
 					}
 
 					const plan = await tx.query.membershipPlans.findFirst({
@@ -320,6 +328,7 @@ export const approveComplimentaryRequestFn = createServerFn({ method: "POST" })
 				});
 
 				if (result.success) {
+					await reconcileMemberState({ memberIds: [result.data.memberId], actorUserId: userId });
 					notifyComplimentaryRequestDecision(result.data).catch((error) => console.log(error));
 				}
 

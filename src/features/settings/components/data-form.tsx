@@ -69,16 +69,6 @@ export function DataForm({
 						/>
 					)}
 				</form.AppField>
-				<form.AppField name="inactiveMemberDays">
-					{(field) => (
-						<field.Input
-							label="Inactive Member Days"
-							placeholder="Enter inactive member days"
-							type="number"
-							helperText="Number of days before a member is marked as inactive."
-						/>
-					)}
-				</form.AppField>
 				<form.AppField name="inactiveMemberDeleteDays">
 					{(field) => (
 						<field.Input

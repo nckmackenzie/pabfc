@@ -73,6 +73,7 @@ function FinanceStatCards() {
 			totalRevenueLast30Days,
 			totalRevenuePreviousPeriod,
 			totalOverdueBills,
+			totalOverdueBillsAmount,
 			totalDiscountedRevenue,
 			totalDiscountedRevenuePreviousPeriod,
 		},
@@ -123,8 +124,12 @@ function FinanceStatCards() {
 			/>
 			<KPICard
 				title="Overdue Bills"
-				value={currencyFormatter(totalOverdueBills, false)}
-				subtitle="Overdue bills"
+				value={totalOverdueBills.toLocaleString()}
+				subtitle={
+					totalOverdueBills > 0
+						? `Overdue bills · ${currencyFormatter(totalOverdueBillsAmount)} outstanding`
+						: "Overdue bills"
+				}
 				icon={ArrowUpWideNarrowIcon}
 				variant="destructive"
 				onViewDetails={showOverdueBills}

@@ -11,6 +11,7 @@ import {
 import { nairobiToday } from "@/lib/nairobi-time";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
+import { reconcileMemberState } from "@/services/member-state";
 import { failure, success, type Result } from "@/lib/result";
 
 // Mirrors PaymentTransactionError's purpose (see payment.mutations.api.ts):
@@ -42,7 +43,7 @@ export const addSessionUsageFn = createServerFn({ method: "POST" })
 			await requirePermission("attendance:adjust-sessions");
 
 			try {
-				return await db.transaction(async (tx) => {
+				const memberId = await db.transaction(async (tx) => {
 					const membership = await tx.query.memberMemberships.findFirst({
 						where: eq(memberMemberships.id, membershipId),
 					});
@@ -129,8 +130,12 @@ export const addSessionUsageFn = createServerFn({ method: "POST" })
 						description: `Added a manual session for membership ${membershipId} on ${usageDate}. Reason: ${reason}.`,
 					});
 
-					return success(undefined);
+					return membership.memberId;
 				});
+
+				// Exhausting or restoring a session can end or revive the membership.
+				await reconcileMemberState({ memberIds: [memberId], actorUserId: userId });
+				return success(undefined);
 			} catch (error) {
 				if (error instanceof SessionUsageTransactionError) return error.result;
 				console.error(error);
@@ -152,7 +157,7 @@ export const waiveSessionUsageFn = createServerFn({ method: "POST" })
 			await requirePermission("attendance:adjust-sessions");
 
 			try {
-				return await db.transaction(async (tx) => {
+				const memberId = await db.transaction(async (tx) => {
 					const usage = await tx.query.membershipSessionUsage.findFirst({
 						where: eq(membershipSessionUsage.id, usageId),
 					});
@@ -194,8 +199,11 @@ export const waiveSessionUsageFn = createServerFn({ method: "POST" })
 						description: `Waived the session for membership ${lockedUsage.membershipId} on ${lockedUsage.usageDate}. Reason: ${reason}.`,
 					});
 
-					return success(undefined);
+					return lockedUsage.memberId;
 				});
+
+				await reconcileMemberState({ memberIds: [memberId], actorUserId: userId });
+				return success(undefined);
 			} catch (error) {
 				if (error instanceof SessionUsageTransactionError) return error.result;
 				console.error(error);

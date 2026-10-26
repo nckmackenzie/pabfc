@@ -30,7 +30,7 @@ import { nairobiToday } from "@/lib/nairobi-time";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { type AppError, failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
-import { enableMemberAccess } from "@/services/member-access";
+import { reconcileMemberState } from "@/services/member-state";
 
 export const getAvailableGuestPassPlansFn = createServerFn()
 	.middleware([authMiddleware])
@@ -192,7 +192,7 @@ export const issueGuestPassFn = createServerFn({ method: "POST" })
 								gender: friend.gender ?? "unspecified",
 								dateOfBirth: friend.dateOfBirth || null,
 								email: friend.email || null,
-								memberStatus: "active",
+								memberStatus: "inactive",
 							},
 						});
 						friendMemberId = created.id;
@@ -200,9 +200,6 @@ export const issueGuestPassFn = createServerFn({ method: "POST" })
 					} else {
 						friendMemberId = friendPlan.memberId;
 						friendMemberNo = friendPlan.memberNo;
-						// The voided pass's void disabled access; turn it back on and queue
-						// the sync, exactly as member-access does for any re-enable.
-						await enableMemberAccess(tx, friendMemberId, "guest_pass_reissued");
 					}
 
 					// 5. Serialise membership creation for the friend.
@@ -285,6 +282,10 @@ export const issueGuestPassFn = createServerFn({ method: "POST" })
 
 					return { paymentId: payment.id, friendMemberId, friendMemberNo };
 				});
+
+				// The friend is created (or reused) inactive; the new pass makes them
+				// current, so status and door access are reconciled once it commits.
+				await reconcileMemberState({ memberIds: [result.friendMemberId], actorUserId: userId });
 
 				return success(result);
 			} catch (error) {

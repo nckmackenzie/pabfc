@@ -15,7 +15,6 @@ import {
 	type UsageRowInput,
 } from "@/features/session-usage/lib/reconciliation";
 import { nairobiToday, toNairobiDateString } from "@/lib/nairobi-time";
-import { enableAccessForActivatedMembers } from "@/services/member-access";
 
 // Matches the BioTime sync's 30-day fixed lookback (see attendance-sync's
 // state/index.ts) plus slack: an expired, never-truncated session membership
@@ -236,11 +235,8 @@ export async function reconcileOneMembership(
 					description: `Membership ${membership.id} end date restored to ${action.endDate}.`,
 				});
 			}
-			if (reactivate) {
-				// Only lifts members the system itself deactivated; manually
-				// deactivated/frozen/terminated or soft-deleted members are left alone.
-				await enableAccessForActivatedMembers(tx, [membership.memberId], "session_usage_restored");
-			}
+			// Status and access for a reactivated member follow in reconcileMemberState,
+			// run by the caller once its transaction commits.
 			outcome.restored = true;
 		} else if (action.type === "overConsumption") {
 			outcome.overConsumption.push(action.usageDate);

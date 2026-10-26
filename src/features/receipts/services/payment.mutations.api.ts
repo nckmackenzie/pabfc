@@ -41,7 +41,7 @@ import {
 } from "@/features/credit-notes/lib/redemption";
 import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { buildVoidReversalJournalLines, checkVoidEligibility } from "@/features/receipts/lib/void";
-import { disableMemberAccess } from "@/services/member-access";
+import { reconcileMemberState } from "@/services/member-state";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { createBankingEntry } from "@/services/banking";
 import { getPaymentNo } from "@/features/receipts/services/payments.queries.api";
@@ -54,6 +54,7 @@ import {
 import {
 	checkPlanAvailability,
 	computeMembershipEndDate,
+	canReceiveMembership,
 	computeMembershipEndDateForPlan,
 	isEligibleUpgradePlan,
 	membershipRangeConflicts,
@@ -369,16 +370,16 @@ export const createManualMembershipPaymentFn = createServerFn({
 				}
 
 				const selectedMembers = await db.query.members.findMany({
-					columns: { id: true, memberStatus: true },
+					columns: { id: true, memberStatus: true, deletedAt: true },
 					where: inArray(members.id, memberIds),
 				});
 				if (
 					selectedMembers.length !== memberIds.length ||
-					selectedMembers.some((member) => member.memberStatus !== "active")
+					selectedMembers.some((member) => !canReceiveMembership(member))
 				) {
 					return failure({
 						type: "ApplicationError",
-						message: "All selected members must be active.",
+						message: "All selected members must be active or inactive (not frozen or terminated).",
 					});
 				}
 
@@ -507,7 +508,9 @@ export const createManualMembershipPaymentFn = createServerFn({
 				});
 
 				// The transaction only ever resolves with a success result — every
-				// failure path throws PaymentTransactionError, handled below.
+				// failure path throws PaymentTransactionError, handled below. Covered
+				// members may have just gone from inactive to active.
+				await reconcileMemberState({ memberIds, actorUserId: userId });
 				return result;
 			} catch (error) {
 				if (error instanceof PaymentTransactionError) {
@@ -521,30 +524,6 @@ export const createManualMembershipPaymentFn = createServerFn({
 			}
 		}
 	);
-
-async function disableAccessForMembersWithoutLiveMembership(memberIds: string[], paymentId: string) {
-	for (const memberId of memberIds) {
-		try {
-			await db.transaction(async (tx) => {
-				const liveMembership = await tx.query.memberMemberships.findFirst({
-					where: and(
-						eq(memberMemberships.memberId, memberId),
-						inArray(memberMemberships.status, ["active", "pending"])
-					),
-					columns: { id: true },
-				});
-				if (!liveMembership) {
-					await disableMemberAccess(tx, memberId, "payment_voided");
-				}
-			});
-		} catch (error) {
-			console.error(
-				`Failed to disable access for member ${memberId} after voiding payment ${paymentId}`,
-				error
-			);
-		}
-	}
-}
 
 export const voidPaymentFn = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
@@ -698,14 +677,11 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 					return success(undefined);
 				});
 
-				// Best-effort follow-up once the void has committed: a member left with
-				// no live membership (e.g. a guest whose only pass was voided) must not
-				// keep door access. Never fails the void — errors are logged only.
+				// Once the void has committed, a member left with no active membership
+				// (e.g. a guest whose only pass was voided) goes inactive and loses
+				// door access. Never fails the void — errors are logged only.
 				if (result.success) {
-					await disableAccessForMembersWithoutLiveMembership(
-						coveredMemberIdsForVoid,
-						paymentId
-					);
+					await reconcileMemberState({ memberIds: coveredMemberIdsForVoid, actorUserId: userId });
 				}
 
 				return result;
@@ -755,6 +731,7 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 			const fail = (error: Parameters<typeof failure>[0]) =>
 				new PaymentTransactionError({ success: false, error });
 
+			const upgradedMemberIds: string[] = [];
 			try {
 				const result = await db.transaction(async (tx) => {
 					// Lock on the covered members (sorted, same convention as
@@ -794,6 +771,7 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 						isLate,
 						daysLate,
 					} = eligibility.data;
+					upgradedMemberIds.push(...coveredMembers.map((member) => member.id));
 
 					// The eligibility check already confirmed grace-period + permission when
 					// isLate is true; this only enforces that a reason was actually supplied,
@@ -1059,6 +1037,8 @@ export const upgradePaymentFn = createServerFn({ method: "POST" })
 					return success({ id: newPayment.id, warning });
 				});
 
+				// A late upgrade can promote an expired membership back to active.
+				await reconcileMemberState({ memberIds: upgradedMemberIds, actorUserId: userId });
 				return result;
 			} catch (error) {
 				if (error instanceof PaymentTransactionError) {

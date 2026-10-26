@@ -54,8 +54,40 @@ export async function nextMemberNo(executor: Pick<typeof db, "select"> = db) {
 	return row.memberNo + 1;
 }
 
-// The insert half of member creation: memberNo, the members row, the BioTime
-// profile and the CREATE_EMPLOYEE sync job. Callers own the transaction,
+// Registration never grants access: status and door access follow the member's
+// memberships (see reconcileMemberState), whatever status the form carried.
+export function buildNewMemberValues(memberData: ReturnType<typeof mapMemberData>, memberNo: number) {
+	return { ...memberData, memberStatus: "inactive" as const, memberNo };
+}
+
+// The BioTime person is still created so a face or fingerprint can be enrolled,
+// but with access off until a membership turns it on.
+export function buildNewMemberProfileValues({
+	memberId,
+	empCode,
+	payload,
+}: {
+	memberId: string;
+	empCode: string;
+	payload: Record<string, unknown>;
+}) {
+	return {
+		personType: "member" as const,
+		memberId,
+		employeeId: null,
+		biotimeEmployeeCode: empCode,
+		biotimeDepartmentId: 1,
+		authorizedAreaId: 2,
+		unauthorizedAreaId: 1,
+		desiredAccessEnabled: false,
+		accessControlStatus: "pending_sync" as const,
+		biometricEnrollmentStatus: "pending" as const,
+		lastSyncPayload: payload,
+	};
+}
+
+// The insert half of member creation: memberNo, the members row (inactive),
+// the BioTime profile (access off) and the CREATE_EMPLOYEE sync job. Callers own the transaction,
 // activity logging and any post-commit side effects (e.g. the registration
 // link SMS), so this can be reused by flows that must not send them.
 export async function insertMemberRecord({
@@ -72,10 +104,7 @@ export async function insertMemberRecord({
 
 	const [member] = await tx
 		.insert(members)
-		.values({
-			...memberData,
-			memberNo,
-		})
+		.values(buildNewMemberValues(memberData, memberNo))
 		.returning();
 
 	const empCode = generateBioTimeEmployeeCode(memberNo);
@@ -85,7 +114,9 @@ export async function insertMemberRecord({
 		firstName: member.firstName,
 		lastName: member.lastName,
 		departmentId: 1,
-		areaIds: [settings?.authorizedAreaId ?? 2],
+		// The person is created in the unauthorized area so a face or fingerprint
+		// can be enrolled without opening the door.
+		areaIds: [settings?.unauthorizedAreaId ?? 1],
 		mobile: member.contact,
 		email: member.email,
 		gender: member.gender,
@@ -106,19 +137,7 @@ export async function insertMemberRecord({
 
 	const [profile] = await tx
 		.insert(biotimePersonProfiles)
-		.values({
-			personType: "member",
-			memberId: member.id,
-			employeeId: null,
-			biotimeEmployeeCode: empCode,
-			biotimeDepartmentId: 1,
-			authorizedAreaId: 2,
-			unauthorizedAreaId: 1,
-			desiredAccessEnabled: true,
-			accessControlStatus: "pending_sync",
-			biometricEnrollmentStatus: "pending",
-			lastSyncPayload: payload,
-		})
+		.values(buildNewMemberProfileValues({ memberId: member.id, empCode, payload }))
 		.returning();
 
 	await tx.insert(accessControlSyncJobs).values({

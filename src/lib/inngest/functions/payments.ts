@@ -1,4 +1,5 @@
 import { db } from "@/drizzle/db";
+import { reconcileMemberState } from "@/services/member-state";
 import { finalizeMembershipPayment } from "@/features/receipts/services/membership-payment-finalizer";
 import { currencyFormatter, internationalizePhoneNumber } from "@/lib/helpers";
 import { inngest } from "@/lib/inngest/client";
@@ -53,6 +54,12 @@ export const createPayment = inngest.createFunction(
 				if (!result.success) {
 					return { success: false, error: result.error.message };
 				}
+
+				// After commit, so a failure here can't undo the finalized payment.
+				await reconcileMemberState({
+					memberIds: [fetchedPayment.memberId],
+					actorUserId: fetchedPayment.createdByUserId ?? undefined,
+				});
 
 				return { success: true, error: null };
 			},

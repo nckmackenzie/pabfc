@@ -80,6 +80,7 @@ describe("planFriendEligibility", () => {
 		fullName: "Jane Doe",
 		matchedFields: ["phone"],
 		deletedAt: null,
+		memberStatus: "inactive",
 		...overrides,
 	});
 	const voidedGuestHistory = (memberId = "m1"): MatchedMemberHistory => ({
@@ -126,6 +127,16 @@ describe("planFriendEligibility", () => {
 		expect(
 			planFriendEligibility({ matches: [match()], history: [voidedGuestHistory()] })
 		).toEqual({ kind: "reuse", memberId: "m1", memberNo: 1042 });
+	});
+
+	it("does not reuse a frozen or terminated leftover member", () => {
+		for (const memberStatus of ["frozen", "terminated"] as const) {
+			const result = planFriendEligibility({
+				matches: [match({ memberStatus })],
+				history: [voidedGuestHistory()],
+			});
+			expect(result.kind).toBe("conflict");
+		}
 	});
 
 	it("does not reuse when any payment is not a voided guest pass", () => {

@@ -1,0 +1,1 @@
+ALTER TABLE "members" ALTER COLUMN "member_status" SET DEFAULT 'inactive';

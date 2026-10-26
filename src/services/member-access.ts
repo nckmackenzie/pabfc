@@ -1,23 +1,14 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
 	accessControlSyncJobs,
 	biotimePersonProfiles,
-	memberMemberships,
 	members,
 	users,
 } from "@/drizzle/schema";
 import type { Transaction } from "@/features/receipts/services/membership-payment-finalizer";
 
-type DisableAccessReason =
-	| "membership_expired"
-	| "credit_note_termination"
-	| "manual_deactivation"
-	| "payment_voided";
-type EnableAccessReason =
-	| "membership_activated"
-	| "manual_activation"
-	| "session_usage_restored"
-	| "guest_pass_reissued";
+type DisableAccessReason = "manual_deactivation" | "no_active_membership";
+type EnableAccessReason = "membership_activated" | "manual_activation";
 
 async function getMemberAccessProfile(tx: Transaction, memberId: string) {
 	const [row] = await tx
@@ -100,6 +91,65 @@ export async function disableMemberAccess(
 	}
 }
 
+// Runs when the agent reports a member's BioTime person was created. The
+// person is created without access, but a membership may have been bought
+// while the job was queued, and the agent may not have honoured the payload's
+// area. So the profile's desired state is applied explicitly: ENABLE_ACCESS if
+// access is now wanted, otherwise DISABLE_ACCESS unless the response confirms
+// the person already sits in the unauthorized area.
+export async function syncAccessAfterEmployeeCreated(
+	tx: Transaction,
+	{
+		profileId,
+		memberId,
+		biotimeEmployeeId,
+		createdAreaId,
+	}: {
+		profileId: string;
+		memberId: string;
+		biotimeEmployeeId: number;
+		createdAreaId: number | null;
+	}
+) {
+	const profile = await tx.query.biotimePersonProfiles.findFirst({
+		where: eq(biotimePersonProfiles.id, profileId),
+		columns: { desiredAccessEnabled: true, authorizedAreaId: true, unauthorizedAreaId: true },
+	});
+	if (!profile) return;
+
+	const now = new Date();
+	const wantsAccess = profile.desiredAccessEnabled;
+	if (!wantsAccess && createdAreaId === profile.unauthorizedAreaId) {
+		await tx
+			.update(biotimePersonProfiles)
+			.set({ accessControlStatus: "disabled", updatedAt: now })
+			.where(eq(biotimePersonProfiles.id, profileId));
+		return;
+	}
+
+	const action = wantsAccess ? "ENABLE_ACCESS" : "DISABLE_ACCESS";
+	const reason = wantsAccess ? "membership_activated" : "no_active_membership";
+	const areaId = wantsAccess ? profile.authorizedAreaId : profile.unauthorizedAreaId;
+
+	await tx
+		.update(biotimePersonProfiles)
+		.set({ accessControlStatus: "pending_sync", updatedAt: now })
+		.where(eq(biotimePersonProfiles.id, profileId));
+
+	await tx
+		.insert(accessControlSyncJobs)
+		.values({
+			memberId,
+			biotimePersonProfileId: profileId,
+			personType: "member",
+			action,
+			status: "pending",
+			payload: { biotimeEmployeeId, areaIds: [areaId], reason },
+			idempotencyKey: accessJobKey(action, reason, memberId, now),
+		})
+		.onConflictDoNothing();
+}
+
 // Reactivates the member and restores their portal login and physical access.
 // Does not lift a portal ban (users.banned), which is managed separately.
 export async function enableMemberAccess(
@@ -157,48 +207,5 @@ export async function enableMemberAccess(
 				idempotencyKey: accessJobKey("ENABLE_ACCESS", reason, memberId, now),
 			})
 			.onConflictDoNothing();
-	}
-}
-
-// Shared by the daily membership-expiry cron (expireMembershipsAndDisableAccess) and
-// credit-note issuance (issueCreditNoteFn) — both can leave a member with zero
-// remaining valid memberships. Disables the member's portal login and physical
-// access, but only when no other active membership remains; a no-op otherwise.
-export async function disableMemberAccessIfNoValidMembership(
-	tx: Transaction,
-	memberId: string,
-	reason: DisableAccessReason
-) {
-	const validMembership = await tx.query.memberMemberships.findFirst({
-		where: and(eq(memberMemberships.memberId, memberId), eq(memberMemberships.status, "active")),
-	});
-	if (validMembership) return;
-
-	await disableMemberAccess(tx, memberId, reason);
-}
-
-// Called after pending memberships become active. Only members the system had
-// switched to "inactive" are reactivated: frozen/terminated members and deleted
-// members are left alone, and already-active members still have their access.
-export async function enableAccessForActivatedMembers(
-	tx: Transaction,
-	memberIds: string[],
-	reason: Extract<EnableAccessReason, "membership_activated" | "session_usage_restored"> = "membership_activated"
-) {
-	if (memberIds.length === 0) return;
-
-	const inactiveMembers = await tx
-		.select({ id: members.id })
-		.from(members)
-		.where(
-			and(
-				inArray(members.id, memberIds),
-				eq(members.memberStatus, "inactive"),
-				isNull(members.deletedAt)
-			)
-		);
-
-	for (const member of inactiveMembers) {
-		await enableMemberAccess(tx, member.id, reason);
 	}
 }
