@@ -17,7 +17,6 @@ export const settings = pgTable("settings", {
 			logRetentionDays?: number;
 			inactiveUserDays?: number;
 			inactiveUserDeleteDays?: number;
-			inactiveMemberDays?: number;
 			inactiveMemberDeleteDays?: number;
 		}>(),
 	notification: jsonb("notification").default({}).$type<{

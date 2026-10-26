@@ -44,7 +44,7 @@ const defaultValues = {
 	contact: "",
 	idType: null,
 	idNumber: null,
-	memberStatus: "active",
+	memberStatus: "inactive",
 	address: "",
 	emergencyContactName: null,
 	emergencyContactNo: null,

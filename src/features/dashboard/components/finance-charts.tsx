@@ -16,7 +16,12 @@ import {
 	getFinanceChartData,
 	getPlanDistribution,
 } from "@/features/dashboard/services/finance.api";
+import {
+	buildPlanDistribution,
+	withSharePercentage,
+} from "@/features/dashboard/lib/plan-distribution";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
+import { currencyFormatter } from "@/lib/helpers";
 
 const areaChartConfig = {
 	revenue: {
@@ -86,7 +91,11 @@ export function FinanceAreaChart() {
 
 // --- Pie Chart ---
 
-const basePieChartConfig = {
+// The legend is plain HTML below the chart rather than a Recharts <Legend>:
+// a legend inside the chart takes its height out of the drawing area, and with
+// many plans the wrapped legend squeezed the pie's outer radius below its inner
+// radius, so the ring vanished while the centre label still rendered.
+const pieChartConfig = {
 	value: {
 		label: "Revenue",
 	},
@@ -98,22 +107,8 @@ export function FinancePieChart() {
 		queryFn: () => getPlanDistribution(),
 	});
 
-	// Plans are configurable, so the legend has to be keyed off whatever plan
-	// names come back rather than a fixed list. Each swatch takes its colour from
-	// the slice's own `fill`, which keeps legend and pie in step.
-	const pieChartConfig = useMemo<ChartConfig>(
-		() =>
-			data.reduce<ChartConfig>(
-				(config, { name }) => {
-					config[name] = { label: name };
-					return config;
-				},
-				{ ...basePieChartConfig }
-			),
-		[data]
-	);
-
-	const totalRevenue = data.reduce((acc, curr) => acc + curr.value, 0);
+	const slices = useMemo(() => withSharePercentage(buildPlanDistribution(data)), [data]);
+	const totalRevenue = slices.reduce((acc, curr) => acc + curr.value, 0);
 
 	return (
 		<Card className="flex flex-col">
@@ -121,11 +116,18 @@ export function FinancePieChart() {
 				<CardTitle>Plan Distribution</CardTitle>
 				<CardDescription>Month-to-date revenue share by plan</CardDescription>
 			</CardHeader>
-			<CardContent className="flex-1 pb-0">
-				<ChartContainer config={pieChartConfig} className="mx-auto aspect-square max-h-62.5">
+			<CardContent className="flex-1 space-y-4 pb-0">
+				<ChartContainer config={pieChartConfig} className="mx-auto aspect-square h-60">
 					<PieChart>
 						<ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-						<Pie data={data} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
+						<Pie
+							data={slices}
+							dataKey="value"
+							nameKey="name"
+							innerRadius="60%"
+							outerRadius="90%"
+							strokeWidth={5}
+						>
 							<Label
 								content={({ viewBox }) => {
 									if (viewBox && "cx" in viewBox && "cy" in viewBox) {
@@ -156,12 +158,22 @@ export function FinancePieChart() {
 								}}
 							/>
 						</Pie>
-						<ChartLegend
-							content={<ChartLegendContent nameKey="name" />}
-							className="-translate-y-2 flex-wrap gap-2"
-						/>
 					</PieChart>
 				</ChartContainer>
+				<ul className="flex flex-wrap justify-center gap-x-4 gap-y-2 pb-4 text-xs">
+					{slices.map((slice) => (
+						<li key={slice.name} className="flex items-center gap-2">
+							<span
+								className="size-2.5 shrink-0 rounded-[2px]"
+								style={{ backgroundColor: slice.fill }}
+							/>
+							<span className="font-medium">{slice.name}</span>
+							<span className="text-muted-foreground">
+								{currencyFormatter(slice.value, false)} ({slice.percentage.toFixed(1)}%)
+							</span>
+						</li>
+					))}
+				</ul>
 			</CardContent>
 		</Card>
 	);

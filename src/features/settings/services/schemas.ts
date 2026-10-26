@@ -6,7 +6,6 @@ export const settingsDataSchema = z.object({
 	logRetentionDays: z.number().min(1, { error: "Log retention days is required" }),
 	inactiveUserDays: z.number().nullish(),
 	inactiveUserDeleteDays: z.number().nullish(),
-	inactiveMemberDays: z.number().nullish(),
 	inactiveMemberDeleteDays: z.number().nullish(),
 });
 

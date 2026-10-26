@@ -15,7 +15,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success, type Result } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
-import { disableMemberAccessIfNoValidMembership } from "@/services/member-access";
+import { reconcileMemberState } from "@/services/member-state";
 
 // Same rollback convention as voidPaymentFn/upgradePaymentFn: throw to force a
 // rollback while carrying the original failure Result out through the outer catch.
@@ -139,15 +139,6 @@ export const issueCreditNoteFn = createServerFn({ method: "POST" })
 						.set({ status: "terminated", terminatedAt: today, terminatedReason: reason })
 						.where(eq(memberMemberships.id, membershipId));
 
-					// This may have been the member's only remaining valid membership —
-					// mirrors the same check the daily expiry cron runs, since a terminated
-					// row (unlike an expired one) is otherwise invisible to that job.
-					await disableMemberAccessIfNoValidMembership(
-						tx,
-						membership.memberId,
-						"credit_note_termination"
-					);
-
 					const expiryMonths = settings.billing.creditNoteExpiryMonths ?? 12;
 					const creditNoteNo = await nextCreditNoteNo(tx);
 					const [creditNote] = await tx
@@ -191,6 +182,14 @@ export const issueCreditNoteFn = createServerFn({ method: "POST" })
 
 					return success(creditNote);
 				});
+
+				// A terminated membership may have been the member's last active one.
+				if (result.success) {
+					await reconcileMemberState({
+						memberIds: [result.data.memberId],
+						actorUserId: userId,
+					});
+				}
 
 				return result;
 			} catch (error) {

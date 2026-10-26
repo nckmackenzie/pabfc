@@ -1,6 +1,8 @@
 import { format, parseISO } from "date-fns";
 import { describe, expect, it } from "vitest";
+import type { MemberStatus } from "@/drizzle/schema";
 import {
+	canReceiveMembership,
 	checkPlanAvailability,
 	computeMembershipEndDate,
 	computeMembershipEndDateForPlan,
@@ -441,5 +443,23 @@ describe("computeMembershipEndDateForPlan", () => {
 			numberOfPeriods: 1,
 		});
 		expect(fmt(end)).toBe("2026-11-14");
+	});
+});
+
+describe("canReceiveMembership", () => {
+	const member = (memberStatus: MemberStatus, deletedAt: Date | null = null) => ({
+		memberStatus,
+		deletedAt,
+	});
+
+	it("accepts active and inactive members", () => {
+		expect(canReceiveMembership(member("active"))).toBe(true);
+		expect(canReceiveMembership(member("inactive"))).toBe(true);
+	});
+
+	it("rejects frozen, terminated and soft-deleted members", () => {
+		expect(canReceiveMembership(member("frozen"))).toBe(false);
+		expect(canReceiveMembership(member("terminated"))).toBe(false);
+		expect(canReceiveMembership(member("inactive", new Date()))).toBe(false);
 	});
 });

@@ -11,6 +11,7 @@ import {
 	softDeleteMemberLocally,
 } from "@/lib/access-control";
 import { authenticateAccessAgent } from "@/services/access-control";
+import { syncAccessAfterEmployeeCreated } from "@/services/member-access";
 
 type AccessSyncJobPayload = {
 	areaIds?: number[];
@@ -112,15 +113,24 @@ export const Route = createFileRoute(
 
 						// 3. Update member access profile depending on job action
 						if (job.action === "CREATE_EMPLOYEE") {
+							const responseArea = body.responsePayload?.area;
+							const firstArea = Array.isArray(responseArea) ? responseArea[0] : undefined;
+							const createdAreaId: number | null =
+								typeof firstArea === "number" ? firstArea : (firstArea?.id ?? null);
+							const biotimeEmployeeId: number | null = body.responsePayload?.id ?? null;
+							// Members are registered without access, so their desired access is
+							// left as the profile holds it (a membership may have been bought
+							// while this job was queued). Employees keep the original behaviour.
+							const isMember = job.personType === "member" && !!job.memberId;
+
 							await tx
 								.update(biotimePersonProfiles)
 								.set({
-									biotimeEmployeeId: body.responsePayload?.id ?? null,
-									currentAreaId: Array.isArray(body.responsePayload?.area)
-										? body.responsePayload.area[0]
-										: (payload.areaIds?.[0] ?? 2),
-									desiredAccessEnabled: true,
-									accessControlStatus: "active",
+									biotimeEmployeeId,
+									currentAreaId: createdAreaId ?? (payload.areaIds?.[0] ?? 2),
+									...(isMember
+										? {}
+										: { desiredAccessEnabled: true, accessControlStatus: "active" as const }),
 									lastSyncedAt: now,
 									lastSyncAttemptAt: now,
 									lastSyncError: null,
@@ -130,6 +140,15 @@ export const Route = createFileRoute(
 								.where(
 									eq(biotimePersonProfiles.id, job.biotimePersonProfileId),
 								);
+
+							if (isMember && job.memberId && biotimeEmployeeId !== null) {
+								await syncAccessAfterEmployeeCreated(tx, {
+									profileId: job.biotimePersonProfileId,
+									memberId: job.memberId,
+									biotimeEmployeeId,
+									createdAreaId,
+								});
+							}
 						}
 
 						if (job.action === "ENABLE_ACCESS") {

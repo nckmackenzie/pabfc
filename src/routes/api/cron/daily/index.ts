@@ -1,16 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { addYears, format, isToday, subDays } from "date-fns";
-import { and, eq, inArray, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
+import { addYears, format, isToday } from "date-fns";
+import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import {
-	accessControlSyncJobs,
-	attendanceLogs,
-	biotimePersonProfiles,
-	financialYears,
-	memberMemberships,
-	members,
-	users,
-} from "@/drizzle/schema";
+import { financialYears, memberMemberships } from "@/drizzle/schema";
 import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
 import { activateDueMemberships } from "@/features/receipts/services/membership-payment-finalizer";
 import { expireCreditNotes } from "@/features/credit-notes/services/credit-note.maintenance";
@@ -18,7 +10,7 @@ import { reconcileSessionUsage } from "@/features/session-usage/services/reconci
 import { dateFormat, normalizeDateRange } from "@/lib/helpers";
 import { nairobiToday } from "@/lib/nairobi-time";
 import { deleteOlderLogs } from "@/services/activity-logger";
-import { disableMemberAccessIfNoValidMembership } from "@/services/member-access";
+import { reconcileMemberState } from "@/services/member-state";
 
 async function autoCreateFinancialYear() {
 	const settings = await db.query.settings.findFirst({
@@ -70,170 +62,53 @@ async function runDailyMaintenance() {
 	}
 
 	// 4) update membership status rollovers (pending → active, active → expired)
-	await expireMembershipsAndDisableAccess();
+	await rolloverMemberships();
 
-	// 5) deactivate inactive members
-	await deactivateInactiveMembers();
+	// 5) bring every member's status and door access in line with their
+	// memberships. Runs after the rollovers above so it sees their final state,
+	// and doubles as the backfill for members whose state drifted. Isolated so a
+	// failure can't skip the credit note step below.
+	try {
+		await reconcileMemberState({ logSummary: true });
+	} catch (error) {
+		console.error("Member state reconciliation failed during nightly maintenance", error);
+	}
 
 	// 6) write off expired, unredeemed credit note balances
 	await expireCreditNotes();
 }
 
-async function deactivateInactiveMembers() {
-	const settingsData = await db.query.settings.findFirst({
-		columns: { data: true },
-	});
-	const inactiveDays = settingsData?.data?.inactiveMemberDays ?? 90;
-	const thresholdDate = subDays(new Date(), inactiveDays);
-
-	const lastAttendanceSubquery = db
-		.select({
-			memberId: attendanceLogs.memberId,
-			lastCheckIn: sql<Date>`max(${attendanceLogs.checkInTime})`.as("last_check_in"),
-		})
-		.from(attendanceLogs)
-		.groupBy(attendanceLogs.memberId)
-		.as("last_attendance");
-
-	const today = dateFormat(new Date());
-
-	const membersWithActiveSubscription = db
-		.select({ memberId: memberMemberships.memberId })
-		.from(memberMemberships)
-		.where(
-			and(
-				eq(memberMemberships.status, "active"),
-				or(isNull(memberMemberships.endDate), sql`${memberMemberships.endDate} >= ${today}`)
-			)
-		);
-
-	const membersToDeactivate = await db
-		.select({
-			id: members.id,
-			memberNo: members.memberNo,
-			firstName: members.firstName,
-			lastName: members.lastName,
-			profileId: biotimePersonProfiles.id,
-			biotimeEmployeeId: biotimePersonProfiles.biotimeEmployeeId,
-			unauthorizedAreaId: biotimePersonProfiles.unauthorizedAreaId,
-		})
-		.from(members)
-		.leftJoin(lastAttendanceSubquery, eq(members.id, lastAttendanceSubquery.memberId))
-		.leftJoin(biotimePersonProfiles, eq(members.id, biotimePersonProfiles.memberId))
-		.where(
-			and(
-				eq(members.memberStatus, "active"),
-				isNull(members.deletedAt),
-				notInArray(members.id, membersWithActiveSubscription),
-				or(
-					lte(lastAttendanceSubquery.lastCheckIn, thresholdDate),
-					and(isNull(lastAttendanceSubquery.lastCheckIn), lte(members.createdAt, thresholdDate))
-				)
-			)
-		);
-
-	if (membersToDeactivate.length === 0) {
-		return;
-	}
-
-	const now = new Date();
-
-	await db.transaction(async (tx) => {
-		for (const member of membersToDeactivate) {
-			// 1) Update member status to inactive
-			await tx
-				.update(members)
-				.set({
-					memberStatus: "inactive",
-					deactivatedAt: now,
-					updatedAt: now,
-				})
-				.where(eq(members.id, member.id));
-
-			// 2) Update user status to inactive
-			await tx
-				.update(users)
-				.set({
-					active: false,
-					deactivatedAt: now,
-					updatedAt: now,
-				})
-				.where(eq(users.memberId, member.id));
-
-			// 3) Update access profile if exists
-			if (member.profileId) {
-				await tx
-					.update(biotimePersonProfiles)
-					.set({
-						desiredAccessEnabled: false,
-						accessControlStatus: "pending_sync",
-						updatedAt: now,
-					})
-					.where(eq(biotimePersonProfiles.id, member.profileId));
-
-				if (member.biotimeEmployeeId !== null && member.biotimeEmployeeId !== undefined) {
-					// 4) Insert access control sync job
-					await tx.insert(accessControlSyncJobs).values({
-						memberId: member.id,
-						biotimePersonProfileId: member.profileId,
-						personType: "member",
-						action: "DISABLE_ACCESS",
-						status: "pending",
-						payload: {
-							biotimeEmployeeId: member.biotimeEmployeeId,
-							areaIds: [member.unauthorizedAreaId ?? 1],
-							reason: "inactive_member",
-						},
-						idempotencyKey: `DISABLE_ACCESS:${member.id}:${Date.now()}`,
-					});
-				}
-			}
-		}
-	});
-}
-
-async function expireMembershipsAndDisableAccess() {
+// Activates due pending memberships, then expires lapsed ones. Member status
+// and access are not touched here: reconcileMemberState runs afterwards and
+// derives both from the resulting memberships, so jobs are queued only once.
+async function rolloverMemberships() {
 	// One captured instant so activation and expiry agree on the calendar day.
 	const now = new Date();
 	const today = dateFormat(now);
 
 	await db.transaction(async (tx) => {
-		// 1) Activate pending memberships that start today (or earlier). This must
-		// run before expiry: a renewal paid ahead of time is "pending" until its
-		// start date, and without it the access check below would treat the
-		// member as having no valid membership and deactivate them.
+		// Activation runs before expiry so a renewal paid ahead of time starts
+		// counting as the member's active membership on its start date.
 		await activateDueMemberships(tx, now);
 
-		// 2) Expire memberships and return affected members
-		const expiredMemberships = await tx
+		await tx
 			.update(memberMemberships)
 			.set({
 				status: "expired",
 				updatedAt: now,
 			})
-			.where(and(eq(memberMemberships.status, "active"), lt(memberMemberships.endDate, today)))
-			.returning({
-				memberId: memberMemberships.memberId,
-			});
-
-		if (expiredMemberships.length === 0) return;
-
-		const affectedMemberIds = [...new Set(expiredMemberships.map((m) => m.memberId))];
-
-		for (const memberId of affectedMemberIds) {
-			await disableMemberAccessIfNoValidMembership(tx, memberId, "membership_expired");
-		}
+			.where(and(eq(memberMemberships.status, "active"), lt(memberMemberships.endDate, today)));
 	});
 }
 
 // Session memberships end at whichever comes first: sessions exhausted
 // (reconcileSessionUsage already truncated endDate for those) or the date
 // window lapsing unused. Both cases are just "endDate < today" once
-// reconcileSessionUsage has run — but unlike expireMembershipsAndDisableAccess,
+// reconcileSessionUsage has run — but unlike rolloverMemberships,
 // "today" here must be the Nairobi calendar date, not whatever the server's
 // local/UTC date happens to be (see Task 16's finding). Runs before the
 // generic expiry step so session memberships are correctly dated first; the
-// generic step is then a no-op for rows this one already expired.
+// generic step is then a no-op for rows this one already expired. Member status and access follow in reconcileMemberState.
 async function expireExhaustedSessionMemberships() {
 	const today = nairobiToday();
 
@@ -255,11 +130,6 @@ async function expireExhaustedSessionMemberships() {
 			.update(memberMemberships)
 			.set({ status: "expired", updatedAt: new Date() })
 			.where(inArray(memberMemberships.id, toExpire.map((row) => row.id)));
-
-		const affectedMemberIds = [...new Set(toExpire.map((row) => row.memberId))];
-		for (const memberId of affectedMemberIds) {
-			await disableMemberAccessIfNoValidMembership(tx, memberId, "membership_expired");
-		}
 	});
 }
 

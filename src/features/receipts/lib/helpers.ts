@@ -1,5 +1,5 @@
 import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
-import type { MembershipStatus } from "@/drizzle/schema";
+import type { MemberStatus, MembershipStatus } from "@/drizzle/schema";
 import { failure, type Result, success } from "@/lib/result";
 
 // "yyyy-MM-dd" strings must go through parseISO (interpreted as local midnight),
@@ -7,6 +7,17 @@ import { failure, type Result, success } from "@/lib/result";
 // calendar date by a day once converted to local time in non-UTC timezones.
 export function parseCalendarDate(value: Date | string): Date {
 	return typeof value === "string" ? parseISO(value) : value;
+}
+
+// A member can be sold a membership while active, or inactive (registered
+// without a plan, or lapsed). Frozen, terminated and soft-deleted members
+// cannot: soft-deleted rows are stored as "inactive", so deletedAt matters.
+export function canReceiveMembership(member: {
+	memberStatus: MemberStatus;
+	deletedAt: Date | null;
+}): boolean {
+	if (member.deletedAt) return false;
+	return member.memberStatus === "active" || member.memberStatus === "inactive";
 }
 
 const NON_BLOCKING_STATUSES = ["cancelled", ""] as const;

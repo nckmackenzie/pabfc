@@ -213,6 +213,7 @@ export function buildFinanceMockData(today = new Date()) {
 		totalExpensesLast30Days,
 		totalExpensesPreviousPeriod,
 		totalOverdueBills: 0,
+		totalOverdueBillsAmount: 0,
 		totalDiscountedRevenue: Math.floor(totalRevenueLast30Days * 0.1),
 		totalDiscountedRevenuePreviousPeriod: Math.floor(totalRevenuePreviousPeriod * 0.1),
 		revenueExpensesChartData,

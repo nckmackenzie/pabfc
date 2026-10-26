@@ -1,4 +1,5 @@
 import type { MemberStatus, MembershipStatus } from "@/drizzle/schema";
+import { canReceiveMembership } from "@/features/receipts/lib/helpers";
 import { type AppError, failure, type Result, success } from "@/lib/result";
 
 // Returns every equivalent form a Kenyan mobile number may be stored in
@@ -80,6 +81,7 @@ export type IdentityMatch = {
 	fullName: string;
 	matchedFields: IdentityField[];
 	deletedAt: Date | null;
+	memberStatus: MemberStatus;
 };
 
 export type MatchedMemberHistory = {
@@ -147,6 +149,9 @@ export function planFriendEligibility({
 		memberHistory.payments.every((p) => p.status === "voided" && p.sponsorMemberId !== null);
 	if (!reusable) {
 		return conflict(first, "Guest passes are only for people who are not yet members.");
+	}
+	if (!canReceiveMembership(first)) {
+		return conflict(first, "That member is frozen or terminated and cannot receive a pass.");
 	}
 	return { kind: "reuse", memberId: first.id, memberNo: first.memberNo };
 }

@@ -46,6 +46,7 @@ export async function findMembersByIdentity({
 			contact: members.contact,
 			idNumber: members.idNumber,
 			deletedAt: members.deletedAt,
+			memberStatus: members.memberStatus,
 		})
 		.from(members)
 		.where(or(...conditions));
@@ -62,6 +63,7 @@ export async function findMembersByIdentity({
 			fullName: `${row.firstName} ${row.lastName}`,
 			matchedFields,
 			deletedAt: row.deletedAt,
+			memberStatus: row.memberStatus,
 		};
 	});
 }

@@ -21,7 +21,11 @@ const config = defineConfig({
 	},
 	plugins: [
 		devtools(),
-		nitro(),
+		nitro({
+			rollupConfig: {
+				external: [/^@react-pdf\//],
+			},
+		}),
 		// this is the plugin that enables path aliases
 		// viteTsConfigPaths({
 		//   projects: ['./tsconfig.json'],
