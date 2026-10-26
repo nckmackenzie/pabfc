@@ -66,10 +66,14 @@ export function buildNewMemberProfileValues({
 	memberId,
 	empCode,
 	payload,
+	authorizedAreaId,
+	unauthorizedAreaId,
 }: {
 	memberId: string;
 	empCode: string;
 	payload: Record<string, unknown>;
+	authorizedAreaId: number;
+	unauthorizedAreaId: number;
 }) {
 	return {
 		personType: "member" as const,
@@ -77,8 +81,8 @@ export function buildNewMemberProfileValues({
 		employeeId: null,
 		biotimeEmployeeCode: empCode,
 		biotimeDepartmentId: 1,
-		authorizedAreaId: 2,
-		unauthorizedAreaId: 1,
+		authorizedAreaId,
+		unauthorizedAreaId,
 		desiredAccessEnabled: false,
 		accessControlStatus: "pending_sync" as const,
 		biometricEnrollmentStatus: "pending" as const,
@@ -101,6 +105,8 @@ export async function insertMemberRecord({
 	const memberData = mapMemberData(data);
 
 	const settings = await tx.query.biotimeSettings.findFirst();
+	const authorizedAreaId = settings?.authorizedAreaId ?? 2;
+	const unauthorizedAreaId = settings?.unauthorizedAreaId ?? 1;
 
 	const [member] = await tx
 		.insert(members)
@@ -116,7 +122,7 @@ export async function insertMemberRecord({
 		departmentId: 1,
 		// The person is created in the unauthorized area so a face or fingerprint
 		// can be enrolled without opening the door.
-		areaIds: [settings?.unauthorizedAreaId ?? 1],
+		areaIds: [unauthorizedAreaId],
 		mobile: member.contact,
 		email: member.email,
 		gender: member.gender,
@@ -137,7 +143,13 @@ export async function insertMemberRecord({
 
 	const [profile] = await tx
 		.insert(biotimePersonProfiles)
-		.values(buildNewMemberProfileValues({ memberId: member.id, empCode, payload }))
+		.values(buildNewMemberProfileValues({
+				memberId: member.id,
+				empCode,
+				payload,
+				authorizedAreaId,
+				unauthorizedAreaId,
+			}))
 		.returning();
 
 	await tx.insert(accessControlSyncJobs).values({
