@@ -183,7 +183,7 @@ export const getExpiringMemberships = createServerFn()
 
 // Shared by the select and the ORDER BY so the two can't drift apart.
 const activePlanEndDate = sql<string | null>`(
-		SELECT mm.end_date FROM member_memberships mm
+		SELECT mm.end_date::text FROM member_memberships mm
 		WHERE mm.member_id = "members"."id"
 		AND mm.status = 'active'
 		ORDER BY mm.start_date DESC
