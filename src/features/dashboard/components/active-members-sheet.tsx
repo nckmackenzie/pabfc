@@ -7,6 +7,7 @@ import { TableSkeleton } from "@/components/ui/loaders";
 import type { getActiveMemberships } from "@/features/dashboard/services/dashboard.api";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
 import { dateFormat } from "@/lib/helpers";
+import { parseCalendarDate } from "@/features/receipts/lib/helpers";
 
 type ActiveMembershipRow = Awaited<ReturnType<typeof getActiveMemberships>>[number];
 
@@ -14,9 +15,7 @@ const columns: Array<ColumnDef<ActiveMembershipRow>> = [
 	{
 		accessorKey: "fullName",
 		header: "Member",
-		cell: ({ row }) => (
-			<span className="font-medium capitalize">{row.original.fullName}</span>
-		),
+		cell: ({ row }) => <span className="font-medium capitalize">{row.original.fullName}</span>,
 	},
 	{
 		accessorKey: "memberNo",
@@ -25,15 +24,15 @@ const columns: Array<ColumnDef<ActiveMembershipRow>> = [
 	{
 		accessorKey: "activePlanName",
 		header: "Current Plan",
-		cell: ({ row }) => (
-			<span className="capitalize">{row.original.activePlanName ?? "—"}</span>
-		),
+		cell: ({ row }) => <span className="capitalize">{row.original.activePlanName ?? "—"}</span>,
 	},
 	{
 		accessorKey: "planEndDate",
 		header: "Plan End Date",
 		cell: ({ row }) =>
-			row.original.planEndDate ? dateFormat(row.original.planEndDate, "long") : "—",
+			row.original.planEndDate
+				? dateFormat(parseCalendarDate(row.original.planEndDate), "long")
+				: "—",
 	},
 	{
 		accessorKey: "lastPaymentDate",
