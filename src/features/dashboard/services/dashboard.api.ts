@@ -181,6 +181,15 @@ export const getExpiringMemberships = createServerFn()
 		return expiringMemberships;
 	});
 
+// Shared by the select and the ORDER BY so the two can't drift apart.
+const activePlanEndDate = sql<string | null>`(
+		SELECT mm.end_date::text FROM member_memberships mm
+		WHERE mm.member_id = "members"."id"
+		AND mm.status = 'active'
+		ORDER BY mm.start_date DESC
+		LIMIT 1
+	)`;
+
 export const getActiveMemberships = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
@@ -199,10 +208,20 @@ export const getActiveMemberships = createServerFn()
 					ORDER BY mm.start_date DESC
 					LIMIT 1
 				)`,
+				planEndDate: activePlanEndDate,
+				lastPaymentDate: sql<string | null>`(
+					SELECT max(p.payment_date) FROM payments p
+					WHERE p.member_id = "members"."id"
+					AND p.status = 'completed'
+				)`,
 			})
 			.from(members)
 			.where(eq(members.memberStatus, "active"))
-			.orderBy(asc(sql`lower(${members.firstName})`), asc(sql`lower(${members.lastName})`));
+			.orderBy(
+				sql`${activePlanEndDate} DESC NULLS LAST`,
+				asc(sql`lower(${members.firstName})`),
+				asc(sql`lower(${members.lastName})`)
+			);
 	});
 
 export const getInactiveMembers = createServerFn()
