@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty";
 import { TableSkeleton } from "@/components/ui/loaders";
 import type { getActiveMemberships } from "@/features/dashboard/services/dashboard.api";
 import { dashboardQueries } from "@/features/dashboard/services/queries";
+import { dateFormat } from "@/lib/helpers";
 
 type ActiveMembershipRow = Awaited<ReturnType<typeof getActiveMemberships>>[number];
 
@@ -28,6 +29,18 @@ const columns: Array<ColumnDef<ActiveMembershipRow>> = [
 			<span className="capitalize">{row.original.activePlanName ?? "—"}</span>
 		),
 	},
+	{
+		accessorKey: "planEndDate",
+		header: "Plan End Date",
+		cell: ({ row }) =>
+			row.original.planEndDate ? dateFormat(row.original.planEndDate, "long") : "—",
+	},
+	{
+		accessorKey: "lastPaymentDate",
+		header: "Last Payment",
+		cell: ({ row }) =>
+			row.original.lastPaymentDate ? dateFormat(row.original.lastPaymentDate, "long") : "—",
+	},
 ];
 
 export function ActiveMembersSheet() {
@@ -40,7 +53,7 @@ export function ActiveMembersSheet() {
 	if (isLoading) {
 		return (
 			<div className="p-4">
-				<TableSkeleton rowCount={5} columnWidths={["w-36", "w-20", "w-28"]} />
+				<TableSkeleton rowCount={5} columnWidths={["w-36", "w-20", "w-28", "w-28", "w-28"]} />
 			</div>
 		);
 	}

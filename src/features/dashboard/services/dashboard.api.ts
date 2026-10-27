@@ -199,6 +199,18 @@ export const getActiveMemberships = createServerFn()
 					ORDER BY mm.start_date DESC
 					LIMIT 1
 				)`,
+				planEndDate: sql<string | null>`(
+					SELECT mm.end_date FROM member_memberships mm
+					WHERE mm.member_id = "members"."id"
+					AND mm.status = 'active'
+					ORDER BY mm.start_date DESC
+					LIMIT 1
+				)`,
+				lastPaymentDate: sql<string | null>`(
+					SELECT max(p.payment_date) FROM payments p
+					WHERE p.member_id = "members"."id"
+					AND p.status = 'completed'
+				)`,
 			})
 			.from(members)
 			.where(eq(members.memberStatus, "active"))

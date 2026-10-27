@@ -46,7 +46,7 @@ export function StatCards() {
 		setOpen(<ActiveMembersSheet />, {
 			title: "Active Members",
 			description: "Members with an active membership.",
-			className: "overflow-y-auto sm:max-w-xl!",
+			className: "overflow-y-auto sm:max-w-3xl!",
 		});
 	}
 
