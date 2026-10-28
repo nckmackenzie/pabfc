@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { nanoid } from "nanoid";
@@ -16,7 +16,6 @@ import { complimentaryQueries } from "@/features/receipts/services/complimentary
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { usePermissions } from "@/hooks/use-permissions";
 import { dateFormat } from "@/lib/helpers";
-import { GymReceiptPdf } from "./donwloadable-receipt";
 
 export function PaymentDetails() {
 	const payment = getRouteApi("/app/receipts/$receiptId/details").useLoaderData();
@@ -35,7 +34,8 @@ export function PaymentDetails() {
 	// whether the grace period/permission actually make it eligible is resolved by
 	// the upgradeContext query below, same as every other upgrade nuance.
 	const today = dateFormat(new Date());
-	const isMembershipStillActive = !payment.membership?.endDate || payment.membership.endDate >= today;
+	const isMembershipStillActive =
+		!payment.membership?.endDate || payment.membership.endDate >= today;
 	const canParticipateInUpgrade =
 		payment.status === "completed" &&
 		!!payment.planId &&
@@ -125,44 +125,47 @@ export function PaymentDetails() {
 					{payment.status !== "voided" && (
 						<Button asChild variant="outline">
 							<PDFDownloadLink
-								document={
-									<GymReceiptPdf
-										data={{
-											receiptNo: payment.paymentNo,
-											date: format(new Date(payment.paymentDate), "MMM d, yyyy"),
-											members: coveredMembers.map((member) => ({
-												name: `${member.firstName} ${member.lastName}`,
-												id: member.memberNo.toString(),
-												address: "",
-											})),
-											paymentMethod: payment.method.replace("_", " ").toUpperCase(),
-											sponsor: payment.sponsor
-												? {
-														name: `${payment.sponsor.firstName} ${payment.sponsor.lastName}`,
-														memberNo: payment.sponsor.memberNo.toString(),
-													}
-												: undefined,
-											lineItems: [
-												{
-													description: `Membership Fee - ${payment.plan?.name}`,
-													qty: periods,
-													price: periods > 0 ? Number(payment.amount) / periods : 0,
-													amount: Number(payment.amount),
-												},
-												...addonLines.map((line) => ({
-													description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
-													qty: line.numberOfPeriods,
-													price: Number(line.unitAmount),
-													amount: Number(line.lineTotal),
+								loadDocument={async () => {
+									const { GymReceiptPdf } = await import("./donwloadable-receipt");
+									return (
+										<GymReceiptPdf
+											data={{
+												receiptNo: payment.paymentNo,
+												date: format(new Date(payment.paymentDate), "MMM d, yyyy"),
+												members: coveredMembers.map((member) => ({
+													name: `${member.firstName} ${member.lastName}`,
+													id: member.memberNo.toString(),
+													address: "",
 												})),
-											],
-											subtotal: Number(payment.amount) + addonSubtotalValue,
-											discount: Number(payment.discountedAmount),
-											tax: Number(payment.taxAmount),
-											total: Number(payment.totalAmount),
-										}}
-									/>
-								}
+												paymentMethod: payment.method.replace("_", " ").toUpperCase(),
+												sponsor: payment.sponsor
+													? {
+															name: `${payment.sponsor.firstName} ${payment.sponsor.lastName}`,
+															memberNo: payment.sponsor.memberNo.toString(),
+														}
+													: undefined,
+												lineItems: [
+													{
+														description: `Membership Fee - ${payment.plan?.name}`,
+														qty: periods,
+														price: periods > 0 ? Number(payment.amount) / periods : 0,
+														amount: Number(payment.amount),
+													},
+													...addonLines.map((line) => ({
+														description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
+														qty: line.numberOfPeriods,
+														price: Number(line.unitAmount),
+														amount: Number(line.lineTotal),
+													})),
+												],
+												subtotal: Number(payment.amount) + addonSubtotalValue,
+												discount: Number(payment.discountedAmount),
+												tax: Number(payment.taxAmount),
+												total: Number(payment.totalAmount),
+											}}
+										/>
+									);
+								}}
 								fileName={`Receipt-${payment.paymentNo}.pdf`}
 								key={payment.id}
 							>

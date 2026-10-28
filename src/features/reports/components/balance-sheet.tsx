@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { DownloadIcon } from "lucide-react";
@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BalanceSheetDrillDown } from "@/features/reports/components/balance-sheet-drilldown";
-import { BalanceSheetPdf } from "@/features/reports/components/downloadable-balance-sheet";
+
 import {
 	ReportAccountLabel,
 	ReportAmountButton,
@@ -66,29 +66,33 @@ export function BalanceSheet() {
 			<div className="flex justify-end mb-4 no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={
-							<BalanceSheetPdf
-								data={{
-									asOfDate: formattedAsOfDate,
-									assetRows: assetRows.map((r) => ({
-										label: reportLabel(r),
-										amount: formatStatementAmount(Number(r.total)),
-									})),
-									liabilityRows: liabilityRows.map((r) => ({
-										label: reportLabel(r),
-										amount: formatStatementAmount(Number(r.total)),
-									})),
-									equityRows: equityRows.map((r) => ({
-										label: reportLabel(r),
-										amount: formatStatementAmount(Number(r.total)),
-									})),
-									totalAssets: formatStatementAmount(totalAssets),
-									totalLiabilities: formatStatementAmount(totalLiabilities),
-									totalEquity: formatStatementAmount(totalEquity),
-									totalLiabilitiesAndEquity: formatStatementAmount(totalLiabilitiesAndEquity),
-								}}
-							/>
-						}
+						loadDocument={async () => {
+							const { BalanceSheetPdf } =
+								await import("@/features/reports/components/downloadable-balance-sheet");
+							return (
+								<BalanceSheetPdf
+									data={{
+										asOfDate: formattedAsOfDate,
+										assetRows: assetRows.map((r) => ({
+											label: reportLabel(r),
+											amount: formatStatementAmount(Number(r.total)),
+										})),
+										liabilityRows: liabilityRows.map((r) => ({
+											label: reportLabel(r),
+											amount: formatStatementAmount(Number(r.total)),
+										})),
+										equityRows: equityRows.map((r) => ({
+											label: reportLabel(r),
+											amount: formatStatementAmount(Number(r.total)),
+										})),
+										totalAssets: formatStatementAmount(totalAssets),
+										totalLiabilities: formatStatementAmount(totalLiabilities),
+										totalEquity: formatStatementAmount(totalEquity),
+										totalLiabilitiesAndEquity: formatStatementAmount(totalLiabilitiesAndEquity),
+									}}
+								/>
+							);
+						}}
 						fileName="Balance-Sheet.pdf"
 					>
 						{({ loading }) =>

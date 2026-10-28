@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { renderToBuffer } from "@react-pdf/renderer";
 import { and, asc, eq, ne } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
@@ -8,7 +7,6 @@ import { authMiddleware } from "@/middlewares/auth-middleware";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { resend, FROM_EMAIL } from "@/services/email";
-import { PayslipPdf } from "@/features/payroll/components/payslip-pdf";
 import type { PayslipPdfData } from "@/features/payroll/components/payslip-pdf";
 import { toNumber } from "@/lib/helpers";
 import { dateFormat } from "@/lib/helpers";
@@ -31,7 +29,7 @@ function buildEmailContent(
 	employeeName: string,
 	employeeNo: string,
 	periodName: string,
-	payDate: string,
+	payDate: string
 ) {
 	const safeName = escapeHtml(employeeName);
 	const safePeriod = escapeHtml(periodName);
@@ -108,6 +106,10 @@ function buildPdfData(
 }
 
 async function generatePayslipPdf(pdfData: PayslipPdfData): Promise<Buffer> {
+	const [{ renderToBuffer }, { PayslipPdf }] = await Promise.all([
+		import("@react-pdf/renderer"),
+		import("@/features/payroll/components/payslip-pdf"),
+	]);
 	return renderToBuffer(<PayslipPdf data={pdfData} />);
 }
 
@@ -136,7 +138,7 @@ export const sendPayslipEmailFn = createServerFn()
 				pdfData.employeeName,
 				row.employeeNo,
 				pdfData.periodName,
-				pdfData.payDate,
+				pdfData.payDate
 			);
 
 			const { error } = await resend.emails.send({
@@ -198,7 +200,7 @@ export const sendAllPayslipsEmailFn = createServerFn()
 					pdfData.employeeName,
 					row.employeeNo,
 					pdfData.periodName,
-					pdfData.payDate,
+					pdfData.payDate
 				);
 
 				const { error } = await resend.emails.send({

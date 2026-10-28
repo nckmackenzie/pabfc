@@ -1,13 +1,7 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DownloadIcon } from "@/components/ui/icons";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,20 +14,13 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { MemberInfo } from "@/features/members/components/member-profile";
-import { PaymentPdf } from "@/features/payments/components/downloadable-payment";
+
 import type { getPayment } from "@/features/payments/services/payments.api";
 import { currencyFormatter } from "@/lib/helpers";
 import { toTitleCase } from "@/lib/utils";
 
-export function PaymentDetails({
-	payment,
-}: {
-	payment: Awaited<ReturnType<typeof getPayment>>;
-}) {
-	const totalPaid = payment.lines.reduce(
-		(acc, line) => acc + parseFloat(line.amount),
-		0,
-	);
+export function PaymentDetails({ payment }: { payment: Awaited<ReturnType<typeof getPayment>> }) {
+	const totalPaid = payment.lines.reduce((acc, line) => acc + parseFloat(line.amount), 0);
 
 	return (
 		<div className="space-y-6">
@@ -43,47 +30,34 @@ export function PaymentDetails({
 				content={
 					<Button asChild variant="outline" size="sm">
 						<PDFDownloadLink
-							document={
-								<PaymentPdf
-									data={{
-										paymentNo: payment.paymentNo,
-										paymentDate: format(
-											new Date(payment.paymentDate),
-											"dd/MM/yyyy",
-										),
-										vendor: toTitleCase(payment.vendor.name),
-										paymentMethod: payment.paymentMethod,
-										reference: payment.reference ?? undefined,
-										bank: payment.bank?.bankName
-											? toTitleCase(payment.bank.bankName)
-											: undefined,
-										memo: payment.memo ?? undefined,
-										lines: payment.lines.map((line) => ({
-											billNo: line.bill.invoiceNo,
-											billDate: format(
-												new Date(line.bill.invoiceDate),
-												"dd/MM/yyyy",
-											),
-											dueDate: line.bill.dueDate
-												? format(new Date(line.bill.dueDate), "dd/MM/yyyy")
-												: undefined,
-											billAmount: currencyFormatter(
-												parseFloat(line.bill.total),
-												false,
-											),
-											balance: currencyFormatter(
-												parseFloat(line.currentBalance),
-												false,
-											),
-											amountPaid: currencyFormatter(
-												parseFloat(line.amount),
-												false,
-											),
-										})),
-										totalPaid: currencyFormatter(totalPaid),
-									}}
-								/>
-							}
+							loadDocument={async () => {
+								const { PaymentPdf } =
+									await import("@/features/payments/components/downloadable-payment");
+								return (
+									<PaymentPdf
+										data={{
+											paymentNo: payment.paymentNo,
+											paymentDate: format(new Date(payment.paymentDate), "dd/MM/yyyy"),
+											vendor: toTitleCase(payment.vendor.name),
+											paymentMethod: payment.paymentMethod,
+											reference: payment.reference ?? undefined,
+											bank: payment.bank?.bankName ? toTitleCase(payment.bank.bankName) : undefined,
+											memo: payment.memo ?? undefined,
+											lines: payment.lines.map((line) => ({
+												billNo: line.bill.invoiceNo,
+												billDate: format(new Date(line.bill.invoiceDate), "dd/MM/yyyy"),
+												dueDate: line.bill.dueDate
+													? format(new Date(line.bill.dueDate), "dd/MM/yyyy")
+													: undefined,
+												billAmount: currencyFormatter(parseFloat(line.bill.total), false),
+												balance: currencyFormatter(parseFloat(line.currentBalance), false),
+												amountPaid: currencyFormatter(parseFloat(line.amount), false),
+											})),
+											totalPaid: currencyFormatter(totalPaid),
+										}}
+									/>
+								);
+							}}
 							fileName={`Payment-${payment.paymentNo}.pdf`}
 							key={Date.now()}
 						>
@@ -117,23 +91,15 @@ export function PaymentDetails({
 						value={format(new Date(payment.createdAt), "dd/MM/yyyy")}
 					/>
 					<MemberInfo label="Payment Method" value={payment.paymentMethod} />
-					<MemberInfo
-						label="Reference"
-						value={payment.reference?.toUpperCase()}
-					/>
+					<MemberInfo label="Reference" value={payment.reference?.toUpperCase()} />
 					<MemberInfo
 						label="Bank"
-						value={
-							payment.bank?.bankName ? toTitleCase(payment.bank.bankName) : "-"
-						}
+						value={payment.bank?.bankName ? toTitleCase(payment.bank.bankName) : "-"}
 					/>
 					<MemberInfo
 						label="Amount Paid"
 						value={currencyFormatter(
-							payment.lines.reduce(
-								(acc, line) => acc + parseFloat(line.amount),
-								0,
-							),
+							payment.lines.reduce((acc, line) => acc + parseFloat(line.amount), 0)
 						)}
 					/>
 				</CardContent>
@@ -141,9 +107,7 @@ export function PaymentDetails({
 			<Card className="shadow-none">
 				<CardHeader>
 					<CardTitle>Allocated Bills</CardTitle>
-					<CardDescription>
-						Each bill and amount affected by this payment
-					</CardDescription>
+					<CardDescription>Each bill and amount affected by this payment</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<Table>
@@ -161,13 +125,9 @@ export function PaymentDetails({
 							{payment.lines.map((line) => (
 								<TableRow key={line.id}>
 									<TableCell>{line.bill.invoiceNo}</TableCell>
+									<TableCell>{format(new Date(line.bill.invoiceDate), "dd/MM/yyyy")}</TableCell>
 									<TableCell>
-										{format(new Date(line.bill.invoiceDate), "dd/MM/yyyy")}
-									</TableCell>
-									<TableCell>
-										{line.bill.dueDate
-											? format(new Date(line.bill.dueDate), "dd/MM/yyyy")
-											: "-"}
+										{line.bill.dueDate ? format(new Date(line.bill.dueDate), "dd/MM/yyyy") : "-"}
 									</TableCell>
 									<TableCell className="text-right">
 										{currencyFormatter(parseFloat(line.bill.total), false)}
@@ -222,9 +182,7 @@ export function PaymentDetailsSkeleton() {
 			<Card className="shadow-none">
 				<CardHeader>
 					<CardTitle>Allocated Bills</CardTitle>
-					<CardDescription>
-						Each bill and amount affected by this payment
-					</CardDescription>
+					<CardDescription>Each bill and amount affected by this payment</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<Table>

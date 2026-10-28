@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { AlertTriangleIcon, DownloadIcon } from "lucide-react";
@@ -14,7 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { PayrollP9Pdf } from "@/features/reports/components/downloadable-payroll-p9";
+
 import { getPayrollP9Report } from "@/features/reports/services/payroll-p9.api";
 import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter } from "@/lib/helpers";
@@ -51,7 +51,11 @@ export function PayrollP9Report() {
 			<div className="flex justify-end no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={<PayrollP9Pdf data={data} />}
+						loadDocument={async () => {
+							const { PayrollP9Pdf } =
+								await import("@/features/reports/components/downloadable-payroll-p9");
+							return <PayrollP9Pdf data={data} />;
+						}}
 						fileName={`p9-${data.employee.employeeNo}-${data.taxYear}.pdf`}
 					>
 						{({ loading }) =>

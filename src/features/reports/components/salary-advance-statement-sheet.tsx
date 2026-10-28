@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { SalaryAdvanceStatementPdf } from "@/features/reports/components/downloadable-salary-advance-statement";
+
 import { formatSalaryAdvanceStatus } from "@/features/reports/lib/salary-advance-report";
 import { getSalaryAdvanceStatement } from "@/features/reports/services/salary-advance-report.api";
 import { getSalaryAdvanceStatusVariant } from "@/features/payroll/lib/salary-advance-options";
@@ -43,7 +43,11 @@ export function SalaryAdvanceStatementSheet({ advanceId }: { advanceId: string }
 			<div className="flex justify-end no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={<SalaryAdvanceStatementPdf data={data} />}
+						loadDocument={async () => {
+							const { SalaryAdvanceStatementPdf } =
+								await import("@/features/reports/components/downloadable-salary-advance-statement");
+							return <SalaryAdvanceStatementPdf data={data} />;
+						}}
 						fileName={`salary-advance-statement-${data.header.advanceReference}.pdf`}
 					>
 						{({ loading }) =>

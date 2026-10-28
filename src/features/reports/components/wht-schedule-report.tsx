@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { DownloadIcon } from "lucide-react";
@@ -14,11 +14,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { WhtSchedulePdf } from "@/features/reports/components/downloadable-wht-schedule";
-import {
-	summariseWhtSchedule,
-	type WhtScheduleRow,
-} from "@/features/reports/lib/wht-schedule";
+
+import { summariseWhtSchedule, type WhtScheduleRow } from "@/features/reports/lib/wht-schedule";
 import type { WhtScheduleFormSchema } from "@/features/reports/services/schema";
 import { getWhtSchedule } from "@/features/reports/services/wht-schedule.api";
 import { useFilters } from "@/hooks/use-filters";
@@ -56,7 +53,7 @@ export function WhtScheduleReport() {
 		filters.dateRange?.from && filters.dateRange?.to
 			? `${dateFormat(filters.dateRange.from, "long")} to ${dateFormat(
 					filters.dateRange.to,
-					"long",
+					"long"
 				)}`
 			: "";
 
@@ -65,43 +62,45 @@ export function WhtScheduleReport() {
 			<div className="flex justify-end no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={
-							<WhtSchedulePdf
-								data={{
-									period,
-									groups: summary.groups.map((group) => ({
-										label: group.label,
-										rows: group.rows.map((row) => ({
-											vendor: toTitleCase(row.vendor),
-											taxPin: row.taxPin?.toUpperCase() ?? "-",
-											invoiceNo: row.invoiceNo,
-											invoiceDate: dateFormat(row.invoiceDate, "reporting"),
-											grossAmount:
-												row.grossAmount === null
-													? "-"
-													: currencyFormatter(row.grossAmount, false),
-											rate: row.rate ?? "-",
-											whtAmount: currencyFormatter(row.whtAmount, false),
-											certificateNo: row.certificateNo?.toUpperCase() ?? "-",
-											rowType:
-												row.rowType === "billing"
-													? "Entered at billing"
-													: "Correction entry",
-											remittanceStatus:
-												row.remittanceStatus === "already_remitted"
-													? "Already remitted"
-													: row.remittanceStatus === "pending"
-														? "Pending remittance"
-														: "-",
+						loadDocument={async () => {
+							const { WhtSchedulePdf } =
+								await import("@/features/reports/components/downloadable-wht-schedule");
+							return (
+								<WhtSchedulePdf
+									data={{
+										period,
+										groups: summary.groups.map((group) => ({
+											label: group.label,
+											rows: group.rows.map((row) => ({
+												vendor: toTitleCase(row.vendor),
+												taxPin: row.taxPin?.toUpperCase() ?? "-",
+												invoiceNo: row.invoiceNo,
+												invoiceDate: dateFormat(row.invoiceDate, "reporting"),
+												grossAmount:
+													row.grossAmount === null
+														? "-"
+														: currencyFormatter(row.grossAmount, false),
+												rate: row.rate ?? "-",
+												whtAmount: currencyFormatter(row.whtAmount, false),
+												certificateNo: row.certificateNo?.toUpperCase() ?? "-",
+												rowType:
+													row.rowType === "billing" ? "Entered at billing" : "Correction entry",
+												remittanceStatus:
+													row.remittanceStatus === "already_remitted"
+														? "Already remitted"
+														: row.remittanceStatus === "pending"
+															? "Pending remittance"
+															: "-",
+											})),
+											grossAmount: currencyFormatter(group.grossAmount, false),
+											whtAmount: currencyFormatter(group.whtAmount, false),
 										})),
-										grossAmount: currencyFormatter(group.grossAmount, false),
-										whtAmount: currencyFormatter(group.whtAmount, false),
-									})),
-									totalGrossAmount: currencyFormatter(summary.grossAmount, false),
-									totalWhtAmount: currencyFormatter(summary.whtAmount, false),
-								}}
-							/>
-						}
+										totalGrossAmount: currencyFormatter(summary.grossAmount, false),
+										totalWhtAmount: currencyFormatter(summary.whtAmount, false),
+									}}
+								/>
+							);
+						}}
 						fileName="WHT-Schedule.pdf"
 					>
 						{({ loading }) =>
@@ -125,9 +124,7 @@ export function WhtScheduleReport() {
 							<TableHead className="w-[140px]">PIN</TableHead>
 							<TableHead className="w-[140px]">Bill Ref</TableHead>
 							<TableHead className="w-[130px]">Bill Date</TableHead>
-							<TableHead className="text-right w-[160px]">
-								Gross Amount (excl. VAT)
-							</TableHead>
+							<TableHead className="text-right w-[160px]">Gross Amount (excl. VAT)</TableHead>
 							<TableHead className="text-right w-[90px]">Rate %</TableHead>
 							<TableHead className="text-right w-[150px]">WHT Amount</TableHead>
 							<TableHead className="w-[150px]">Certificate No</TableHead>
@@ -144,33 +141,21 @@ export function WhtScheduleReport() {
 									</TableCell>
 								</TableRow>
 								{group.rows.map((row, index) => (
-									<TableRow
-										key={`${group.label}-${row.invoiceNo}-${index.toString()}`}
-									>
+									<TableRow key={`${group.label}-${row.invoiceNo}-${index.toString()}`}>
 										<TableCell>{toTitleCase(row.vendor)}</TableCell>
 										<TableCell>{row.taxPin?.toUpperCase() ?? "-"}</TableCell>
 										<TableCell>{row.invoiceNo}</TableCell>
-										<TableCell>
-											{dateFormat(row.invoiceDate, "reporting")}
-										</TableCell>
+										<TableCell>{dateFormat(row.invoiceDate, "reporting")}</TableCell>
 										<TableCell className="text-right tabular-nums">
-											{row.grossAmount === null
-												? "-"
-												: currencyFormatter(row.grossAmount, false)}
+											{row.grossAmount === null ? "-" : currencyFormatter(row.grossAmount, false)}
 										</TableCell>
-										<TableCell className="text-right tabular-nums">
-											{row.rate ?? "-"}
-										</TableCell>
+										<TableCell className="text-right tabular-nums">{row.rate ?? "-"}</TableCell>
 										<TableCell className="text-right tabular-nums">
 											{currencyFormatter(row.whtAmount, false)}
 										</TableCell>
+										<TableCell>{row.certificateNo?.toUpperCase() ?? "-"}</TableCell>
 										<TableCell>
-											{row.certificateNo?.toUpperCase() ?? "-"}
-										</TableCell>
-										<TableCell>
-											{row.rowType === "billing"
-												? "Entered at billing"
-												: "Correction entry"}
+											{row.rowType === "billing" ? "Entered at billing" : "Correction entry"}
 										</TableCell>
 										<TableCell>
 											{row.remittanceStatus === "already_remitted"

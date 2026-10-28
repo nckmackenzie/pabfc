@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { formatText } from "@/features/employees/utils/helpers";
-import { LoanStatementPdf } from "@/features/reports/components/downloadable-loan-statement";
+
 import { getLoanStatement } from "@/features/reports/services/loan-ledger-report.api";
 import { getLoanStatusVariant } from "@/features/payroll/lib/loan-options";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
@@ -49,7 +49,11 @@ export function LoanStatementSheet({ loanId }: { loanId: string }) {
 			<div className="flex justify-end no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={<LoanStatementPdf data={data} />}
+						loadDocument={async () => {
+							const { LoanStatementPdf } =
+								await import("@/features/reports/components/downloadable-loan-statement");
+							return <LoanStatementPdf data={data} />;
+						}}
 						fileName={`loan-statement-${data.header.loanReference}.pdf`}
 					>
 						{({ loading }) =>

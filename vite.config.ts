@@ -8,6 +8,7 @@ import { nitro } from "nitro/vite";
 import { loadEnv } from "vite";
 
 const env = loadEnv("development", process.cwd(), "");
+const pdfServerExternals = [/^@react-pdf\//, /^pdfkit(?:\/|$)/];
 
 const config = defineConfig({
 	server: {
@@ -19,9 +20,15 @@ const config = defineConfig({
 	resolve: {
 		tsconfigPaths: true,
 	},
+	ssr: {
+		external: ["@react-pdf/renderer", "pdfkit"],
+	},
 	plugins: [
 		devtools(),
-		nitro(),
+		nitro({
+			rollupConfig: { external: pdfServerExternals },
+			traceDeps: ["@react-pdf/renderer*", "pdfkit*"],
+		}),
 		// this is the plugin that enables path aliases
 		// viteTsConfigPaths({
 		//   projects: ['./tsconfig.json'],

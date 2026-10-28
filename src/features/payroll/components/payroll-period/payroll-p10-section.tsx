@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { PayrollP10Pdf } from "@/features/reports/components/downloadable-payroll-p10";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
+
 import { getPayrollP10Report } from "@/features/reports/services/payroll-p10.api";
 import { currencyFormatter } from "@/lib/helpers";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,11 @@ export function PayrollP10Section({ periodId, status, periodName }: Props) {
 						</div>
 						{data && (
 							<PDFDownloadLink
-								document={<PayrollP10Pdf data={data} />}
+								loadDocument={async () => {
+									const { PayrollP10Pdf } =
+										await import("@/features/reports/components/downloadable-payroll-p10");
+									return <PayrollP10Pdf data={data} />;
+								}}
 								fileName={`p10-${periodName.replace(/\s+/g, "-")}.pdf`}
 							>
 								{({ loading }) => (
