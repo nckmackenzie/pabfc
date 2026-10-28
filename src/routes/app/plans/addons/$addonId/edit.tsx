@@ -16,7 +16,9 @@ export const Route = createFileRoute("/app/plans/addons/$addonId/edit")({
 		meta: [{ title: "Edit Addon / Prime Age Beauty & Fitness Center" }],
 	}),
 	loader: async ({ params, context: { queryClient } }) => {
-		const addon = await queryClient.ensureQueryData(addonQueries.detail(params.addonId));
+		const addon = await queryClient.ensureQueryData(
+			addonQueries.detail(params.addonId),
+		);
 		if (!addon) {
 			throw notFound();
 		}

@@ -7,7 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
 import { BroadcastArea } from "@/features/communication/components/broadcast-area";
 import { Broadcasts } from "@/features/communication/components/broadcasts";
-import { TemplateArea, TemplatesSkeleton } from "@/features/communication/components/template-area";
+import {
+	TemplateArea,
+	TemplatesSkeleton,
+} from "@/features/communication/components/template-area";
 import { smsTemplateQueries } from "@/features/communication/services/queries";
 import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";

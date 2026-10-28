@@ -33,7 +33,7 @@ import {
 	sumBillLineAmounts,
 } from "@/features/bills/lib/bill-totals";
 import { toDecimalString, toNumber } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
+import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -524,9 +524,10 @@ export const updateBillWhtCertificate = createServerFn({ method: "POST" })
 export const getUnpaidBillsBySupplier = createServerFn()
 	.middleware([authMiddleware])
 	.validator((vendorId: string) => vendorId)
-	.handler(async ({ data: vendorId }) =>
-		db
+	.handler(async ({ data: vendorId }) => {
+		await requireAnyPermission(["payments:create", "payments:update", "bills:view"]);
+		return db
 			.select()
 			.from(vwInvoices)
-			.where(and(eq(vwInvoices.vendorId, vendorId), gt(vwInvoices.balance, "0")))
-	);
+			.where(and(eq(vwInvoices.vendorId, vendorId), gt(vwInvoices.balance, "0")));
+	});

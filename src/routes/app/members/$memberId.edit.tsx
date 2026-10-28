@@ -17,7 +17,9 @@ export const Route = createFileRoute("/app/members/$memberId/edit")({
 	component: RouteComponent,
 	pendingComponent: () => <FormLoader />,
 	loader: async ({ context: { queryClient }, params: { memberId } }) => {
-		const member = await queryClient.ensureQueryData(memberQueries.detail(memberId));
+		const member = await queryClient.ensureQueryData(
+			memberQueries.detail(memberId),
+		);
 		if (!member) {
 			throw notFound();
 		}
@@ -30,7 +32,9 @@ export const Route = createFileRoute("/app/members/$memberId/edit")({
 
 function RouteComponent() {
 	const loaderMember = Route.useLoaderData();
-	const { data: queryMember } = useQuery(memberQueries.detail(Route.useParams().memberId));
+	const { data: queryMember } = useQuery(
+		memberQueries.detail(Route.useParams().memberId),
+	);
 	const member = queryMember ?? loaderMember;
 	return (
 		<ProtectedPageWithWrapper

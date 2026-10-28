@@ -11,12 +11,7 @@ const today = new Date();
 
 const overtimePeriodSearchSchema = z.object({
 	q: z.string().optional().catch(""),
-	periodMonth: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(12)
-		.catch(today.getUTCMonth() + 1),
+	periodMonth: z.coerce.number().int().min(1).max(12).catch(today.getUTCMonth() + 1),
 	periodYear: z.coerce.number().int().min(2000).max(2100).catch(today.getUTCFullYear()),
 	status: overtimeStatusSchema.optional().catch(undefined),
 	departmentId: z.coerce.number().int().positive().optional().catch(undefined),

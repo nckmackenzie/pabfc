@@ -11,7 +11,10 @@ import { DataTableColumnHeader } from "@/components/ui/datatable-column-header";
 import { DeleteActionButton } from "@/components/ui/delete-action";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ResetIcon } from "@/components/ui/icons";
-import { deleteUser, type UserWithLoginAttempts } from "@/features/users/services/users.api";
+import {
+	deleteUser,
+	type UserWithLoginAttempts,
+} from "@/features/users/services/users.api";
 import { useFilters } from "@/hooks/use-filters";
 import { useRouteContext } from "@tanstack/react-router";
 import { toTitleCase } from "@/lib/utils";
@@ -24,11 +27,15 @@ export function UsersTable() {
 	const columns: Array<ColumnDef<UserWithLoginAttempts>> = [
 		{
 			accessorKey: "name",
-			header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Name" />
+			),
 			cell: ({ row }) => (
 				<div className="row-font flex items-center gap-2">
 					{toTitleCase(row.original.name)}
-					{session?.user.id === row.original.id && <Badge variant="secondary">You</Badge>}
+					{session?.user.id === row.original.id && (
+						<Badge variant="secondary">You</Badge>
+					)}
 				</div>
 			),
 		},
@@ -42,7 +49,8 @@ export function UsersTable() {
 			cell: ({ row }) => (
 				<div
 					className={clsx("row-font capitalize", {
-						"text-success-foreground font-semibold": row.original.role === "admin",
+						"text-success-foreground font-semibold":
+							row.original.role === "admin",
 					})}
 				>
 					{row.original.role}
@@ -55,7 +63,10 @@ export function UsersTable() {
 			cell: ({ row }) => {
 				const status = row.original.active ? "active" : "inactive";
 				return (
-					<Badge variant={status === "active" ? "success" : "danger"} className="uppercase">
+					<Badge
+						variant={status === "active" ? "success" : "danger"}
+						className="uppercase"
+					>
 						{status}
 					</Badge>
 				);

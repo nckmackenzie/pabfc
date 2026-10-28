@@ -116,7 +116,11 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
+				<form.SubmitButton
+					buttonText="Preview"
+					icon={<FileIcon />}
+					withReset={false}
+				/>
 			</form.AppForm>
 		</form>
 	);

@@ -30,9 +30,9 @@ import { findInvalidPostingAccountIdsByType } from "@/features/coa/services/acco
 import { calculateExpenseRequest } from "@/features/expenses/utils";
 import { normalizeDateRange } from "@/lib/helpers";
 import { ApplicationError } from "@/lib/error-handling/app-error";
-import { requirePermission } from "@/lib/permissions/permissions";
+import { requirePermission, requireAnyPermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
@@ -44,7 +44,7 @@ import {
 } from "@/services/journal";
 
 export const getExpenseNo = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => {
 		const { rows } = await db.execute<{ expenseNo: number }>(
 			sql`SELECT COALESCE(MAX(expense_no),0) + 1 as "expenseNo" FROM expense_headers`,
@@ -56,6 +56,7 @@ export const getExpenses = createServerFn()
 	.middleware([authMiddleware])
 	.validator(expenseValidateSearch)
 	.handler(async ({ data }) => {
+		await requirePermission("expenses:view");
 		const { q, from, to } = data;
 
 		const filters: Array<SQL> = [];
@@ -117,6 +118,7 @@ export const getExpense = createServerFn()
 	.middleware([authMiddleware])
 	.validator((expenseId: string) => expenseId)
 	.handler(async ({ data: expenseId }) => {
+		await requireAnyPermission(["expenses:view", "expenses:update"]);
 		return db.query.expenseHeaders.findFirst({
 			with: {
 				attachments: {
@@ -383,8 +385,10 @@ export const createExpense = createServerFn({ method: "POST" })
 	);
 
 export const getExpenseJournal = createServerFn()
+	.middleware([authMiddleware])
 	.validator((expenseId: string) => expenseId)
 	.handler(async ({ data: expenseId }) => {
+		await requireAnyPermission(["expenses:view", "expenses:update"]);
 		return db
 			.select({
 				id: journalLines.id,

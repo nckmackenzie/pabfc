@@ -59,7 +59,9 @@ function RouteComponent() {
 			<ReportFilters />
 			{hasRequiredFilters && (
 				<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
-					<AttendanceReportTable filters={filters as AttendanceReportFormSchema} />
+					<AttendanceReportTable
+						filters={filters as AttendanceReportFormSchema}
+					/>
 				</ErrorBoundaryWithSuspense>
 			)}
 		</Wrapper>
@@ -120,7 +122,11 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
+				<form.SubmitButton
+					buttonText="Preview"
+					icon={<FileIcon />}
+					withReset={false}
+				/>
 			</form.AppForm>
 		</form>
 	);

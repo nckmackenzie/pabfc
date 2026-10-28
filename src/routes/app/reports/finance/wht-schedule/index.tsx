@@ -31,7 +31,9 @@ export const Route = createFileRoute("/app/reports/finance/wht-schedule/")({
 
 function RouteComponent() {
 	const { filters } = useFilters(Route.id);
-	const hasRequiredFilters = Boolean(filters.dateRange?.from && filters.dateRange?.to);
+	const hasRequiredFilters = Boolean(
+		filters.dateRange?.from && filters.dateRange?.to,
+	);
 
 	return (
 		<Wrapper size="full">
@@ -83,7 +85,11 @@ function Filters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
+				<form.SubmitButton
+					buttonText="Preview"
+					icon={<FileIcon />}
+					withReset={false}
+				/>
 			</form.AppForm>
 		</form>
 	);

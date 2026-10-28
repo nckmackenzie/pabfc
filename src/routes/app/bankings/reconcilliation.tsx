@@ -12,7 +12,9 @@ export const Route = createFileRoute("/app/bankings/reconcilliation")({
 	},
 	validateSearch: bankReconciliationValidateSearch,
 	head: () => ({
-		meta: [{ title: "Bank Reconciliation / Prime Age Beauty & Fitness Center" }],
+		meta: [
+			{ title: "Bank Reconciliation / Prime Age Beauty & Fitness Center" },
+		],
 	}),
 	staticData: {
 		breadcrumb: "Bank Reconciliation",

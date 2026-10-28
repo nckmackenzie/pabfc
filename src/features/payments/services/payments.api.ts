@@ -17,7 +17,7 @@ import { ApplicationError } from "@/lib/error-handling/app-error";
 import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
@@ -28,7 +28,7 @@ import {
 } from "@/services/journal";
 
 export const getPaymentNo = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => {
 		const result = await db.execute<{ paymentNo: number }>(
 			`SELECT COALESCE(MAX(payment_no), 0) as "paymentNo" FROM bill_payments`

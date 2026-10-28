@@ -17,7 +17,9 @@ export const Route = createFileRoute("/app/payments/$paymentId/details")({
 	}),
 	component: RouteComponent,
 	loader: async ({ context: { queryClient }, params: { paymentId } }) => {
-		const payment = await queryClient.ensureQueryData(paymentQueries.detail(paymentId));
+		const payment = await queryClient.ensureQueryData(
+			paymentQueries.detail(paymentId),
+		);
 
 		return payment;
 	},

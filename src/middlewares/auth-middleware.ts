@@ -33,3 +33,15 @@ export const adminMiddleware = createMiddleware()
 
 		return next();
 	});
+
+// Staff-only access for lookup endpoints that are shared by many forms and have no single
+// owning permission. Portal members are signed in but must not reach internal data.
+export const staffMiddleware = createMiddleware()
+	.middleware([authMiddleware])
+	.server(async ({ context, next }) => {
+		if (context.user.role === "member") {
+			throw new AuthorizationError("This action is restricted to staff");
+		}
+
+		return next();
+	});

@@ -11,7 +11,9 @@ export const Route = createFileRoute("/app/chart-of-accounts/new")({
 	},
 	component: RouteComponent,
 	head: () => ({
-		meta: [{ title: "New Chart of Account / Prime Age Beauty & Fitness Center" }],
+		meta: [
+			{ title: "New Chart of Account / Prime Age Beauty & Fitness Center" },
+		],
 	}),
 	pendingComponent: FormLoader,
 	loader: async ({ context: { queryClient } }) =>

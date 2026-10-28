@@ -32,7 +32,10 @@ export const Route = createFileRoute("/app/attendances/")({
 function RouteComponent() {
 	return (
 		<ProtectedPageWithWrapper permissions={["attendance:view"]}>
-			<PageHeader title="Attendance" description="View member attendance records" />
+			<PageHeader
+				title="Attendance"
+				description="View member attendance records"
+			/>
 			<Filters />
 			<ErrorBoundaryWithSuspense>
 				<AttendanceTable />

@@ -14,7 +14,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { roundDecimal, toDecimalString } from "@/lib/helpers";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
 import { createBankingEntry, deleteBankingEntry } from "@/services/banking";
@@ -43,7 +43,7 @@ class RemittanceValidationError extends Error {}
  * `createRemittance`'s transaction via `getNextDocumentNumber`.
  */
 export const getRemittanceNo = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => {
 		const result = await db.execute<{ remittanceNo: number }>(
 			`SELECT COALESCE(MAX(remittance_no), 0) as "remittanceNo" FROM wht_remittances`,

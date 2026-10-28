@@ -25,7 +25,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 export function AppSidebar() {
 	const data = useRouteContext({ from: "/app", select: (context) => context.auth });
 	const { setOpenMobile, openMobile } = useSidebar();
-	const { hasPermission } = usePermissions();
+	const { hasPermission, isAdmin } = usePermissions();
 
 	return (
 		<Sidebar>
@@ -50,9 +50,7 @@ export function AppSidebar() {
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{menuItems
-								.filter((item) =>
-									item.permission ? hasPermission(item.permission) : data?.user.role === "admin"
-								)
+								.filter((item) => (item.permission ? hasPermission(item.permission) : isAdmin))
 								.map((item) => (
 									<MenuItem key={item.title} item={item} />
 								))}
@@ -113,14 +111,12 @@ export function AppSidebar() {
 			<SidebarFooter>
 				<SidebarGroup>
 					<SidebarGroupContent>
-						{data && (
-							<p className="text-xs text-muted-foreground">
-								Logged In as:{" "}
-								<span className="font-semibold capitalize text-primary">
-									{data.user.name.split(" ")[0]}
-								</span>
-							</p>
-						)}
+						<p className="text-xs text-muted-foreground">
+							Logged In as:{" "}
+							<span className="font-semibold capitalize text-primary">
+								{data.user.name.split(" ")[0]}
+							</span>
+						</p>
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarFooter>

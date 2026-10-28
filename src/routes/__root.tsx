@@ -29,9 +29,10 @@ declare module "@tanstack/react-router" {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async ({ context }) => {
-		const userSession = await context.queryClient.fetchQuery(authContextQueryOptions);
+		// staleTime is 0, so authorization is re-read from the server on every navigation.
+		const auth = await context.queryClient.fetchQuery(authContextQueryOptions);
 
-		return { userSession };
+		return { auth };
 	},
 	ssr: "data-only",
 	head: () => ({

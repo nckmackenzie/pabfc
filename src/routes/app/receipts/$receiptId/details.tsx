@@ -19,7 +19,9 @@ export const Route = createFileRoute("/app/receipts/$receiptId/details")({
 	component: RouteComponent,
 	pendingComponent: PaymentDetailsSkeleton,
 	loader: async ({ context: { queryClient }, params: { receiptId } }) => {
-		const payment = await queryClient.ensureQueryData(paymentsQueries.detail(receiptId));
+		const payment = await queryClient.ensureQueryData(
+			paymentsQueries.detail(receiptId),
+		);
 		if (!payment) {
 			throw notFound();
 		}

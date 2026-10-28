@@ -14,7 +14,7 @@ import { financialYearQueries } from "@/features/financial-years/services/querie
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
 		// The root beforeLoad has just fetched authorization from the server.
-		const auth = context.userSession;
+		const { auth } = context;
 		if (!auth || auth.user.role === "member") {
 			throw redirect({ to: "/sign-in", search: { redirectTo: location.href } });
 		}

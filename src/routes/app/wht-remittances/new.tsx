@@ -25,7 +25,9 @@ export const Route = createFileRoute("/app/wht-remittances/new")({
 			queryClient.ensureQueryData(remittanceQueries.remittanceNo()),
 			queryClient.ensureQueryData(bankQueries.list()),
 			queryClient.ensureQueryData(
-				accountQueries.childrenAccountsByParentName("Cash And Cash Equivalents")
+				accountQueries.childrenAccountsByParentName(
+					"Cash And Cash Equivalents",
+				),
 			),
 		]);
 
@@ -41,7 +43,8 @@ export const Route = createFileRoute("/app/wht-remittances/new")({
 });
 
 function RouteComponent() {
-	const { remittanceNo, banks, cashEquivalentAccounts } = Route.useLoaderData();
+	const { remittanceNo, banks, cashEquivalentAccounts } =
+		Route.useLoaderData();
 
 	return (
 		<ProtectedPageWithWrapper

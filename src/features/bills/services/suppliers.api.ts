@@ -1,4 +1,5 @@
 import { notFound } from "@tanstack/react-router";
+import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { createServerFn } from "@tanstack/react-start";
 import { asc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -14,6 +15,17 @@ export const getVendors = createServerFn()
 	.middleware([authMiddleware])
 	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
+		await requireAnyPermission([
+			"bills:view",
+			"bills:create",
+			"bills:update",
+			"payments:create",
+			"payments:update",
+			"expenses:create",
+			"expenses:update",
+			"reports:invoices-report",
+			"reports:payments-report",
+		]);
 		return db.query.vendors.findMany({
 			where: q
 				? or(
@@ -31,6 +43,15 @@ export const getVendorById = createServerFn()
 	.middleware([authMiddleware])
 	.validator(z.string())
 	.handler(async ({ data: id }) => {
+		await requireAnyPermission([
+			"bills:view",
+			"bills:create",
+			"bills:update",
+			"payments:create",
+			"payments:update",
+			"expenses:create",
+			"expenses:update",
+		]);
 		const vendor = await db.query.vendors.findFirst({
 			where: eq(vendors.id, id),
 		});
@@ -49,6 +70,7 @@ export const upsertSupplier = createServerFn()
 			},
 		}) => {
 			const { id, ...rest } = data;
+			await requirePermission(id ? "bills:update" : "bills:create");
 			if (id) {
 				await db.update(vendors).set(rest).where(eq(vendors.id, id));
 			} else {
@@ -77,6 +99,7 @@ export const deleteSupplier = createServerFn()
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("bills:delete");
 			try {
 				const [vendor, bill] = await Promise.all([
 					db.query.vendors.findFirst({

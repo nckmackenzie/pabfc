@@ -14,7 +14,7 @@ export const Route = createFileRoute("/app/profile/")({
 });
 
 function RouteComponent() {
-	const { userSession } = Route.useRouteContext();
+	const { auth } = Route.useRouteContext();
 
 	return (
 		<Wrapper size="full">
@@ -22,7 +22,7 @@ function RouteComponent() {
 				title="Profile"
 				description="Update your personal details and security settings"
 			/>
-			<ProfileForm user={userSession?.user} />
+			<ProfileForm user={auth?.user} />
 		</Wrapper>
 	);
 }

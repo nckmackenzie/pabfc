@@ -22,7 +22,9 @@ export const Route = createFileRoute("/app/members/$memberId/profile")({
 		meta: [{ title: "Member Profile / Prime Age Beauty & Fitness Center" }],
 	}),
 	loader: async ({ context: { queryClient }, params: { memberId } }) => {
-		const member = await queryClient.ensureQueryData(memberQueries.overview(memberId));
+		const member = await queryClient.ensureQueryData(
+			memberQueries.overview(memberId),
+		);
 		if (!member) {
 			throw notFound();
 		}
@@ -39,15 +41,18 @@ export const Route = createFileRoute("/app/members/$memberId/profile")({
 
 function RouteComponent() {
 	const member = Route.useLoaderData();
-	const { userSession } = Route.useRouteContext();
+	const { auth } = Route.useRouteContext();
 	const { vid } = Route.useSearch();
-	const memberName = useMemo(() => `${member.firstName} ${member.lastName}`, [member]);
+	const memberName = useMemo(
+		() => `${member.firstName} ${member.lastName}`,
+		[member],
+	);
 
 	useEffect(() => {
 		async function logVisit() {
 			logActivity({
 				data: {
-					userId: userSession?.user.id as string,
+					userId: auth?.user.id as string,
 					action: "view member profile",
 					description: `viewed member profile for member ${memberName}`,
 					id: vid,
@@ -56,7 +61,7 @@ function RouteComponent() {
 		}
 
 		logVisit();
-	}, [memberName, userSession?.user.id, vid]);
+	}, [memberName, auth?.user.id, vid]);
 
 	return (
 		<ProtectedPageWithWrapper

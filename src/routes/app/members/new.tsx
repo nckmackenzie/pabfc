@@ -10,7 +10,10 @@ export const Route = createFileRoute("/app/members/new")({
 		assertCan(context.auth, "members:create");
 	},
 	validateSearch: z.object({
-		tab: z.enum(["personal", "contact", "emergency"]).optional().catch("personal"),
+		tab: z
+			.enum(["personal", "contact", "emergency"])
+			.optional()
+			.catch("personal"),
 	}),
 	pendingComponent: () => <FormLoader />,
 	component: RouteComponent,

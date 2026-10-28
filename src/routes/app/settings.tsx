@@ -15,8 +15,8 @@ export const Route = createFileRoute("/app/settings")({
 	staticData: {
 		breadcrumb: "Settings",
 	},
-	beforeLoad: async ({ context: { userSession } }) => {
-		if (userSession?.user.role !== "admin") {
+	beforeLoad: async ({ context: { auth } }) => {
+		if (auth?.user.role !== "admin") {
 			throw redirect({ to: "/app/unauthorized" });
 		}
 	},

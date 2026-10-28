@@ -9,6 +9,7 @@ interface PermissionGateProps {
 	requireAll?: boolean;
 	role?: string;
 	fallback?: ReactNode;
+	/** @deprecated Permissions are read synchronously from route context; never shown. */
 	loadingComponent?: ReactNode;
 }
 
@@ -19,28 +20,15 @@ export function PermissionGate({
 	requireAll = false,
 	role,
 	fallback = null,
-	loadingComponent = null,
 }: PermissionGateProps) {
-	const {
-		hasPermission,
-		hasAnyPermission,
-		hasAllPermissions,
-		hasRole,
-		isLoading,
-	} = usePermissions();
-
-	if (isLoading) {
-		return loadingComponent;
-	}
+	const { hasPermission, hasAnyPermission, hasAllPermissions, hasRole } = usePermissions();
 
 	let hasAccess = false;
 
 	if (permission) {
 		hasAccess = hasPermission(permission);
 	} else if (permissions) {
-		hasAccess = requireAll
-			? hasAllPermissions(permissions)
-			: hasAnyPermission(permissions);
+		hasAccess = requireAll ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
 	} else if (role) {
 		hasAccess = hasRole(role);
 	}

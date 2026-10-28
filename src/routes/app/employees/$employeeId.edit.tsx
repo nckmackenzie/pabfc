@@ -12,7 +12,9 @@ export const Route = createFileRoute("/app/employees/$employeeId/edit")({
 		assertCan(context.auth, "employees:update");
 	},
 	loader: async ({ context: { queryClient }, params: { employeeId } }) => {
-		const employee = await queryClient.ensureQueryData(employeeQueries.detail(employeeId));
+		const employee = await queryClient.ensureQueryData(
+			employeeQueries.detail(employeeId),
+		);
 
 		if (!employee) {
 			throw notFound();
@@ -24,7 +26,8 @@ export const Route = createFileRoute("/app/employees/$employeeId/edit")({
 	head: () => ({ meta: seo({ title: "Edit Employee" }) }),
 	pendingComponent: EmployeeFormPendingComponent,
 	staticData: {
-		breadcrumb: (match) => `Edit ${match.loaderData.firstName} ${match.loaderData.lastName}`,
+		breadcrumb: (match) =>
+			`Edit ${match.loaderData.firstName} ${match.loaderData.lastName}`,
 	},
 });
 

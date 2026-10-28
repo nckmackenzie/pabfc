@@ -17,13 +17,24 @@ import {
 import { pickCurrentSessionMembership } from "@/features/members/lib/session-membership";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { nextMemberNo } from "./member-creation";
-import { authMiddleware } from "@/middlewares/auth-middleware";
-import { requirePermission } from "@/lib/permissions/permissions";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
+import { requirePermission, requireAnyPermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const getMembers = createServerFn()
+	.middleware([authMiddleware])
 	.validator(memberValidateSearch)
 	.handler(async ({ data: { q, status, plan } }) => {
+		await requireAnyPermission([
+			"members:view",
+			"receipts:view",
+			"receipts:create",
+			"payments:view",
+			"attendance:view",
+			"communication:view",
+			"reports:receipts-report",
+			"reports:hr-reports",
+		]);
 		const filters: Array<SQL> = [];
 
 		if (q) {
@@ -93,6 +104,7 @@ export const getMemberProfileData = createServerFn()
 	.middleware([authMiddleware])
 	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
+		await requireAnyPermission(["members:view-profile", "members:view"]);
 		const member = await db.select().from(membersOverview).where(eq(membersOverview.id, memberId));
 		const memberRow = member[0];
 		if (!memberRow) return null;
@@ -146,6 +158,7 @@ export const getMemberProfileData = createServerFn()
 	});
 
 export const checkColumnExists = createServerFn()
+	.middleware([staffMiddleware])
 	.validator((data: { column: "contact" | "idNo"; value: string; memberId?: string }) => data)
 	.handler(async ({ data }) => {
 		const filter: Array<SQL> = [];
@@ -165,13 +178,20 @@ export const checkColumnExists = createServerFn()
 	});
 
 export const getMemberNo = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => nextMemberNo());
 
 export const getMember = createServerFn()
 	.middleware([authMiddleware])
 	.validator((memberId: string) => memberId)
 	.handler(async ({ data: memberId }) => {
+		await requireAnyPermission([
+			"members:view",
+			"members:create",
+			"members:update",
+			"members:view-profile",
+			"receipts:create",
+		]);
 		return db.query.members.findFirst({
 			columns: { createdAt: false, updatedAt: false },
 			where: and(eq(members.id, memberId), isNull(members.deletedAt)),
@@ -179,8 +199,10 @@ export const getMember = createServerFn()
 	});
 
 export const getMemberPreviousPlanDetails = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: string) => data)
 	.handler(async ({ data: memberId }) => {
+		await requireAnyPermission(["receipts:create", "receipts:update", "members:view"]);
 		const plan = await db.query.memberMemberships.findFirst({
 			columns: { createdAt: false, updatedAt: false },
 			with: { membershipPlan: { columns: { name: true } } },

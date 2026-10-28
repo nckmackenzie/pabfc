@@ -88,7 +88,7 @@ function ReportFilters() {
 	});
 
 	const employeeId = useStore(form.store, (state) => state.values.employeeId);
-	const availableYears = employeeId ? (employeeTaxYears[employeeId] ?? []) : [];
+	const availableYears = employeeId ? employeeTaxYears[employeeId] ?? [] : [];
 
 	return (
 		<form
@@ -101,12 +101,20 @@ function ReportFilters() {
 			<FieldGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 				<form.AppField name="employeeId">
 					{(field) => (
-						<field.Combobox items={employees} placeholder="Select employee" label="Employee" />
+						<field.Combobox
+							items={employees}
+							placeholder="Select employee"
+							label="Employee"
+						/>
 					)}
 				</form.AppField>
 				<form.AppField name="taxYear">
 					{(field) => (
-						<field.Select label="Tax Year" placeholder="Select tax year" disabled={!employeeId}>
+						<field.Select
+							label="Tax Year"
+							placeholder="Select tax year"
+							disabled={!employeeId}
+						>
 							{availableYears.map((year) => (
 								<SelectItem key={year} value={year.toString()}>
 									{year}
@@ -117,7 +125,11 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
+				<form.SubmitButton
+					buttonText="Preview"
+					icon={<FileIcon />}
+					withReset={false}
+				/>
 			</form.AppForm>
 		</form>
 	);

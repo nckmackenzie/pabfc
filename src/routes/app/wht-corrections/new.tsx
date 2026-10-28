@@ -25,7 +25,9 @@ export const Route = createFileRoute("/app/wht-corrections/new")({
 			queryClient.ensureQueryData(correctionQueries.correctionNo()),
 			queryClient.ensureQueryData(bankQueries.list()),
 			queryClient.ensureQueryData(
-				accountQueries.childrenAccountsByParentName("Cash And Cash Equivalents")
+				accountQueries.childrenAccountsByParentName(
+					"Cash And Cash Equivalents",
+				),
 			),
 		]);
 
@@ -41,7 +43,8 @@ export const Route = createFileRoute("/app/wht-corrections/new")({
 });
 
 function RouteComponent() {
-	const { correctionNo, banks, cashEquivalentAccounts } = Route.useLoaderData();
+	const { correctionNo, banks, cashEquivalentAccounts } =
+		Route.useLoaderData();
 
 	return (
 		<ProtectedPageWithWrapper

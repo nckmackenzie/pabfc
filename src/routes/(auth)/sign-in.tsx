@@ -6,7 +6,7 @@ import { sanitizeRedirect } from "@/hooks/use-previous-location";
 export const Route = createFileRoute("/(auth)/sign-in")({
 	beforeLoad: async ({ search, context }) => {
 		const safe = sanitizeRedirect(search.redirectTo);
-		if (context.userSession) {
+		if (context.auth) {
 			throw redirect({ to: safe });
 		}
 		return { safeRedirectTo: safe };

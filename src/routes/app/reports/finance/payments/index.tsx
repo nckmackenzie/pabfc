@@ -43,7 +43,7 @@ export const Route = createFileRoute("/app/reports/finance/payments/")({
 function RouteComponent() {
 	const { filters } = useFilters(Route.id);
 	const hasRequiredFilters = Boolean(
-		filters.dateRange?.from && filters.dateRange?.to && filters.vendorId
+		filters.dateRange?.from && filters.dateRange?.to && filters.vendorId,
 	);
 
 	return (
@@ -104,7 +104,11 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
+				<form.SubmitButton
+					buttonText="Preview"
+					icon={<FileIcon />}
+					withReset={false}
+				/>
 			</form.AppForm>
 		</form>
 	);

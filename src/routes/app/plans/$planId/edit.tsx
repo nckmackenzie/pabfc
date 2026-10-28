@@ -16,7 +16,9 @@ export const Route = createFileRoute("/app/plans/$planId/edit")({
 		meta: [{ title: "Edit Plan/Package / Prime Age Beauty & Fitness Center" }],
 	}),
 	loader: async ({ params, context: { queryClient } }) => {
-		const plan = await queryClient.ensureQueryData(planQueries.detail(params.planId));
+		const plan = await queryClient.ensureQueryData(
+			planQueries.detail(params.planId),
+		);
 		if (!plan) {
 			throw notFound();
 		}

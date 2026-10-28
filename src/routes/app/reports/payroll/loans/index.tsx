@@ -43,7 +43,9 @@ function RouteComponent() {
 				description="Review all employee loans and drill into a full repayment statement for each loan."
 			/>
 			<ReportFilters />
-			<ErrorBoundaryWithSuspense key={`${filters.employeeId ?? "all"}-${filters.status ?? "all"}`}>
+			<ErrorBoundaryWithSuspense
+				key={`${filters.employeeId ?? "all"}-${filters.status ?? "all"}`}
+			>
 				<PayrollLoanLedgerReport />
 			</ErrorBoundaryWithSuspense>
 		</Wrapper>

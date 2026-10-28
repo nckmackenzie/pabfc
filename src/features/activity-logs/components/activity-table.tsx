@@ -21,7 +21,7 @@ import { toTitleCase } from "@/lib/utils";
 export function ActivtyTable() {
 	const user = useRouteContext({
 		from: "/app/activity-logs/",
-		select: (context) => context.userSession?.user,
+		select: (context) => context.auth?.user,
 	});
 	const { filters } = useFilters(getRouteApi("/app/activity-logs/").id);
 	const { data: logs } = useSuspenseQuery(activityLogsQueries.list(filters));

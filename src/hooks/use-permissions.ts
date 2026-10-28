@@ -1,18 +1,20 @@
 import { useRouteContext } from "@tanstack/react-router";
+import { can, canAny } from "@/lib/permissions/can";
 import type { Permission } from "@/lib/permissions/constants";
-import { can } from "@/lib/permissions/can";
 
 export function usePermissions() {
 	const auth = useRouteContext({ from: "/app", select: (context) => context.auth });
-	const hasPermission = (permission: Permission | Permission[]) =>
-		Array.isArray(permission) ? permission.some((item) => can(auth, item)) : can(auth, permission);
+	const isAdmin = auth.user.role === "admin";
+
 	return {
 		permissions: auth.permissions,
 		roles: auth.roles,
-		hasPermission,
-		hasAnyPermission: (permissions: Permission[]) => permissions.some((item) => can(auth, item)),
-		hasAllPermissions: (permissions: Permission[]) => permissions.every((item) => can(auth, item)),
-		hasRole: (role: string) => auth.user.role === "admin" || auth.roles.includes(role),
-		isLoading: false,
+		isAdmin,
+		hasPermission: (permission: Permission | Permission[]) =>
+			Array.isArray(permission) ? canAny(auth, permission) : can(auth, permission),
+		hasAnyPermission: (permissions: Permission[]) => canAny(auth, permissions),
+		hasAllPermissions: (permissions: Permission[]) =>
+			permissions.every((permission) => can(auth, permission)),
+		hasRole: (role: string) => isAdmin || auth.roles.includes(role),
 	};
 }

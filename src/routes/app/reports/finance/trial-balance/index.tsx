@@ -5,7 +5,10 @@ import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-s
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { Wrapper } from "@/components/ui/wrapper";
-import { TrialBalance, TrialBalanceSkeleton } from "@/features/reports/components/trial-balance";
+import {
+	TrialBalance,
+	TrialBalanceSkeleton,
+} from "@/features/reports/components/trial-balance";
 import {
 	trialBalanceReportFormSchema,
 	trialBalanceValidateSearchSchema,
@@ -32,10 +35,16 @@ function RouteComponent() {
 	const hasRequiredFilters = Boolean(filters.asOfDate);
 	return (
 		<Wrapper size="full">
-			<PageHeader title="Trial Balance" description="Verify ledger debits and credits." />
+			<PageHeader
+				title="Trial Balance"
+				description="Verify ledger debits and credits."
+			/>
 			<ReportFilter />
 			{hasRequiredFilters && (
-				<ErrorBoundaryWithSuspense key={filters.asOfDate} loader={<TrialBalanceSkeleton />}>
+				<ErrorBoundaryWithSuspense
+					key={filters.asOfDate}
+					loader={<TrialBalanceSkeleton />}
+				>
 					<TrialBalance />
 				</ErrorBoundaryWithSuspense>
 			)}
@@ -71,7 +80,11 @@ function ReportFilter() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
+				<form.SubmitButton
+					buttonText="Preview"
+					icon={<FileIcon />}
+					withReset={false}
+				/>
 			</form.AppForm>
 		</form>
 	);

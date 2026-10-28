@@ -28,9 +28,10 @@ export function UserAvatar() {
 
 	async function handleLogout() {
 		await authClient.signOut();
-		queryClient.removeQueries({ queryKey: ["auth"] });
-		await router.invalidate();
-		router.navigate({ to: "/sign-in" });
+		queryClient.clear();
+		// Navigating re-runs the root beforeLoad against the cleared auth cache. Invalidating
+		// first would re-run /app guards and redirect to /sign-in with a stale redirectTo.
+		await router.navigate({ to: "/sign-in" });
 	}
 
 	return (

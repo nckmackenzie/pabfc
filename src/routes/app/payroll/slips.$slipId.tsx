@@ -14,8 +14,12 @@ export const Route = createFileRoute("/app/payroll/slips/$slipId")({
 	loader: async ({ context: { queryClient }, params: { slipId } }) => {
 		const slip = await queryClient.ensureQueryData(payrollSlipQueries.detail({ slipId }));
 		await Promise.all([
-			queryClient.ensureQueryData(payrollPeriodQueries.detail({ periodId: slip.payrollPeriodId })),
-			queryClient.ensureQueryData(payrollSlipQueries.history({ employeeId: slip.employeeId })),
+			queryClient.ensureQueryData(
+				payrollPeriodQueries.detail({ periodId: slip.payrollPeriodId })
+			),
+			queryClient.ensureQueryData(
+				payrollSlipQueries.history({ employeeId: slip.employeeId })
+			),
 		]);
 	},
 	head: () => ({ meta: seo({ title: "Payroll Slip Detail" }) }),

@@ -16,7 +16,7 @@ import { toTitleCase } from "@/lib/utils";
 const PermissionMatrix = lazy(() =>
 	import("./permission-matrix-hieracical").then((m) => ({
 		default: m.PermissionMatrix,
-	}))
+	})),
 );
 
 type Props = {
@@ -75,7 +75,9 @@ export function RoleForm({ permissions, role }: Props) {
 				title={role ? "Edit Role" : "Create New Role"}
 				description={
 					role
-						? `Edit ${toTitleCase(role.name.toLowerCase())} details and permissions`
+						? `Edit ${toTitleCase(
+								role.name.toLowerCase(),
+							)} details and permissions`
 						: "Create a new role"
 				}
 			/>
@@ -89,7 +91,9 @@ export function RoleForm({ permissions, role }: Props) {
 				className="space-y-4"
 			>
 				<form.AppField name="name">
-					{(field) => <field.Input placeholder="Trainer" required label="Role Name" />}
+					{(field) => (
+						<field.Input placeholder="Trainer" required label="Role Name" />
+					)}
 				</form.AppField>
 				<form.Field name="permissions">
 					{(field) => (
@@ -101,7 +105,9 @@ export function RoleForm({ permissions, role }: Props) {
 					)}
 				</form.Field>
 				<form.AppForm>
-					<form.SubmitButton buttonText={role ? "Update Role" : "Create Role"} />
+					<form.SubmitButton
+						buttonText={role ? "Update Role" : "Create Role"}
+					/>
 				</form.AppForm>
 			</form>
 		</div>

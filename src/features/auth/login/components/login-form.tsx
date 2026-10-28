@@ -1,10 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import { FieldGroup } from "@/components/ui/field";
 import { ToastContent } from "@/components/ui/toast-content";
 import { loginSchema } from "@/features/auth/login/services/schemas";
-import { sanitizeRedirect, usePreviousLocation } from "@/hooks/use-previous-location";
+import {
+	sanitizeRedirect,
+	usePreviousLocation,
+} from "@/hooks/use-previous-location";
 import { authClient } from "@/lib/auth/client";
 import { useAppForm } from "@/lib/form";
 
@@ -16,7 +19,6 @@ const defaultValues = {
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 	const previousLocation = usePreviousLocation();
 	const navigate = useNavigate({ from: "/sign-in" });
-	const router = useRouter();
 	const queryClient = useQueryClient();
 
 	const form = useAppForm({
@@ -41,9 +43,8 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 					onSuccess: async () => {
 						const target = sanitizeRedirect(redirectTo ?? previousLocation);
 						form.reset();
-						queryClient.removeQueries({ queryKey: ["auth"] });
+						queryClient.clear();
 						await navigate({ to: target, replace: true });
-						await router.invalidate();
 					},
 				},
 			});
@@ -59,10 +60,17 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 		>
 			<FieldGroup>
 				<form.AppField name="username">
-					{(field) => <field.Input label="Contact Or Email" placeholder="you@example.com" />}
+					{(field) => (
+						<field.Input
+							label="Contact Or Email"
+							placeholder="you@example.com"
+						/>
+					)}
 				</form.AppField>
 				<form.AppField name="password">
-					{(field) => <field.Input isPassword label="Password" placeholder="********" />}
+					{(field) => (
+						<field.Input isPassword label="Password" placeholder="********" />
+					)}
 				</form.AppField>
 				<Link
 					className="-mt-2 block text-sm text-right text-primary font-medium transition-all hover:underline"
@@ -71,7 +79,11 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 					Forgot Password?
 				</Link>
 				<form.AppForm>
-					<form.SubmitButton buttonText="Login" withReset={false} orientation="vertical" />
+					<form.SubmitButton
+						buttonText="Login"
+						withReset={false}
+						orientation="vertical"
+					/>
 				</form.AppForm>
 			</FieldGroup>
 		</form>

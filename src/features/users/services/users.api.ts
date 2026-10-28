@@ -13,7 +13,7 @@ import { NotFoundError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
 import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
-import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
+import { adminMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
 const createUser = async ({ data, loggedUserId }: { data: UserSchema; loggedUserId: string }) => {
@@ -220,7 +220,7 @@ export const upsertUser = createServerFn({ method: "POST" })
 	);
 
 export const getUserWithRole = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([adminMiddleware])
 	.validator((data: { userId: string }) => data)
 	.handler(async ({ data }) => {
 		return db.query.users.findFirst({
