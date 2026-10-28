@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useStore } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
@@ -19,13 +20,12 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/payroll/p9/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:payroll-p9");
-		await requirePermission("employees:payroll-information");
-		await requirePermission("payroll-periods:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:payroll-p9");
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "payroll-periods:view");
 	},
 	component: RouteComponent,
 	validateSearch: payrollP9ValidateSearchSchema,
@@ -88,7 +88,7 @@ function ReportFilters() {
 	});
 
 	const employeeId = useStore(form.store, (state) => state.values.employeeId);
-	const availableYears = employeeId ? employeeTaxYears[employeeId] ?? [] : [];
+	const availableYears = employeeId ? (employeeTaxYears[employeeId] ?? []) : [];
 
 	return (
 		<form
@@ -101,20 +101,12 @@ function ReportFilters() {
 			<FieldGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 				<form.AppField name="employeeId">
 					{(field) => (
-						<field.Combobox
-							items={employees}
-							placeholder="Select employee"
-							label="Employee"
-						/>
+						<field.Combobox items={employees} placeholder="Select employee" label="Employee" />
 					)}
 				</form.AppField>
 				<form.AppField name="taxYear">
 					{(field) => (
-						<field.Select
-							label="Tax Year"
-							placeholder="Select tax year"
-							disabled={!employeeId}
-						>
+						<field.Select label="Tax Year" placeholder="Select tax year" disabled={!employeeId}>
 							{availableYears.map((year) => (
 								<SelectItem key={year} value={year.toString()}>
 									{year}
@@ -125,11 +117,7 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

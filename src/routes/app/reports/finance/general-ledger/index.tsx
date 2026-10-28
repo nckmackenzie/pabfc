@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon, LibraryIcon } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty";
@@ -14,11 +15,10 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/finance/general-ledger/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:general-ledger");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:general-ledger");
 	},
 	component: RouteComponent,
 	validateSearch: generalLedgerValidateSearchSchema,

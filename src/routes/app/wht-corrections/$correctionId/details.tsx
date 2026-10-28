@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -6,25 +7,19 @@ import {
 	CorrectionDetailsSkeleton,
 } from "@/features/wht-corrections/components/correction-details";
 import { correctionQueries } from "@/features/wht-corrections/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
-export const Route = createFileRoute(
-	"/app/wht-corrections/$correctionId/details",
-)({
-	beforeLoad: async () => {
-		await requirePermission("wht-corrections:view");
+export const Route = createFileRoute("/app/wht-corrections/$correctionId/details")({
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "wht-corrections:view");
 	},
 	head: () => ({
-		meta: [
-			{ title: "WHT Correction Details / Prime Age Beauty & Fitness Club" },
-		],
+		meta: [{ title: "WHT Correction Details / Prime Age Beauty & Fitness Club" }],
 	}),
 	component: RouteComponent,
 	loader: async ({ context: { queryClient }, params: { correctionId } }) =>
 		queryClient.ensureQueryData(correctionQueries.detail(correctionId)),
 	staticData: {
-		breadcrumb: (match) =>
-			`Correction #${match.loaderData.correctionNo} Details`,
+		breadcrumb: (match) => `Correction #${match.loaderData.correctionNo} Details`,
 	},
 	pendingComponent: CorrectionDetailsSkeleton,
 });
@@ -32,9 +27,7 @@ export const Route = createFileRoute(
 function RouteComponent() {
 	const { correctionId } = Route.useParams();
 	const loaderCorrection = Route.useLoaderData();
-	const { data: correction } = useQuery(
-		correctionQueries.detail(correctionId),
-	);
+	const { data: correction } = useQuery(correctionQueries.detail(correctionId));
 	return (
 		<ProtectedPageWithWrapper
 			hasBackLink

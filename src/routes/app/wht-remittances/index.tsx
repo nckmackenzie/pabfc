@@ -1,17 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { RemittancesTable } from "@/features/wht-remittances/components/remittance-table";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/wht-remittances/")({
-	beforeLoad: async () => {
-		await requirePermission("wht-remittances:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "wht-remittances:view");
 	},
 	component: RouteComponent,
 	validateSearch: searchValidateSchema,

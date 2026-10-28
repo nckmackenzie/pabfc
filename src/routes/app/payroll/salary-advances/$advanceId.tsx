@@ -1,16 +1,16 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
 import { FormLoader } from "@/components/ui/loaders";
 import { SalaryAdvanceDetail } from "@/features/payroll/components/salary-advance-detail";
 import { salaryAdvanceQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/salary-advances/$advanceId")({
 	component: RouteComponent,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("salary-advances:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "salary-advances:view");
 	},
 	loader: async ({ context: { queryClient }, params }) => {
 		const advance = await queryClient.ensureQueryData(

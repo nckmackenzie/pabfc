@@ -1,14 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { CreditNotesTable } from "@/features/credit-notes/components/credit-notes-table";
 import { creditNotesSearchValidateSchema } from "@/features/credit-notes/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/credit-notes/")({
-	beforeLoad: async () => {
-		await requirePermission("credit-notes:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "credit-notes:view");
 	},
 	component: RouteComponent,
 	validateSearch: creditNotesSearchValidateSchema,

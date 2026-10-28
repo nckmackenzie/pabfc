@@ -4,7 +4,7 @@ import { AlertErrorComponent } from "@/components/ui/error-component";
 export const Route = createFileRoute("/app/suppliers")({
 	component: RouteComponent,
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 	staticData: {
 		breadcrumb: "Suppliers",

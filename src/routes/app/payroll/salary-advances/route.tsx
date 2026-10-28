@@ -8,7 +8,7 @@ export const Route = createFileRoute("/app/payroll/salary-advances")({
 	},
 	errorComponent: ({ error }) => {
 		let errorMessage;
-		if (error.message.includes("Failed query")) {
+		if ((error instanceof Error ? error.message : String(error)).includes("Failed query")) {
 			errorMessage = "Failed to load required data. Please try again later.";
 		} else {
 			errorMessage = "An unexpected error occurred. Please try again.";

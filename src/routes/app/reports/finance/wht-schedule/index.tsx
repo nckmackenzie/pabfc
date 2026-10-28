@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import type { z } from "zod";
@@ -13,11 +14,10 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/finance/wht-schedule/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:wht-schedule");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:wht-schedule");
 	},
 	component: RouteComponent,
 	head: () => ({
@@ -31,9 +31,7 @@ export const Route = createFileRoute("/app/reports/finance/wht-schedule/")({
 
 function RouteComponent() {
 	const { filters } = useFilters(Route.id);
-	const hasRequiredFilters = Boolean(
-		filters.dateRange?.from && filters.dateRange?.to,
-	);
+	const hasRequiredFilters = Boolean(filters.dateRange?.from && filters.dateRange?.to);
 
 	return (
 		<Wrapper size="full">
@@ -85,11 +83,7 @@ function Filters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

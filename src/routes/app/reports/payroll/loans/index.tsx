@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
@@ -15,12 +16,11 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/payroll/loans/")({
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("employee-loans:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "employee-loans:view");
 	},
 	component: RouteComponent,
 	validateSearch: loanLedgerReportValidateSearchSchema,
@@ -43,9 +43,7 @@ function RouteComponent() {
 				description="Review all employee loans and drill into a full repayment statement for each loan."
 			/>
 			<ReportFilters />
-			<ErrorBoundaryWithSuspense
-				key={`${filters.employeeId ?? "all"}-${filters.status ?? "all"}`}
-			>
+			<ErrorBoundaryWithSuspense key={`${filters.employeeId ?? "all"}-${filters.status ?? "all"}`}>
 				<PayrollLoanLedgerReport />
 			</ErrorBoundaryWithSuspense>
 		</Wrapper>

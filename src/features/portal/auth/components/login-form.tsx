@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { LogOutIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -6,16 +7,15 @@ import { FieldGroup } from "@/components/ui/field";
 import { GoogleIcon } from "@/components/ui/icons";
 import { ToastContent } from "@/components/ui/toast-content";
 import { loginSchema } from "@/features/auth/login/services/schemas";
-import {
-	sanitizeRedirect,
-	usePreviousLocation,
-} from "@/hooks/use-previous-location";
+import { sanitizeRedirect, usePreviousLocation } from "@/hooks/use-previous-location";
 import { authClient } from "@/lib/auth/client";
 import { useAppForm } from "@/lib/form";
 
 export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 	const previousLocation = usePreviousLocation();
 	const navigate = useNavigate({ from: "/member/login" });
+	const router = useRouter();
+	const queryClient = useQueryClient();
 	const form = useAppForm({
 		defaultValues: { username: "", password: "" },
 		validators: {
@@ -41,7 +41,9 @@ export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 					onSuccess: async () => {
 						const target = sanitizeRedirect(redirectTo ?? previousLocation);
 						form.reset();
-						navigate({ to: target, replace: true });
+						queryClient.removeQueries({ queryKey: ["auth"] });
+						await navigate({ to: target, replace: true });
+						await router.invalidate();
 					},
 				},
 			});
@@ -58,22 +60,13 @@ export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 			<FieldGroup>
 				<form.AppField name="username">
 					{(field) => {
-						return (
-							<field.Input
-								label="Phone No"
-								placeholder="Enter your phone number"
-							/>
-						);
+						return <field.Input label="Phone No" placeholder="Enter your phone number" />;
 					}}
 				</form.AppField>
 				<form.AppField name="password">
 					{(field) => {
 						return (
-							<field.Input
-								label="Password"
-								type="password"
-								placeholder="Enter your password"
-							/>
+							<field.Input label="Password" type="password" placeholder="Enter your password" />
 						);
 					}}
 				</form.AppField>
@@ -98,9 +91,7 @@ export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 			<FieldGroup>
 				<div className="relative flex items-center py-5">
 					<div className="grow border-t border-gray-300"></div>
-					<span className="shrink mx-4 text-gray-600 text-sm">
-						Or continue with
-					</span>
+					<span className="shrink mx-4 text-gray-600 text-sm">Or continue with</span>
 					<div className="grow border-t border-gray-300"></div>
 				</div>
 				<Button variant="outline" size="lg" disabled>

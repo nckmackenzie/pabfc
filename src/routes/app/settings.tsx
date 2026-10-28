@@ -22,7 +22,7 @@ export const Route = createFileRoute("/app/settings")({
 	},
 	component: RouteComponent,
 	errorComponent: ({ error }) => {
-		return <ErrorComponent message={error.message} />;
+		return <ErrorComponent message={error instanceof Error ? error.message : String(error)} />;
 	},
 	pendingComponent: SettingsSkeleton,
 	loader: async ({ context: { queryClient } }) => {

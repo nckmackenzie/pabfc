@@ -1,14 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { memberQueries } from "@/features/members/services/queries";
 import { GuestPassForm } from "@/features/receipts/components/guest-pass-form";
 import { guestPassQueries } from "@/features/receipts/services/guest-pass.queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/receipts/guest-pass/new")({
-	beforeLoad: async () => {
-		await requirePermission("receipts:guest-pass");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:guest-pass");
 	},
 	component: RouteComponent,
 	head: () => ({

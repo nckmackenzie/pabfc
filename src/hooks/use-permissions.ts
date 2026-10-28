@@ -1,59 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-
-import { useSession } from "@/lib/auth/client";
+import { useRouteContext } from "@tanstack/react-router";
 import type { Permission } from "@/lib/permissions/constants";
-import { getUserPermissions } from "@/lib/permissions/permissions-service";
+import { can } from "@/lib/permissions/can";
 
 export function usePermissions() {
-	const { data: session, isPending } = useSession();
-
-	const { data: userPermissions, isLoading } = useQuery({
-		queryKey: ["permissions", session?.user.id],
-		queryFn: () => getUserPermissions(),
-		enabled: !!session?.user.id,
-	});
-
-	const permissions = useMemo(() => {
-		if (!userPermissions) return [];
-		return userPermissions.permissions;
-	}, [userPermissions]);
-
-	const roles = useMemo(() => {
-		if (!userPermissions) return [];
-		return userPermissions.roles;
-	}, [userPermissions]);
-
-	const hasPermission = (permission: Permission | Permission[]): boolean => {
-		if (session?.user.role === "admin") return true;
-		if (Array.isArray(permission)) {
-			return hasAnyPermission(permission);
-		}
-		return permissions.includes(permission);
-	};
-
-	const hasAnyPermission = (permissionList: Array<Permission>): boolean => {
-		if (session?.user.role === "admin") return true;
-		return permissionList.some((permission) => permissions.includes(permission));
-	};
-
-	const hasAllPermissions = (permissionList: Array<Permission>): boolean => {
-		if (session?.user.role === "admin") return true;
-		return permissionList.every((permission) => permissions.includes(permission));
-	};
-
-	const hasRole = (roleName: string): boolean => {
-		if (session?.user.role === "admin") return true;
-		return roles.includes(roleName);
-	};
-
+	const auth = useRouteContext({ from: "/app", select: (context) => context.auth });
+	const hasPermission = (permission: Permission | Permission[]) =>
+		Array.isArray(permission) ? permission.some((item) => can(auth, item)) : can(auth, permission);
 	return {
-		permissions,
-		roles,
+		permissions: auth.permissions,
+		roles: auth.roles,
 		hasPermission,
-		hasAnyPermission,
-		hasAllPermissions,
-		hasRole,
-		isLoading: isLoading || isPending,
+		hasAnyPermission: (permissions: Permission[]) => permissions.some((item) => can(auth, item)),
+		hasAllPermissions: (permissions: Permission[]) => permissions.every((item) => can(auth, item)),
+		hasRole: (role: string) => auth.user.role === "admin" || auth.roles.includes(role),
+		isLoading: false,
 	};
 }

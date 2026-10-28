@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -5,12 +6,11 @@ import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
 import { PaymentForm } from "@/features/receipts/components/payments-form";
 import { paymentsQueries } from "@/features/receipts/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/receipts/new")({
-	beforeLoad: async () => {
-		await requirePermission("receipts:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:create");
 	},
 	component: RouteComponent,
 	head: () => ({

@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -6,20 +7,17 @@ import {
 	PaymentDetailsSkeleton,
 } from "@/features/payments/components/payment-details";
 import { paymentQueries } from "@/features/payments/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payments/$paymentId/details")({
-	beforeLoad: async () => {
-		await requirePermission("payments:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "payments:view");
 	},
 	head: () => ({
 		meta: [{ title: "Payment Details / Prime Age Beauty & Fitness Club" }],
 	}),
 	component: RouteComponent,
 	loader: async ({ context: { queryClient }, params: { paymentId } }) => {
-		const payment = await queryClient.ensureQueryData(
-			paymentQueries.detail(paymentId),
-		);
+		const payment = await queryClient.ensureQueryData(paymentQueries.detail(paymentId));
 
 		return payment;
 	},

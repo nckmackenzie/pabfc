@@ -1,14 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { PayrollAccountMappingsPage } from "@/features/payroll/components/account-mappings-page";
 import { payrollAccountMappingQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/account-mappings")({
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("payroll-account-mappings:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "payroll-account-mappings:view");
 	},
 	loader: async ({ context }) => {
 		await Promise.all([

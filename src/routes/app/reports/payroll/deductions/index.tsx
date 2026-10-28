@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty";
@@ -15,12 +16,11 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/payroll/deductions/")({
-	beforeLoad: async () => {
-		await requirePermission("payroll-periods:view");
-		await requirePermission("employees:payroll-information");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "payroll-periods:view");
+		assertCan(context.auth, "employees:payroll-information");
 	},
 	component: RouteComponent,
 	validateSearch: payrollPeriodReportValidateSearchSchema,

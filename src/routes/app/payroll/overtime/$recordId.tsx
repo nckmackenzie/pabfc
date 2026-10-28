@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
@@ -5,13 +6,12 @@ import { FormLoader } from "@/components/ui/loaders";
 import { OvertimeRecordDetail } from "@/features/payroll/components/overtime-record-detail";
 import { overtimeQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/overtime/$recordId")({
 	component: RouteComponent,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("overtime-records:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "overtime-records:view");
 	},
 	loader: ({ context: { queryClient }, params }) =>
 		queryClient.ensureQueryData(overtimeQueries.detail({ recordId: params.recordId })),

@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ClipboardCheckIcon } from "@/components/ui/icons";
@@ -8,11 +9,10 @@ import { ProtectedPage } from "@/components/ui/protected-page";
 import { ReceiptsTable } from "@/features/receipts/components/payment-table";
 import { paymentsSearchValidateSchema } from "@/features/receipts/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/receipts/")({
-	beforeLoad: async () => {
-		await requirePermission("receipts:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:view");
 	},
 	component: RouteComponent,
 	validateSearch: paymentsSearchValidateSchema,

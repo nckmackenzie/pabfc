@@ -1,24 +1,22 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { AddonForm } from "@/features/addons/components/addon-form";
 import { addonQueries } from "@/features/addons/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/plans/addons/$addonId/edit")({
-	beforeLoad: async () => {
-		await requirePermission("plans:update");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "plans:update");
 	},
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "Edit Addon / Prime Age Beauty & Fitness Center" }],
 	}),
 	loader: async ({ params, context: { queryClient } }) => {
-		const addon = await queryClient.ensureQueryData(
-			addonQueries.detail(params.addonId),
-		);
+		const addon = await queryClient.ensureQueryData(addonQueries.detail(params.addonId));
 		if (!addon) {
 			throw notFound();
 		}

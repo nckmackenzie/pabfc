@@ -1,12 +1,12 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { BackLink } from "@/components/ui/links";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/payroll")({
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("payroll-periods:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "payroll-periods:view");
 	},
 	component: PayrollReportLayout,
 	staticData: {

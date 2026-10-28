@@ -1,17 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { BankingsDataTable } from "@/features/bankings/components/bankings-datatable";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/bankings/postings/")({
-	beforeLoad: async () => {
-		await requirePermission("banking:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "banking:view");
 	},
 	component: BankingsIndexComponent,
 	validateSearch: searchValidateSchema,
@@ -23,10 +20,7 @@ export const Route = createFileRoute("/app/bankings/postings/")({
 		],
 	}),
 	pendingComponent: () => (
-		<BasePageLoadingSkeleton
-			pageDescription="View and manage bankings"
-			pageTitle="Bankings"
-		/>
+		<BasePageLoadingSkeleton pageDescription="View and manage bankings" pageTitle="Bankings" />
 	),
 });
 

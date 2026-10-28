@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { DatatableSkeleton } from "@/components/ui/loaders";
 import { PageHeader } from "@/components/ui/page-header";
@@ -5,13 +6,12 @@ import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wr
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlanWithMembers } from "@/features/plans/components/plan-with-members";
 import { planQueries } from "@/features/plans/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/plans/$planId/view-members")({
 	validateSearch: searchValidateSchema,
-	beforeLoad: async () => {
-		await requirePermission("plans:view-members");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "plans:view-members");
 	},
 	head: () => ({
 		meta: [{ title: "Plan Members / Prime Age Beauty & Fitness Centre" }],

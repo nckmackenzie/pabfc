@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import {
@@ -5,11 +6,10 @@ import {
 	CreditNoteDetailsSkeleton,
 } from "@/features/credit-notes/components/credit-note-details";
 import { creditNoteQueries } from "@/features/credit-notes/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/credit-notes/$creditNoteId/details")({
-	beforeLoad: async () => {
-		await requirePermission("credit-notes:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "credit-notes:view");
 	},
 	head: () => ({
 		meta: [{ title: "Credit Note Details / Prime Age Beauty & Fitness Club" }],

@@ -1,9 +1,4 @@
-import {
-	createFileRoute,
-	Link,
-	linkOptions,
-	Outlet,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, linkOptions, Outlet } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { AlertErrorComponent } from "@/components/ui/error-component";
@@ -41,7 +36,7 @@ export const Route = createFileRoute("/app/bankings")({
 		return { banks };
 	},
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 	pendingComponent: () => (
 		<div className="space-y-6">

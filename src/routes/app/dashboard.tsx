@@ -1,7 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ShieldCheckIcon } from "lucide-react";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import z from "zod";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
@@ -35,9 +34,7 @@ import {
 } from "@/features/dashboard/components/todays-checkings";
 import { accessControlDashboardJobStatusFilters } from "@/features/dashboard/services/access-control.api";
 import { useFilters } from "@/hooks/use-filters";
-import { useSession } from "@/lib/auth/client";
 import type { Permission } from "@/lib/permissions/constants";
-import { getUserPermissions } from "@/lib/permissions/permissions-service";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -45,14 +42,8 @@ export const Route = createFileRoute("/app/dashboard")({
 		meta: [{ title: "Dashboard / Prime Age Beauty & Fitness Center" }],
 	}),
 	validateSearch: z.object({
-		tab: z
-			.enum(["memberships", "finance", "access-control"])
-			.optional()
-			.catch("memberships"),
-		syncJobStatus: z
-			.enum(accessControlDashboardJobStatusFilters)
-			.optional()
-			.catch("all"),
+		tab: z.enum(["memberships", "finance", "access-control"]).optional().catch("memberships"),
+		syncJobStatus: z.enum(accessControlDashboardJobStatusFilters).optional().catch("all"),
 		syncJobSearch: z.string().trim().max(100).optional().catch(""),
 	}),
 	component: RouteComponent,
@@ -62,16 +53,8 @@ export const Route = createFileRoute("/app/dashboard")({
 });
 
 function RouteComponent() {
-	const { data: session } = useSession();
-	const queryClient = useQueryClient();
 	const { tab, syncJobSearch, syncJobStatus } = Route.useSearch();
 	const { setFilters } = useFilters(Route.id);
-	useEffect(() => {
-		queryClient.prefetchQuery({
-			queryKey: ["permissions", session?.user.id],
-			queryFn: () => getUserPermissions(),
-		});
-	}, [queryClient, session?.user.id]);
 
 	return (
 		<Wrapper size="full">
@@ -144,7 +127,7 @@ function DashboardTabs() {
 								"grow flex items-center gap-2 px-4 py-2 rounded-md whitespace-nowrap transition-all hover:bg-transparent hover:text-primary",
 								{
 									"bg-background text-primary": isActive,
-								},
+								}
 							)}
 						>
 							<Icon />
@@ -162,10 +145,7 @@ function MemberShipDashboard() {
 		<>
 			<Suspense
 				fallback={
-					<StatCardsSkeleton
-						count={MEMBERSHIP_STAT_COUNT}
-						className={MEMBERSHIP_STAT_GRID}
-					/>
+					<StatCardsSkeleton count={MEMBERSHIP_STAT_COUNT} className={MEMBERSHIP_STAT_GRID} />
 				}
 			>
 				<StatCards />

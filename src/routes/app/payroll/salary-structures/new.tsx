@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
 import { SalaryStructureFormPendingComponent } from "@/features/payroll/components/salary-structure-form-skeleton";
@@ -5,14 +6,13 @@ import { SalaryStructureForm } from "@/features/payroll/components/salary-struct
 import { salaryStructureQueries } from "@/features/payroll/services/queries";
 import { salaryStructureCreatePrefillSearchSchema } from "@/features/payroll/services/schemas";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/salary-structures/new")({
 	component: RouteComponent,
 	validateSearch: salaryStructureCreatePrefillSearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("salary-structures:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "salary-structures:create");
 	},
 	loader: ({ context: { queryClient } }) =>
 		queryClient.ensureQueryData(salaryStructureQueries.employees()),

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/app/bankings/postings")({
 		breadcrumb: "Bank Postings",
 	},
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 });
 

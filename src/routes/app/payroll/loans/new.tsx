@@ -1,17 +1,17 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
 import { LoanApplicationForm } from "@/features/payroll/components/loan-application-form";
 import { loanQueries } from "@/features/payroll/services/queries";
 import { loanApplicationPrefillSearchSchema } from "@/features/payroll/services/loan.schemas";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/loans/new")({
 	component: RouteComponent,
 	validateSearch: loanApplicationPrefillSearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("employee-loans:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "employee-loans:create");
 	},
 	loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(loanQueries.formOptions()),
 	head: () => ({ meta: seo({ title: "Apply For Employee Loan" }) }),

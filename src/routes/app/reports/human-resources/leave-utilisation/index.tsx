@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
@@ -14,13 +15,12 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 const currentYear = new Date().getFullYear();
 
 export const Route = createFileRoute("/app/reports/human-resources/leave-utilisation/")({
-	beforeLoad: async () => {
-		await requirePermission("leaves:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "leaves:view");
 	},
 	component: RouteComponent,
 	validateSearch: leaveUtilisationValidateSearchSchema,

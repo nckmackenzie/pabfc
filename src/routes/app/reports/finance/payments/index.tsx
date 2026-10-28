@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import type { z } from "zod";
@@ -14,12 +15,11 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/reports/finance/payments/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:payments-report");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:payments-report");
 	},
 	component: RouteComponent,
 	validateSearch: paymentsValidateSchema,
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/app/reports/finance/payments/")({
 function RouteComponent() {
 	const { filters } = useFilters(Route.id);
 	const hasRequiredFilters = Boolean(
-		filters.dateRange?.from && filters.dateRange?.to && filters.vendorId,
+		filters.dateRange?.from && filters.dateRange?.to && filters.vendorId
 	);
 
 	return (
@@ -104,11 +104,7 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

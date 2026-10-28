@@ -1,4 +1,6 @@
 import { useStore } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouteContext, useRouter } from "@tanstack/react-router";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
 	MultiSelect,
@@ -31,17 +33,20 @@ const defaultValues = {
 	active: true,
 } as UserSchema;
 
-export function UserForm({
-	user,
-	roles,
-}: {
-	user?: UserSchema;
-	roles: Array<Option>;
-}) {
+export function UserForm({ user, roles }: { user?: UserSchema; roles: Array<Option> }) {
+	const queryClient = useQueryClient();
+	const router = useRouter();
+	const auth = useRouteContext({ from: "/app", select: (context) => context.auth });
 	const userMutation = useFormUpsert({
 		upsertFn: (data: UserSchema) => upsertUser({ data }),
 		entityName: "User",
 		queryKey: ["users"],
+		onSuccessCallback: () => {
+			if (user?.id === auth.user.id) {
+				queryClient.removeQueries({ queryKey: ["auth"] });
+				void router.invalidate();
+			}
+		},
 		navigateTo: "/app/users",
 	});
 
@@ -57,7 +62,7 @@ export function UserForm({
 					onSuccess: () => {
 						form.reset();
 					},
-				},
+				}
 			);
 		},
 	});
@@ -69,9 +74,7 @@ export function UserForm({
 			<PageHeader
 				title={user ? "Edit User" : "Create new user"}
 				description={
-					user
-						? `Edit ${toTitleCase(user.name)} details`
-						: "Add a new user to the system"
+					user ? `Edit ${toTitleCase(user.name)} details` : "Add a new user to the system"
 				}
 			/>
 			<form
@@ -83,9 +86,7 @@ export function UserForm({
 			>
 				<FieldGroup className="grid md:grid-cols-2 gap-4">
 					<form.AppField name="name">
-						{(field) => (
-							<field.Input label="Name" required placeholder="eg John Doe" />
-						)}
+						{(field) => <field.Input label="Name" required placeholder="eg John Doe" />}
 					</form.AppField>
 					<form.AppField name="contact">
 						{(field) => (
@@ -98,18 +99,11 @@ export function UserForm({
 						)}
 					</form.AppField>
 					<form.AppField name="email">
-						{(field) => (
-							<field.Input label="Email" placeholder="eg johndoe@example.com" />
-						)}
+						{(field) => <field.Input label="Email" placeholder="eg johndoe@example.com" />}
 					</form.AppField>
 					<form.AppField name="role">
 						{(field) => (
-							<field.Select
-								key={user?.role}
-								label="User Type"
-								required
-								placeholder="eg member"
-							>
+							<field.Select key={user?.role} label="User Type" required placeholder="eg member">
 								{USER_TYPES.map((role) => (
 									<SelectItem key={role.value} value={role.value}>
 										{role.label}
@@ -121,29 +115,13 @@ export function UserForm({
 					<div className="col-span-full">
 						<form.Field name="roleIds">
 							{(field) => (
-								<Field
-									data-invalid={
-										field.state.meta.isTouched && !field.state.meta.isValid
-									}
-								>
+								<Field data-invalid={field.state.meta.isTouched && !field.state.meta.isValid}>
 									<FieldLabel htmlFor={field.name}>
-										Role(s){" "}
-										{userType !== "admin" && (
-											<span className="text-destructive">*</span>
-										)}
+										Role(s) {userType !== "admin" && <span className="text-destructive">*</span>}
 									</FieldLabel>
-									<MultiSelect
-										onValuesChange={field.handleChange}
-										values={field.state.value ?? []}
-									>
-										<MultiSelectTrigger
-											className="w-full"
-											disabled={userType === "admin"}
-										>
-											<MultiSelectValue
-												overflowBehavior="cutoff"
-												placeholder="Select role(s)..."
-											/>
+									<MultiSelect onValuesChange={field.handleChange} values={field.state.value ?? []}>
+										<MultiSelectTrigger className="w-full" disabled={userType === "admin"}>
+											<MultiSelectValue overflowBehavior="cutoff" placeholder="Select role(s)..." />
 										</MultiSelectTrigger>
 										<MultiSelectContent>
 											<MultiSelectGroup>

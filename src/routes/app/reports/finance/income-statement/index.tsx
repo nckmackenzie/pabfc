@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import type { z } from "zod";
@@ -9,12 +10,11 @@ import { Wrapper } from "@/components/ui/wrapper";
 import { IncomeStatementReport } from "@/features/reports/components/income-statement-report";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/reports/finance/income-statement/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:income-statement");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:income-statement");
 	},
 	component: RouteComponent,
 	staticData: {
@@ -28,16 +28,11 @@ export const Route = createFileRoute("/app/reports/finance/income-statement/")({
 
 function RouteComponent() {
 	const { filters } = useFilters(Route.id);
-	const hasRequiredFilters = Boolean(
-		filters.dateRange?.from && filters.dateRange?.to,
-	);
+	const hasRequiredFilters = Boolean(filters.dateRange?.from && filters.dateRange?.to);
 
 	return (
 		<Wrapper size="full">
-			<PageHeader
-				title="Income Statement"
-				description="Profit and Loss Statement"
-			/>
+			<PageHeader title="Income Statement" description="Profit and Loss Statement" />
 			<ReportFilters />
 			{hasRequiredFilters && (
 				<ErrorBoundaryWithSuspense loader={<DatatableSkeleton />}>
@@ -79,11 +74,7 @@ function ReportFilters() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

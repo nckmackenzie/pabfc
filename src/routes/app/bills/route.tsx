@@ -3,7 +3,10 @@ import { AlertErrorComponent } from "@/components/ui/error-component";
 
 export const Route = createFileRoute("/app/bills")({
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} title="Error" />
+		<AlertErrorComponent
+			message={error instanceof Error ? error.message : String(error)}
+			title="Error"
+		/>
 	),
 	component: RouteComponent,
 	staticData: {

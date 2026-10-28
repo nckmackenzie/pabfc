@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import {
@@ -5,25 +6,18 @@ import {
 	AddonReceiptDetailsSkeleton,
 } from "@/features/addons/components/addon-receipt-details";
 import { addonQueries } from "@/features/addons/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
-export const Route = createFileRoute(
-	"/app/receipts/addons/$addonInvoiceId/details",
-)({
-	beforeLoad: async () => {
-		await requirePermission("receipts:view");
+export const Route = createFileRoute("/app/receipts/addons/$addonInvoiceId/details")({
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:view");
 	},
 	head: () => ({
-		meta: [
-			{ title: "Addon Receipt Details / Prime Age Beauty & Fitness Club" },
-		],
+		meta: [{ title: "Addon Receipt Details / Prime Age Beauty & Fitness Club" }],
 	}),
 	component: RouteComponent,
 	pendingComponent: AddonReceiptDetailsSkeleton,
 	loader: async ({ context: { queryClient }, params: { addonInvoiceId } }) => {
-		const invoice = await queryClient.ensureQueryData(
-			addonQueries.invoice(addonInvoiceId),
-		);
+		const invoice = await queryClient.ensureQueryData(addonQueries.invoice(addonInvoiceId));
 		if (!invoice) {
 			throw notFound();
 		}

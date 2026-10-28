@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
 import { DatatableSkeleton } from "@/components/ui/loaders";
@@ -6,18 +7,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Wrapper } from "@/components/ui/wrapper";
 import { BroadcastArea } from "@/features/communication/components/broadcast-area";
 import { Broadcasts } from "@/features/communication/components/broadcasts";
-import {
-	TemplateArea,
-	TemplatesSkeleton,
-} from "@/features/communication/components/template-area";
+import { TemplateArea, TemplatesSkeleton } from "@/features/communication/components/template-area";
 import { smsTemplateQueries } from "@/features/communication/services/queries";
 import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/communication/")({
-	beforeLoad: async () => {
-		await requirePermission("communication:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "communication:view");
 	},
 	staticData: {
 		breadcrumb: "Communication",

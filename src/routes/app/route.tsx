@@ -1,33 +1,33 @@
-import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Outlet,
 	redirect,
 	// useRouterState,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { RouterBreadcrumb } from "@/components/ui/nav-breadcrumb";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Wip } from "@/components/ui/wip";
 import { financialYearQueries } from "@/features/financial-years/services/queries";
+import { authContextQueryOptions } from "@/lib/session/queries";
 
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
-		if (!context.userSession || context.userSession.user.role === "member") {
+		const auth = await context.queryClient.fetchQuery(authContextQueryOptions);
+		if (!auth || auth.user.role === "member") {
 			throw redirect({ to: "/sign-in", search: { redirectTo: location.href } });
 		}
+		return { auth };
+	},
+	loader: ({ context }) => {
+		void context.queryClient.prefetchQuery(financialYearQueries.current());
 	},
 	component: RouteComponent,
 	notFoundComponent: () => <Wip />,
 });
 
 function RouteComponent() {
-	const queryClient = useQueryClient();
-	useEffect(() => {
-		queryClient.prefetchQuery(financialYearQueries.current());
-	}, [queryClient]);
 	return (
 		<SidebarProvider>
 			<AppSidebar />

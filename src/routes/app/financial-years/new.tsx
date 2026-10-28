@@ -1,11 +1,11 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { FinancialYearForm } from "@/features/financial-years/components/financial-year-form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/financial-years/new")({
-	beforeLoad: async () => {
-		await requirePermission("financial-years:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "financial-years:create");
 	},
 	component: RouteComponent,
 	head: () => ({

@@ -1,13 +1,16 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { BackLink } from "@/components/ui/links";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { OvertimeSummaryPanel } from "@/features/payroll/components/overtime-summary-panel";
-import { PAYROLL_MONTH_OPTIONS, getPayrollYearOptions } from "@/features/payroll/lib/overtime-options";
+import {
+	PAYROLL_MONTH_OPTIONS,
+	getPayrollYearOptions,
+} from "@/features/payroll/lib/overtime-options";
 import { overtimeQueries, salaryStructureQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 import {
 	Select,
 	SelectContent,
@@ -26,16 +29,21 @@ const yearOptions = getPayrollYearOptions({
 const overtimeSummarySearchSchema = z.object({
 	fromMonth: z.coerce.number().int().min(1).max(12).catch(1),
 	fromYear: z.coerce.number().int().min(2000).max(2100).catch(today.getUTCFullYear()),
-	toMonth: z.coerce.number().int().min(1).max(12).catch(today.getUTCMonth() + 1),
+	toMonth: z.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(12)
+		.catch(today.getUTCMonth() + 1),
 	toYear: z.coerce.number().int().min(2000).max(2100).catch(today.getUTCFullYear()),
 });
 
 export const Route = createFileRoute("/app/payroll/overtime/employee/$employeeId")({
 	component: RouteComponent,
 	validateSearch: overtimeSummarySearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("overtime-records:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "overtime-records:view");
 	},
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context: { queryClient }, params, deps: search }) => {
@@ -65,9 +73,7 @@ export const Route = createFileRoute("/app/payroll/overtime/employee/$employeeId
 
 function RouteComponent() {
 	const params = Route.useParams();
-	const { filters, setFilters } = useFilters(
-		Route.id,
-	);
+	const { filters, setFilters } = useFilters(Route.id);
 	const employeeQuery = useSuspenseQuery(
 		salaryStructureQueries.employeeSummary({ employeeId: params.employeeId })
 	);

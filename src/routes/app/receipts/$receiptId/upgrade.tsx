@@ -1,15 +1,15 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { UpgradePaymentForm } from "@/features/receipts/components/upgrade-payment-form";
 import { paymentsQueries } from "@/features/receipts/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/receipts/$receiptId/upgrade")({
-	beforeLoad: async () => {
-		await requirePermission("receipts:top-up");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:top-up");
 	},
 	component: RouteComponent,
 	head: () => ({

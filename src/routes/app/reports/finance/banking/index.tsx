@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useStore } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
@@ -10,10 +11,7 @@ import { SelectItem } from "@/components/ui/select";
 import { Wrapper } from "@/components/ui/wrapper";
 import { getBanks } from "@/features/bankings/services/bankings.api";
 import { BankingReportDataTable } from "@/features/reports/components/banking-report-datatable";
-import {
-	BANKING_REPORT_STATUS,
-	BANKING_REPORT_TYPE,
-} from "@/features/reports/lib/constants";
+import { BANKING_REPORT_STATUS, BANKING_REPORT_TYPE } from "@/features/reports/lib/constants";
 import {
 	type BankingValidateSchema,
 	bankingReportFormSchema,
@@ -21,11 +19,10 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/finance/banking/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:bankings-report");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:bankings-report");
 	},
 	component: RouteComponent,
 	validateSearch: bankingValidateSchema,
@@ -114,13 +111,7 @@ function ReportFilters() {
 					{(field) => <field.DateRangePicker asString label="Date Range" />}
 				</form.AppField>
 				<form.AppField name="bankId">
-					{(field) => (
-						<field.Combobox
-							items={banks}
-							placeholder="Select bank"
-							label="Bank"
-						/>
-					)}
+					{(field) => <field.Combobox items={banks} placeholder="Select bank" label="Bank" />}
 				</form.AppField>
 				<form.AppField name="reportType">
 					{(field) => (
@@ -148,11 +139,7 @@ function ReportFilters() {
 				)}
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

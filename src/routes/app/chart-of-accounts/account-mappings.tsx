@@ -1,12 +1,12 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { LedgerAccountMappingsPage } from "@/features/coa/components/account-mappings-page";
 import { accountMappingQueries } from "@/features/coa/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/chart-of-accounts/account-mappings")({
-	beforeLoad: async () => {
-		await requirePermission("ledger-account-mappings:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "ledger-account-mappings:view");
 	},
 	loader: async ({ context: { queryClient } }) => {
 		await Promise.all([

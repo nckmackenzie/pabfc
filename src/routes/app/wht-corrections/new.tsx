@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -8,12 +9,11 @@ import {
 	CorrectionFormPendingComponent,
 } from "@/features/wht-corrections/components/correction-form";
 import { correctionQueries } from "@/features/wht-corrections/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { transformOptions } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/wht-corrections/new")({
-	beforeLoad: async () => {
-		await requirePermission("wht-corrections:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "wht-corrections:create");
 	},
 	component: RouteComponent,
 	head: () => ({
@@ -25,9 +25,7 @@ export const Route = createFileRoute("/app/wht-corrections/new")({
 			queryClient.ensureQueryData(correctionQueries.correctionNo()),
 			queryClient.ensureQueryData(bankQueries.list()),
 			queryClient.ensureQueryData(
-				accountQueries.childrenAccountsByParentName(
-					"Cash And Cash Equivalents",
-				),
+				accountQueries.childrenAccountsByParentName("Cash And Cash Equivalents")
 			),
 		]);
 
@@ -43,8 +41,7 @@ export const Route = createFileRoute("/app/wht-corrections/new")({
 });
 
 function RouteComponent() {
-	const { correctionNo, banks, cashEquivalentAccounts } =
-		Route.useLoaderData();
+	const { correctionNo, banks, cashEquivalentAccounts } = Route.useLoaderData();
 
 	return (
 		<ProtectedPageWithWrapper

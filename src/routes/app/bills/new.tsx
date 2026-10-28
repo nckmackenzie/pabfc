@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 import { FormLoader } from "@/components/ui/loaders";
@@ -6,11 +7,10 @@ import { BillForm } from "@/features/bills/components/bill-form";
 import { getBillFormValues } from "@/features/bills/lib/utils";
 import { billQueries, supplierQueries } from "@/features/bills/services/queries";
 import { accountQueries } from "@/features/coa/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/bills/new")({
-	beforeLoad: async () => {
-		await requirePermission("bills:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "bills:create");
 	},
 	head: () => ({
 		meta: [{ title: "New Bill / Prime Age Beauty & Fitness Centre" }],

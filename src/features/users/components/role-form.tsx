@@ -1,4 +1,6 @@
 import { lazy } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import { PageHeader } from "@/components/ui/page-header";
 import { ToastContent } from "@/components/ui/toast-content";
@@ -14,7 +16,7 @@ import { toTitleCase } from "@/lib/utils";
 const PermissionMatrix = lazy(() =>
 	import("./permission-matrix-hieracical").then((m) => ({
 		default: m.PermissionMatrix,
-	})),
+	}))
 );
 
 type Props = {
@@ -25,6 +27,8 @@ type Props = {
 };
 
 export function RoleForm({ permissions, role }: Props) {
+	const queryClient = useQueryClient();
+	const router = useRouter();
 	const form = useAppForm({
 		defaultValues:
 			role ??
@@ -59,6 +63,10 @@ export function RoleForm({ permissions, role }: Props) {
 		entityName: "Role",
 		navigateTo: "/app/users/roles",
 		queryKey: ["roles"],
+		onSuccessCallback: () => {
+			queryClient.removeQueries({ queryKey: ["auth"] });
+			void router.invalidate();
+		},
 	});
 
 	return (
@@ -67,9 +75,7 @@ export function RoleForm({ permissions, role }: Props) {
 				title={role ? "Edit Role" : "Create New Role"}
 				description={
 					role
-						? `Edit ${toTitleCase(
-								role.name.toLowerCase(),
-							)} details and permissions`
+						? `Edit ${toTitleCase(role.name.toLowerCase())} details and permissions`
 						: "Create a new role"
 				}
 			/>
@@ -83,9 +89,7 @@ export function RoleForm({ permissions, role }: Props) {
 				className="space-y-4"
 			>
 				<form.AppField name="name">
-					{(field) => (
-						<field.Input placeholder="Trainer" required label="Role Name" />
-					)}
+					{(field) => <field.Input placeholder="Trainer" required label="Role Name" />}
 				</form.AppField>
 				<form.Field name="permissions">
 					{(field) => (
@@ -97,9 +101,7 @@ export function RoleForm({ permissions, role }: Props) {
 					)}
 				</form.Field>
 				<form.AppForm>
-					<form.SubmitButton
-						buttonText={role ? "Update Role" : "Create Role"}
-					/>
+					<form.SubmitButton buttonText={role ? "Update Role" : "Create Role"} />
 				</form.AppForm>
 			</form>
 		</div>

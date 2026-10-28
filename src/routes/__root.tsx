@@ -1,10 +1,6 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
-import {
-	createRootRouteWithContext,
-	HeadContent,
-	Scripts,
-} from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "react-hot-toast";
 import { ErrorComponent } from "@/components/ui/error-component";
@@ -13,7 +9,7 @@ import { NotFoundComponent } from "@/components/ui/not-found";
 import { Spinner } from "@/components/ui/spinner";
 import { ModalProvider } from "@/integrations/modal-provider";
 import { SheetProvider } from "@/integrations/sheet-provider";
-import { authQueries } from "@/lib/session/queries";
+import { authContextQueryOptions } from "@/lib/session/queries";
 import type { getRouter } from "@/router";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -33,9 +29,7 @@ declare module "@tanstack/react-router" {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async ({ context }) => {
-		const userSession = await context.queryClient.fetchQuery(
-			authQueries.user(),
-		);
+		const userSession = await context.queryClient.fetchQuery(authContextQueryOptions);
 
 		return { userSession };
 	},
@@ -79,7 +73,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
-	errorComponent: ({ error }) => <ErrorComponent message={error.message} />,
+	errorComponent: ({ error }) => (
+		<ErrorComponent message={error instanceof Error ? error.message : String(error)} />
+	),
 	pendingComponent: () => (
 		<div className="flex items-center justify-center min-h-screen">
 			<div className="flex flex-col items-center gap-4">

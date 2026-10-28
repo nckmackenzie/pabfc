@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,13 +12,12 @@ import {
 } from "@/features/payments/components/payment-form";
 import { paymentQueries } from "@/features/payments/services/queries";
 import { transformPaymentFormValues } from "@/features/payments/utils/lib";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { transformOptions } from "@/lib/utils";
 import type { Option } from "@/types/index.types";
 
 export const Route = createFileRoute("/app/payments/$paymentId/edit")({
-	beforeLoad: async () => {
-		await requirePermission("payments:update");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "payments:update");
 	},
 	head: () => ({
 		meta: [{ title: "Edit Payment / Prime Age Beauty & Fitness Center" }],

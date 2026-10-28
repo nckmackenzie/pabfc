@@ -1,24 +1,21 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { Wrapper } from "@/components/ui/wrapper";
-import {
-	TrialBalance,
-	TrialBalanceSkeleton,
-} from "@/features/reports/components/trial-balance";
+import { TrialBalance, TrialBalanceSkeleton } from "@/features/reports/components/trial-balance";
 import {
 	trialBalanceReportFormSchema,
 	trialBalanceValidateSearchSchema,
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/finance/trial-balance/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:trial-balance");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:trial-balance");
 	},
 	component: RouteComponent,
 	staticData: {
@@ -35,16 +32,10 @@ function RouteComponent() {
 	const hasRequiredFilters = Boolean(filters.asOfDate);
 	return (
 		<Wrapper size="full">
-			<PageHeader
-				title="Trial Balance"
-				description="Verify ledger debits and credits."
-			/>
+			<PageHeader title="Trial Balance" description="Verify ledger debits and credits." />
 			<ReportFilter />
 			{hasRequiredFilters && (
-				<ErrorBoundaryWithSuspense
-					key={filters.asOfDate}
-					loader={<TrialBalanceSkeleton />}
-				>
+				<ErrorBoundaryWithSuspense key={filters.asOfDate} loader={<TrialBalanceSkeleton />}>
 					<TrialBalance />
 				</ErrorBoundaryWithSuspense>
 			)}
@@ -80,11 +71,7 @@ function ReportFilter() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

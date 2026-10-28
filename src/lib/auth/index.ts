@@ -101,7 +101,7 @@ export const auth = betterAuth({
 				});
 			}
 
-			ctx.context.userId = user.id;
+			(ctx.context as typeof ctx.context & { userId: string }).userId = user.id;
 		}),
 		after: createAuthMiddleware(async (ctx) => {
 			if (!ctx.path.startsWith("/sign-in")) return;
@@ -115,7 +115,7 @@ export const auth = betterAuth({
 			const success = Boolean(ctx.context.newSession);
 
 			await db.insert(schema.loginAttempts).values({
-				userId: ctx.context.userId,
+				userId: (ctx.context as typeof ctx.context & { userId?: string }).userId,
 				success,
 				ipAddress,
 				failureReason: success ? undefined : "Invalid username or password",

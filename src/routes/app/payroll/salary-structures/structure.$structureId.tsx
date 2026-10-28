@@ -1,15 +1,15 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
 import { SalaryStructureDetail } from "@/features/payroll/components/salary-structure-detail";
 import { salaryStructureQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/salary-structures/structure/$structureId")({
 	component: RouteComponent,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("salary-structures:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "salary-structures:view");
 	},
 	loader: async ({ context: { queryClient }, params }) => {
 		const structure = await queryClient.ensureQueryData(

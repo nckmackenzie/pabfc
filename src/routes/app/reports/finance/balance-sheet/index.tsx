@@ -1,20 +1,17 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
 import { FieldGroup } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { Wrapper } from "@/components/ui/wrapper";
-import {
-	BalanceSheet,
-	BalanceSheetSkeleton,
-} from "@/features/reports/components/balance-sheet";
+import { BalanceSheet, BalanceSheetSkeleton } from "@/features/reports/components/balance-sheet";
 import {
 	trialBalanceReportFormSchema,
 	trialBalanceValidateSearchSchema,
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/finance/balance-sheet/")({
 	component: RouteComponent,
@@ -25,8 +22,8 @@ export const Route = createFileRoute("/app/reports/finance/balance-sheet/")({
 			},
 		],
 	}),
-	beforeLoad: async () => {
-		await requirePermission("reports:balance-sheet");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:balance-sheet");
 	},
 	validateSearch: trialBalanceValidateSearchSchema,
 });
@@ -36,16 +33,10 @@ function RouteComponent() {
 	const hasRequiredFilters = Boolean(filters.asOfDate);
 	return (
 		<Wrapper size="full">
-			<PageHeader
-				title="Balance Sheet"
-				description="Assets, liabilities, and equity snapshot."
-			/>
+			<PageHeader title="Balance Sheet" description="Assets, liabilities, and equity snapshot." />
 			<ReportFilter />
 			{hasRequiredFilters && (
-				<ErrorBoundaryWithSuspense
-					key={filters.asOfDate}
-					loader={<BalanceSheetSkeleton />}
-				>
+				<ErrorBoundaryWithSuspense key={filters.asOfDate} loader={<BalanceSheetSkeleton />}>
 					<BalanceSheet />
 				</ErrorBoundaryWithSuspense>
 			)}
@@ -81,11 +72,7 @@ function ReportFilter() {
 				</form.AppField>
 			</FieldGroup>
 			<form.AppForm>
-				<form.SubmitButton
-					buttonText="Preview"
-					icon={<FileIcon />}
-					withReset={false}
-				/>
+				<form.SubmitButton buttonText="Preview" icon={<FileIcon />} withReset={false} />
 			</form.AppForm>
 		</form>
 	);

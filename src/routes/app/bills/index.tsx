@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, Link, stripSearchParams } from "@tanstack/react-router";
 import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,6 @@ import { BillTable } from "@/features/bills/components/bill-table";
 import { billQueries } from "@/features/bills/services/queries";
 import { billValidateSearch } from "@/features/bills/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 import { PermissionGate } from "@/components/ui/permission-gate";
 
@@ -25,8 +25,8 @@ const defaultValue = {
 };
 
 export const Route = createFileRoute("/app/bills/")({
-	beforeLoad: async () => {
-		await requirePermission("bills:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "bills:view");
 	},
 	component: RouteComponent,
 	validateSearch: billValidateSearch,

@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { z } from "zod";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
@@ -5,7 +6,6 @@ import { LoansPage } from "@/features/payroll/components/loans-page";
 import { loanQueries } from "@/features/payroll/services/queries";
 import { loanStatusSchema } from "@/features/payroll/services/loan.schemas";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 const loanDirectorySearchSchema = z.object({
 	q: z.string().optional().catch(""),
@@ -16,9 +16,9 @@ const loanDirectorySearchSchema = z.object({
 export const Route = createFileRoute("/app/payroll/loans/")({
 	component: RouteComponent,
 	validateSearch: loanDirectorySearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("employee-loans:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "employee-loans:view");
 	},
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context: { queryClient }, deps: search }) => {

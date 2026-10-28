@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { startOfMonth } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -11,30 +12,26 @@ import { useFilters } from "@/hooks/use-filters";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 import { dateRangeWithSearchSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/plans/$planId/revenue")({
-	beforeLoad: async () => {
-		await requirePermission("plans:view-plan-revenue")
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "plans:view-plan-revenue");
 	},
 	validateSearch: dateRangeWithSearchSchema,
 	head: () => ({
 		meta: [{ title: "Plan Revenue / Prime Age Beauty & Fitness Centre" }],
 	}),
 	loader: async ({ context: { queryClient }, params: { planId } }) => {
-		const [plan] = await Promise.all([
-			queryClient.ensureQueryData(planQueries.detail(planId)),
-		]);
+		const [plan] = await Promise.all([queryClient.ensureQueryData(planQueries.detail(planId))]);
 		if (!plan) throw notFound();
 		return { plan };
 	},
 	component: RouteComponent,
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 	staticData: {
-		breadcrumb: (match) =>
-			`Revenue for ${toTitleCase(match.loaderData.plan.name)}`,
+		breadcrumb: (match) => `Revenue for ${toTitleCase(match.loaderData.plan.name)}`,
 	},
 });
 
@@ -70,9 +67,7 @@ function RouteComponent() {
 					</div>
 					<div className="text-sm text-muted-foreground flex items-center">
 						<p>Revenue analytics.</p>
-						{price && (
-							<Badge variant="secondary">{currencyFormatter(price)}</Badge>
-						)}
+						{price && <Badge variant="secondary">{currencyFormatter(price)}</Badge>}
 					</div>
 				</div>
 				<DatePicker
