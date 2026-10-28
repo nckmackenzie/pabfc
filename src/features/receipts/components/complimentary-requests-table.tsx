@@ -9,14 +9,14 @@ import { RejectComplimentaryRequestModal } from "@/features/receipts/components/
 import { approveComplimentaryRequestFn } from "@/features/receipts/services/complimentary.mutations.api";
 import { complimentaryQueries } from "@/features/receipts/services/complimentary.queries";
 import { useModal } from "@/integrations/modal-provider";
-import { useSession } from "@/lib/auth/client";
+import { useRouteContext } from "@tanstack/react-router";
 import { dateFormat } from "@/lib/helpers";
 import { success } from "@/lib/result";
 import { toTitleCase } from "@/lib/utils";
 
 export function ComplimentaryRequestsTable() {
 	const { data: requests } = useSuspenseQuery(complimentaryQueries.list({ status: "all" }));
-	const { data: session } = useSession();
+	const session = useRouteContext({ from: "/app", select: (context) => context.auth });
 
 	const columns: Array<ColumnDef<(typeof requests)[0]>> = [
 		{

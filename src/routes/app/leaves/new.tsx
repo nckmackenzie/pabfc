@@ -1,8 +1,8 @@
+import { assertCan } from "@/lib/permissions/can";
 import { BackLink } from "@/components/ui/links";
 import { LeaveRequestForm } from "@/features/leaves/components/leave-request-form";
 import { leaveQueries } from "@/features/leaves/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/app/leaves/new")({
@@ -14,8 +14,8 @@ export const Route = createFileRoute("/app/leaves/new")({
       </div>
     );
   },
-  beforeLoad: async () => {
-    await requirePermission("leaves:create");
+  beforeLoad: ({ context }) => {
+			assertCan(context.auth, "leaves:create");
   },
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(leaveQueries.employees()),
   staticData: {

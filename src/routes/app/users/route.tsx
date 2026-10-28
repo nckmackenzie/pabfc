@@ -6,11 +6,11 @@ export const Route = createFileRoute("/app/users")({
 		breadcrumb: "Users List",
 	},
 	beforeLoad: ({ context }) => {
-		if (context.userSession?.user.role !== "admin") {
+		if (context.auth?.user.role !== "admin") {
 			throw redirect({ to: "/app/unauthorized" });
 		}
 	},
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 });

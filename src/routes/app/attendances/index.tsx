@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { DatePicker } from "@/components/ui/date-range";
@@ -6,16 +7,18 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { Search } from "@/components/ui/search";
 import { AttendanceTable } from "@/features/attendances/components/attendance-table";
+import { attendanceQueries } from "@/features/attendances/services/queries";
 import { attendanceValidateSearch } from "@/features/attendances/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { dateFormat } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/attendances/")({
-	beforeLoad: async () => {
-		await requirePermission("attendance:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "attendance:view");
 	},
 	validateSearch: attendanceValidateSearch,
+	loaderDeps: ({ search }) => search,
+	loader: ({ context, deps }) => context.queryClient.ensureQueryData(attendanceQueries.list(deps)),
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "Attendance / Prime Age Beauty & Fitness Centre" }],

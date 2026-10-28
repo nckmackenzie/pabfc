@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { PermissionGate } from "@/components/ui/permission-gate";
@@ -5,13 +6,12 @@ import { ProtectedPage } from "@/components/ui/protected-page";
 import { ChartOfAccountsTable } from "@/features/coa/components/coa-datatable";
 import { useFilters } from "@/hooks/use-filters";
 import { searchValidateSchema } from "@/lib/schema-rules";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { Button } from "@/components/ui/button";
 import { CogIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app/chart-of-accounts/")({
-	beforeLoad: async () => {
-		await requirePermission("chart-of-accounts:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "chart-of-accounts:view");
 	},
 	component: RouteComponent,
 	validateSearch: searchValidateSchema,

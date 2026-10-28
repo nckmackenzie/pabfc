@@ -1,15 +1,15 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BackLink } from "@/components/ui/links";
 import { FormLoader } from "@/components/ui/loaders";
 import { EmployeeForm } from "@/features/employees/components/employee-form";
 import { employeeQueries } from "@/features/employees/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/employees/new")({
 	component: RouteComponent,
-	beforeLoad: async () => {
-		await requirePermission("employees:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:create");
 	},
 	loader: ({ context: { queryClient } }) =>
 		queryClient.ensureQueryData(employeeQueries.nextEmployeeNo()),

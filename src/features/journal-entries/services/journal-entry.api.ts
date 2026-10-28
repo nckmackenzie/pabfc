@@ -1,23 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { journalEntries, journalLines } from "@/drizzle/schema";
 import { journalEntrySchema } from "@/features/journal-entries/services/schemas";
 import { failure, success } from "@/lib/result";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
-export const getJournalNo = createServerFn().handler(async () => {
-	const { rows } = await db.execute<{ journalNo: number }>(
-		sql`SELECT COALESCE(MAX(journal_no),0) + 1 as "journalNo" FROM journal_entries`,
-	);
-	return rows[0].journalNo;
-});
+export const getJournalNo = createServerFn()
+	.middleware([staffMiddleware])
+	.handler(async () => {
+		const { rows } = await db.execute<{ journalNo: number }>(
+			sql`SELECT COALESCE(MAX(journal_no),0) + 1 as "journalNo" FROM journal_entries`,
+		);
+		return rows[0].journalNo;
+	});
 
 export const getJournalEntry = createServerFn()
 	.middleware([authMiddleware])
 	.validator((journalNo: number) => journalNo)
 	.handler(async ({ data }) => {
+		await requireAnyPermission(["journal-entries:view", "journal-entries:update"]);
 		const journalEntry = await db.query.journalEntries.findFirst({
 			columns: { entryDate: true, journalNo: true, id: true },
 			where: eq(journalEntries.journalNo, data),
@@ -44,6 +48,7 @@ export const upsertJournalEntries = createServerFn()
 			},
 		}) => {
 			const { journalNo: formJournalNo, journalLines: lines, date, id } = data;
+			await requirePermission(id ? "journal-entries:update" : "journal-entries:create");
 
 			try {
 				const journalNo = id ? formJournalNo : await getJournalNo();
@@ -134,6 +139,7 @@ export const deleteJournalEntry = createServerFn()
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("journal-entries:delete");
 			try {
 				const journal = await db.query.journalEntries.findFirst({
 					columns: { id: true, journalNo: true },

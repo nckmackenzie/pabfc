@@ -1,14 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { BankReconcilliation } from "@/features/bankings/components/bank-reconciliation";
 import { bankReconciliationValidateSearch } from "@/features/bankings/services/schema";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/bankings/reconcilliation")({
 	component: ReconcilliationComponent,
-	beforeLoad: async () => {
-		await requirePermission("banking:reconciliation");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "banking:reconciliation");
 	},
 	validateSearch: bankReconciliationValidateSearch,
 	head: () => ({

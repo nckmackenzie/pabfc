@@ -35,3 +35,11 @@ export const checkFinancialYearConflict = async (
 		}
 	}
 };
+
+export const findCurrentFinancialYear = () =>
+	db.query.financialYears.findFirst({
+		where: and(
+			lte(financialYears.startDate, sql`CURRENT_DATE`),
+			gte(financialYears.endDate, sql`CURRENT_DATE`),
+		),
+	});

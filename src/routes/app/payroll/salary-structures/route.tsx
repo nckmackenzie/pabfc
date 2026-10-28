@@ -7,6 +7,9 @@ export const Route = createFileRoute("/app/payroll/salary-structures")({
 		breadcrumb: "Salary Structures",
 	},
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} title="Error" />
+		<AlertErrorComponent
+			message={error instanceof Error ? error.message : String(error)}
+			title="Error"
+		/>
 	),
 });

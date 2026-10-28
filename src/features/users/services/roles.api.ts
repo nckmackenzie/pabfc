@@ -14,10 +14,10 @@ import {
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { failure, success } from "@/lib/result";
 import { transformOptions } from "@/lib/utils";
-import { adminMiddleware, authMiddleware } from "@/middlewares/auth-middleware";
+import { adminMiddleware } from "@/middlewares/auth-middleware";
 
 export const getActiveRoles = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([adminMiddleware])
 	.handler(async () => {
 		return transformOptions(
 			await db.query.roles.findMany({

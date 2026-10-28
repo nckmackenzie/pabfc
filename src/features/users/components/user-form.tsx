@@ -1,4 +1,6 @@
 import { useStore } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouteContext, useRouter } from "@tanstack/react-router";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
 	MultiSelect,
@@ -38,10 +40,19 @@ export function UserForm({
 	user?: UserSchema;
 	roles: Array<Option>;
 }) {
+	const queryClient = useQueryClient();
+	const router = useRouter();
+	const auth = useRouteContext({ from: "/app", select: (context) => context.auth });
 	const userMutation = useFormUpsert({
 		upsertFn: (data: UserSchema) => upsertUser({ data }),
 		entityName: "User",
 		queryKey: ["users"],
+		onSuccessCallback: () => {
+			if (user?.id === auth.user.id) {
+				queryClient.removeQueries({ queryKey: ["auth"] });
+				void router.invalidate();
+			}
+		},
 		navigateTo: "/app/users",
 	});
 

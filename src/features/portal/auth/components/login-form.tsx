@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LogOutIcon } from "lucide-react";
 import toast from "react-hot-toast";
@@ -16,6 +17,7 @@ import { useAppForm } from "@/lib/form";
 export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 	const previousLocation = usePreviousLocation();
 	const navigate = useNavigate({ from: "/member/login" });
+	const queryClient = useQueryClient();
 	const form = useAppForm({
 		defaultValues: { username: "", password: "" },
 		validators: {
@@ -41,7 +43,8 @@ export function MemberLoginForm({ redirectTo }: { redirectTo?: string }) {
 					onSuccess: async () => {
 						const target = sanitizeRedirect(redirectTo ?? previousLocation);
 						form.reset();
-						navigate({ to: target, replace: true });
+						queryClient.clear();
+						await navigate({ to: target, replace: true });
 					},
 				},
 			});

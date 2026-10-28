@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
@@ -7,7 +8,6 @@ import { OvertimeSummaryPanel } from "@/features/payroll/components/overtime-sum
 import { PAYROLL_MONTH_OPTIONS, getPayrollYearOptions } from "@/features/payroll/lib/overtime-options";
 import { overtimeQueries, salaryStructureQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 import {
 	Select,
 	SelectContent,
@@ -33,9 +33,9 @@ const overtimeSummarySearchSchema = z.object({
 export const Route = createFileRoute("/app/payroll/overtime/employee/$employeeId")({
 	component: RouteComponent,
 	validateSearch: overtimeSummarySearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("overtime-records:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "overtime-records:view");
 	},
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context: { queryClient }, params, deps: search }) => {

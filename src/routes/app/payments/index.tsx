@@ -1,17 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { PaymentsTable } from "@/features/payments/components/payment-table";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/payments/")({
-	beforeLoad: async () => {
-		await requirePermission("payments:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "payments:view");
 	},
 	component: RouteComponent,
 	validateSearch: searchValidateSchema,

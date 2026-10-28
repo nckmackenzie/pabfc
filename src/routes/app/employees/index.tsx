@@ -1,26 +1,20 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { EmployeesTable } from "@/features/employees/components/employees-table";
 import { useFilters } from "@/hooks/use-filters";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/employees/")({
 	component: RouteComponent,
 	head: () => ({ meta: seo({ title: "Employees" }) }),
 	validateSearch: searchValidateSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:view");
 	},
 	pendingComponent: () => (
-		<BasePageLoadingSkeleton
-			pageTitle="Employees"
-			pageDescription="View and manage employees"
-		/>
+		<BasePageLoadingSkeleton pageTitle="Employees" pageDescription="View and manage employees" />
 	),
 });
 

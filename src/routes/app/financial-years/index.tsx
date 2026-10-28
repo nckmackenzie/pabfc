@@ -1,14 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { FinancialYearsTable } from "@/features/financial-years/components/financial-years-table";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/financial-years/")({
-	beforeLoad: async () => {
-		await requirePermission("financial-years:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "financial-years:view");
 	},
 	component: RouteComponent,
 	validateSearch: searchValidateSchema,

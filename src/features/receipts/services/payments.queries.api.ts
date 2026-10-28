@@ -15,13 +15,14 @@ import { checkUpgradeEligibility } from "@/features/receipts/lib/upgrade";
 import { userHasPermission } from "@/lib/permissions/permission-queries";
 import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import type { VatType } from "@/drizzle/schema";
 
 export const getPaymentStatusFn = createServerFn()
 	.middleware([authMiddleware])
 	.validator((checkoutRequestId: string) => checkoutRequestId)
 	.handler(async ({ data: checkoutRequestId }) => {
+		await requireAnyPermission(["receipts:view", "receipts:create"]);
 		const payment = await db.query.mpesaStkRequests.findFirst({
 			where: eq(mpesaStkRequests.checkoutRequestId, checkoutRequestId),
 		});
@@ -39,7 +40,7 @@ export const getPaymentStatusFn = createServerFn()
 	});
 
 export const getPaymentNo = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => {
 		const { rows } = await db.execute<{ maxno: number }>(
 			sql`SELECT coalesce(MAX(CAST(payment_no AS integer)), 0) as maxno FROM payments`
@@ -68,6 +69,7 @@ export const getPayments = createServerFn()
 	.middleware([authMiddleware])
 	.validator(searchValidateSchema)
 	.handler(async ({ data: { q } }) => {
+		await requirePermission("receipts:view");
 		// Membership payments (may also carry addons). "Amount" reflects the actual
 		// total paid (incl. VAT and any addons), not just the membership line total.
 		const membershipRows = await db
@@ -149,6 +151,7 @@ export const getPayment = createServerFn()
 	.middleware([authMiddleware])
 	.validator((id: string) => id)
 	.handler(async ({ data: id }) => {
+		await requireAnyPermission(["receipts:view", "receipts:update", "receipts:void"]);
 		const payment = await db.query.payments.findFirst({
 			with: {
 				member: {

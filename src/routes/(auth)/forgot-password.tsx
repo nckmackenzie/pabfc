@@ -3,7 +3,7 @@ import { ForgotPasswordForm } from "@/features/auth/forgot-password/components/f
 
 export const Route = createFileRoute("/(auth)/forgot-password")({
 	beforeLoad: async ({ context }) => {
-		if (context.userSession) {
+		if (context.auth) {
 			throw redirect({ to: "/app/dashboard" });
 		}
 	},

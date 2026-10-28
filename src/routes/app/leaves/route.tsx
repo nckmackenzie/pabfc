@@ -6,5 +6,10 @@ export const Route = createFileRoute("/app/leaves")({
 	staticData: {
 		breadcrumb: "Leave Management",
 	},
-	errorComponent: ({ error }) => <AlertErrorComponent message={error.message} title="Error" />,
+	errorComponent: ({ error }) => (
+		<AlertErrorComponent
+			message={error instanceof Error ? error.message : String(error)}
+			title="Error"
+		/>
+	),
 });

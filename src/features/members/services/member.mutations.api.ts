@@ -20,7 +20,7 @@ import {
 } from "@/lib/access-control";
 import { ConflictError, NotFoundError } from "@/lib/error-handling/app-error";
 import { inngest } from "@/lib/inngest/client";
-import { requirePermission } from "@/lib/permissions/permissions";
+import { requirePermission, requireAnyPermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { authMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
@@ -220,6 +220,7 @@ export const upsertMember = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
+			await requirePermission(data.id ? "members:update" : "members:create");
 			if (data.id) {
 				return updateMember({ value: data, id: data.id, loggedUserId });
 			}
@@ -237,6 +238,7 @@ export const revokePortalAccess = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
+			await requirePermission("members:update");
 			const member = await getMember({ data: memberId });
 			if (!member) {
 				throw new NotFoundError("Member not found");
@@ -322,6 +324,7 @@ export const sendRegistrationLink = createServerFn({ method: "POST" })
 				user: { id: loggedUserId },
 			},
 		}) => {
+			await requireAnyPermission(["members:create", "members:update"]);
 			const member = await getMember({ data: memberId });
 			if (!member) {
 				throw new NotFoundError("Member not found");

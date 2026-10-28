@@ -133,6 +133,7 @@ export const getExpiredMemberships = createServerFn()
 export const getTodaysAttendances = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("dashboard:view");
 		const today = nairobiToday();
 		const todaysAttendances = await db
 			.select({
@@ -266,6 +267,7 @@ export const getInactiveMembers = createServerFn()
 export const getAverageAttendanceByDay = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("dashboard:view");
 		const startDate = toNairobiDateString(subDays(new Date(), 30));
 
 		const rows = await db

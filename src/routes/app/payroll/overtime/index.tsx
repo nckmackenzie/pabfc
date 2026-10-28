@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
@@ -5,7 +6,6 @@ import { OvertimeRecordsPage } from "@/features/payroll/components/overtime-reco
 import { overtimeQueries } from "@/features/payroll/services/queries";
 import { overtimeStatusSchema } from "@/features/payroll/services/overtime.schemas";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 const today = new Date();
 
@@ -20,9 +20,9 @@ const overtimePeriodSearchSchema = z.object({
 export const Route = createFileRoute("/app/payroll/overtime/")({
 	component: RouteComponent,
 	validateSearch: overtimePeriodSearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("overtime-records:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "overtime-records:view");
 	},
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context: { queryClient }, deps: search }) => {

@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -14,11 +15,10 @@ import { journalQueries } from "@/features/journal-entries/services/queries";
 import { journalEntryValidateSearch } from "@/features/journal-entries/services/schemas";
 import { useFilters } from "@/hooks/use-filters";
 import { toTitleCase } from "@/lib/utils";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/journal-entries")({
-	beforeLoad: async () => {
-		await requirePermission("journal-entries:create")
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "journal-entries:create");
 	},
 	component: RouteComponent,
 	validateSearch: journalEntryValidateSearch,
@@ -28,21 +28,16 @@ export const Route = createFileRoute("/app/journal-entries")({
 	loaderDeps: ({ search: { journalNo } }) => ({ journalNo }),
 	pendingComponent: JournalLoadingSkeleton,
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 	staticData: {
 		breadcrumb: "Journal Entries",
 	},
-	loader: async ({
-		context: { queryClient },
-		deps: { journalNo: queryJournalNo },
-	}) => {
+	loader: async ({ context: { queryClient }, deps: { journalNo: queryJournalNo } }) => {
 		const [accounts, journalNo, journalEntry] = await Promise.all([
 			queryClient.ensureQueryData(accountQueries.list({})),
 			queryClient.ensureQueryData(journalQueries.journalNo()),
-			queryJournalNo
-				? queryClient.ensureQueryData(journalQueries.journal(queryJournalNo))
-				: null,
+			queryJournalNo ? queryClient.ensureQueryData(journalQueries.journal(queryJournalNo)) : null,
 		]);
 
 		if (queryJournalNo && !journalEntry) {
@@ -100,9 +95,7 @@ export function SearchForm() {
 		e.preventDefault();
 		if (!searchValue) return;
 		if (Number.isNaN(Number(searchValue))) {
-			toast.error((t) => (
-				<ToastContent t={t} message="Invalid journal number" title="Invalid" />
-			));
+			toast.error((t) => <ToastContent t={t} message="Invalid journal number" title="Invalid" />);
 			return;
 		}
 		setFilters({ journalNo: Number(searchValue) });

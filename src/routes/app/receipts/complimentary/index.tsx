@@ -1,11 +1,11 @@
+import { assertCanAny } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageComponent } from "@/components/ui/base-page";
 import { ComplimentaryRequestsTable } from "@/features/receipts/components/complimentary-requests-table";
-import { requireAnyPermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/receipts/complimentary/")({
-	beforeLoad: async () => {
-		await requireAnyPermission([
+	beforeLoad: ({ context }) => {
+		assertCanAny(context.auth, [
 			"receipts:complimentary-request",
 			"receipts:complimentary-approve",
 		]);

@@ -27,7 +27,7 @@ import { requirePermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
 import { toTitleCase } from "@/lib/utils";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import { createJournalEntry } from "@/services/journal";
 import { resolveAccountRole } from "@/services/ledger-account-mappings";
@@ -583,7 +583,7 @@ export const getAccount = createServerFn({ method: "GET" })
 	});
 
 export const getChildrenAccountByParentName = createServerFn({ method: "GET" })
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator((parentName: string) => parentName)
 	.handler(async ({ data: parentName }) => {
 		const parentAccount = await db.query.ledgerAccounts.findFirst({
@@ -698,7 +698,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
 	});
 
 export const getVatAccountId = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => {
 		const billing = await db.query.settings.findFirst({
 			columns: { billing: true },
@@ -708,7 +708,7 @@ export const getVatAccountId = createServerFn()
 	});
 
 export const getCashEquivalentsAccountId = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator((account: string) => account)
 	.handler(async ({ data: account }) => {
 		const ledgerAccount = await db.query.ledgerAccounts.findFirst({

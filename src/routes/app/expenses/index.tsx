@@ -1,17 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { ProtectedPage } from "@/components/ui/protected-page";
 import { ExpenseDatatable } from "@/features/expenses/components/expense-datatable";
 import { ExpenseFilters } from "@/features/expenses/components/filters";
 import { expenseValidateSearch } from "@/features/expenses/services/schemas";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/expenses/")({
-	beforeLoad: async () => {
-		await requirePermission("expenses:view")
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "expenses:view");
 	},
 	component: RouteComponent,
 	validateSearch: expenseValidateSearch,
@@ -19,10 +16,7 @@ export const Route = createFileRoute("/app/expenses/")({
 		meta: [{ title: "Expenses / Prime Age Beauty & Fitness Center" }],
 	}),
 	pendingComponent: () => (
-		<BasePageLoadingSkeleton
-			pageDescription="Manage your expenses"
-			pageTitle="Expenses"
-		/>
+		<BasePageLoadingSkeleton pageDescription="Manage your expenses" pageTitle="Expenses" />
 	),
 });
 

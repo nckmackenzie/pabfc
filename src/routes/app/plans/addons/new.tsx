@@ -1,12 +1,12 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { AddonForm } from "@/features/addons/components/addon-form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/plans/addons/new")({
-	beforeLoad: async () => {
-		await requirePermission("plans:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "plans:create");
 	},
 	component: RouteComponent,
 	head: () => ({

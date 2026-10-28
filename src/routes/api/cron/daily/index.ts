@@ -3,7 +3,7 @@ import { addYears, format, isToday } from "date-fns";
 import { and, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { financialYears, memberMemberships } from "@/drizzle/schema";
-import { getCurrentFinancialYear } from "@/features/financial-years/services/financial-years.api";
+import { findCurrentFinancialYear } from "@/features/financial-years/services/helpers";
 import { activateDueMemberships } from "@/features/receipts/services/membership-payment-finalizer";
 import { expireCreditNotes } from "@/features/credit-notes/services/credit-note.maintenance";
 import { reconcileSessionUsage } from "@/features/session-usage/services/reconcile";
@@ -18,7 +18,7 @@ async function autoCreateFinancialYear() {
 	});
 
 	if (!settings?.billing?.autoCreateFinancialYear) return;
-	const currentFinancialYear = await getCurrentFinancialYear();
+	const currentFinancialYear = await findCurrentFinancialYear();
 	if (!currentFinancialYear) return;
 
 	if (isToday(new Date(currentFinancialYear.endDate))) {

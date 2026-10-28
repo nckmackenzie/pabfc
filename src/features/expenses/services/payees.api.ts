@@ -1,20 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAnyPermission } from "@/lib/permissions/permissions";
 import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { payees } from "@/drizzle/schema";
 import { payeeSchema } from "@/features/expenses/services/schemas";
 import { failure, success } from "@/lib/result";
 import { toTitleCase } from "@/lib/utils";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 
-export const getPayees = createServerFn().handler(async () => {
-	return db
-		.select({ id: payees.id, name: payees.name })
-		.from(payees)
-		.where(eq(payees.isActive, true))
-		.orderBy(asc(payees.name));
-});
+export const getPayees = createServerFn()
+	.middleware([staffMiddleware])
+	.handler(async () => {
+		return db
+			.select({ id: payees.id, name: payees.name })
+			.from(payees)
+			.where(eq(payees.isActive, true))
+			.orderBy(asc(payees.name));
+	});
 
 export const createPayee = createServerFn()
 	.middleware([authMiddleware])
@@ -26,6 +29,7 @@ export const createPayee = createServerFn()
 				user: { id: userId },
 			},
 		}) => {
+			await requireAnyPermission(["expenses:create", "expenses:update"]);
 			try {
 				const payee = await db.query.payees.findFirst({
 					where: eq(sql`lower(${payees.name})`, data.name.trim().toLowerCase()),

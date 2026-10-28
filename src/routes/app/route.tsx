@@ -1,11 +1,9 @@
-import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Outlet,
 	redirect,
 	// useRouterState,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { RouterBreadcrumb } from "@/components/ui/nav-breadcrumb";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -15,19 +13,21 @@ import { financialYearQueries } from "@/features/financial-years/services/querie
 
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
-		if (!context.userSession || context.userSession.user.role === "member") {
+		// The root beforeLoad has just fetched authorization from the server.
+		const { auth } = context;
+		if (!auth || auth.user.role === "member") {
 			throw redirect({ to: "/sign-in", search: { redirectTo: location.href } });
 		}
+		return { auth };
+	},
+	loader: ({ context }) => {
+		void context.queryClient.prefetchQuery(financialYearQueries.current());
 	},
 	component: RouteComponent,
 	notFoundComponent: () => <Wip />,
 });
 
 function RouteComponent() {
-	const queryClient = useQueryClient();
-	useEffect(() => {
-		queryClient.prefetchQuery(financialYearQueries.current());
-	}, [queryClient]);
 	return (
 		<SidebarProvider>
 			<AppSidebar />

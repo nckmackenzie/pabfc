@@ -1,20 +1,20 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { PackageIcon } from "@/components/ui/icons";
 import { ButtonLink } from "@/components/ui/links";
 import { PlansTable } from "@/features/plans/components/plans-table";
+import { planQueries } from "@/features/plans/services/queries";
 import { useFilters } from "@/hooks/use-filters";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { searchValidateSchema } from "@/lib/schema-rules";
 
 export const Route = createFileRoute("/app/plans/")({
-	beforeLoad: async () => {
-		await requirePermission("plans:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "plans:view");
 	},
 	validateSearch: searchValidateSchema,
+	loaderDeps: ({ search }) => search,
+	loader: ({ context, deps }) => context.queryClient.ensureQueryData(planQueries.list(deps)),
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "Plans & Packages / Prime Age Beauty & Fitness Center" }],
@@ -40,11 +40,7 @@ function RouteComponent() {
 			onSearch={(val) => setFilters({ q: val })}
 			createPermissions={["plans:create"]}
 			extraActionButtons={
-				<ButtonLink
-					variant="outline"
-					path="/app/plans/addons"
-					icon={<PackageIcon />}
-				>
+				<ButtonLink variant="outline" path="/app/plans/addons" icon={<PackageIcon />}>
 					Manage Addons
 				</ButtonLink>
 			}

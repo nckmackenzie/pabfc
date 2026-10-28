@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 import { ErrorBoundaryWithSuspense } from "@/components/ui/error-boundary-with-suspense";
@@ -14,7 +15,6 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/finance/balance-sheet/")({
 	component: RouteComponent,
@@ -25,8 +25,8 @@ export const Route = createFileRoute("/app/reports/finance/balance-sheet/")({
 			},
 		],
 	}),
-	beforeLoad: async () => {
-		await requirePermission("reports:balance-sheet");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:balance-sheet");
 	},
 	validateSearch: trialBalanceValidateSearchSchema,
 });

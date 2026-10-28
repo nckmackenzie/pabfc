@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useStore } from "@tanstack/react-form";
 import { createFileRoute, useRouteContext } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,13 +12,12 @@ import {
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
 import { dateFormat } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { cn, toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/bankings/clear")({
 	component: RouteComponent,
-	beforeLoad: async () => {
-		await requirePermission("banking:clear");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "banking:clear");
 	},
 	validateSearch: clearBankingsValidateSearch,
 	staticData: {

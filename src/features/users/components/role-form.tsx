@@ -1,4 +1,6 @@
 import { lazy } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import { PageHeader } from "@/components/ui/page-header";
 import { ToastContent } from "@/components/ui/toast-content";
@@ -25,6 +27,8 @@ type Props = {
 };
 
 export function RoleForm({ permissions, role }: Props) {
+	const queryClient = useQueryClient();
+	const router = useRouter();
 	const form = useAppForm({
 		defaultValues:
 			role ??
@@ -59,6 +63,10 @@ export function RoleForm({ permissions, role }: Props) {
 		entityName: "Role",
 		navigateTo: "/app/users/roles",
 		queryKey: ["roles"],
+		onSuccessCallback: () => {
+			queryClient.removeQueries({ queryKey: ["auth"] });
+			void router.invalidate();
+		},
 	});
 
 	return (

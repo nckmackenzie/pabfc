@@ -1,4 +1,4 @@
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { createServerFn } from "@tanstack/react-start";
 import {
 	employeeIdSchema,
@@ -133,7 +133,7 @@ async function buildLeaveBalanceSummary({
 }
 
 export const getExistingOneOffRequest = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator(employeeLeaveTypeSchema)
 	.handler(async ({ data }) => {
 		return await db.query.leaveRequests.findFirst({
@@ -146,7 +146,7 @@ export const getExistingOneOffRequest = createServerFn()
 	});
 
 export const getOverlappingRequests = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator(
 		z.object({
 			employeeId: employeeIdSchema,
@@ -176,7 +176,7 @@ export const getOverlappingRequests = createServerFn()
 	});
 
 export const getEffectiveBalanceCheck = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator(
 		z.object({
 			employeeId: employeeIdSchema,
@@ -373,7 +373,7 @@ export const getEmployeesForLeaveOptionsFn = createServerFn()
 	});
 
 export const getEntitlementByLeaveType = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator(leaveTypeSchema)
 	.handler(async ({ data }) => {
 		const entitlement = await db.query.leaveEntitlements.findFirst({
@@ -383,7 +383,7 @@ export const getEntitlementByLeaveType = createServerFn()
 	});
 
 export const getHolidayDatesInRange = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.validator(
 		z.object({
 			startDate: dateSchema("Start date is required"),

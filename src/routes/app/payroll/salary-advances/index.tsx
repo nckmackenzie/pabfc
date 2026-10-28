@@ -1,10 +1,10 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { z } from "zod";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { SalaryAdvancesPage } from "@/features/payroll/components/salary-advances-page";
 import { salaryAdvanceQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 const salaryAdvanceDirectorySearchSchema = z.object({
 	view: z.enum(["pending", "active"]).optional().catch("pending"),
@@ -15,9 +15,9 @@ const salaryAdvanceDirectorySearchSchema = z.object({
 export const Route = createFileRoute("/app/payroll/salary-advances/")({
 	component: RouteComponent,
 	validateSearch: salaryAdvanceDirectorySearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("salary-advances:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "salary-advances:view");
 	},
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context: { queryClient }, deps: search }) => {

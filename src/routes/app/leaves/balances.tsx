@@ -1,10 +1,10 @@
+import { assertCan } from "@/lib/permissions/can";
 import { BackLink } from "@/components/ui/links";
 import { PageHeader } from "@/components/ui/page-header";
 import { LeaveBalancesPanel } from "@/features/leaves/components/leave-balances-panel";
 import { leaveQueries } from "@/features/leaves/services/queries";
 import { leaveBalanceViewSchema } from "@/features/leaves/utils/schemas";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/app/leaves/balances")({
@@ -22,8 +22,8 @@ export const Route = createFileRoute("/app/leaves/balances")({
     );
   },
   head: () => ({ meta: seo({ title: "Leave Balances" }) }),
-  beforeLoad: async () => {
-    await requirePermission("leaves:view");
+  beforeLoad: ({ context }) => {
+			assertCan(context.auth, "leaves:view");
   },
   loader: async ({ context: { queryClient } }) => {
     return await queryClient.ensureQueryData(leaveQueries.employees());

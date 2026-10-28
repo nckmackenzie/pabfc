@@ -1,13 +1,13 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 import { PageWrapperWithBackLink } from "@/components/ui/edit-page-wrapper";
 import { FormLoader } from "@/components/ui/loaders";
 import { MemberForm } from "@/features/members/components/member-form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/members/new")({
-	beforeLoad: async () => {
-		await requirePermission("members:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "members:create");
 	},
 	validateSearch: z.object({
 		tab: z

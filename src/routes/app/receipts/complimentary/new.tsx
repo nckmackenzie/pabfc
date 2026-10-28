@@ -1,13 +1,13 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { ComplimentaryRequestForm } from "@/features/receipts/components/complimentary-request-form";
 import { memberQueries } from "@/features/members/services/queries";
 import { planQueries } from "@/features/plans/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/receipts/complimentary/new")({
-	beforeLoad: async () => {
-		await requirePermission("receipts:complimentary-request");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:complimentary-request");
 	},
 	component: RouteComponent,
 	head: () => ({

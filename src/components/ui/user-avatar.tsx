@@ -1,7 +1,7 @@
 import { Style, Avatar as DicebearAvatar } from "@dicebear/core";
 import definition from "@dicebear/styles/initials.json" with { type: "json" };
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useRouteContext, useRouter } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,16 +14,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ClipboardClockIcon, CogIcon, LogOutIcon, UsersIcon } from "@/components/ui/icons";
-import { Skeleton } from "@/components/ui/skeleton";
-import { authClient, useSession } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth/client";
 
 export function UserAvatar() {
-	const { data: session, isPending } = useSession();
+	const session = useRouteContext({ from: "/app", select: (context) => context.auth });
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	if (isPending) {
-		return <Skeleton className="size-8 bg-secondary" />;
-	}
 
 	const style = new Style(definition);
 	const avatar = new DicebearAvatar(style, {
@@ -32,9 +28,10 @@ export function UserAvatar() {
 
 	async function handleLogout() {
 		await authClient.signOut();
-		router.navigate({ to: "/sign-in" });
-		router.invalidate();
-		await queryClient.invalidateQueries();
+		queryClient.clear();
+		// Navigating re-runs the root beforeLoad against the cleared auth cache. Invalidating
+		// first would re-run /app guards and redirect to /sign-in with a stale redirectTo.
+		await router.navigate({ to: "/sign-in" });
 	}
 
 	return (

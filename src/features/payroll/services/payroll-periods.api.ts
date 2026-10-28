@@ -1200,6 +1200,7 @@ export const recordDisbursementAndMarkPaidFn = createServerFn({ method: "POST" }
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("payroll-periods:transition");
 			const disbursementResult = await postSalaryDisbursementJournalFn({ data });
 
 			if (!disbursementResult.success) {

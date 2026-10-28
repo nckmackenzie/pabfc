@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,13 +11,12 @@ import {
 	PaymentFormPendingComponent,
 } from "@/features/payments/components/payment-form";
 import { paymentQueries } from "@/features/payments/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { transformOptions } from "@/lib/utils";
 import type { Option } from "@/types/index.types";
 
 export const Route = createFileRoute("/app/payments/new")({
-	beforeLoad: async () => {
-		await requirePermission("payments:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "payments:create");
 	},
 	validateSearch: z.object({
 		billId: z.string().optional(),

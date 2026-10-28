@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,13 @@ export const Route = createFileRoute("/member/dashboard")({
 
 function RouteComponent() {
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const handleLogout = async () => {
 		await authClient.signOut({
 			fetchOptions: {
-				onSuccess: () => {
-					navigate({ to: "/member/login" });
+				onSuccess: async () => {
+					queryClient.clear();
+					await navigate({ to: "/member/login" });
 				},
 				onError: () => {
 					toast.error("Failed to sign out");

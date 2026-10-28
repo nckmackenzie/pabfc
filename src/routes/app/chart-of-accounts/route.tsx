@@ -5,13 +5,13 @@ import { accountQueries } from "@/features/coa/services/queries";
 export const Route = createFileRoute("/app/chart-of-accounts")({
 	beforeLoad: async ({ context }) => {
 		const parentAccounts = await context.queryClient.ensureQueryData(
-			accountQueries.parentAccounts(),
+			accountQueries.parentAccounts()
 		);
 		return { parentAccounts };
 	},
 	component: RouteComponent,
 	errorComponent: ({ error }) => (
-		<AlertErrorComponent message={error.message} />
+		<AlertErrorComponent message={error instanceof Error ? error.message : String(error)} />
 	),
 	staticData: {
 		breadcrumb: "Chart of Accounts",

@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useStore } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
@@ -19,7 +20,6 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/reports/members/")({
 	component: RouteComponent,
@@ -27,8 +27,8 @@ export const Route = createFileRoute("/app/reports/members/")({
 	head: () => ({
 		meta: [{ title: "Members Report / Prime Age Beauty & Fitness Center" }],
 	}),
-	beforeLoad: async () => {
-		await requirePermission("members:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "members:view");
 	},
 	staticData: {
 		breadcrumb: "Members report",

@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useStore } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
@@ -18,12 +19,11 @@ import {
 } from "@/features/reports/services/schema";
 import { useFilters } from "@/hooks/use-filters";
 import { useAppForm } from "@/lib/form";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/reports/finance/invoices/")({
-	beforeLoad: async () => {
-		await requirePermission("reports:invoices-report");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "reports:invoices-report");
 	},
 	component: RouteComponent,
 	head: () => ({

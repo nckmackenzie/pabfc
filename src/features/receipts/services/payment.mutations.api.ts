@@ -72,7 +72,7 @@ import { nairobiToday } from "@/lib/nairobi-time";
 import { initiateMpesaStkPush, registerUrlCallacks } from "@/lib/mpesa";
 import { userHasPermission } from "@/lib/permissions/permission-queries";
 import { requirePermission } from "@/lib/permissions/permissions";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, adminMiddleware } from "@/middlewares/auth-middleware";
 import { failure, success, type Result } from "@/lib/result";
 
 // Thrown inside a payment transaction to force a rollback while carrying the
@@ -300,7 +300,7 @@ export const initiateStkPushFn = createServerFn({ method: "POST" })
 	);
 
 export const registerUrlCallacksFn = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
+	.middleware([adminMiddleware])
 	.handler(async () => {
 		await registerUrlCallacks();
 		return { success: true };

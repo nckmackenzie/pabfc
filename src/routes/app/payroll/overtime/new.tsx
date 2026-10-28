@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { FormLoader } from "@/components/ui/loaders";
@@ -5,7 +6,6 @@ import { BackLink } from "@/components/ui/links";
 import { OvertimeRecordForm } from "@/features/payroll/components/overtime-record-form";
 import { overtimeQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 const overtimeCreateSearchSchema = z.object({
 	employeeId: z.string().optional().catch(""),
@@ -14,9 +14,9 @@ const overtimeCreateSearchSchema = z.object({
 export const Route = createFileRoute("/app/payroll/overtime/new")({
 	component: RouteComponent,
 	validateSearch: overtimeCreateSearchSchema,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("overtime-records:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "overtime-records:create");
 	},
 	loader: ({ context: { queryClient } }) =>
 		queryClient.ensureQueryData(overtimeQueries.formOptions()),

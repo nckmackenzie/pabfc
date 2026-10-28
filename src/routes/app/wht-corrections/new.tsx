@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -8,12 +9,11 @@ import {
 	CorrectionFormPendingComponent,
 } from "@/features/wht-corrections/components/correction-form";
 import { correctionQueries } from "@/features/wht-corrections/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { transformOptions } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/wht-corrections/new")({
-	beforeLoad: async () => {
-		await requirePermission("wht-corrections:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "wht-corrections:create");
 	},
 	component: RouteComponent,
 	head: () => ({

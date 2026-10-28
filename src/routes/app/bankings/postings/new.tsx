@@ -1,8 +1,8 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { BankPostingForm } from "@/features/bankings/components/bank-posting-form";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/bankings/postings/new")({
 	component: RouteComponent,
@@ -13,8 +13,8 @@ export const Route = createFileRoute("/app/bankings/postings/new")({
 		meta: [{ title: "New Bank Posting / Prime Age Beauty & Fitness Centre" }],
 	}),
 	pendingComponent: FormLoader,
-	beforeLoad: async () => {
-		await requirePermission("banking:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "banking:create");
 	},
 });
 

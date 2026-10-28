@@ -1,13 +1,11 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { MemberFilters } from "@/features/members/components/filters";
 import { MemberTable } from "@/features/members/components/member-table";
+import { memberQueries } from "@/features/members/services/queries";
 import { memberValidateSearch } from "@/features/members/services/schemas";
 import { planQueries } from "@/features/plans/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 const defaultValues = {
 	q: "",
@@ -16,10 +14,11 @@ const defaultValues = {
 };
 
 export const Route = createFileRoute("/app/members/")({
-	beforeLoad: async () => {
-		await requirePermission("members:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "members:view");
 	},
 	validateSearch: memberValidateSearch,
+	loaderDeps: ({ search }) => search,
 	search: {
 		middlewares: [stripSearchParams(defaultValues)],
 	},
@@ -28,14 +27,12 @@ export const Route = createFileRoute("/app/members/")({
 	}),
 	component: RouteComponent,
 	pendingComponent: () => (
-		<BasePageLoadingSkeleton
-			pageTitle="Members"
-			pageDescription="View and manage members"
-		/>
+		<BasePageLoadingSkeleton pageTitle="Members" pageDescription="View and manage members" />
 	),
-	loader: async ({ context }) => {
+	loader: async ({ context, deps }) => {
 		const [activePlans] = await Promise.all([
 			context.queryClient.ensureQueryData(planQueries.active()),
+			context.queryClient.ensureQueryData(memberQueries.list(deps)),
 		]);
 		return {
 			plans: activePlans,

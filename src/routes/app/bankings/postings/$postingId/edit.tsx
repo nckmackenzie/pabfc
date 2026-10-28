@@ -1,14 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { BankPostingForm } from "@/features/bankings/components/bank-posting-form";
 import { getBankPosting } from "@/features/bankings/services/bankings.api";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { toTitleCase } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/bankings/postings/$postingId/edit")({
-	beforeLoad: async () => {
-		await requirePermission("banking:update");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "banking:update");
 	},
 	component: RouteComponent,
 	pendingComponent: FormLoader,

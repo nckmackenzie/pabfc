@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import { FieldGroup } from "@/components/ui/field";
@@ -18,6 +19,7 @@ const defaultValues = {
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 	const previousLocation = usePreviousLocation();
 	const navigate = useNavigate({ from: "/sign-in" });
+	const queryClient = useQueryClient();
 
 	const form = useAppForm({
 		defaultValues,
@@ -41,7 +43,8 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
 					onSuccess: async () => {
 						const target = sanitizeRedirect(redirectTo ?? previousLocation);
 						form.reset();
-						navigate({ to: target, replace: true });
+						queryClient.clear();
+						await navigate({ to: target, replace: true });
 					},
 				},
 			});

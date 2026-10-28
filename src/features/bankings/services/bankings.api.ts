@@ -26,10 +26,10 @@ import {
 } from "@/features/bankings/services/schema";
 import { ApplicationError } from "@/lib/error-handling/app-error";
 import { normalizeDateRange } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
+import { requirePermission, requireAnyPermission } from "@/lib/permissions/permissions";
 import { failure, success } from "@/lib/result";
 import { searchValidateSchema } from "@/lib/schema-rules";
-import { authMiddleware } from "@/middlewares/auth-middleware";
+import { authMiddleware, staffMiddleware } from "@/middlewares/auth-middleware";
 import { logActivity } from "@/services/activity-logger";
 import {
 	areJournalValuesBalanced,
@@ -40,7 +40,7 @@ import {
 import { getCashbookBalance, getUnclearedAmounts } from "./helpers";
 
 export const getBanks = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([staffMiddleware])
 	.handler(async () => {
 		return db.query.bankAccounts.findMany({
 			orderBy: [asc(sql`LOWER(${bankAccounts.bankName})`)],
@@ -51,6 +51,7 @@ export const getBankPostings = createServerFn()
 	.middleware([authMiddleware])
 	.validator(searchValidateSchema)
 	.handler(async ({ data }) => {
+		await requirePermission("banking:view");
 		const filters: Array<SQL> = [];
 		filters.push(eq(bankPostings.source, "postings"));
 
@@ -93,6 +94,7 @@ export const getBankPosting = createServerFn()
 	.middleware([authMiddleware])
 	.validator(z.string().min(1, "Bank posting ID is required"))
 	.handler(async ({ data: postingId }) => {
+		await requireAnyPermission(["banking:view", "banking:update"]);
 		const posting = await db.query.bankPostings.findFirst({
 			columns: {
 				cleared: false,

@@ -16,14 +16,14 @@ import {
 	type UserWithLoginAttempts,
 } from "@/features/users/services/users.api";
 import { useFilters } from "@/hooks/use-filters";
-import { useSession } from "@/lib/auth/client";
+import { useRouteContext } from "@tanstack/react-router";
 import { toTitleCase } from "@/lib/utils";
 import { usersQueries } from "../services/queries";
 
 export function UsersTable() {
 	const { filters } = useFilters(getRouteApi("/app/users/").id);
 	const { data } = useSuspenseQuery(usersQueries.list(filters));
-	const { data: session } = useSession();
+	const session = useRouteContext({ from: "/app", select: (context) => context.auth });
 	const columns: Array<ColumnDef<UserWithLoginAttempts>> = [
 		{
 			accessorKey: "name",

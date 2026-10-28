@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireAnyPermission, requirePermission } from "@/lib/permissions/permissions";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import { smsBroadcasts, smsTemplates, users } from "@/drizzle/schema";
@@ -16,6 +17,11 @@ import { logActivity } from "@/services/activity-logger";
 export const getSmsTemplates = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requireAnyPermission([
+			"communication:view",
+			"communication:create",
+			"communication:update",
+		]);
 		return db
 			.select({
 				id: smsTemplates.id,
@@ -35,6 +41,7 @@ export const getSmsTemplates = createServerFn()
 export const getSmsBroadcasts = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
+		await requirePermission("communication:view");
 		const broadcasts = await db
 			.select({
 				id: smsBroadcasts.id,
@@ -85,6 +92,7 @@ export const upsertTemplate = createServerFn()
 			},
 		}) => {
 			const { name, content, id, description } = data;
+			await requirePermission(id ? "communication:update" : "communication:create");
 			const variables = extractVariables(content);
 
 			try {
@@ -145,6 +153,7 @@ export const deleteTemplate = createServerFn()
 	.middleware([authMiddleware])
 	.validator((templateId: string) => templateId)
 	.handler(async ({ data }) => {
+		await requirePermission("communication:delete");
 		try {
 			const template = await db.query.smsTemplates.findFirst({
 				where: eq(smsTemplates.id, data),
@@ -172,6 +181,7 @@ export const sendBroadCast = createServerFn({ method: "POST" })
 				user: { id: userId },
 			},
 		}) => {
+			await requirePermission("communication:create");
 			const {
 				filterCriteria,
 				criteria,

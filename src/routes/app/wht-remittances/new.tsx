@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -8,12 +9,11 @@ import {
 	RemittanceFormPendingComponent,
 } from "@/features/wht-remittances/components/remittance-form";
 import { remittanceQueries } from "@/features/wht-remittances/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { transformOptions } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/wht-remittances/new")({
-	beforeLoad: async () => {
-		await requirePermission("wht-remittances:create");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "wht-remittances:create");
 	},
 	component: RouteComponent,
 	head: () => ({

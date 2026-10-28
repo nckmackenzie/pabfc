@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { z } from "zod";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
@@ -6,11 +7,10 @@ import {
 	PaymentDetailsSkeleton,
 } from "@/features/receipts/components/payment-details";
 import { paymentsQueries } from "@/features/receipts/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/receipts/$receiptId/details")({
-	beforeLoad: async () => {
-		await requirePermission("receipts:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "receipts:view");
 	},
 	validateSearch: z.object({ guestMemberNo: z.number().optional().catch(undefined) }),
 	head: () => ({

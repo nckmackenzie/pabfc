@@ -1,3 +1,4 @@
+import { assertCan } from "@/lib/permissions/can";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,13 +11,12 @@ import {
 } from "@/features/wht-remittances/components/remittance-form";
 import { remittanceQueries } from "@/features/wht-remittances/services/queries";
 import { transformRemittanceFormValues } from "@/features/wht-remittances/utils/lib";
-import { requirePermission } from "@/lib/permissions/permissions";
 import { transformOptions } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/wht-remittances/$remittanceId/edit")(
 	{
-		beforeLoad: async () => {
-			await requirePermission("wht-remittances:update");
+		beforeLoad: ({ context }) => {
+			assertCan(context.auth, "wht-remittances:update");
 		},
 		head: () => ({
 			meta: [

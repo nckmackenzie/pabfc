@@ -1,17 +1,14 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	BasePageComponent,
-	BasePageLoadingSkeleton,
-} from "@/components/ui/base-page";
+import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import { ButtonLink } from "@/components/ui/links";
 import { AddonsTable } from "@/features/addons/components/addons-table";
 import { addonQueries } from "@/features/addons/services/queries";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/plans/addons/")({
-	beforeLoad: async () => {
-		await requirePermission("plans:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "plans:view");
 	},
 	component: RouteComponent,
 	head: () => ({
@@ -41,11 +38,7 @@ function RouteComponent() {
 			newButtonLinkPath="/app/plans/addons/new"
 			createPermissions={["plans:create"]}
 			extraActionButtons={
-				<ButtonLink
-					variant="outline"
-					path="/app/plans"
-					icon={<ArrowLeftIcon />}
-				>
+				<ButtonLink variant="outline" path="/app/plans" icon={<ArrowLeftIcon />}>
 					Back to Plans
 				</ButtonLink>
 			}

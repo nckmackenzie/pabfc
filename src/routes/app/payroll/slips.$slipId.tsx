@@ -1,15 +1,15 @@
+import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
 import { BasePageLoadingSkeleton } from "@/components/ui/base-page";
 import { PayrollSlipDetailPage } from "@/features/payroll/components/payroll-slip-detail-page";
 import { payrollPeriodQueries, payrollSlipQueries } from "@/features/payroll/services/queries";
 import { seo } from "@/lib/helpers";
-import { requirePermission } from "@/lib/permissions/permissions";
 
 export const Route = createFileRoute("/app/payroll/slips/$slipId")({
 	component: PayrollSlipDetailPage,
-	beforeLoad: async () => {
-		await requirePermission("employees:payroll-information");
-		await requirePermission("payroll-periods:view");
+	beforeLoad: ({ context }) => {
+		assertCan(context.auth, "employees:payroll-information");
+		assertCan(context.auth, "payroll-periods:view");
 	},
 	loader: async ({ context: { queryClient }, params: { slipId } }) => {
 		const slip = await queryClient.ensureQueryData(payrollSlipQueries.detail({ slipId }));
