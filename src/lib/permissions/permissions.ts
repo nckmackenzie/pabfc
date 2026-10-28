@@ -1,49 +1,38 @@
 import { redirect } from "@tanstack/react-router";
+import { can, canAny } from "@/lib/permissions/can";
 import type { Permission } from "@/lib/permissions/constants";
-import {
-	hasAnyPermission,
-	hasPermission,
-	hasRole,
-} from "@/lib/permissions/permissions-service";
-import { getUserSession } from "@/lib/session/session-service";
+import { getRequestAuthContext } from "@/lib/session/request-auth";
 
 export async function getLoggedInUser() {
-	const session = await getUserSession();
+	const auth = await getRequestAuthContext();
 
-	if (!session) {
+	if (!auth) {
 		throw redirect({ to: "/sign-in" });
 	}
+
+	return auth;
 }
 
 export const requirePermission = async (permission: Permission) => {
-	await getLoggedInUser();
-	const userHasPermission = await hasPermission({ data: permission });
+	const auth = await getLoggedInUser();
 
-	if (!userHasPermission) {
-		throw new Error(
-			"You do not have the required permissions to access this resource.",
-		);
+	if (!can(auth, permission)) {
+		throw new Error("You do not have the required permissions to access this resource.");
 	}
 };
 
 export async function requireAnyPermission(permissionList: Array<Permission>) {
-	await getLoggedInUser();
-	const userHasPermission = await hasAnyPermission({ data: permissionList });
+	const auth = await getLoggedInUser();
 
-	if (!userHasPermission) {
-		throw new Error(
-			"You do not have any of the required permissions to access this resource.",
-		);
+	if (!canAny(auth, permissionList)) {
+		throw new Error("You do not have any of the required permissions to access this resource.");
 	}
 }
 
 export async function requireRole(roleName: string) {
-	await getLoggedInUser();
-	const userHasRole = await hasRole({ data: roleName });
+	const auth = await getLoggedInUser();
 
-	if (!userHasRole) {
-		throw new Error(
-			"You do not have the required role to access this resource.",
-		);
+	if (auth.user.role !== "admin" && !auth.roles.includes(roleName)) {
+		throw new Error("You do not have the required role to access this resource.");
 	}
 }
