@@ -1,11 +1,11 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrialBalancePdf } from "@/features/reports/components/downloadable-trial-balance";
+
 import {
 	ReportAccountLabel,
 	ReportAmountButton,
@@ -60,24 +60,28 @@ export function TrialBalance() {
 			<div className="flex justify-end mb-4 no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={
-							<TrialBalancePdf
-								data={{
-									asOfDate: formattedAsOfDate,
-									rows: rows.map((r) => ({
-										label: r.code ? `${r.code} - ${r.name}` : r.name,
-										debit: Number(r.debit_balance)
-											? currencyFormatter(Number(r.debit_balance), false)
-											: "",
-										credit: Number(r.credit_balance)
-											? currencyFormatter(Number(r.credit_balance), false)
-											: "",
-									})),
-									totalDebits: currencyFormatter(totalDebits, false),
-									totalCredits: currencyFormatter(totalCredits, false),
-								}}
-							/>
-						}
+						loadDocument={async () => {
+							const { TrialBalancePdf } =
+								await import("@/features/reports/components/downloadable-trial-balance");
+							return (
+								<TrialBalancePdf
+									data={{
+										asOfDate: formattedAsOfDate,
+										rows: rows.map((r) => ({
+											label: r.code ? `${r.code} - ${r.name}` : r.name,
+											debit: Number(r.debit_balance)
+												? currencyFormatter(Number(r.debit_balance), false)
+												: "",
+											credit: Number(r.credit_balance)
+												? currencyFormatter(Number(r.credit_balance), false)
+												: "",
+										})),
+										totalDebits: currencyFormatter(totalDebits, false),
+										totalCredits: currencyFormatter(totalCredits, false),
+									}}
+								/>
+							);
+						}}
 						fileName="Trial-Balance.pdf"
 					>
 						{({ loading }) =>

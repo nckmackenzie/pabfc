@@ -1,4 +1,4 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DownloadIcon, SearchIcon } from "lucide-react";
@@ -10,7 +10,7 @@ import { DatatableSkeleton } from "@/components/ui/loaders";
 import { Search } from "@/components/ui/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableCell } from "@/components/ui/table";
-import { GeneralLedgerPdf } from "@/features/reports/components/downloadable-general-ledger";
+
 import type { GeneralLedgerReport } from "@/features/reports/services/general-ledger.api";
 import { generalLedgerQueries } from "@/features/reports/services/queries";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
@@ -129,29 +129,33 @@ export function GeneralLedger({ accountId, dateFrom, dateTo }: GeneralLedgerProp
 			<div className="flex justify-end no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={
-							<GeneralLedgerPdf
-								data={{
-									accountLabel,
-									period,
-									openingBalanceLabel: openingBalanceLabel(fullReport),
-									openingBalance: formatBalance(fullReport.openingBalance),
-									rows: fullReport.rows.map((row) => ({
-										key: rowKey(row),
-										date: dateFormat(row.date, "reporting"),
-										description: rowDescription(row),
-										source: row.source ? toTitleCase(row.source) : "",
-										reference: row.reference ? row.reference.toUpperCase() : "",
-										debit: formatOptionalAmount(row.debit),
-										credit: formatOptionalAmount(row.credit),
-										runningBalance: formatBalance(row.runningBalance),
-									})),
-									totalDebits: currencyFormatter(fullReport.totalDebits, false),
-									totalCredits: currencyFormatter(fullReport.totalCredits, false),
-									closingBalance: formatBalance(fullReport.closingBalance),
-								}}
-							/>
-						}
+						loadDocument={async () => {
+							const { GeneralLedgerPdf } =
+								await import("@/features/reports/components/downloadable-general-ledger");
+							return (
+								<GeneralLedgerPdf
+									data={{
+										accountLabel,
+										period,
+										openingBalanceLabel: openingBalanceLabel(fullReport),
+										openingBalance: formatBalance(fullReport.openingBalance),
+										rows: fullReport.rows.map((row) => ({
+											key: rowKey(row),
+											date: dateFormat(row.date, "reporting"),
+											description: rowDescription(row),
+											source: row.source ? toTitleCase(row.source) : "",
+											reference: row.reference ? row.reference.toUpperCase() : "",
+											debit: formatOptionalAmount(row.debit),
+											credit: formatOptionalAmount(row.credit),
+											runningBalance: formatBalance(row.runningBalance),
+										})),
+										totalDebits: currencyFormatter(fullReport.totalDebits, false),
+										totalCredits: currencyFormatter(fullReport.totalCredits, false),
+										closingBalance: formatBalance(fullReport.closingBalance),
+									}}
+								/>
+							);
+						}}
 						fileName={`General-Ledger-${fullReport.account.code ?? fullReport.account.id}.pdf`}
 					>
 						{({ loading }) =>

@@ -1,18 +1,11 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { getRouteApi } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GymReceiptPdf } from "@/features/receipts/components/donwloadable-receipt";
 
 const route = getRouteApi("/app/receipts/addons/$addonInvoiceId/details");
 
@@ -34,9 +27,7 @@ export function AddonReceiptDetails() {
 		<div className="space-y-6">
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						Addon receipt details
-					</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Addon receipt details</h1>
 					<p className="text-muted-foreground">
 						Standalone addon payment — no membership plan attached.
 					</p>
@@ -44,34 +35,36 @@ export function AddonReceiptDetails() {
 				<div className="flex items-center gap-2">
 					<Button asChild variant="outline">
 						<PDFDownloadLink
-							document={
-								<GymReceiptPdf
-									data={{
-										receiptNo: invoice.invoiceNo,
-										date: format(new Date(invoice.paymentDate), "MMM d, yyyy"),
-										members: [
-											{
-												name: memberName,
-												id: invoice.member?.memberNo?.toString() ?? "",
-												address: "",
-											},
-										],
-										paymentMethod: invoice.method
-											.replace("_", " ")
-											.toUpperCase(),
-										lineItems: invoice.lines.map((line) => ({
-											description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
-											qty: line.numberOfPeriods,
-											price: Number(line.unitAmount),
-											amount: Number(line.lineTotal),
-										})),
-										subtotal: Number(invoice.subtotalAmount),
-										discount: 0,
-										tax: Number(invoice.taxAmount),
-										total: Number(invoice.totalAmount),
-									}}
-								/>
-							}
+							loadDocument={async () => {
+								const { GymReceiptPdf } =
+									await import("@/features/receipts/components/donwloadable-receipt");
+								return (
+									<GymReceiptPdf
+										data={{
+											receiptNo: invoice.invoiceNo,
+											date: format(new Date(invoice.paymentDate), "MMM d, yyyy"),
+											members: [
+												{
+													name: memberName,
+													id: invoice.member?.memberNo?.toString() ?? "",
+													address: "",
+												},
+											],
+											paymentMethod: invoice.method.replace("_", " ").toUpperCase(),
+											lineItems: invoice.lines.map((line) => ({
+												description: `${line.addonName}${line.perMember ? ` (per member × ${line.numberOfMembers})` : ""}`,
+												qty: line.numberOfPeriods,
+												price: Number(line.unitAmount),
+												amount: Number(line.lineTotal),
+											})),
+											subtotal: Number(invoice.subtotalAmount),
+											discount: 0,
+											tax: Number(invoice.taxAmount),
+											total: Number(invoice.totalAmount),
+										}}
+									/>
+								);
+							}}
 							fileName={`Addon-Receipt-${invoice.invoiceNo}.pdf`}
 							key={invoice.id}
 						>
@@ -98,11 +91,7 @@ export function AddonReceiptDetails() {
 								<CardTitle>Payment summary</CardTitle>
 								<CardDescription>Invoice # {invoice.invoiceNo}</CardDescription>
 							</div>
-							<Badge
-								variant={
-									invoice.status === "completed" ? "success" : "secondary"
-								}
-							>
+							<Badge variant={invoice.status === "completed" ? "success" : "secondary"}>
 								{invoice.status === "completed" ? "Paid" : invoice.status}
 							</Badge>
 						</CardHeader>
@@ -125,26 +114,18 @@ export function AddonReceiptDetails() {
 									</p>
 								</div>
 								<div className="space-y-1">
-									<p className="font-medium text-muted-foreground">
-										Payment method
-									</p>
-									<p className="font-semibold capitalize">
-										{invoice.method.replace(/_/g, " ")}
-									</p>
+									<p className="font-medium text-muted-foreground">Payment method</p>
+									<p className="font-semibold capitalize">{invoice.method.replace(/_/g, " ")}</p>
 								</div>
 								<div className="space-y-1">
-									<p className="font-medium text-muted-foreground">
-										Payment date
-									</p>
+									<p className="font-medium text-muted-foreground">Payment date</p>
 									<p className="font-semibold">
 										{format(new Date(invoice.paymentDate), "MMM d, yyyy")}
 									</p>
 								</div>
 								{invoice.reference && (
 									<div className="space-y-1">
-										<p className="font-medium text-muted-foreground">
-											Reference
-										</p>
+										<p className="font-medium text-muted-foreground">Reference</p>
 										<p className="font-semibold">{invoice.reference}</p>
 									</div>
 								)}

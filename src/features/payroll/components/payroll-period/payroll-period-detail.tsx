@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { payrollPeriodQueries } from "../../services/queries";
 import { useParams } from "@tanstack/react-router";
 import { PayrollPeriodStatusBadge } from "@/routes/app/payroll/periods";
@@ -61,7 +61,7 @@ import { postStatutoryRemittanceJournalFn } from "../../services/payroll-journal
 import { sendPayslipEmailFn, sendAllPayslipsEmailFn } from "../../services/payroll-email.api";
 import { payrollSlipQueries } from "../../services/queries";
 import { PayrollP10Section } from "./payroll-p10-section";
-import { PayslipPdf } from "../payslip-pdf";
+
 import type { PayslipPdfData } from "../payslip-pdf";
 import {
 	Table,
@@ -117,11 +117,7 @@ export function PayrollPeriodDetail() {
 						periodName={data.name}
 					/>
 					<StatutoryRemittance periodId={periodId} status={data.status} />
-					<PayrollP10Section
-						periodId={periodId}
-						status={data.status}
-						periodName={data.name}
-					/>
+					<PayrollP10Section periodId={periodId} status={data.status} periodName={data.name} />
 					<PeriodPayslips
 						periodId={periodId}
 						status={data.status}
@@ -1164,7 +1160,10 @@ function PeriodPayslips({ periodId, status, payDate, periodName }: PeriodPayslip
 									<TableCell>
 										<div className="flex justify-end gap-2">
 											<PDFDownloadLink
-												document={<PayslipPdf data={pdfData} />}
+												loadDocument={async () => {
+													const { PayslipPdf } = await import("../payslip-pdf");
+													return <PayslipPdf data={pdfData} />;
+												}}
 												fileName={`payslip-${slip.employeeNo}-${periodName.replace(/\s+/g, "-")}.pdf`}
 											>
 												{({ loading }) => (

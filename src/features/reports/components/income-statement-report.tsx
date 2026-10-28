@@ -1,9 +1,9 @@
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ClientPdfDownloadLink as PDFDownloadLink } from "@/components/client-pdf-download-link";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { IncomeStatementPdf } from "@/features/reports/components/downloadable-income-statement";
+
 import {
 	getIncomeStatement,
 	type IncomeStatementParentRow,
@@ -38,44 +38,41 @@ export function IncomeStatementReport() {
 	const expenseRows = rows.filter((row) => row.type === "expense");
 
 	const totalRevenue = revenueRows.reduce((sum, r) => sum + Number(r.total), 0);
-	const totalExpenses = expenseRows.reduce(
-		(sum, r) => sum + Number(r.total),
-		0,
-	);
+	const totalExpenses = expenseRows.reduce((sum, r) => sum + Number(r.total), 0);
 	const netIncome = totalRevenue - totalExpenses;
 
-	const fromDate = filters.dateRange?.from
-		? dateFormat(filters.dateRange.from, "long")
-		: "";
-	const toDate = filters.dateRange?.to
-		? dateFormat(filters.dateRange.to, "long")
-		: "";
+	const fromDate = filters.dateRange?.from ? dateFormat(filters.dateRange.from, "long") : "";
+	const toDate = filters.dateRange?.to ? dateFormat(filters.dateRange.to, "long") : "";
 
 	return (
 		<div>
 			<div className="flex justify-end mb-4 no-print">
 				<Button asChild variant="outline" size="sm">
 					<PDFDownloadLink
-						document={
-							<IncomeStatementPdf
-								data={{
-									fromDate,
-									toDate,
-									revenueRows: revenueRows.map((r) => ({
-										label: r.name.toUpperCase(),
-										amount: formatStatementAmount(Number(r.total)),
-									})),
-									expenseRows: expenseRows.map((r) => ({
-										label: r.name.toUpperCase(),
-										amount: formatStatementAmount(Number(r.total)),
-									})),
-									totalRevenue: formatStatementAmount(totalRevenue),
-									totalExpenses: formatStatementAmount(totalExpenses),
-									netIncome: formatStatementAmount(netIncome),
-									isNegativeNetIncome: netIncome < 0,
-								}}
-							/>
-						}
+						loadDocument={async () => {
+							const { IncomeStatementPdf } =
+								await import("@/features/reports/components/downloadable-income-statement");
+							return (
+								<IncomeStatementPdf
+									data={{
+										fromDate,
+										toDate,
+										revenueRows: revenueRows.map((r) => ({
+											label: r.name.toUpperCase(),
+											amount: formatStatementAmount(Number(r.total)),
+										})),
+										expenseRows: expenseRows.map((r) => ({
+											label: r.name.toUpperCase(),
+											amount: formatStatementAmount(Number(r.total)),
+										})),
+										totalRevenue: formatStatementAmount(totalRevenue),
+										totalExpenses: formatStatementAmount(totalExpenses),
+										netIncome: formatStatementAmount(netIncome),
+										isNegativeNetIncome: netIncome < 0,
+									}}
+								/>
+							);
+						}}
 						fileName="Income-Statement.pdf"
 					>
 						{({ loading }) =>
@@ -94,9 +91,7 @@ export function IncomeStatementReport() {
 
 			<div className="income-statement-report">
 				<div className="text-center mb-8">
-					<h2 className="text-xl font-bold tracking-wide uppercase">
-						Income Statement
-					</h2>
+					<h2 className="text-xl font-bold tracking-wide uppercase">Income Statement</h2>
 					<p className="text-sm text-muted-foreground mt-1">
 						For the period {fromDate} to {toDate}
 					</p>
@@ -167,19 +162,11 @@ function StatementRow({
 	const { setOpen } = useSheet();
 
 	function handleOpenDrillDown() {
-		setOpen(
-			<IncomeStatementDrillDown
-				id={id}
-				key={id}
-				dateFrom={dateFrom}
-				dateTo={dateTo}
-			/>,
-			{
-				className: "max-w-6xl!",
-				title: "Income Statement",
-				description: `Detailed breakdown of account: ${toTitleCase(label)}`,
-			},
-		);
+		setOpen(<IncomeStatementDrillDown id={id} key={id} dateFrom={dateFrom} dateTo={dateTo} />, {
+			className: "max-w-6xl!",
+			title: "Income Statement",
+			description: `Detailed breakdown of account: ${toTitleCase(label)}`,
+		});
 	}
 	return (
 		<div className="flex justify-between items-center py-1">
@@ -199,9 +186,7 @@ function TotalRow({ label, amount }: { label: string; amount: number }) {
 	return (
 		<div className="flex justify-between items-center py-1.5 mt-1 border-t border-foreground/30 font-semibold">
 			<span className="pl-6">{label}</span>
-			<span className="border-b border-foreground/50">
-				{formatStatementAmount(amount)}
-			</span>
+			<span className="border-b border-foreground/50">{formatStatementAmount(amount)}</span>
 		</div>
 	);
 }
