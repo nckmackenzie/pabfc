@@ -10,11 +10,11 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Wip } from "@/components/ui/wip";
 import { financialYearQueries } from "@/features/financial-years/services/queries";
-import { authContextQueryOptions } from "@/lib/session/queries";
 
 export const Route = createFileRoute("/app")({
 	beforeLoad: async ({ context, location }) => {
-		const auth = await context.queryClient.fetchQuery(authContextQueryOptions);
+		// The root beforeLoad has just fetched authorization from the server.
+		const auth = context.userSession;
 		if (!auth || auth.user.role === "member") {
 			throw redirect({ to: "/sign-in", search: { redirectTo: location.href } });
 		}
