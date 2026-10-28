@@ -1,13 +1,27 @@
-import { useState, type MouseEvent, type ReactElement, type ReactNode } from "react";
-import { toast } from "sonner";
+import {
+	useState,
+	type ComponentProps,
+	type MouseEvent,
+	type ReactElement,
+	type ReactNode,
+} from "react";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
-type Props = {
+type Props = Omit<ComponentProps<"a">, "children" | "href"> & {
 	loadDocument: () => Promise<ReactElement>;
 	fileName: string;
 	children: ({ loading }: { loading: boolean }) => ReactNode;
 };
 
-export function ClientPdfDownloadLink({ loadDocument, fileName, children }: Props) {
+export function ClientPdfDownloadLink({
+	loadDocument,
+	fileName,
+	children,
+	className,
+	onClick,
+	...anchorProps
+}: Props) {
 	const [loading, setLoading] = useState(false);
 
 	async function download(event: MouseEvent<HTMLAnchorElement>) {
@@ -36,7 +50,16 @@ export function ClientPdfDownloadLink({ loadDocument, fileName, children }: Prop
 	}
 
 	return (
-		<a href="#" onClick={download} aria-disabled={loading} className="flex items-center gap-1">
+		<a
+			{...anchorProps}
+			href="#"
+			onClick={(event) => {
+				onClick?.(event);
+				if (!event.defaultPrevented) void download(event);
+			}}
+			aria-disabled={loading}
+			className={cn("flex items-center gap-1", className)}
+		>
 			{children({ loading })}
 		</a>
 	);
