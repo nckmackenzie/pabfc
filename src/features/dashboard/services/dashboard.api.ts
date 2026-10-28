@@ -211,8 +211,14 @@ export const getActiveMemberships = createServerFn()
 				planEndDate: activePlanEndDate,
 				lastPaymentDate: sql<string | null>`(
 					SELECT max(p.payment_date) FROM payments p
-					WHERE p.member_id = "members"."id"
-					AND p.status = 'completed'
+					WHERE p.status = 'completed'
+					AND (
+						p.member_id = "members"."id"
+						OR EXISTS (
+							SELECT 1 FROM payment_members pm
+							WHERE pm.payment_id = p.id AND pm.member_id = "members"."id"
+						)
+					)
 				)`,
 			})
 			.from(members)
