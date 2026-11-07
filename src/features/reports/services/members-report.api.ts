@@ -17,7 +17,7 @@ export type MembersReportRow = {
 	lastAttendance: Date | null;
 	activePlanName: string | null;
 	lastPlanName: string | null;
-	lastPlanEndDate: string | null;
+	planEndDateAsOf: string | null;
 	nextRenewalDate: string | null;
 	notes: string | null;
 	emergencyContactName: string | null;
@@ -46,14 +46,30 @@ export const getMembersReport = createServerFn()
 			latest_plan AS (
 				SELECT DISTINCT ON (mm.member_id)
 					mm.member_id,
-					mp.name AS last_plan_name,
-					mm.end_date AS last_plan_end_date
+					mp.name AS last_plan_name
 				FROM member_memberships mm
 				JOIN membership_plans mp
 					ON mp.id = mm.membership_plan_id
 				ORDER BY
 					mm.member_id,
 					COALESCE(mm.end_date, mm.start_date) DESC NULLS LAST,
+					mm.created_at DESC
+			),
+			-- The member's plan as it stood on asOfDate: the membership covering
+			-- that date, or failing that the most recent one that had already
+			-- ended by then. Bounded by start_date so a membership created after
+			-- asOfDate (e.g. a pending plan) can't surface a future expiry date
+			-- that didn't exist yet at the report cutoff.
+			plan_as_of AS (
+				SELECT DISTINCT ON (mm.member_id)
+					mm.member_id,
+					mm.end_date AS plan_end_date
+				FROM member_memberships mm
+				WHERE mm.start_date <= ${asOfDate}
+				ORDER BY
+					mm.member_id,
+					(mm.end_date IS NULL OR mm.end_date >= ${asOfDate}) DESC,
+					mm.end_date DESC NULLS FIRST,
 					mm.created_at DESC
 			),
 			payment_totals AS (
@@ -77,7 +93,7 @@ export const getMembersReport = createServerFn()
 				la.last_attendance AS "lastAttendance",
 				mo.active_plan_name AS "activePlanName",
 				lp.last_plan_name AS "lastPlanName",
-				lp.last_plan_end_date AS "lastPlanEndDate",
+				pa.plan_end_date AS "planEndDateAsOf",
 				mo.next_renewal_date AS "nextRenewalDate",
 				mo.notes,
 				mo.emergency_contact_name AS "emergencyContactName",
@@ -92,6 +108,8 @@ export const getMembersReport = createServerFn()
 				ON la.member_id = m.id
 			LEFT JOIN latest_plan lp
 				ON lp.member_id = m.id
+			LEFT JOIN plan_as_of pa
+				ON pa.member_id = m.id
 			LEFT JOIN payment_totals pt
 				ON pt.member_id = m.id
 			WHERE DATE(m.created_at) <= ${asOfDate}

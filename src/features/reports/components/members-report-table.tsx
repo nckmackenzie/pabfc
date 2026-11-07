@@ -303,17 +303,16 @@ function inactiveStatusColumns(
 	];
 }
 
+// planEndDateAsOf is already resolved server-side relative to asOfDate (the
+// membership covering that date, or the most recent one that had already
+// ended by then), so expired here just means that date is before asOfDate.
 function getPlanExpiryDate(row: MembersReportItem): string | null {
-	return row.activePlanName ? row.nextRenewalDate : row.lastPlanEndDate;
+	return row.planEndDateAsOf;
 }
 
-// A member with no active plan can still surface a future-dated last
-// membership (a pending plan that hasn't started yet, or a terminated plan
-// whose end_date was preserved rather than cut short), so the badge must
-// check the actual date rather than just the absence of an active plan.
 function isPlanExpired(row: MembersReportItem, asOfDate: string): boolean {
-	if (row.activePlanName || !row.lastPlanEndDate) return false;
-	return new Date(row.lastPlanEndDate) < new Date(asOfDate);
+	if (!row.planEndDateAsOf) return false;
+	return new Date(row.planEndDateAsOf) < new Date(asOfDate);
 }
 
 function PlanExpiryDateCell({
