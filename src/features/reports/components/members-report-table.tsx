@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/datatable";
 import { TableCell } from "@/components/ui/table";
 import { getMembersReport } from "@/features/reports/services/members-report.api";
@@ -133,6 +134,14 @@ function allMembersColumns(
 			),
 		},
 		{
+			id: "planExpiryDate",
+			header: "Plan Expiry Date",
+			accessorFn: (row) => getPlanExpiryDate(row),
+			cell: ({ row }) => (
+				<PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />
+			),
+		},
+		{
 			id: "duration",
 			header: "Duration",
 			cell: ({ row }) => getMembershipDuration(row.original, asOfDate),
@@ -258,6 +267,14 @@ function inactiveStatusColumns(
 					: "-",
 		},
 		{
+			id: "planExpiryDate",
+			header: "Plan Expiry Date",
+			accessorFn: (row) => getPlanExpiryDate(row),
+			cell: ({ row }) => (
+				<PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />
+			),
+		},
+		{
 			accessorKey: "lastAttendance",
 			header: "Last Attendance",
 			cell: ({ row }) =>
@@ -284,6 +301,39 @@ function inactiveStatusColumns(
 			cell: ({ row }) => getMembershipDuration(row.original, asOfDate),
 		},
 	];
+}
+
+// planEndDateAsOf is already resolved server-side relative to asOfDate (the
+// membership covering that date, or the most recent one that had already
+// ended by then), so expired here just means that date is before asOfDate.
+function getPlanExpiryDate(row: MembersReportItem): string | null {
+	return row.planEndDateAsOf;
+}
+
+function isPlanExpired(row: MembersReportItem, asOfDate: string): boolean {
+	if (!row.planEndDateAsOf) return false;
+	return new Date(row.planEndDateAsOf) < new Date(asOfDate);
+}
+
+function PlanExpiryDateCell({
+	row,
+	asOfDate,
+}: {
+	row: MembersReportItem;
+	asOfDate: string;
+}) {
+	const expiryDate = getPlanExpiryDate(row);
+
+	if (!expiryDate) return <>-</>;
+
+	return (
+		<div className="flex items-center gap-2">
+			<span>{expiryDate}</span>
+			{isPlanExpired(row, asOfDate) && (
+				<Badge variant="danger">Expired</Badge>
+			)}
+		</div>
+	);
 }
 
 function getMembershipDuration(
