@@ -329,7 +329,7 @@ function PlanExpiryDateCell({
 
 	return (
 		<div className="flex items-center gap-2">
-			<span>{dateFormat(expiryDate, "regular")}</span>
+			<span>{expiryDate}</span>
 			{isPlanExpired(row, asOfDate) && (
 				<Badge variant="danger">Expired</Badge>
 			)}
