@@ -136,6 +136,7 @@ function allMembersColumns(
 		{
 			id: "planExpiryDate",
 			header: "Plan Expiry Date",
+			accessorFn: (row) => getPlanExpiryDate(row),
 			cell: ({ row }) => <PlanExpiryDateCell row={row.original} />,
 		},
 		{
@@ -266,6 +267,7 @@ function inactiveStatusColumns(
 		{
 			id: "planExpiryDate",
 			header: "Plan Expiry Date",
+			accessorFn: (row) => getPlanExpiryDate(row),
 			cell: ({ row }) => <PlanExpiryDateCell row={row.original} />,
 		},
 		{
@@ -297,10 +299,12 @@ function inactiveStatusColumns(
 	];
 }
 
+function getPlanExpiryDate(row: MembersReportItem): string | null {
+	return row.activePlanName ? row.nextRenewalDate : row.lastPlanEndDate;
+}
+
 function PlanExpiryDateCell({ row }: { row: MembersReportItem }) {
-	const expiryDate = row.activePlanName
-		? row.nextRenewalDate
-		: row.lastPlanEndDate;
+	const expiryDate = getPlanExpiryDate(row);
 
 	if (!expiryDate) return <>-</>;
 
