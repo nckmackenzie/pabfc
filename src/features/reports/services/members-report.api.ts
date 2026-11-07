@@ -17,6 +17,7 @@ export type MembersReportRow = {
 	lastAttendance: Date | null;
 	activePlanName: string | null;
 	lastPlanName: string | null;
+	lastPlanEndDate: string | null;
 	nextRenewalDate: string | null;
 	notes: string | null;
 	emergencyContactName: string | null;
@@ -45,7 +46,8 @@ export const getMembersReport = createServerFn()
 			latest_plan AS (
 				SELECT DISTINCT ON (mm.member_id)
 					mm.member_id,
-					mp.name AS last_plan_name
+					mp.name AS last_plan_name,
+					mm.end_date AS last_plan_end_date
 				FROM member_memberships mm
 				JOIN membership_plans mp
 					ON mp.id = mm.membership_plan_id
@@ -75,6 +77,7 @@ export const getMembersReport = createServerFn()
 				la.last_attendance AS "lastAttendance",
 				mo.active_plan_name AS "activePlanName",
 				lp.last_plan_name AS "lastPlanName",
+				lp.last_plan_end_date AS "lastPlanEndDate",
 				mo.next_renewal_date AS "nextRenewalDate",
 				mo.notes,
 				mo.emergency_contact_name AS "emergencyContactName",

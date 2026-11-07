@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/datatable";
 import { TableCell } from "@/components/ui/table";
 import { getMembersReport } from "@/features/reports/services/members-report.api";
@@ -133,6 +134,11 @@ function allMembersColumns(
 			),
 		},
 		{
+			id: "planExpiryDate",
+			header: "Plan Expiry Date",
+			cell: ({ row }) => <PlanExpiryDateCell row={row.original} />,
+		},
+		{
 			id: "duration",
 			header: "Duration",
 			cell: ({ row }) => getMembershipDuration(row.original, asOfDate),
@@ -258,6 +264,11 @@ function inactiveStatusColumns(
 					: "-",
 		},
 		{
+			id: "planExpiryDate",
+			header: "Plan Expiry Date",
+			cell: ({ row }) => <PlanExpiryDateCell row={row.original} />,
+		},
+		{
 			accessorKey: "lastAttendance",
 			header: "Last Attendance",
 			cell: ({ row }) =>
@@ -284,6 +295,21 @@ function inactiveStatusColumns(
 			cell: ({ row }) => getMembershipDuration(row.original, asOfDate),
 		},
 	];
+}
+
+function PlanExpiryDateCell({ row }: { row: MembersReportItem }) {
+	const expiryDate = row.activePlanName
+		? row.nextRenewalDate
+		: row.lastPlanEndDate;
+
+	if (!expiryDate) return <>-</>;
+
+	return (
+		<div className="flex items-center gap-2">
+			<span>{dateFormat(expiryDate, "regular")}</span>
+			{!row.activePlanName && <Badge variant="danger">Expired</Badge>}
+		</div>
+	);
 }
 
 function getMembershipDuration(
