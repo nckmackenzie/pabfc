@@ -137,7 +137,9 @@ function allMembersColumns(
 			id: "planExpiryDate",
 			header: "Plan Expiry Date",
 			accessorFn: (row) => getPlanExpiryDate(row),
-			cell: ({ row }) => <PlanExpiryDateCell row={row.original} />,
+			cell: ({ row }) => (
+				<PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />
+			),
 		},
 		{
 			id: "duration",
@@ -268,7 +270,9 @@ function inactiveStatusColumns(
 			id: "planExpiryDate",
 			header: "Plan Expiry Date",
 			accessorFn: (row) => getPlanExpiryDate(row),
-			cell: ({ row }) => <PlanExpiryDateCell row={row.original} />,
+			cell: ({ row }) => (
+				<PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />
+			),
 		},
 		{
 			accessorKey: "lastAttendance",
@@ -303,7 +307,22 @@ function getPlanExpiryDate(row: MembersReportItem): string | null {
 	return row.activePlanName ? row.nextRenewalDate : row.lastPlanEndDate;
 }
 
-function PlanExpiryDateCell({ row }: { row: MembersReportItem }) {
+// A member with no active plan can still surface a future-dated last
+// membership (a pending plan that hasn't started yet, or a terminated plan
+// whose end_date was preserved rather than cut short), so the badge must
+// check the actual date rather than just the absence of an active plan.
+function isPlanExpired(row: MembersReportItem, asOfDate: string): boolean {
+	if (row.activePlanName || !row.lastPlanEndDate) return false;
+	return new Date(row.lastPlanEndDate) < new Date(asOfDate);
+}
+
+function PlanExpiryDateCell({
+	row,
+	asOfDate,
+}: {
+	row: MembersReportItem;
+	asOfDate: string;
+}) {
 	const expiryDate = getPlanExpiryDate(row);
 
 	if (!expiryDate) return <>-</>;
@@ -311,7 +330,9 @@ function PlanExpiryDateCell({ row }: { row: MembersReportItem }) {
 	return (
 		<div className="flex items-center gap-2">
 			<span>{dateFormat(expiryDate, "regular")}</span>
-			{!row.activePlanName && <Badge variant="danger">Expired</Badge>}
+			{isPlanExpired(row, asOfDate) && (
+				<Badge variant="danger">Expired</Badge>
+			)}
 		</div>
 	);
 }
