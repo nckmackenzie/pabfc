@@ -10,20 +10,13 @@ import { toTitleCase } from "@/lib/utils";
 
 type MembersReportItem = Awaited<ReturnType<typeof getMembersReport>>[number];
 
-export function MembersReportTable({
-	filters,
-}: {
-	filters: MembersReportFormSchema;
-}) {
+export function MembersReportTable({ filters }: { filters: MembersReportFormSchema }) {
 	const { data } = useSuspenseQuery({
 		queryKey: ["reports", "members", filters],
 		queryFn: () => getMembersReport({ data: filters }),
 	});
 
-	const totalPayments = data.reduce(
-		(acc, row) => acc + toNumber(row.totalPayments),
-		0,
-	);
+	const totalPayments = data.reduce((acc, row) => acc + toNumber(row.totalPayments), 0);
 
 	const columns = getColumns({
 		reportType: filters.reportType,
@@ -37,10 +30,7 @@ export function MembersReportTable({
 			columns={columns}
 			customFooter={
 				<>
-					<TableCell
-						colSpan={columns.length - 1}
-						className="font-semibold text-right"
-					>
+					<TableCell colSpan={columns.length - 1} className="font-semibold text-right">
 						Total Payments
 					</TableCell>
 					<TableCell className="font-semibold text-right">
@@ -73,9 +63,7 @@ function getColumns({
 	return allMembersColumns(asOfDate);
 }
 
-function allMembersColumns(
-	asOfDate: string,
-): Array<ColumnDef<MembersReportItem>> {
+function allMembersColumns(asOfDate: string): Array<ColumnDef<MembersReportItem>> {
 	return [
 		{
 			accessorKey: "fullName",
@@ -96,9 +84,7 @@ function allMembersColumns(
 			accessorKey: "lastVisit",
 			header: "Last Visit",
 			cell: ({ row }) =>
-				row.original.lastVisit
-					? dateFormat(row.original.lastVisit, "regular")
-					: "-",
+				row.original.lastVisit ? dateFormat(row.original.lastVisit, "regular") : "-",
 		},
 		{
 			id: "plan",
@@ -110,6 +96,12 @@ function allMembersColumns(
 						: row.original.activePlanName;
 				return plan ? toTitleCase(plan) : "-";
 			},
+		},
+		{
+			id: "planExpiryDate",
+			header: "Plan Expiry Date",
+			accessorFn: (row) => getPlanExpiryDate(row),
+			cell: ({ row }) => <PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />,
 		},
 		{
 			accessorKey: "contact",
@@ -128,17 +120,7 @@ function allMembersColumns(
 			accessorKey: "totalPayments",
 			header: () => <div className="text-right">Total Payments</div>,
 			cell: ({ row }) => (
-				<div className="text-right">
-					{currencyFormatter(row.original.totalPayments, false)}
-				</div>
-			),
-		},
-		{
-			id: "planExpiryDate",
-			header: "Plan Expiry Date",
-			accessorFn: (row) => getPlanExpiryDate(row),
-			cell: ({ row }) => (
-				<PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />
+				<div className="text-right">{currencyFormatter(row.original.totalPayments, false)}</div>
 			),
 		},
 		{
@@ -149,9 +131,7 @@ function allMembersColumns(
 	];
 }
 
-function activeStatusColumns(
-	asOfDate: string,
-): Array<ColumnDef<MembersReportItem>> {
+function activeStatusColumns(asOfDate: string): Array<ColumnDef<MembersReportItem>> {
 	return [
 		{
 			accessorKey: "memberNo",
@@ -180,33 +160,25 @@ function activeStatusColumns(
 			accessorKey: "activePlanName",
 			header: "Active Plan",
 			cell: ({ row }) =>
-				row.original.activePlanName
-					? toTitleCase(row.original.activePlanName)
-					: "-",
+				row.original.activePlanName ? toTitleCase(row.original.activePlanName) : "-",
 		},
 		{
 			accessorKey: "nextRenewalDate",
 			header: "Next Renewal Date",
 			cell: ({ row }) =>
-				row.original.nextRenewalDate
-					? dateFormat(row.original.nextRenewalDate, "regular")
-					: "-",
+				row.original.nextRenewalDate ? dateFormat(row.original.nextRenewalDate, "regular") : "-",
 		},
 		{
 			accessorKey: "lastVisit",
 			header: "Last Visit",
 			cell: ({ row }) =>
-				row.original.lastVisit
-					? dateFormat(row.original.lastVisit, "regular")
-					: "-",
+				row.original.lastVisit ? dateFormat(row.original.lastVisit, "regular") : "-",
 		},
 		{
 			accessorKey: "emergencyContactName",
 			header: "Emergency Contact",
 			cell: ({ row }) =>
-				row.original.emergencyContactName
-					? toTitleCase(row.original.emergencyContactName)
-					: "-",
+				row.original.emergencyContactName ? toTitleCase(row.original.emergencyContactName) : "-",
 		},
 		{
 			accessorKey: "emergencyContactNo",
@@ -232,9 +204,7 @@ function activeStatusColumns(
 			accessorKey: "totalPayments",
 			header: () => <div className="text-right">Total Payments</div>,
 			cell: ({ row }) => (
-				<div className="text-right">
-					{currencyFormatter(row.original.totalPayments, false)}
-				</div>
+				<div className="text-right">{currencyFormatter(row.original.totalPayments, false)}</div>
 			),
 		},
 		{
@@ -245,9 +215,7 @@ function activeStatusColumns(
 	];
 }
 
-function inactiveStatusColumns(
-	asOfDate: string,
-): Array<ColumnDef<MembersReportItem>> {
+function inactiveStatusColumns(asOfDate: string): Array<ColumnDef<MembersReportItem>> {
 	return [
 		{
 			accessorKey: "fullName",
@@ -261,26 +229,19 @@ function inactiveStatusColumns(
 		{
 			accessorKey: "lastPlanName",
 			header: "Last Plan",
-			cell: ({ row }) =>
-				row.original.lastPlanName
-					? toTitleCase(row.original.lastPlanName)
-					: "-",
+			cell: ({ row }) => (row.original.lastPlanName ? toTitleCase(row.original.lastPlanName) : "-"),
 		},
 		{
 			id: "planExpiryDate",
 			header: "Plan Expiry Date",
 			accessorFn: (row) => getPlanExpiryDate(row),
-			cell: ({ row }) => (
-				<PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />
-			),
+			cell: ({ row }) => <PlanExpiryDateCell row={row.original} asOfDate={asOfDate} />,
 		},
 		{
 			accessorKey: "lastAttendance",
 			header: "Last Attendance",
 			cell: ({ row }) =>
-				row.original.lastAttendance
-					? dateFormat(row.original.lastAttendance, "regular")
-					: "-",
+				row.original.lastAttendance ? dateFormat(row.original.lastAttendance, "regular") : "-",
 		},
 		{
 			accessorKey: "memberNo",
@@ -290,9 +251,7 @@ function inactiveStatusColumns(
 			accessorKey: "totalPayments",
 			header: () => <div className="text-right">Total Payments</div>,
 			cell: ({ row }) => (
-				<div className="text-right">
-					{currencyFormatter(row.original.totalPayments, false)}
-				</div>
+				<div className="text-right">{currencyFormatter(row.original.totalPayments, false)}</div>
 			),
 		},
 		{
@@ -315,13 +274,7 @@ function isPlanExpired(row: MembersReportItem, asOfDate: string): boolean {
 	return new Date(row.planEndDateAsOf) < new Date(asOfDate);
 }
 
-function PlanExpiryDateCell({
-	row,
-	asOfDate,
-}: {
-	row: MembersReportItem;
-	asOfDate: string;
-}) {
+function PlanExpiryDateCell({ row, asOfDate }: { row: MembersReportItem; asOfDate: string }) {
 	const expiryDate = getPlanExpiryDate(row);
 
 	if (!expiryDate) return <>-</>;
@@ -329,17 +282,12 @@ function PlanExpiryDateCell({
 	return (
 		<div className="flex items-center gap-2">
 			<span>{expiryDate}</span>
-			{isPlanExpired(row, asOfDate) && (
-				<Badge variant="danger">Expired</Badge>
-			)}
+			{isPlanExpired(row, asOfDate) && <Badge variant="danger">Expired</Badge>}
 		</div>
 	);
 }
 
-function getMembershipDuration(
-	row: MembersReportItem,
-	asOfDate: string,
-): string {
+function getMembershipDuration(row: MembersReportItem, asOfDate: string): string {
 	const startDate = new Date(row.dateJoined);
 	const endDate =
 		row.memberStatus === "inactive" && row.lastAttendance
