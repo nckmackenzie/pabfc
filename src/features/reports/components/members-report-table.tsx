@@ -30,7 +30,7 @@ export function MembersReportTable({ filters }: { filters: MembersReportFormSche
 			columns={columns}
 			customFooter={
 				<>
-					<TableCell colSpan={columns.length - 1} className="font-semibold text-right">
+					<TableCell colSpan={columns.length} className="font-semibold text-right">
 						Total Payments
 					</TableCell>
 					<TableCell className="font-semibold text-right">
