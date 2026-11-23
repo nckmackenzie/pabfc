@@ -21,6 +21,7 @@ import { Route as AppChartOfAccountsRouteRouteImport } from './routes/app/chart-
 import { Route as AppCreditNotesRouteRouteImport } from './routes/app/credit-notes/route'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppEmployeesRouteRouteImport } from './routes/app/employees/route'
+import { Route as AppEnquiriesRouteRouteImport } from './routes/app/enquiries/route'
 import { Route as AppExpensesRouteRouteImport } from './routes/app/expenses/route'
 import { Route as AppFinancialYearsRouteRouteImport } from './routes/app/financial-years/route'
 import { Route as AppJournalEntriesRouteImport } from './routes/app/journal-entries'
@@ -58,6 +59,8 @@ import { Route as AppCreditNotesIndexRouteImport } from './routes/app/credit-not
 import { Route as AppCreditNotesNewRouteImport } from './routes/app/credit-notes/new'
 import { Route as AppEmployeesIndexRouteImport } from './routes/app/employees/index'
 import { Route as AppEmployeesNewRouteImport } from './routes/app/employees/new'
+import { Route as AppEnquiriesIndexRouteImport } from './routes/app/enquiries/index'
+import { Route as AppEnquiriesNewRouteImport } from './routes/app/enquiries/new'
 import { Route as AppExpensesIndexRouteImport } from './routes/app/expenses/index'
 import { Route as AppExpensesExpenseIdRouteRouteImport } from './routes/app/expenses/$expenseId/route'
 import { Route as AppExpensesNewRouteImport } from './routes/app/expenses/new'
@@ -100,6 +103,8 @@ import { Route as AppBillsBillIdEditRouteImport } from './routes/app/bills/$bill
 import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/app/chart-of-accounts/$accountId.edit'
 import { Route as AppCreditNotesCreditNoteIdDetailsRouteImport } from './routes/app/credit-notes/$creditNoteId/details'
 import { Route as AppEmployeesEmployeeIdEditRouteImport } from './routes/app/employees/$employeeId.edit'
+import { Route as AppEnquiriesEnquiryIdIndexRouteImport } from './routes/app/enquiries/$enquiryId.index'
+import { Route as AppEnquiriesEnquiryIdEditRouteImport } from './routes/app/enquiries/$enquiryId.edit'
 import { Route as AppExpensesExpenseIdEditRouteImport } from './routes/app/expenses/$expenseId/edit'
 import { Route as AppExpensesExpenseIdViewRouteImport } from './routes/app/expenses/$expenseId/view'
 import { Route as AppFinancialYearsFinancialYearIdEditRouteImport } from './routes/app/financial-years/$financialYearId/edit'
@@ -236,6 +241,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
 const AppEmployeesRouteRoute = AppEmployeesRouteRouteImport.update({
   id: '/employees',
   path: '/employees',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppEnquiriesRouteRoute = AppEnquiriesRouteRouteImport.update({
+  id: '/enquiries',
+  path: '/enquiries',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppExpensesRouteRoute = AppExpensesRouteRouteImport.update({
@@ -427,6 +437,16 @@ const AppEmployeesNewRoute = AppEmployeesNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppEmployeesRouteRoute,
+} as any)
+const AppEnquiriesIndexRoute = AppEnquiriesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppEnquiriesRouteRoute,
+} as any)
+const AppEnquiriesNewRoute = AppEnquiriesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppEnquiriesRouteRoute,
 } as any)
 const AppExpensesIndexRoute = AppExpensesIndexRouteImport.update({
   id: '/',
@@ -647,6 +667,18 @@ const AppEmployeesEmployeeIdEditRoute =
     id: '/$employeeId/edit',
     path: '/$employeeId/edit',
     getParentRoute: () => AppEmployeesRouteRoute,
+  } as any)
+const AppEnquiriesEnquiryIdIndexRoute =
+  AppEnquiriesEnquiryIdIndexRouteImport.update({
+    id: '/$enquiryId/',
+    path: '/$enquiryId/',
+    getParentRoute: () => AppEnquiriesRouteRoute,
+  } as any)
+const AppEnquiriesEnquiryIdEditRoute =
+  AppEnquiriesEnquiryIdEditRouteImport.update({
+    id: '/$enquiryId/edit',
+    path: '/$enquiryId/edit',
+    getParentRoute: () => AppEnquiriesRouteRoute,
   } as any)
 const AppExpensesExpenseIdEditRoute =
   AppExpensesExpenseIdEditRouteImport.update({
@@ -1103,6 +1135,7 @@ export interface FileRoutesByFullPath {
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/credit-notes': typeof AppCreditNotesRouteRouteWithChildren
   '/app/employees': typeof AppEmployeesRouteRouteWithChildren
+  '/app/enquiries': typeof AppEnquiriesRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
   '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
   '/app/leaves': typeof AppLeavesRouteRouteWithChildren
@@ -1143,6 +1176,7 @@ export interface FileRoutesByFullPath {
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/credit-notes/new': typeof AppCreditNotesNewRoute
   '/app/employees/new': typeof AppEmployeesNewRoute
+  '/app/enquiries/new': typeof AppEnquiriesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/leaves/balances': typeof AppLeavesBalancesRoute
@@ -1166,6 +1200,7 @@ export interface FileRoutesByFullPath {
   '/app/communication/': typeof AppCommunicationIndexRoute
   '/app/credit-notes/': typeof AppCreditNotesIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
+  '/app/enquiries/': typeof AppEnquiriesIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/leaves/': typeof AppLeavesIndexRoute
@@ -1183,6 +1218,7 @@ export interface FileRoutesByFullPath {
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/credit-notes/$creditNoteId/details': typeof AppCreditNotesCreditNoteIdDetailsRoute
   '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
+  '/app/enquiries/$enquiryId/edit': typeof AppEnquiriesEnquiryIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
   '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
@@ -1216,6 +1252,7 @@ export interface FileRoutesByFullPath {
   '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
+  '/app/enquiries/$enquiryId/': typeof AppEnquiriesEnquiryIdIndexRoute
   '/app/payroll/loans/': typeof AppPayrollLoansIndexRoute
   '/app/payroll/overtime/': typeof AppPayrollOvertimeIndexRoute
   '/app/payroll/periods/': typeof AppPayrollPeriodsIndexRoute
@@ -1289,6 +1326,7 @@ export interface FileRoutesByTo {
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/credit-notes/new': typeof AppCreditNotesNewRoute
   '/app/employees/new': typeof AppEmployeesNewRoute
+  '/app/enquiries/new': typeof AppEnquiriesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/leaves/balances': typeof AppLeavesBalancesRoute
@@ -1312,6 +1350,7 @@ export interface FileRoutesByTo {
   '/app/communication': typeof AppCommunicationIndexRoute
   '/app/credit-notes': typeof AppCreditNotesIndexRoute
   '/app/employees': typeof AppEmployeesIndexRoute
+  '/app/enquiries': typeof AppEnquiriesIndexRoute
   '/app/expenses': typeof AppExpensesIndexRoute
   '/app/financial-years': typeof AppFinancialYearsIndexRoute
   '/app/leaves': typeof AppLeavesIndexRoute
@@ -1329,6 +1368,7 @@ export interface FileRoutesByTo {
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/credit-notes/$creditNoteId/details': typeof AppCreditNotesCreditNoteIdDetailsRoute
   '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
+  '/app/enquiries/$enquiryId/edit': typeof AppEnquiriesEnquiryIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
   '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
@@ -1362,6 +1402,7 @@ export interface FileRoutesByTo {
   '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings': typeof AppBankingsPostingsIndexRoute
+  '/app/enquiries/$enquiryId': typeof AppEnquiriesEnquiryIdIndexRoute
   '/app/payroll/loans': typeof AppPayrollLoansIndexRoute
   '/app/payroll/overtime': typeof AppPayrollOvertimeIndexRoute
   '/app/payroll/periods': typeof AppPayrollPeriodsIndexRoute
@@ -1421,6 +1462,7 @@ export interface FileRoutesById {
   '/app/chart-of-accounts': typeof AppChartOfAccountsRouteRouteWithChildren
   '/app/credit-notes': typeof AppCreditNotesRouteRouteWithChildren
   '/app/employees': typeof AppEmployeesRouteRouteWithChildren
+  '/app/enquiries': typeof AppEnquiriesRouteRouteWithChildren
   '/app/expenses': typeof AppExpensesRouteRouteWithChildren
   '/app/financial-years': typeof AppFinancialYearsRouteRouteWithChildren
   '/app/leaves': typeof AppLeavesRouteRouteWithChildren
@@ -1461,6 +1503,7 @@ export interface FileRoutesById {
   '/app/chart-of-accounts/new': typeof AppChartOfAccountsNewRoute
   '/app/credit-notes/new': typeof AppCreditNotesNewRoute
   '/app/employees/new': typeof AppEmployeesNewRoute
+  '/app/enquiries/new': typeof AppEnquiriesNewRoute
   '/app/expenses/new': typeof AppExpensesNewRoute
   '/app/financial-years/new': typeof AppFinancialYearsNewRoute
   '/app/leaves/balances': typeof AppLeavesBalancesRoute
@@ -1484,6 +1527,7 @@ export interface FileRoutesById {
   '/app/communication/': typeof AppCommunicationIndexRoute
   '/app/credit-notes/': typeof AppCreditNotesIndexRoute
   '/app/employees/': typeof AppEmployeesIndexRoute
+  '/app/enquiries/': typeof AppEnquiriesIndexRoute
   '/app/expenses/': typeof AppExpensesIndexRoute
   '/app/financial-years/': typeof AppFinancialYearsIndexRoute
   '/app/leaves/': typeof AppLeavesIndexRoute
@@ -1501,6 +1545,7 @@ export interface FileRoutesById {
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/credit-notes/$creditNoteId/details': typeof AppCreditNotesCreditNoteIdDetailsRoute
   '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
+  '/app/enquiries/$enquiryId/edit': typeof AppEnquiriesEnquiryIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
   '/app/financial-years/$financialYearId/edit': typeof AppFinancialYearsFinancialYearIdEditRoute
@@ -1534,6 +1579,7 @@ export interface FileRoutesById {
   '/app/wht-remittances/$remittanceId/edit': typeof AppWhtRemittancesRemittanceIdEditRoute
   '/api/cron/daily/': typeof ApiCronDailyIndexRoute
   '/app/bankings/postings/': typeof AppBankingsPostingsIndexRoute
+  '/app/enquiries/$enquiryId/': typeof AppEnquiriesEnquiryIdIndexRoute
   '/app/payroll/loans/': typeof AppPayrollLoansIndexRoute
   '/app/payroll/overtime/': typeof AppPayrollOvertimeIndexRoute
   '/app/payroll/periods/': typeof AppPayrollPeriodsIndexRoute
@@ -1593,6 +1639,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts'
     | '/app/credit-notes'
     | '/app/employees'
+    | '/app/enquiries'
     | '/app/expenses'
     | '/app/financial-years'
     | '/app/leaves'
@@ -1633,6 +1680,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/new'
     | '/app/credit-notes/new'
     | '/app/employees/new'
+    | '/app/enquiries/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
     | '/app/leaves/balances'
@@ -1656,6 +1704,7 @@ export interface FileRouteTypes {
     | '/app/communication/'
     | '/app/credit-notes/'
     | '/app/employees/'
+    | '/app/enquiries/'
     | '/app/expenses/'
     | '/app/financial-years/'
     | '/app/leaves/'
@@ -1673,6 +1722,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/credit-notes/$creditNoteId/details'
     | '/app/employees/$employeeId/edit'
+    | '/app/enquiries/$enquiryId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
     | '/app/financial-years/$financialYearId/edit'
@@ -1706,6 +1756,7 @@ export interface FileRouteTypes {
     | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
+    | '/app/enquiries/$enquiryId/'
     | '/app/payroll/loans/'
     | '/app/payroll/overtime/'
     | '/app/payroll/periods/'
@@ -1779,6 +1830,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/new'
     | '/app/credit-notes/new'
     | '/app/employees/new'
+    | '/app/enquiries/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
     | '/app/leaves/balances'
@@ -1802,6 +1854,7 @@ export interface FileRouteTypes {
     | '/app/communication'
     | '/app/credit-notes'
     | '/app/employees'
+    | '/app/enquiries'
     | '/app/expenses'
     | '/app/financial-years'
     | '/app/leaves'
@@ -1819,6 +1872,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/credit-notes/$creditNoteId/details'
     | '/app/employees/$employeeId/edit'
+    | '/app/enquiries/$enquiryId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
     | '/app/financial-years/$financialYearId/edit'
@@ -1852,6 +1906,7 @@ export interface FileRouteTypes {
     | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily'
     | '/app/bankings/postings'
+    | '/app/enquiries/$enquiryId'
     | '/app/payroll/loans'
     | '/app/payroll/overtime'
     | '/app/payroll/periods'
@@ -1910,6 +1965,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts'
     | '/app/credit-notes'
     | '/app/employees'
+    | '/app/enquiries'
     | '/app/expenses'
     | '/app/financial-years'
     | '/app/leaves'
@@ -1950,6 +2006,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/new'
     | '/app/credit-notes/new'
     | '/app/employees/new'
+    | '/app/enquiries/new'
     | '/app/expenses/new'
     | '/app/financial-years/new'
     | '/app/leaves/balances'
@@ -1973,6 +2030,7 @@ export interface FileRouteTypes {
     | '/app/communication/'
     | '/app/credit-notes/'
     | '/app/employees/'
+    | '/app/enquiries/'
     | '/app/expenses/'
     | '/app/financial-years/'
     | '/app/leaves/'
@@ -1990,6 +2048,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/credit-notes/$creditNoteId/details'
     | '/app/employees/$employeeId/edit'
+    | '/app/enquiries/$enquiryId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
     | '/app/financial-years/$financialYearId/edit'
@@ -2023,6 +2082,7 @@ export interface FileRouteTypes {
     | '/app/wht-remittances/$remittanceId/edit'
     | '/api/cron/daily/'
     | '/app/bankings/postings/'
+    | '/app/enquiries/$enquiryId/'
     | '/app/payroll/loans/'
     | '/app/payroll/overtime/'
     | '/app/payroll/periods/'
@@ -2178,6 +2238,13 @@ declare module '@tanstack/react-router' {
       path: '/employees'
       fullPath: '/app/employees'
       preLoaderRoute: typeof AppEmployeesRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/enquiries': {
+      id: '/app/enquiries'
+      path: '/enquiries'
+      fullPath: '/app/enquiries'
+      preLoaderRoute: typeof AppEnquiriesRouteRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/app/expenses': {
@@ -2438,6 +2505,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/employees/new'
       preLoaderRoute: typeof AppEmployeesNewRouteImport
       parentRoute: typeof AppEmployeesRouteRoute
+    }
+    '/app/enquiries/': {
+      id: '/app/enquiries/'
+      path: '/'
+      fullPath: '/app/enquiries/'
+      preLoaderRoute: typeof AppEnquiriesIndexRouteImport
+      parentRoute: typeof AppEnquiriesRouteRoute
+    }
+    '/app/enquiries/new': {
+      id: '/app/enquiries/new'
+      path: '/new'
+      fullPath: '/app/enquiries/new'
+      preLoaderRoute: typeof AppEnquiriesNewRouteImport
+      parentRoute: typeof AppEnquiriesRouteRoute
     }
     '/app/expenses/': {
       id: '/app/expenses/'
@@ -2732,6 +2813,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/employees/$employeeId/edit'
       preLoaderRoute: typeof AppEmployeesEmployeeIdEditRouteImport
       parentRoute: typeof AppEmployeesRouteRoute
+    }
+    '/app/enquiries/$enquiryId/': {
+      id: '/app/enquiries/$enquiryId/'
+      path: '/$enquiryId'
+      fullPath: '/app/enquiries/$enquiryId/'
+      preLoaderRoute: typeof AppEnquiriesEnquiryIdIndexRouteImport
+      parentRoute: typeof AppEnquiriesRouteRoute
+    }
+    '/app/enquiries/$enquiryId/edit': {
+      id: '/app/enquiries/$enquiryId/edit'
+      path: '/$enquiryId/edit'
+      fullPath: '/app/enquiries/$enquiryId/edit'
+      preLoaderRoute: typeof AppEnquiriesEnquiryIdEditRouteImport
+      parentRoute: typeof AppEnquiriesRouteRoute
     }
     '/app/expenses/$expenseId/edit': {
       id: '/app/expenses/$expenseId/edit'
@@ -3398,6 +3493,23 @@ const AppEmployeesRouteRouteChildren: AppEmployeesRouteRouteChildren = {
 const AppEmployeesRouteRouteWithChildren =
   AppEmployeesRouteRoute._addFileChildren(AppEmployeesRouteRouteChildren)
 
+interface AppEnquiriesRouteRouteChildren {
+  AppEnquiriesNewRoute: typeof AppEnquiriesNewRoute
+  AppEnquiriesIndexRoute: typeof AppEnquiriesIndexRoute
+  AppEnquiriesEnquiryIdEditRoute: typeof AppEnquiriesEnquiryIdEditRoute
+  AppEnquiriesEnquiryIdIndexRoute: typeof AppEnquiriesEnquiryIdIndexRoute
+}
+
+const AppEnquiriesRouteRouteChildren: AppEnquiriesRouteRouteChildren = {
+  AppEnquiriesNewRoute: AppEnquiriesNewRoute,
+  AppEnquiriesIndexRoute: AppEnquiriesIndexRoute,
+  AppEnquiriesEnquiryIdEditRoute: AppEnquiriesEnquiryIdEditRoute,
+  AppEnquiriesEnquiryIdIndexRoute: AppEnquiriesEnquiryIdIndexRoute,
+}
+
+const AppEnquiriesRouteRouteWithChildren =
+  AppEnquiriesRouteRoute._addFileChildren(AppEnquiriesRouteRouteChildren)
+
 interface AppExpensesExpenseIdRouteRouteChildren {
   AppExpensesExpenseIdEditRoute: typeof AppExpensesExpenseIdEditRoute
   AppExpensesExpenseIdViewRoute: typeof AppExpensesExpenseIdViewRoute
@@ -3842,6 +3954,7 @@ interface AppRouteRouteChildren {
   AppChartOfAccountsRouteRoute: typeof AppChartOfAccountsRouteRouteWithChildren
   AppCreditNotesRouteRoute: typeof AppCreditNotesRouteRouteWithChildren
   AppEmployeesRouteRoute: typeof AppEmployeesRouteRouteWithChildren
+  AppEnquiriesRouteRoute: typeof AppEnquiriesRouteRouteWithChildren
   AppExpensesRouteRoute: typeof AppExpensesRouteRouteWithChildren
   AppFinancialYearsRouteRoute: typeof AppFinancialYearsRouteRouteWithChildren
   AppLeavesRouteRoute: typeof AppLeavesRouteRouteWithChildren
@@ -3875,6 +3988,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppChartOfAccountsRouteRoute: AppChartOfAccountsRouteRouteWithChildren,
   AppCreditNotesRouteRoute: AppCreditNotesRouteRouteWithChildren,
   AppEmployeesRouteRoute: AppEmployeesRouteRouteWithChildren,
+  AppEnquiriesRouteRoute: AppEnquiriesRouteRouteWithChildren,
   AppExpensesRouteRoute: AppExpensesRouteRouteWithChildren,
   AppFinancialYearsRouteRoute: AppFinancialYearsRouteRouteWithChildren,
   AppLeavesRouteRoute: AppLeavesRouteRouteWithChildren,

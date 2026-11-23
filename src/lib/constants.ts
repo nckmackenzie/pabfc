@@ -5,6 +5,7 @@ import {
 	ChatMessageIcon,
 	DollarSignIcon,
 	PercentBadgeIcon,
+	PhoneIcon,
 	Users2Icon,
 	UsersIcon,
 	UserKeyIcon,
@@ -52,6 +53,12 @@ export const menuItems: MenuItem[] = [
 		url: "/app/members",
 		icon: Users2Icon,
 		permission: "members:view",
+	},
+	{
+		title: "Enquiries",
+		url: "/app/enquiries",
+		icon: PhoneIcon,
+		permission: "enquiries:view",
 	},
 	{
 		title: "Plans & Packages",
