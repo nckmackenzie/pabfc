@@ -203,6 +203,11 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				permission: "members:view",
 			},
 			{
+				title: "Enquiry Conversion",
+				url: "/app/reports/enquiries/conversion",
+				permission: "enquiries:report",
+			},
+			{
 				title: "Attendance Reports",
 				url: "/app/reports/attendance",
 				permission: "attendance:view",

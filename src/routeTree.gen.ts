@@ -162,6 +162,7 @@ import { Route as AppPayrollSalaryStructuresEmployeeEmployeeIdRouteImport } from
 import { Route as AppPayrollSalaryStructuresStructureStructureIdRouteImport } from './routes/app/payroll/salary-structures/structure.$structureId'
 import { Route as AppPlansAddonsAddonIdEditRouteImport } from './routes/app/plans/addons/$addonId/edit'
 import { Route as AppReceiptsAddonsAddonInvoiceIdDetailsRouteImport } from './routes/app/receipts/addons/$addonInvoiceId/details'
+import { Route as AppReportsEnquiriesConversionIndexRouteImport } from './routes/app/reports/enquiries/conversion/index'
 import { Route as AppReportsFinanceBalanceSheetIndexRouteImport } from './routes/app/reports/finance/balance-sheet/index'
 import { Route as AppReportsFinanceBankingIndexRouteImport } from './routes/app/reports/finance/banking/index'
 import { Route as AppReportsFinanceExpensesIndexRouteImport } from './routes/app/reports/finance/expenses/index'
@@ -1001,6 +1002,12 @@ const AppReceiptsAddonsAddonInvoiceIdDetailsRoute =
     path: '/addons/$addonInvoiceId/details',
     getParentRoute: () => AppReceiptsRouteRoute,
   } as any)
+const AppReportsEnquiriesConversionIndexRoute =
+  AppReportsEnquiriesConversionIndexRouteImport.update({
+    id: '/reports/enquiries/conversion/',
+    path: '/reports/enquiries/conversion/',
+    getParentRoute: () => AppRouteRoute,
+  } as any)
 const AppReportsFinanceBalanceSheetIndexRoute =
   AppReportsFinanceBalanceSheetIndexRouteImport.update({
     id: '/balance-sheet/',
@@ -1287,6 +1294,7 @@ export interface FileRoutesByFullPath {
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/payroll/periods/$periodId/': typeof AppPayrollPeriodsPeriodIdIndexRoute
+  '/app/reports/enquiries/conversion/': typeof AppReportsEnquiriesConversionIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
@@ -1438,6 +1446,7 @@ export interface FileRoutesByTo {
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/payroll/periods/$periodId': typeof AppPayrollPeriodsPeriodIdIndexRoute
+  '/app/reports/enquiries/conversion': typeof AppReportsEnquiriesConversionIndexRoute
   '/app/reports/finance/balance-sheet': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses': typeof AppReportsFinanceExpensesIndexRoute
@@ -1616,6 +1625,7 @@ export interface FileRoutesById {
   '/app/users/roles/$roleId/edit': typeof AppUsersRolesRoleIdEditRoute
   '/api/access-control/agent/heartbeat/': typeof ApiAccessControlAgentHeartbeatIndexRoute
   '/app/payroll/periods/$periodId/': typeof AppPayrollPeriodsPeriodIdIndexRoute
+  '/app/reports/enquiries/conversion/': typeof AppReportsEnquiriesConversionIndexRoute
   '/app/reports/finance/balance-sheet/': typeof AppReportsFinanceBalanceSheetIndexRoute
   '/app/reports/finance/banking/': typeof AppReportsFinanceBankingIndexRoute
   '/app/reports/finance/expenses/': typeof AppReportsFinanceExpensesIndexRoute
@@ -1794,6 +1804,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
     | '/app/payroll/periods/$periodId/'
+    | '/app/reports/enquiries/conversion/'
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
@@ -1945,6 +1956,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat'
     | '/app/payroll/periods/$periodId'
+    | '/app/reports/enquiries/conversion'
     | '/app/reports/finance/balance-sheet'
     | '/app/reports/finance/banking'
     | '/app/reports/finance/expenses'
@@ -2122,6 +2134,7 @@ export interface FileRouteTypes {
     | '/app/users/roles/$roleId/edit'
     | '/api/access-control/agent/heartbeat/'
     | '/app/payroll/periods/$periodId/'
+    | '/app/reports/enquiries/conversion/'
     | '/app/reports/finance/balance-sheet/'
     | '/app/reports/finance/banking/'
     | '/app/reports/finance/expenses/'
@@ -3240,6 +3253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReceiptsAddonsAddonInvoiceIdDetailsRouteImport
       parentRoute: typeof AppReceiptsRouteRoute
     }
+    '/app/reports/enquiries/conversion/': {
+      id: '/app/reports/enquiries/conversion/'
+      path: '/reports/enquiries/conversion'
+      fullPath: '/app/reports/enquiries/conversion/'
+      preLoaderRoute: typeof AppReportsEnquiriesConversionIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/reports/finance/balance-sheet/': {
       id: '/app/reports/finance/balance-sheet/'
       path: '/balance-sheet'
@@ -4002,6 +4022,7 @@ interface AppRouteRouteChildren {
   AppProfileIndexRoute: typeof AppProfileIndexRoute
   AppReportsAttendanceIndexRoute: typeof AppReportsAttendanceIndexRoute
   AppReportsMembersIndexRoute: typeof AppReportsMembersIndexRoute
+  AppReportsEnquiriesConversionIndexRoute: typeof AppReportsEnquiriesConversionIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -4037,6 +4058,8 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppProfileIndexRoute: AppProfileIndexRoute,
   AppReportsAttendanceIndexRoute: AppReportsAttendanceIndexRoute,
   AppReportsMembersIndexRoute: AppReportsMembersIndexRoute,
+  AppReportsEnquiriesConversionIndexRoute:
+    AppReportsEnquiriesConversionIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

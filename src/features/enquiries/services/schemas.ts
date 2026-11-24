@@ -3,6 +3,7 @@ import { ENQUIRY_LOST_REASONS, ENQUIRY_SOURCES, ENQUIRY_STATUSES } from "@/drizz
 import { FOLLOW_UP_FILTERS } from "@/features/enquiries/lib/constants";
 import { isValidEmail, memberFormSchema } from "@/features/members/services/schemas";
 import { normalizeKenyanPhone } from "@/lib/phone";
+import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
 
 export const enquiryValidateSearch = z.object({
 	q: z.string().optional().catch(""),
@@ -137,3 +138,23 @@ export const enquirySmsFormSchema = z.object({
 export type EnquirySmsRecipientsSchema = z.infer<typeof enquirySmsRecipientsSchema>;
 export type SendEnquirySmsSchema = z.infer<typeof sendEnquirySmsSchema>;
 export type EnquirySmsFormSchema = z.infer<typeof enquirySmsFormSchema>;
+
+// Conversion report. Source and staff narrow BOTH measures (created-in-range and
+// converted-in-range); the date range applies to createdAt for the first and
+// convertedAt for the second.
+const conversionReportExtras = {
+	source: z.array(z.enum(ENQUIRY_SOURCES)).optional(),
+	// An employee id, or "unassigned".
+	assignedEmployeeId: z.string().optional(),
+};
+
+export const enquiryConversionValidateSearch = dateRangeSchema.safeExtend({
+	source: z.array(z.enum(ENQUIRY_SOURCES)).optional().catch(undefined),
+	assignedEmployeeId: z.string().optional().catch(undefined),
+});
+
+export const enquiryConversionFormSchema =
+	dateRangeRequiredSchema.safeExtend(conversionReportExtras);
+
+export type EnquiryConversionValidateSearch = z.infer<typeof enquiryConversionValidateSearch>;
+export type EnquiryConversionFormSchema = z.infer<typeof enquiryConversionFormSchema>;

@@ -1,5 +1,10 @@
 import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import {
+	getEnquiryConversionReport,
+	getEnquiryDashboardSnapshot,
+	getEnquiryReportStaffOptions,
+} from "@/features/enquiries/services/enquiries.report.api";
+import {
 	getEnquirySmsHistory,
 	getEnquirySmsTemplates,
 	previewEnquirySmsRecipients,
@@ -12,6 +17,7 @@ import {
 	getEnquiryPlanOptions,
 } from "@/features/enquiries/services/enquiries.queries.api";
 import type {
+	EnquiryConversionFormSchema,
 	EnquirySmsRecipientsSchema,
 	EnquiryValidateSearch,
 } from "@/features/enquiries/services/schemas";
@@ -58,6 +64,23 @@ export const enquiryQueries = {
 		queryOptions({
 			queryKey: [...enquiryQueries.all, "sms-history", enquiryId] as const,
 			queryFn: () => getEnquirySmsHistory({ data: enquiryId }),
+		}),
+	conversionReport: (filters: EnquiryConversionFormSchema) =>
+		queryOptions({
+			queryKey: [...enquiryQueries.all, "conversion-report", filters] as const,
+			queryFn: () => getEnquiryConversionReport({ data: filters }),
+		}),
+	reportStaffOptions: () =>
+		queryOptions({
+			queryKey: [...enquiryQueries.all, "report-staff-options"] as const,
+			queryFn: () => getEnquiryReportStaffOptions(),
+			staleTime: 5 * 60 * 1000,
+		}),
+	dashboardSnapshot: () =>
+		queryOptions({
+			queryKey: [...enquiryQueries.all, "dashboard-snapshot"] as const,
+			queryFn: () => getEnquiryDashboardSnapshot(),
+			staleTime: 60 * 1000,
 		}),
 	duplicates: (phone: string, excludeEnquiryId?: string) =>
 		queryOptions({
