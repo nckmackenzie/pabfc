@@ -1,8 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import toast from "react-hot-toast";
 import CustomModal from "@/components/ui/custom-modal";
 import { ToastContent } from "@/components/ui/toast-content";
 import { MarkLostModal } from "@/features/enquiries/components/mark-lost-modal";
+import { isEnquiryConflictError } from "@/features/enquiries/services/enquiry-duplicates";
 import { enquiryQueries } from "@/features/enquiries/services/queries";
 import { updateEnquiryStatus } from "@/features/enquiries/services/enquiries.mutations.api";
 import { useModal } from "@/integrations/modal-provider";
@@ -16,7 +18,27 @@ export function useEnquiryActions() {
 		try {
 			const result = await updateEnquiryStatus({ data: { id: enquiryId, status } });
 			if (!result.success) {
-				toast.error((t) => <ToastContent t={t} title="Error" message={result.error.message} />);
+				const { error } = result;
+				// Reopening can collide with another open enquiry for the same phone.
+				const existingEnquiryId = isEnquiryConflictError(error) ? error.existingEnquiryId : null;
+				toast.error(
+					(t) => (
+						<div className="space-y-1">
+							<ToastContent t={t} title="Error" message={error.message} />
+							{existingEnquiryId && (
+								<Link
+									to="/app/enquiries/$enquiryId"
+									params={{ enquiryId: existingEnquiryId }}
+									onClick={() => toast.dismiss(t.id)}
+									className="ml-3 block text-sm font-medium underline"
+								>
+									View the existing enquiry
+								</Link>
+							)}
+						</div>
+					),
+					{ duration: existingEnquiryId ? 10000 : undefined }
+				);
 				return;
 			}
 			toast.success((t) => <ToastContent t={t} title="Success" message={successMessage} />);

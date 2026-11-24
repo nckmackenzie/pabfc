@@ -104,6 +104,7 @@ import { Route as AppChartOfAccountsAccountIdEditRouteImport } from './routes/ap
 import { Route as AppCreditNotesCreditNoteIdDetailsRouteImport } from './routes/app/credit-notes/$creditNoteId/details'
 import { Route as AppEmployeesEmployeeIdEditRouteImport } from './routes/app/employees/$employeeId.edit'
 import { Route as AppEnquiriesEnquiryIdIndexRouteImport } from './routes/app/enquiries/$enquiryId.index'
+import { Route as AppEnquiriesEnquiryIdConvertRouteImport } from './routes/app/enquiries/$enquiryId.convert'
 import { Route as AppEnquiriesEnquiryIdEditRouteImport } from './routes/app/enquiries/$enquiryId.edit'
 import { Route as AppExpensesExpenseIdEditRouteImport } from './routes/app/expenses/$expenseId/edit'
 import { Route as AppExpensesExpenseIdViewRouteImport } from './routes/app/expenses/$expenseId/view'
@@ -674,6 +675,12 @@ const AppEnquiriesEnquiryIdIndexRoute =
     path: '/$enquiryId/',
     getParentRoute: () => AppEnquiriesRouteRoute,
   } as any)
+const AppEnquiriesEnquiryIdConvertRoute =
+  AppEnquiriesEnquiryIdConvertRouteImport.update({
+    id: '/$enquiryId/convert',
+    path: '/$enquiryId/convert',
+    getParentRoute: () => AppEnquiriesRouteRoute,
+  } as any)
 const AppEnquiriesEnquiryIdEditRoute =
   AppEnquiriesEnquiryIdEditRouteImport.update({
     id: '/$enquiryId/edit',
@@ -1218,6 +1225,7 @@ export interface FileRoutesByFullPath {
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/credit-notes/$creditNoteId/details': typeof AppCreditNotesCreditNoteIdDetailsRoute
   '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
+  '/app/enquiries/$enquiryId/convert': typeof AppEnquiriesEnquiryIdConvertRoute
   '/app/enquiries/$enquiryId/edit': typeof AppEnquiriesEnquiryIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
@@ -1368,6 +1376,7 @@ export interface FileRoutesByTo {
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/credit-notes/$creditNoteId/details': typeof AppCreditNotesCreditNoteIdDetailsRoute
   '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
+  '/app/enquiries/$enquiryId/convert': typeof AppEnquiriesEnquiryIdConvertRoute
   '/app/enquiries/$enquiryId/edit': typeof AppEnquiriesEnquiryIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
@@ -1545,6 +1554,7 @@ export interface FileRoutesById {
   '/app/chart-of-accounts/$accountId/edit': typeof AppChartOfAccountsAccountIdEditRoute
   '/app/credit-notes/$creditNoteId/details': typeof AppCreditNotesCreditNoteIdDetailsRoute
   '/app/employees/$employeeId/edit': typeof AppEmployeesEmployeeIdEditRoute
+  '/app/enquiries/$enquiryId/convert': typeof AppEnquiriesEnquiryIdConvertRoute
   '/app/enquiries/$enquiryId/edit': typeof AppEnquiriesEnquiryIdEditRoute
   '/app/expenses/$expenseId/edit': typeof AppExpensesExpenseIdEditRoute
   '/app/expenses/$expenseId/view': typeof AppExpensesExpenseIdViewRoute
@@ -1722,6 +1732,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/credit-notes/$creditNoteId/details'
     | '/app/employees/$employeeId/edit'
+    | '/app/enquiries/$enquiryId/convert'
     | '/app/enquiries/$enquiryId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
@@ -1872,6 +1883,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/credit-notes/$creditNoteId/details'
     | '/app/employees/$employeeId/edit'
+    | '/app/enquiries/$enquiryId/convert'
     | '/app/enquiries/$enquiryId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
@@ -2048,6 +2060,7 @@ export interface FileRouteTypes {
     | '/app/chart-of-accounts/$accountId/edit'
     | '/app/credit-notes/$creditNoteId/details'
     | '/app/employees/$employeeId/edit'
+    | '/app/enquiries/$enquiryId/convert'
     | '/app/enquiries/$enquiryId/edit'
     | '/app/expenses/$expenseId/edit'
     | '/app/expenses/$expenseId/view'
@@ -2821,6 +2834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEnquiriesEnquiryIdIndexRouteImport
       parentRoute: typeof AppEnquiriesRouteRoute
     }
+    '/app/enquiries/$enquiryId/convert': {
+      id: '/app/enquiries/$enquiryId/convert'
+      path: '/$enquiryId/convert'
+      fullPath: '/app/enquiries/$enquiryId/convert'
+      preLoaderRoute: typeof AppEnquiriesEnquiryIdConvertRouteImport
+      parentRoute: typeof AppEnquiriesRouteRoute
+    }
     '/app/enquiries/$enquiryId/edit': {
       id: '/app/enquiries/$enquiryId/edit'
       path: '/$enquiryId/edit'
@@ -3496,6 +3516,7 @@ const AppEmployeesRouteRouteWithChildren =
 interface AppEnquiriesRouteRouteChildren {
   AppEnquiriesNewRoute: typeof AppEnquiriesNewRoute
   AppEnquiriesIndexRoute: typeof AppEnquiriesIndexRoute
+  AppEnquiriesEnquiryIdConvertRoute: typeof AppEnquiriesEnquiryIdConvertRoute
   AppEnquiriesEnquiryIdEditRoute: typeof AppEnquiriesEnquiryIdEditRoute
   AppEnquiriesEnquiryIdIndexRoute: typeof AppEnquiriesEnquiryIdIndexRoute
 }
@@ -3503,6 +3524,7 @@ interface AppEnquiriesRouteRouteChildren {
 const AppEnquiriesRouteRouteChildren: AppEnquiriesRouteRouteChildren = {
   AppEnquiriesNewRoute: AppEnquiriesNewRoute,
   AppEnquiriesIndexRoute: AppEnquiriesIndexRoute,
+  AppEnquiriesEnquiryIdConvertRoute: AppEnquiriesEnquiryIdConvertRoute,
   AppEnquiriesEnquiryIdEditRoute: AppEnquiriesEnquiryIdEditRoute,
   AppEnquiriesEnquiryIdIndexRoute: AppEnquiriesEnquiryIdIndexRoute,
 }

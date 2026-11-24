@@ -117,6 +117,7 @@ function MembershipPaymentForm() {
 		plans,
 		taxType,
 	} = getRouteApi("/app/receipts/new").useLoaderData();
+	const { memberId: preselectedMemberId } = getRouteApi("/app/receipts/new").useSearch();
 	const queryClient = useQueryClient();
 	const navigate = useNavigate({ from: "/app/receipts/new" });
 	const { data: freshMembers } = useQuery(memberQueries.allMembersValueWithLabel());
@@ -128,7 +129,7 @@ function MembershipPaymentForm() {
 	const form = useAppForm({
 		defaultValues: {
 			planId: "",
-			memberIds: [],
+			memberIds: preselectedMemberId ? [preselectedMemberId] : [],
 			paymentDate: format(new Date(), "yyyy-MM-dd"),
 			startDate: format(new Date(), "yyyy-MM-dd"),
 			numberOfPeriods: 1,

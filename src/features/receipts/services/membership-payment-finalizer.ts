@@ -16,6 +16,7 @@ import {
 import { dateFormat, toBig, toDecimalString } from "@/lib/helpers";
 import { nextAddonInvoiceNo } from "@/features/addons/services/addon-invoice.helpers";
 import { type ComputedAddonLine, sumAddonSubtotal } from "@/features/addons/lib/helpers";
+import { markEnquiryConversions } from "@/features/enquiries/services/enquiry-conversion";
 import { buildReceiptJournalLines } from "@/features/receipts/lib/journal";
 import { getDueMembershipConditions } from "@/features/receipts/lib/membership-activation";
 import {
@@ -290,6 +291,10 @@ export async function finalizeMembershipPayment({
 			throw new Error("Payment is already processed or not pending");
 		}
 	}
+
+	// The payment is completed by now on every path (manual/guest pass insert it
+	// completed; STK just flipped it above). Never throws, so it can't fail a payment.
+	await markEnquiryConversions({ tx, payment, memberIds: coveredMemberIds });
 
 	// Persist the addons (linked to this payment) in the same transaction, before the
 	// journal entry that already accounts for their revenue.

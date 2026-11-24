@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, getTableColumns, isNull, sql } from "drizzle-orm";
 import { db } from "@/drizzle/db";
-import { employees, enquiries, membershipPlans } from "@/drizzle/schema";
+import { employees, enquiries, members, membershipPlans, payments } from "@/drizzle/schema";
 import { buildEnquiryFilters } from "@/features/enquiries/lib/query-filters";
 import { findEnquiryDuplicates } from "@/features/enquiries/services/enquiry-duplicates";
 import {
@@ -60,10 +60,17 @@ export const getEnquiry = createServerFn()
 				...getTableColumns(enquiries),
 				interestedPlanName: membershipPlans.name,
 				assignedEmployeeName,
+				convertedMemberName: sql<
+					string | null
+				>`nullif(concat_ws(' ', ${members.firstName}, ${members.lastName}), '')`,
+				convertedMemberNo: members.memberNo,
+				convertedPaymentNo: payments.paymentNo,
 			})
 			.from(enquiries)
 			.leftJoin(membershipPlans, eq(membershipPlans.id, enquiries.interestedPlanId))
 			.leftJoin(employees, eq(employees.id, enquiries.assignedEmployeeId))
+			.leftJoin(members, eq(members.id, enquiries.convertedMemberId))
+			.leftJoin(payments, eq(payments.id, enquiries.convertedPaymentId))
 			.where(and(eq(enquiries.id, enquiryId), isNull(enquiries.deletedAt)))
 			.limit(1);
 
@@ -76,7 +83,7 @@ export const checkEnquiryDuplicates = createServerFn()
 	.middleware([authMiddleware])
 	.validator(checkEnquiryDuplicatesSchema)
 	.handler(async ({ data }) => {
-		await requireAnyPermission(["enquiries:create", "enquiries:update"]);
+		await requireAnyPermission(["enquiries:create", "enquiries:update", "enquiries:convert"]);
 		return findEnquiryDuplicates(db, data);
 	});
 

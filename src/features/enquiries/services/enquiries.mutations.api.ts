@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/drizzle/db";
-import { activityLogs, employees, enquiries } from "@/drizzle/schema";
+import { employees, enquiries } from "@/drizzle/schema";
 import { enquiryStatusLabel } from "@/features/enquiries/lib/constants";
 import { canTransition, isConversionStatus } from "@/features/enquiries/lib/enquiry-status";
 import {
@@ -11,6 +11,7 @@ import {
 	normalizeEnquiryValues,
 	resolveSmsConsentAt,
 } from "@/features/enquiries/lib/helpers";
+import { logEnquiryActivity } from "@/features/enquiries/services/enquiry-activity";
 import {
 	type EnquiryConflictError,
 	findEnquiryDuplicates,
@@ -27,13 +28,6 @@ import { authMiddleware } from "@/middlewares/auth-middleware";
 const OPEN_PHONE_INDEX = "uq_enquiries_open_phone";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-function logEnquiryActivity(
-	tx: Transaction,
-	{ userId, action, description }: { userId: string; action: string; description: string }
-) {
-	return tx.insert(activityLogs).values({ userId, action, description });
-}
 
 function openEnquiryConflict(existing: { id: string; name: string }): Result<never> {
 	const error: EnquiryConflictError = {

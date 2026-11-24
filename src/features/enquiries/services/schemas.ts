@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ENQUIRY_LOST_REASONS, ENQUIRY_SOURCES, ENQUIRY_STATUSES } from "@/drizzle/schema";
 import { FOLLOW_UP_FILTERS } from "@/features/enquiries/lib/constants";
-import { isValidEmail } from "@/features/members/services/schemas";
+import { isValidEmail, memberFormSchema } from "@/features/members/services/schemas";
 import { normalizeKenyanPhone } from "@/lib/phone";
 
 export const enquiryValidateSearch = z.object({
@@ -87,3 +87,16 @@ export type EnquiryFormSchema = z.infer<typeof enquiryFormSchema>;
 export type UpdateEnquiryStatusSchema = z.infer<typeof updateEnquiryStatusSchema>;
 export type MarkLostFormSchema = z.infer<typeof markLostFormSchema>;
 export type CheckEnquiryDuplicatesSchema = z.infer<typeof checkEnquiryDuplicatesSchema>;
+
+export const convertEnquirySchema = z.object({
+	enquiryId: z.string().min(1, "Enquiry is required"),
+	member: memberFormSchema,
+});
+
+export const linkEnquiryToMemberSchema = z.object({
+	enquiryId: z.string().min(1, "Enquiry is required"),
+	memberId: z.string().min(1, "Member is required"),
+});
+
+export type ConvertEnquirySchema = z.infer<typeof convertEnquirySchema>;
+export type LinkEnquiryToMemberSchema = z.infer<typeof linkEnquiryToMemberSchema>;

@@ -26,6 +26,7 @@ import {
 import { useFormUpsert } from "@/hooks/use-form-upsert";
 import { usePreventUnsavedChanges } from "@/hooks/use-prevent-navigation";
 import { useAppForm } from "@/lib/form";
+import type { Result } from "@/lib/result";
 import { cn, generateRandomId } from "@/lib/utils";
 import type { WithId } from "@/types/index.types";
 
@@ -51,7 +52,33 @@ const defaultValues = {
 	emergencyContactRelationship: null,
 	notes: null,
 } as MemberFormSchema;
-export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
+// Lets another flow (e.g. converting an enquiry) save through its own server fn
+// and decide where to go next, instead of the default create/update + redirect.
+export type MemberFormSubmitOverride = {
+	upsertFn: (values: MemberFormSchema) => Promise<Result<{ memberId: string }>>;
+	onSuccess: (result: { memberId: string }) => void;
+	entityName?: string;
+	submitLabel?: string;
+	// The phone is the key the other flow matched on, so it can't be edited here.
+	lockContact?: boolean;
+};
+
+type MemberFormProps = {
+	member?: MemberFormSchema & WithId;
+	// Pre-fills a NEW member without switching the form into edit mode.
+	initialValues?: Partial<MemberFormSchema>;
+	submitOverride?: MemberFormSubmitOverride;
+	title?: string;
+	description?: string;
+};
+
+export function MemberForm({
+	member,
+	initialValues,
+	submitOverride,
+	title,
+	description,
+}: MemberFormProps) {
 	const [activeTab, setActiveTab] = useState("personal");
 
 	const currentTabIndex = tabs.findIndex((t) => t.id === activeTab);
@@ -68,16 +95,19 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 		}
 	};
 
-	const memberMutation = useFormUpsert({
-		upsertFn: (values: MemberFormSchema) => upsertMember({ data: values }),
-		entityName: "Member",
+	const memberMutation = useFormUpsert<MemberFormSchema, unknown>({
+		upsertFn: submitOverride?.upsertFn ?? ((values) => upsertMember({ data: values })),
+		entityName: submitOverride?.entityName ?? "Member",
 		queryKey: ["members"],
-		navigateTo: "/app/members",
+		navigateTo: submitOverride ? undefined : "/app/members",
+		onSuccessCallback: submitOverride
+			? (result) => submitOverride.onSuccess(result as { memberId: string })
+			: undefined,
 		onReset: () => form.reset(),
 	});
 
 	const form = useAppForm({
-		defaultValues: member ?? defaultValues,
+		defaultValues: member ?? { ...defaultValues, ...initialValues },
 		validators: {
 			onSubmit: memberFormSchema,
 		},
@@ -106,11 +136,10 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 	return (
 		<>
 			<PageHeader
-				title={member ? "Edit Member" : "New Member"}
+				title={title ?? (member ? "Edit Member" : "New Member")}
 				description={
-					member
-						? "Edit member details."
-						: "Complete all sections to register a new member."
+					description ??
+					(member ? "Edit member details." : "Complete all sections to register a new member.")
 				}
 			/>
 			<div className="bg-muted text-muted-foreground inline-flex h-9 w-full items-center justify-between rounded-lg p-[3px]">
@@ -225,6 +254,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 								<field.Input
 									label="Contact Number"
 									placeholder="Enter contact number"
+									readOnly={submitOverride?.lockContact}
 									required
 									maxLength={15}
 								/>
@@ -349,7 +379,7 @@ export function MemberForm({ member }: { member?: MemberFormSchema & WithId }) {
 									>
 										<LoadingSwap isLoading={state || memberMutation.isPending}>
 											<CheckIcon />
-											{member ? "Update" : "Submit"}
+											{member ? "Update" : (submitOverride?.submitLabel ?? "Submit")}
 										</LoadingSwap>
 									</Button>
 								)}

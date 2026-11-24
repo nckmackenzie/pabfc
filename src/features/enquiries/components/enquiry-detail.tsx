@@ -5,6 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PermissionGate } from "@/components/ui/permission-gate";
+import {
+	ConversionLinks,
+	ConvertToMemberActions,
+} from "@/features/enquiries/components/enquiry-conversion-actions";
 import { EnquiryStatusBadge } from "@/features/enquiries/components/enquiry-status-badge";
 import { FollowUpDate } from "@/features/enquiries/components/follow-up-date";
 import { useEnquiryActions } from "@/features/enquiries/hooks/use-enquiry-actions";
@@ -12,12 +16,6 @@ import { enquiryLostReasonLabel, enquirySourceLabel } from "@/features/enquiries
 import { allowedManualTransitions } from "@/features/enquiries/lib/enquiry-status";
 import { enquiryFullName } from "@/features/enquiries/lib/helpers";
 import type { EnquiryDetail as EnquiryDetailData } from "@/features/enquiries/services/enquiries.queries.api";
-
-// PART 2 SLOT: "Convert to member" action (permission: enquiries:convert).
-// Intentionally renders nothing until the conversion flow exists.
-function ConvertToMemberSlot(_props: { enquiry: EnquiryDetailData }): ReactNode {
-	return null;
-}
 
 // PART 3 SLOT: "Send SMS" action (permission: enquiries:send-sms; needs smsConsent).
 // Intentionally renders nothing until manual SMS to enquirers exists.
@@ -75,7 +73,7 @@ export function EnquiryDetail({ enquiry }: { enquiry: EnquiryDetailData }) {
 						</Button>
 					)}
 				</PermissionGate>
-				<ConvertToMemberSlot enquiry={enquiry} />
+				<ConvertToMemberActions enquiry={enquiry} />
 				<SendSmsSlot enquiry={enquiry} />
 			</div>
 
@@ -121,6 +119,7 @@ export function EnquiryDetail({ enquiry }: { enquiry: EnquiryDetailData }) {
 						{format(new Date(enquiry.convertedAt), "dd MMM yyyy")}
 					</DetailItem>
 				)}
+				<ConversionLinks enquiry={enquiry} />
 				<div className="sm:col-span-2 lg:col-span-3">
 					<DetailItem label="Notes">
 						{enquiry.notes ? <p className="whitespace-pre-wrap">{enquiry.notes}</p> : dash}
