@@ -16,6 +16,27 @@ export const FILTER_CRITERIA = [
 	"all members",
 	"specific members",
 ] as const;
+// Criteria for broadcasts to enquirers. Kept apart from FILTER_CRITERIA so the
+// member broadcast form and its validation never accept them.
+export const ENQUIRY_FILTER_CRITERIA = [
+	"specific enquiries",
+	"filtered enquiries",
+] as const;
+
+export const SMS_RECIPIENT_TYPES = ["members", "enquiries"] as const;
+export type SmsRecipientType = (typeof SMS_RECIPIENT_TYPES)[number];
+
+// The enquiry list filters a bulk send was resolved from, kept for audit.
+export type EnquirySmsRecipientFilter = {
+	q?: string;
+	status?: string;
+	source?: string;
+	assignedEmployeeId?: string;
+	followUp?: string;
+	from?: string;
+	to?: string;
+};
+
 export const SMS_BROADCAST_STATUS = [
 	"draft",
 	"sent",
@@ -38,9 +59,13 @@ export type SMSBroadcastResponse = {
 	};
 };
 
-export const smsFilterCriteriaEnum = pgEnum(
-	"sms_filter_criteria",
-	FILTER_CRITERIA,
+export const smsFilterCriteriaEnum = pgEnum("sms_filter_criteria", [
+	...FILTER_CRITERIA,
+	...ENQUIRY_FILTER_CRITERIA,
+] as const);
+export const smsRecipientTypeEnum = pgEnum(
+	"sms_recipient_type",
+	SMS_RECIPIENT_TYPES,
 );
 export const smsBroadcastStatusEnum = pgEnum(
 	"sms_broadcast_status",
@@ -84,7 +109,10 @@ export const smsBroadcasts = pgTable("sms_broadcasts", {
 		onDelete: "set null",
 	}),
 	content: text("message").notNull(),
+	// What `receipients` holds: member ids (default) or enquiry ids.
+	recipientType: smsRecipientTypeEnum("recipient_type").notNull().default("members"),
 	receipients: text().array().notNull(),
+	recipientFilter: jsonb("recipient_filter").$type<EnquirySmsRecipientFilter>(),
 	smsBroadcastStatus: smsBroadcastStatusEnum("sms_broadcast_status")
 		.notNull()
 		.default("draft"),

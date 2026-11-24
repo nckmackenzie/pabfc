@@ -5,6 +5,7 @@ import {
 	ChatMessageIcon,
 	DollarSignIcon,
 	PercentBadgeIcon,
+	PhoneIcon,
 	Users2Icon,
 	UsersIcon,
 	UserKeyIcon,
@@ -52,6 +53,12 @@ export const menuItems: MenuItem[] = [
 		url: "/app/members",
 		icon: Users2Icon,
 		permission: "members:view",
+	},
+	{
+		title: "Enquiries",
+		url: "/app/enquiries",
+		icon: PhoneIcon,
+		permission: "enquiries:view",
 	},
 	{
 		title: "Plans & Packages",
@@ -194,6 +201,11 @@ export const collapsibleMenuItems: CollapsibleMenuItem[] = [
 				title: "Member Reports",
 				url: "/app/reports/members",
 				permission: "members:view",
+			},
+			{
+				title: "Enquiry Conversion",
+				url: "/app/reports/enquiries/conversion",
+				permission: "enquiries:report",
 			},
 			{
 				title: "Attendance Reports",

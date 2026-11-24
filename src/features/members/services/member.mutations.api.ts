@@ -27,6 +27,7 @@ import { logActivity } from "@/services/activity-logger";
 import { disableMemberAccess, enableMemberAccess } from "@/services/member-access";
 import { insertMemberRecord, mapMemberData } from "./member-creation";
 import { checkColumnExists, getMember } from "./members.queries.api";
+import { sendRegistrationLinkEvent } from "./registration-link";
 
 const createMember = async ({
 	data,
@@ -56,12 +57,7 @@ const createMember = async ({
 			return member.id;
 		});
 
-		await inngest.send({
-			name: "app/members.send.registration.link",
-			data: {
-				memberId,
-			},
-		});
+		await sendRegistrationLinkEvent(memberId);
 
 		return success(undefined);
 	} catch (err) {
@@ -427,7 +423,9 @@ export const deleteMember = createServerFn({ method: "POST" })
 		},
 	);
 
-const validateMemberUniqueness = async ({
+// Throws ConflictError when the contact or ID number already belongs to another
+// member. Email is NOT checked here (it relies on the DB unique constraint).
+export const validateMemberUniqueness = async ({
 	contact,
 	idNumber,
 	memberId,

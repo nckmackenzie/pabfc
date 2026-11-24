@@ -1,0 +1,160 @@
+import { z } from "zod";
+import { ENQUIRY_LOST_REASONS, ENQUIRY_SOURCES, ENQUIRY_STATUSES } from "@/drizzle/schema";
+import { FOLLOW_UP_FILTERS } from "@/features/enquiries/lib/constants";
+import { isValidEmail, memberFormSchema } from "@/features/members/services/schemas";
+import { normalizeKenyanPhone } from "@/lib/phone";
+import { dateRangeRequiredSchema, dateRangeSchema } from "@/lib/schema-rules";
+
+export const enquiryValidateSearch = z.object({
+	q: z.string().optional().catch(""),
+	status: z
+		.enum(["all", ...ENQUIRY_STATUSES])
+		.optional()
+		.catch("all"),
+	source: z
+		.enum(["all", ...ENQUIRY_SOURCES])
+		.optional()
+		.catch("all"),
+	assignedEmployeeId: z.string().optional().catch("all"),
+	followUp: z.enum(FOLLOW_UP_FILTERS).optional().catch("all"),
+	from: z.iso.date().optional().catch(undefined),
+	to: z.iso.date().optional().catch(undefined),
+});
+
+// Strict on purpose: status and the conversion fields are not editable here,
+// so a payload that tries to set them is rejected rather than silently stripped.
+export const enquiryFormSchema = z
+	.strictObject({
+		id: z.string().optional(),
+		firstName: z.string().trim().min(1, "First name is required").max(100),
+		lastName: z.string().trim().max(100).nullish(),
+		phone: z.string().trim().min(1, "Phone number is required"),
+		email: z.string().trim().max(255).nullish(),
+		source: z.enum(ENQUIRY_SOURCES, { error: "Source is required" }),
+		sourceNotes: z.string().trim().max(255).nullish(),
+		interestedPlanId: z.string().nullish(),
+		notes: z.string().nullish(),
+		followUpDate: z.iso.date({ error: "Enter a valid follow-up date" }).nullish(),
+		assignedEmployeeId: z.string().nullish(),
+		smsConsent: z.boolean(),
+		acknowledgeExistingMember: z.boolean().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.phone && !normalizeKenyanPhone(data.phone)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Enter a valid Kenyan phone number, e.g. 0712 345 678",
+				path: ["phone"],
+			});
+		}
+		if (data.email && !isValidEmail(data.email)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Enter a valid email address",
+				path: ["email"],
+			});
+		}
+	});
+
+export const updateEnquiryStatusSchema = z
+	.strictObject({
+		id: z.string().min(1, "Enquiry is required"),
+		status: z.enum(ENQUIRY_STATUSES),
+		lostReason: z.enum(ENQUIRY_LOST_REASONS).nullish(),
+		lostReasonNotes: z.string().trim().max(255).nullish(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.status === "lost" && !data.lostReason) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Lost reason is required",
+				path: ["lostReason"],
+			});
+		}
+	});
+
+export const markLostFormSchema = z.object({
+	lostReason: z.enum(ENQUIRY_LOST_REASONS, { error: "Select a lost reason" }),
+	lostReasonNotes: z.string().trim().max(255).nullish(),
+});
+
+export const checkEnquiryDuplicatesSchema = z.object({
+	phone: z.string(),
+	excludeEnquiryId: z.string().optional(),
+});
+
+export type EnquiryValidateSearch = z.infer<typeof enquiryValidateSearch>;
+export type EnquiryFormSchema = z.infer<typeof enquiryFormSchema>;
+export type UpdateEnquiryStatusSchema = z.infer<typeof updateEnquiryStatusSchema>;
+export type MarkLostFormSchema = z.infer<typeof markLostFormSchema>;
+export type CheckEnquiryDuplicatesSchema = z.infer<typeof checkEnquiryDuplicatesSchema>;
+
+export const convertEnquirySchema = z.object({
+	enquiryId: z.string().min(1, "Enquiry is required"),
+	member: memberFormSchema,
+});
+
+export const linkEnquiryToMemberSchema = z.object({
+	enquiryId: z.string().min(1, "Enquiry is required"),
+	memberId: z.string().min(1, "Member is required"),
+});
+
+export type ConvertEnquirySchema = z.infer<typeof convertEnquirySchema>;
+export type LinkEnquiryToMemberSchema = z.infer<typeof linkEnquiryToMemberSchema>;
+
+// A send targets specific enquiries OR everything matching the list filters.
+const enquirySmsTargetShape = {
+	enquiryIds: z.array(z.string().min(1)).min(1).max(1000).optional(),
+	filters: enquiryValidateSearch.optional(),
+};
+
+const exactlyOneTarget = (data: { enquiryIds?: unknown; filters?: unknown }) =>
+	Boolean(data.enquiryIds) !== Boolean(data.filters);
+const targetMessage = { message: "Choose either specific enquiries or a filtered list" };
+
+const smsContentField = z
+	.string()
+	.trim()
+	.min(1, "Message content is required")
+	.max(1000, "Message is too long");
+
+export const enquirySmsRecipientsSchema = z
+	.object(enquirySmsTargetShape)
+	.refine(exactlyOneTarget, targetMessage);
+
+export const sendEnquirySmsSchema = z
+	.object({
+		...enquirySmsTargetShape,
+		smsTemplateId: z.string().nullish(),
+		content: smsContentField,
+	})
+	.refine(exactlyOneTarget, targetMessage);
+
+export const enquirySmsFormSchema = z.object({
+	smsTemplateId: z.string().nullish(),
+	content: smsContentField,
+});
+
+export type EnquirySmsRecipientsSchema = z.infer<typeof enquirySmsRecipientsSchema>;
+export type SendEnquirySmsSchema = z.infer<typeof sendEnquirySmsSchema>;
+export type EnquirySmsFormSchema = z.infer<typeof enquirySmsFormSchema>;
+
+// Conversion report. Source and staff narrow BOTH measures (created-in-range and
+// converted-in-range); the date range applies to createdAt for the first and
+// convertedAt for the second.
+const conversionReportExtras = {
+	source: z.array(z.enum(ENQUIRY_SOURCES)).optional(),
+	// An employee id, or "unassigned".
+	assignedEmployeeId: z.string().optional(),
+};
+
+export const enquiryConversionValidateSearch = dateRangeSchema.safeExtend({
+	source: z.array(z.enum(ENQUIRY_SOURCES)).optional().catch(undefined),
+	assignedEmployeeId: z.string().optional().catch(undefined),
+});
+
+export const enquiryConversionFormSchema =
+	dateRangeRequiredSchema.safeExtend(conversionReportExtras);
+
+export type EnquiryConversionValidateSearch = z.infer<typeof enquiryConversionValidateSearch>;
+export type EnquiryConversionFormSchema = z.infer<typeof enquiryConversionFormSchema>;

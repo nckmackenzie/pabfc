@@ -1,5 +1,6 @@
 import { assertCan } from "@/lib/permissions/can";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { FormLoader } from "@/components/ui/loaders";
 import { ProtectedPageWithWrapper } from "@/components/ui/protected-page-with-wrapper";
 import { memberQueries } from "@/features/members/services/queries";
@@ -12,6 +13,10 @@ export const Route = createFileRoute("/app/receipts/new")({
 	beforeLoad: ({ context }) => {
 		assertCan(context.auth, "receipts:create");
 	},
+	// Optional: preselects the billing member (e.g. after converting an enquiry).
+	validateSearch: z.object({
+		memberId: z.string().optional().catch(undefined),
+	}),
 	component: RouteComponent,
 	head: () => ({
 		meta: [{ title: "New Receipt / Prime Age Beauty & Fitness Club" }],

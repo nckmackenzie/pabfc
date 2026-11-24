@@ -20,14 +20,26 @@ const columns: Array<ColumnDef<SMSBroadcast>> = [
 			format(row.original.sentAt ?? new Date(), "dd/MM/yyyy HH:mm:ss"),
 	},
 	{
+		accessorKey: "recipientType",
+		header: "Recipients",
+		cell: ({
+			row: {
+				original: { recipientType },
+			},
+		}) => (recipientType === "enquiries" ? "Enquiries" : "Members"),
+	},
+	{
 		accessorKey: "receipients",
 		header: "Sent to",
 		cell: ({
 			row: {
-				original: { receipients },
+				original: { receipients, recipientType },
 			},
-		}) =>
-			`${receipients.length} ${receipients.length === 1 ? "member" : "members"}`,
+		}) => {
+			const [singular, plural] =
+				recipientType === "enquiries" ? ["enquiry", "enquiries"] : ["member", "members"];
+			return `${receipients.length} ${receipients.length === 1 ? singular : plural}`;
+		},
 	},
 	{
 		accessorKey: "totalCost",

@@ -41,6 +41,7 @@ import {
 } from "@/features/credit-notes/lib/redemption";
 import { getAvailableCreditBalance } from "@/features/credit-notes/lib/fifo";
 import { buildVoidReversalJournalLines, checkVoidEligibility } from "@/features/receipts/lib/void";
+import { revertEnquiryConversionsForVoid } from "@/features/enquiries/services/enquiry-conversion";
 import { reconcileMemberState } from "@/services/member-state";
 import { areJournalValuesBalanced, createJournalEntry } from "@/services/journal";
 import { createBankingEntry } from "@/services/banking";
@@ -667,6 +668,10 @@ export const voidPaymentFn = createServerFn({ method: "POST" })
 							.where(eq(creditNoteRedemptions.id, redemption.id));
 						await restoreCreditNoteBalance(tx, redemption.creditNoteId, redemption.amountApplied);
 					}
+
+					// Enquiries converted by this payment go back to awaiting payment. Never
+					// throws, so it can't fail the void.
+					await revertEnquiryConversionsForVoid({ tx, paymentId: payment.id, userId });
 
 					await tx.insert(activityLogs).values({
 						userId,

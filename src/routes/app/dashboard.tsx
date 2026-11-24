@@ -23,6 +23,10 @@ import {
 } from "@/features/dashboard/components/expiring-soon";
 import { FinanceDashboard } from "@/features/dashboard/components/finance-dashboard";
 import {
+	EnquiriesSnapshot,
+	EnquiriesSnapshotSkeleton,
+} from "@/features/enquiries/components/enquiries-snapshot";
+import {
 	MEMBERSHIP_STAT_COUNT,
 	MEMBERSHIP_STAT_GRID,
 	StatCards,
@@ -178,6 +182,14 @@ function MemberShipDashboard() {
 				>
 					<AverageAttendanceByDays />
 				</ErrorBoundaryWithSuspense>
+				<PermissionGate permission="enquiries:view">
+					<ErrorBoundaryWithSuspense
+						loader={<EnquiriesSnapshotSkeleton />}
+						errorMessage="Failed to load enquiries"
+					>
+						<EnquiriesSnapshot />
+					</ErrorBoundaryWithSuspense>
+				</PermissionGate>
 			</div>
 		</>
 	);

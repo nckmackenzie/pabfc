@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 import { format, startOfDay } from "date-fns";
-import { and, eq, gt, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { db } from "@/drizzle/db";
 import {
+	enquiries,
 	memberMemberships,
 	memberRegistrationLinks,
 	membershipPlans,
@@ -14,10 +15,48 @@ import {
 } from "@/drizzle/schema";
 import { decryptTemporaryPassword } from "@/features/auth/forgot-password/services/forgot-password.api";
 import { replaceVariables } from "@/features/communication/lib/utils";
+import {
+	buildEnquiryTemplateData,
+	eligibleEnquirySmsFilter,
+} from "@/features/enquiries/services/enquiry-sms";
 import { internationalizePhoneNumber } from "@/lib/helpers";
+import { normalizeKenyanPhone } from "@/lib/phone";
 import { inngest } from "@/lib/inngest/client";
 import { sendSms } from "@/lib/sms";
 import { toTitleCase } from "@/lib/utils";
+
+// Enquiry broadcasts hold enquiry ids. Consent, deletion and status are checked
+// again here, at send time: anyone who withdrew consent or was deleted after the
+// send was queued is skipped.
+async function sendEnquiryBroadcast(
+	enquiryIds: string[],
+	content: string,
+): Promise<Array<SMSBroadcastResponse["SMSMessageData"]["Recipients"][number]>> {
+	const recipients = await db
+		.select({
+			id: enquiries.id,
+			firstName: enquiries.firstName,
+			lastName: enquiries.lastName,
+			phone: enquiries.phone,
+		})
+		.from(enquiries)
+		.where(and(inArray(enquiries.id, enquiryIds), eligibleEnquirySmsFilter()));
+
+	const broadcastResponse: Array<SMSBroadcastResponse["SMSMessageData"]["Recipients"][number]> = [];
+	for (const recipient of recipients) {
+		const phone = normalizeKenyanPhone(recipient.phone);
+		if (!phone) continue;
+
+		const res = await sendSms({
+			message: replaceVariables(content, buildEnquiryTemplateData(recipient)),
+			to: [phone],
+		});
+		if (res) {
+			broadcastResponse.push(res.SMSMessageData.Recipients[0]);
+		}
+	}
+	return broadcastResponse;
+}
 
 export const sendSmsBroadcast = inngest.createFunction(
 	{
@@ -29,7 +68,7 @@ export const sendSmsBroadcast = inngest.createFunction(
 
 		const broadcastDetails = await step.run("get-receipients", async () => {
 			const broadcast = await db.query.smsBroadcasts.findFirst({
-				columns: { receipients: true, content: true },
+				columns: { receipients: true, content: true, recipientType: true },
 				where: eq(smsBroadcasts.id, broadcastId),
 			});
 			if (!broadcast) {
@@ -41,7 +80,10 @@ export const sendSmsBroadcast = inngest.createFunction(
 		const sendSmsStep = await step.run("send-sms", async () => {
 			const broadcastResponse: Array<SMSBroadcastResponse["SMSMessageData"]["Recipients"][number]> =
 				[];
-			const { receipients, content } = broadcastDetails;
+			const { receipients, content, recipientType } = broadcastDetails;
+			if (recipientType === "enquiries") {
+				return sendEnquiryBroadcast(receipients, content);
+			}
 			for (const receipient of receipients) {
 				const [{ firstName, lastName, contact }] = await db
 					.select({
