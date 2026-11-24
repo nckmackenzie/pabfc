@@ -1,5 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
+import { useState } from "react";
 import { BasePageComponent, BasePageLoadingSkeleton } from "@/components/ui/base-page";
+import { BulkEnquirySmsButton } from "@/features/enquiries/components/enquiry-sms-actions";
 import { EnquiryFilters } from "@/features/enquiries/components/filters";
 import { EnquiryTable } from "@/features/enquiries/components/enquiry-table";
 import { enquiryQueries } from "@/features/enquiries/services/queries";
@@ -43,6 +45,8 @@ export const Route = createFileRoute("/app/enquiries/")({
 });
 
 function RouteComponent() {
+	const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
 	return (
 		<BasePageComponent
 			pageTitle="Enquiries"
@@ -52,9 +56,12 @@ function RouteComponent() {
 			newButtonLinkPath="/app/enquiries/new"
 			filterClassName="md:justify-end"
 			customFilters={<EnquiryFilters />}
+			extraActionButtons={
+				<BulkEnquirySmsButton selectedIds={selectedIds} onSent={() => setSelectedIds([])} />
+			}
 			createPermissions={["enquiries:create"]}
 		>
-			<EnquiryTable />
+			<EnquiryTable selectedIds={selectedIds} onSelectedIdsChange={setSelectedIds} />
 		</BasePageComponent>
 	);
 }

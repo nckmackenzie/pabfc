@@ -100,3 +100,40 @@ export const linkEnquiryToMemberSchema = z.object({
 
 export type ConvertEnquirySchema = z.infer<typeof convertEnquirySchema>;
 export type LinkEnquiryToMemberSchema = z.infer<typeof linkEnquiryToMemberSchema>;
+
+// A send targets specific enquiries OR everything matching the list filters.
+const enquirySmsTargetShape = {
+	enquiryIds: z.array(z.string().min(1)).min(1).max(1000).optional(),
+	filters: enquiryValidateSearch.optional(),
+};
+
+const exactlyOneTarget = (data: { enquiryIds?: unknown; filters?: unknown }) =>
+	Boolean(data.enquiryIds) !== Boolean(data.filters);
+const targetMessage = { message: "Choose either specific enquiries or a filtered list" };
+
+const smsContentField = z
+	.string()
+	.trim()
+	.min(1, "Message content is required")
+	.max(1000, "Message is too long");
+
+export const enquirySmsRecipientsSchema = z
+	.object(enquirySmsTargetShape)
+	.refine(exactlyOneTarget, targetMessage);
+
+export const sendEnquirySmsSchema = z
+	.object({
+		...enquirySmsTargetShape,
+		smsTemplateId: z.string().nullish(),
+		content: smsContentField,
+	})
+	.refine(exactlyOneTarget, targetMessage);
+
+export const enquirySmsFormSchema = z.object({
+	smsTemplateId: z.string().nullish(),
+	content: smsContentField,
+});
+
+export type EnquirySmsRecipientsSchema = z.infer<typeof enquirySmsRecipientsSchema>;
+export type SendEnquirySmsSchema = z.infer<typeof sendEnquirySmsSchema>;
+export type EnquirySmsFormSchema = z.infer<typeof enquirySmsFormSchema>;

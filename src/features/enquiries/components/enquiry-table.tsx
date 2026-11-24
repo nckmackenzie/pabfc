@@ -1,7 +1,9 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from "@/components/ui/datatable";
 import { DatatableActions } from "@/components/ui/datatable-actions";
 import { DataTableColumnHeader } from "@/components/ui/datatable-column-header";
@@ -24,13 +26,64 @@ import { deleteEnquiry } from "@/features/enquiries/services/enquiries.mutations
 import type { EnquiryListItem } from "@/features/enquiries/services/enquiries.queries.api";
 import { enquiryQueries } from "@/features/enquiries/services/queries";
 import { useFilters } from "@/hooks/use-filters";
+import { usePermissions } from "@/hooks/use-permissions";
 
-export function EnquiryTable() {
+type EnquiryTableProps = {
+	// Rows ticked for a bulk SMS. Selection lives in the page so the SMS button can read it.
+	selectedIds: string[];
+	onSelectedIdsChange: (ids: string[]) => void;
+};
+
+export function EnquiryTable({ selectedIds, onSelectedIdsChange }: EnquiryTableProps) {
 	const { filters } = useFilters(getRouteApi("/app/enquiries/").id);
 	const { data } = useSuspenseQuery(enquiryQueries.list(filters));
 	const { handleMarkContacted, handleMarkLost, handleReopen } = useEnquiryActions();
+	const { hasPermission } = usePermissions();
+	const canSendSms = hasPermission("enquiries:send-sms");
 
-	const columns: Array<ColumnDef<EnquiryListItem>> = [
+	const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+	// A changed filter can drop rows from the list; forget any that are gone.
+	useEffect(() => {
+		const present = new Set(data.map(({ id }) => id));
+		const kept = selectedIds.filter((id) => present.has(id));
+		if (kept.length !== selectedIds.length) onSelectedIdsChange(kept);
+	}, [data, selectedIds, onSelectedIdsChange]);
+
+	const selectColumn: ColumnDef<EnquiryListItem> = {
+		id: "select",
+		header: () => (
+			<Checkbox
+				aria-label={`Select all ${data.length} matching enquiries`}
+				title={`Select all ${data.length} matching enquiries`}
+				checked={
+					selectedIds.length > 0 && selectedIds.length === data.length
+						? true
+						: selectedIds.length > 0
+							? "indeterminate"
+							: false
+				}
+				onCheckedChange={(checked) =>
+					onSelectedIdsChange(checked === true ? data.map(({ id }) => id) : [])
+				}
+			/>
+		),
+		cell: ({ row }) => (
+			<Checkbox
+				aria-label={`Select ${enquiryFullName(row.original.firstName, row.original.lastName)}`}
+				checked={selected.has(row.original.id)}
+				onCheckedChange={(checked) =>
+					onSelectedIdsChange(
+						checked === true
+							? [...selectedIds, row.original.id]
+							: selectedIds.filter((id) => id !== row.original.id)
+					)
+				}
+			/>
+		),
+	};
+
+	const dataColumns: Array<ColumnDef<EnquiryListItem>> = [
 		{
 			id: "name",
 			accessorFn: ({ firstName, lastName }) => enquiryFullName(firstName, lastName),
@@ -150,6 +203,8 @@ export function EnquiryTable() {
 			/>
 		);
 	}
+
+	const columns = canSendSms ? [selectColumn, ...dataColumns] : dataColumns;
 
 	return <DataTable columns={columns} data={data} />;
 }

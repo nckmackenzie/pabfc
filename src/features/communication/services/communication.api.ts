@@ -46,19 +46,21 @@ export const getSmsBroadcasts = createServerFn()
 			.select({
 				id: smsBroadcasts.id,
 				sentAt: smsBroadcasts.sentAt,
+				recipientType: smsBroadcasts.recipientType,
 				receipients: smsBroadcasts.receipients,
 				smsBroadcastStatus: smsBroadcasts.smsBroadcastStatus,
 				name: smsTemplates.name,
 				response: smsBroadcasts.response,
 			})
 			.from(smsBroadcasts)
-			.innerJoin(smsTemplates, eq(smsTemplates.id, smsBroadcasts.smsTemplateId))
+			.leftJoin(smsTemplates, eq(smsTemplates.id, smsBroadcasts.smsTemplateId))
 			.orderBy(desc(smsBroadcasts.sentAt))
 			.limit(100);
 
 		return broadcasts.map((broadcast) => ({
 			id: broadcast.id,
 			sentAt: broadcast.sentAt,
+			recipientType: broadcast.recipientType,
 			receipients: broadcast.receipients,
 			smsBroadcastStatus: broadcast.smsBroadcastStatus,
 			name: broadcast.name,

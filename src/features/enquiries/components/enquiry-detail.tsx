@@ -9,6 +9,10 @@ import {
 	ConversionLinks,
 	ConvertToMemberActions,
 } from "@/features/enquiries/components/enquiry-conversion-actions";
+import {
+	EnquirySmsHistory,
+	SendEnquirySmsButton,
+} from "@/features/enquiries/components/enquiry-sms-actions";
 import { EnquiryStatusBadge } from "@/features/enquiries/components/enquiry-status-badge";
 import { FollowUpDate } from "@/features/enquiries/components/follow-up-date";
 import { useEnquiryActions } from "@/features/enquiries/hooks/use-enquiry-actions";
@@ -16,12 +20,6 @@ import { enquiryLostReasonLabel, enquirySourceLabel } from "@/features/enquiries
 import { allowedManualTransitions } from "@/features/enquiries/lib/enquiry-status";
 import { enquiryFullName } from "@/features/enquiries/lib/helpers";
 import type { EnquiryDetail as EnquiryDetailData } from "@/features/enquiries/services/enquiries.queries.api";
-
-// PART 3 SLOT: "Send SMS" action (permission: enquiries:send-sms; needs smsConsent).
-// Intentionally renders nothing until manual SMS to enquirers exists.
-function SendSmsSlot(_props: { enquiry: EnquiryDetailData }): ReactNode {
-	return null;
-}
 
 function DetailItem({ label, children }: { label: string; children: ReactNode }) {
 	return (
@@ -74,7 +72,7 @@ export function EnquiryDetail({ enquiry }: { enquiry: EnquiryDetailData }) {
 					)}
 				</PermissionGate>
 				<ConvertToMemberActions enquiry={enquiry} />
-				<SendSmsSlot enquiry={enquiry} />
+				<SendEnquirySmsButton enquiry={enquiry} />
 			</div>
 
 			<dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -126,6 +124,8 @@ export function EnquiryDetail({ enquiry }: { enquiry: EnquiryDetailData }) {
 					</DetailItem>
 				</div>
 			</dl>
+
+			<EnquirySmsHistory enquiryId={enquiry.id} />
 		</>
 	);
 }
